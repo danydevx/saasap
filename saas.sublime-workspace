@@ -1,0 +1,626 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+			[
+				"shadow",
+				"shadow-sm"
+			],
+			[
+				"roun",
+				"rounded-1"
+			],
+			[
+				"eva",
+				"evaluation"
+			],
+			[
+				"evalu",
+				"evaluation"
+			],
+			[
+				"PRODU",
+				"PRODUCCION"
+			],
+			[
+				"produc",
+				"PRODUCCION"
+			],
+			[
+				"desc",
+				"description"
+			],
+			[
+				"a",
+				"academiainternacionalglobos.com"
+			],
+			[
+				"text",
+				"text-muted"
+			],
+			[
+				"User",
+				"UserGalleriesController"
+			],
+			[
+				"font",
+				"font-size"
+			],
+			[
+				"teach",
+				"teachers"
+			],
+			[
+				"max",
+				"max-height"
+			],
+			[
+				"border-",
+				"border-bottom"
+			],
+			[
+				"border",
+				"border-0"
+			],
+			[
+				"he",
+				"height"
+			],
+			[
+				"flex-",
+				"flex-fill"
+			],
+			[
+				"fill",
+				"flex-fill"
+			],
+			[
+				"just",
+				"justify-content-center"
+			],
+			[
+				"rounded",
+				"rounded-3"
+			],
+			[
+				"bac",
+				"background"
+			],
+			[
+				"route",
+				"route('dashboard.courses.evaluations.index"
+			],
+			[
+				"VideoCardRe",
+				"VideoCardResources.vue"
+			],
+			[
+				"academi",
+				"academiainternacionalglobos"
+			],
+			[
+				"lastV",
+				"lastVideoIdLesson"
+			],
+			[
+				"lastVideo",
+				"lastVideoIdLesson"
+			],
+			[
+				"selec",
+				"selected_course"
+			],
+			[
+				"FieldTe",
+				"FieldText"
+			],
+			[
+				"align",
+				"align-items-center"
+			],
+			[
+				"eval",
+				"evaluations"
+			],
+			[
+				"Image",
+				"ImageThumb"
+			],
+			[
+				"re",
+				"request"
+			],
+			[
+				"over",
+				"overflow"
+			],
+			[
+				"h",
+				"height"
+			],
+			[
+				"min-",
+				"min-width"
+			],
+			[
+				"text-",
+				"text-transform"
+			],
+			[
+				"delete",
+				"deleteVideo"
+			],
+			[
+				"payment_sta",
+				"payment_status_id"
+			],
+			[
+				"payment_re",
+				"payment_refund"
+			],
+			[
+				"payment_s",
+				"payment_stripe_id"
+			],
+			[
+				"payment_",
+				"payment_stripe_id"
+			],
+			[
+				"FieldS",
+				"FieldSwitch"
+			],
+			[
+				"curren",
+				"currency_id"
+			],
+			[
+				"curre",
+				"currency_id"
+			],
+			[
+				"FieldSele",
+				"FieldSelectApi"
+			],
+			[
+				"place",
+				"placehold.co"
+			],
+			[
+				"Da",
+				"Dashboard"
+			],
+			[
+				"studen",
+				"students"
+			],
+			[
+				"Cer",
+				"Certificates"
+			],
+			[
+				"align-items",
+				"align-items-center"
+			],
+			[
+				"Exposici",
+				"exposición"
+			],
+			[
+				"He",
+				"Heading1"
+			],
+			[
+				"background",
+				"background-color"
+			],
+			[
+				"bg-colo",
+				"bg-color-3"
+			],
+			[
+				"b",
+				"bg-color-3"
+			],
+			[
+				"back",
+				"background-image"
+			],
+			[
+				"font-",
+				"font-size"
+			],
+			[
+				"margin-",
+				"margin-top"
+			],
+			[
+				"tex",
+				"text-align"
+			],
+			[
+				"bg-color",
+				"bg-color-6"
+			],
+			[
+				"max-",
+				"max-width"
+			],
+			[
+				"displ",
+				"display-6"
+			]
+		]
+	},
+	"buffers":
+	[
+	],
+	"build_system": "",
+	"build_system_choices":
+	[
+	],
+	"build_varint": "",
+	"command_palette":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+			[
+				"pa",
+				"Package Control: Install Package"
+			],
+			[
+				"pacake",
+				"Package Control: Install Package"
+			],
+			[
+				"packa",
+				"Install Package Control"
+			]
+		],
+		"width": 0.0
+	},
+	"console":
+	{
+		"height": 0.0,
+		"history":
+		[
+		]
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"expanded_folders":
+	[
+		"/mnt/desarrollo/server/laravel/saas-app"
+	],
+	"file_history":
+	[
+		"/mnt/desarrollo/server/laravel/saas-app/.env",
+		"/mnt/desarrollo/server/laravel/saas-app/vite.config.js",
+		"/mnt/desarrollo/server/laravel/saas-app/resources/js/app.js",
+		"/mnt/desarrollo/server/laravel/saas-app/resources/js/App.vue",
+		"/mnt/desarrollo/server/laravel/saas-app/resources/views/welcome.blade.php",
+		"/mnt/desarrollo/server/laravel/saas-app/resources/js/bootstrap.js",
+		"/mnt/desarrollo/apps/vue/officetools/src/components/InvoiceClient.vue",
+		"/mnt/desarrollo/apps/vue/officetools/src/components/InvoiceInformation.vue",
+		"/mnt/desarrollo/server/laravel/saas/resources/views/app.blade.php",
+		"/mnt/desarrollo/apps/vue/officetools/src/components/InvoiceTotal.vue",
+		"/mnt/desarrollo/apps/vue/officetools/src/components/InvoiceDisclamer.vue",
+		"/mnt/desarrollo/apps/vue/officetools/src/components/fields/FieldSelect.vue",
+		"/mnt/desarrollo/apps/vue/officetools/src/components/InvoiceDate.vue",
+		"/mnt/desarrollo/apps/vue/officetools/src/pages/InvoiceCreate.vue",
+		"/mnt/desarrollo/apps/vue/officetools/src/components/fields/FieldPhone.vue",
+		"/mnt/desarrollo/apps/vue/officetools/src/components/QuotePreview.vue",
+		"/mnt/desarrollo/apps/vue/officetools/vite.config.js",
+		"/mnt/desarrollo/apps/vue/officetools/src/components/fields/FieldTextarea.vue",
+		"/mnt/desarrollo/apps/vue/officetools/src/pages/QuoteCreate.vue",
+		"/media/daniel/SERVIDOR1/pwd.htaccess",
+		"/mnt/desarrollo/apps/vue/officetools/src/components/CommercialConditionsList.vue",
+		"/mnt/desarrollo/apps/vue/officetools/src/services/pdfService.js",
+		"/mnt/desarrollo/apps/vue/officetools/src/components/fields/FieldImage.vue",
+		"/mnt/desarrollo/apps/vue/officetools/src/components/ProductPriceItems.vue",
+		"/mnt/desarrollo/apps/vue/officetools/src/utils/formatters.js",
+		"/mnt/desarrollo/apps/vue/officetools/src/utils/validators.js",
+		"/mnt/desarrollo/apps/vue/officetools/src/components/fields/FieldEmail.vue",
+		"/mnt/desarrollo/apps/vue/officetools/src/assets/styles/main.less",
+		"/mnt/proyectos/2026/balloonbuilder/Guia.guide.json",
+		"/mnt/desarrollo/apps/vue/demo/src/pages/Index.vue",
+		"/mnt/desarrollo/apps/vue/officetools/AGENTS.md",
+		"/mnt/desarrollo/apps/vue/officetools/src/main.js",
+		"/mnt/desarrollo/apps/vue/officetools/src/styles/main.less",
+		"/mnt/desarrollo/apps/vue/ballonpro/src/main.js",
+		"/mnt/desarrollo/apps/vue/ballonpro/vite.config.js",
+		"/mnt/desarrollo/apps/vue/ballonpro/src/components/editor/ContextMenu.vue",
+		"/mnt/desarrollo/apps/astro/orpotnet/astro.config.mjs",
+		"/mnt/desarrollo/apps/astro/orpotnet/src/styles/main.less",
+		"/mnt/desarrollo/apps/vue/ballonpro/AGENTS.md",
+		"/home/daniel/Descargas/ocho_columnas.json",
+		"/mnt/desarrollo/apps/astro/orpotnet/src/layouts/Layout.astro",
+		"/mnt/desarrollo/apps/astro/orpotnet/Agent.md",
+		"/mnt/desarrollo/apps/astro/orpotnet/src/pages/index.astro",
+		"/mnt/desarrollo/academia/resources/js/Components/Dashboard/Courses/CourseCardIndex.vue",
+		"/mnt/desarrollo/academia/resources/js/Pages/Frontend/Courses/Index.vue",
+		"/mnt/desarrollo/apps/vue/ballonpro/src/components/editor/EditorView.vue",
+		"/mnt/desarrollo/apps/vue/ballonpro/src/components/guide/GuideEditorView.vue",
+		"/mnt/desarrollo/academia/resources/js/Pages/Frontend/Videos/Show.vue",
+		"/home/daniel/Descargas/asdas.json",
+		"/home/daniel/Descargas/assdasd.json",
+		"/home/daniel/Descargas/guia4.json",
+		"/mnt/desarrollo/apps/vue/ballonpro/src/data/catalog.json",
+		"/mnt/desarrollo/apps/debloy__ballonapp.yml",
+		"/mnt/desarrollo/apps/vue/ballonpro/src/components/editor/LayerPanel.vue",
+		"/mnt/desarrollo/apps/vue/ballonpro/src/components/editor/SidebarCatalog.vue",
+		"/mnt/desarrollo/apps/vue/ballonpro/src/pages/EditorView.vue",
+		"/mnt/desarrollo/apps/vue/ballonpro/src/stores/editor.store.js",
+		"/mnt/desarrollo/apps/vue/ballonpro/src/stores/catalog.store.js",
+		"/mnt/desarrollo/apps/vue/ballonpro/PRODUCTS.md",
+		"/mnt/desarrollo/apps/vue/ballonpro/CATEGORIES.md",
+		"/mnt/desarrollo/apps/vue/ballonpro/src/components/editor/CanvasStage.vue",
+		"/mnt/desarrollo/apps/vue/ballonpro/docs/03-canvas-architecture.md",
+		"/mnt/desarrollo/apps/vue/ballonpro/docs/02-state-architecture.md",
+		"/mnt/desarrollo/apps/vue/ballonpro/docs/overview.md",
+		"/mnt/desarrollo/apps/vue/ballonpro/docs/04-grouping-and-selection.md",
+		"/mnt/desarrollo/apps/vue/ballonpro/docs/05-catalog-integration.md",
+		"/mnt/desarrollo/apps/vue/ballonpro/docs/06-future-saas.md",
+		"/mnt/desarrollo/apps/vue/ballonpro/docs/07-coding-rules.md",
+		"/mnt/desarrollo/apps/vue/ballonpro/src/components/editor/ToolbarTop.vue",
+		"/mnt/desarrollo/apps/vue/ballonpro/src/components/editor/AlignPanel.vue",
+		"/mnt/desarrollo/apps/vue/ballonpro/src/components/editor/PropertiesPanel.vue",
+		"/mnt/desarrollo/apps/vue/ballonpro/src/components/editor/CatalogCostsPanel.vue",
+		"/mnt/desarrollo/apps/vue/ballonpro/src/components/editor/BalloonMaterialPickerCompact.vue",
+		"/mnt/desarrollo/apps/vue/ballonpro/balloondesigner",
+		"/mnt/desarrollo/apps/vue/ballonpro/src/router/index.js",
+		"/mnt/desarrollo/apps/vue/ballonpro/src/App.vue",
+		"/mnt/desarrollo/apps/vue/ballonpro/src/layouts/EditorLayout.vue",
+		"/mnt/desarrollo/apps/vue/ballonpro/src/components/editor/MaterialsPanel.vue",
+		"/mnt/desarrollo/apps/vue/ballonpro/src/assets/styles/main.less",
+		"/mnt/desarrollo/apps/vue/ballonpro/.gitignore",
+		"/mnt/desarrollo/apps/vue/ballonpro/src/router/routes.editor.js",
+		"/mnt/desarrollo/apps/vue/ballonpro/src/pages/editor/EditorView.vue",
+		"/mnt/desarrollo/apps/vue/ballonpro/src/components/editor/<template>.vue",
+		"/mnt/desarrollo/apps/vue/invitacion/src/App.vue",
+		"/mnt/desarrollo/apps/vue/ballonpro/src/core/editor/ids.js",
+		"/mnt/desarrollo/apps/vue/ballonpro/src/core/editor/serializer.js",
+		"/mnt/desarrollo/apps/vue/ballonpro/src/core/editor/history.js",
+		"/mnt/desarrollo/apps/vue/ballonpro/src/core/editor/engine.js",
+		"/mnt/desarrollo/apps/vue/ballonpro/src/views/EditorView.vue",
+		"/mnt/desarrollo/apps/vue/ballonpro/src/views/editor/ToolbarTop.vue",
+		"/mnt/desarrollo/apps/vue/ballonpro/src/views/editor/SidebarCatalog.vue",
+		"/mnt/desarrollo/apps/vue/ballonpro/src/views/editor/LayerPanel.vue",
+		"/mnt/desarrollo/apps/vue/ballonpro/src/views/editor/PropertiesPanel.vue",
+		"/mnt/desarrollo/apps/vue/base/src/router/index.js",
+		"/mnt/desarrollo/apps/vue/base/src/pages/Index.vue",
+		"/mnt/desarrollo/server/wordpress/comunicare/wp-content/themes/comunicare/footer.php",
+		"/mnt/desarrollo/server/wordpress/comunicare/wp-content/themes/comunicare/pages/page--home.php",
+		"/mnt/desarrollo/server/wordpress/comunicare/wp-content/themes/comunicare/pages/page--gallery-modulares.php",
+		"/mnt/desarrollo/server/wordpress/comunicare/wp-content/themes/comunicare/pages/page--gallery-octanorm.php",
+		"/mnt/desarrollo/server/wordpress/comunicare/wp-content/themes/comunicare/pages/page--metodologia.php",
+		"/mnt/desarrollo/server/wordpress/comunicare/wp-content/themes/comunicare/pages/page--contacto.php",
+		"/mnt/desarrollo/server/wordpress/comunicare/wp-content/themes/comunicare/pages/page--stand-octanorm.php",
+		"/mnt/desarrollo/server/wordpress/comunicare/wp-content/themes/comunicare/template-parts/strap-cotizar-stand.php",
+		"/mnt/desarrollo/server/wordpress/comunicare/wp-content/themes/comunicare/pages/page--servicios-escenografias.php",
+		"/mnt/desarrollo/server/wordpress/comunicare/wp-content/themes/comunicare/pages/page--servicios-retail.php",
+		"/mnt/desarrollo/server/wordpress/comunicare/wp-content/themes/comunicare/partials/_header.php",
+		"/mnt/desarrollo/server/wordpress/comunicare/wp-content/themes/comunicare/pages/page--gallery-custom.php",
+		"/mnt/desarrollo/server/wordpress/comunicare/wp-content/themes/comunicare/pages/page--gallery.php",
+		"/mnt/desarrollo/server/wordpress/comunicare/wp-content/themes/comunicare/template-parts/strap-cta.php",
+		"/mnt/desarrollo/server/wordpress/comunicare/wp-content/themes/comunicare/template-parts/strap-services.php",
+		"/mnt/desarrollo/server/wordpress/comunicare/wp-content/themes/comunicare/pages/page--stand-custom.php",
+		"/mnt/desarrollo/server/wordpress/comunicare/wp-content/themes/comunicare/template-parts/strap-testimonals.php",
+		"/mnt/desarrollo/server/wordpress/comunicare/wp-content/themes/comunicare/template-parts/strap-logos-carousel.php",
+		"/mnt/desarrollo/server/wordpress/comunicare/wp-content/themes/comunicare/pages/page--stand-modulares.php",
+		"/mnt/desarrollo/server/wordpress/comunicare/wp-content/themes/comunicare/pages/page--empresa.php",
+		"/mnt/desarrollo/server/wordpress/comunicare/wp-content/themes/comunicare/template-parts/strap-logos-rows.php",
+		"/mnt/desarrollo/server/wordpress/comunicare/wp-content/themes/comunicare/pages/page--industrias.php",
+		"/mnt/desarrollo/server/wordpress/comunicare/wp-content/themes/comunicare/pages/page--faqs.php",
+		"/mnt/desarrollo/server/wordpress/comunicare/wp-content/themes/comunicare/template-parts/strap-contact.php",
+		"/mnt/desarrollo/server/wordpress/comunicare/wp-content/themes/comunicare/template-parts/strap-hero-bottom-contact.php",
+		"/mnt/desarrollo/server/wordpress/comunicare/wp-content/themes/comunicare/template-parts/strap-hero.php",
+		"/mnt/desarrollo/server/wordpress/comunicare/wp-content/themes/comunicare/AGENTS.md",
+		"/mnt/desarrollo/server/processwire/site-orpotnet/config.site.php",
+		"/mnt/desarrollo/server/processwire/site-orpotnet/templates/home.php",
+		"/mnt/desarrollo/server/processwire/site-orpotnet/templates/page-site.php",
+		"/mnt/desarrollo/server/processwire/site-orpotnet/templates/_footer.php",
+		"/mnt/desarrollo/server/processwire/site-orpotnet/templates/theme/partials/_scripts.php",
+		"/mnt/desarrollo/server/processwire/site-orpotnet/config.php"
+	],
+	"find":
+	{
+		"height": 42.0
+	},
+	"find_in_files":
+	{
+		"height": 283.0,
+		"where_history":
+		[
+			"/mnt/desarrollo/server/wordpress/comunicare/wp-content/themes/comunicare"
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": false,
+		"find_history":
+		[
+			"showDescription",
+			"Logo",
+			"Evento",
+			"logo",
+			"formattedAmount",
+			" ",
+			"ORPOT",
+			"curso.academiainternacionalglobos.com",
+			"erogf3svb3ra",
+			"https://staging.academiainternacionalglobos.com",
+			"LayerPanel",
+			"row__actions",
+			"row__meta",
+			"filteredTypesCount",
+			"categoryIsExpanded",
+			"onNodePointerDown",
+			"setupGroupSortables",
+			"groupSortables",
+			"reorderByIds",
+			"onMounted",
+			"watch",
+			":disabled=\"!store.selectedId\"",
+			"deleteSelected",
+			"onTransformEnd",
+			"useEditorStore",
+			"onMounted",
+			"stopInertia",
+			"panning",
+			"onStagePointerDown",
+			"onDocKeyDown",
+			"onStagePointerDown",
+			"snapBoxToGuides",
+			"clearSelection",
+			"markDirty",
+			"_captureSnapshot",
+			"distributeSelection",
+			"initHistory",
+			"store.initAutosave()",
+			"initAutosave",
+			"markDirty",
+			"watch",
+			"onNodePointerDown",
+			"marquee",
+			"onMenuAction",
+			"getCanvasPointer",
+			"watch",
+			"onStagePointerDown",
+			"marquee",
+			"setSelection",
+			"toggleSelect",
+			"endPasteSession",
+			"select",
+			"selectedNodes",
+			"materialsSummary",
+			"ellipseConfig",
+			"downloadJson",
+			"<div class=\"col-12 col-sm-6 col-lg-4\">",
+			">\n",
+			"Custom",
+			"Diseño y Fabricación de Stands Modulares",
+			"                        \n",
+			"Nuesro Trabajo habla por nosotros."
+		],
+		"highlight": true,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": false,
+		"replace_history":
+		[
+			"ballonaca.ballonacademy.com",
+			"ballonaca",
+			"https://staging.ballonacademy.com",
+			"<div class=\"col-12 col-sm-6 col-lg-4 my-2\">",
+			"Nuestro Trabajo habla por nosotros."
+		],
+		"reverse": false,
+		"scrollbar_highlights": true,
+		"show_context": true,
+		"use_buffer2": true,
+		"use_gitignore": true,
+		"whole_word": false,
+		"wrap": true
+	},
+	"groups":
+	[
+		{
+			"sheets":
+			[
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 42.0
+	},
+	"input":
+	{
+		"height": 97.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"output.find_results":
+	{
+		"height": 0.0
+	},
+	"pinned_build_system": "Packages/lessc/lessc.sublime-build",
+	"project": "saas.sublime-project",
+	"replace":
+	{
+		"height": 80.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 500.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 380.0
+	},
+	"select_symbol":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"selected_group": 0,
+	"settings":
+	{
+	},
+	"show_minimap": true,
+	"show_open_files": true,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 448.0,
+	"status_bar_visible": true,
+	"template_settings":
+	{
+	}
+}

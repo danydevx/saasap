@@ -1,0 +1,1148 @@
+Reglas para los CRUDS
+
+Todos los CRUDS deben estar en las carpetas correspondientes
+
+js/Pages/Admin/Roles  (Roles es un ejemplo)
+
+Dentro de esta carpeta  deben estar estos archivos
+
+
+Index.vue
+Muestra la Tabla de los registros correspondiente
+Tendra las siguientes acciones  Detalle | Editar  | Eliminar 
+Tendra un buscador, en este caso nombre de rol e ID
+La paginacion debe ser en el servidor , no en el cliente
+Debe tener un diseño minimalista
+Los resultados se pueden ordenar por el ID
+
+
+
+Create.vue : Formulario de Creacion
+Edit.vue : Formulario de Edicion
+
+================================
+USUARIOS
+==================================
+
+En la tabla de creación de usuarios hay que agregar la parte de roles para seleccionar el rol, menos el rol con el ID 2
+
+
+================================
+USUARIOS
+==================================
+
+En la tabla de creación de usuarios 
+
+
+================================
+Settings 
+==================================
+
+Implementar módulo admin Settings.
+ 
+Permisos:
+- settings.view
+- settings.update
+
+Rutas:
+- GET /admin/settings
+- PUT /admin/settings
+
+Controlador:
+- SettingController@index
+- SettingController@update
+
+Vista:
+- resources/js/Pages/Admin/Settings/Index.vue
+
+Objetivo:
+Una sola pantalla de configuración general.
+Usar cards simples, no tabs complejos.
+
+Campos:
+- app.name
+- app.email
+- app.phone
+- regional.timezone
+- regional.locale
+- system.allow_registration
+- system.require_user_approval
+- system.default_pagination
+
+Persistencia:
+- esquema key/value
+- un solo submit
+- crear key si no existe
+- actualizar si existe
+- cargar valores actuales al abrir
+
+Validaciones:
+- app.name required|string|max:150
+- app.email nullable|email|max:150
+- app.phone nullable|string|max:50
+- regional.timezone required|string|max:100
+- regional.locale required|string|max:10
+- system.allow_registration boolean
+- system.require_user_approval boolean
+- system.default_pagination required|integer|min:5|max:100
+
+UI:
+- layout admin actual
+- PageTitle
+- Breadcrumb
+- cards
+- field components existentes si ya existen
+- useForm
+- toast success/error
+- botón único guardar
+
+Comportamiento:
+- index carga formulario
+- update valida y guarda todo
+- redirect back con success flash
+
+Integración:
+- agregar al menú admin si tiene permiso
+- proteger rutas por permiso
+- registrar permisos si ya existe patrón para eso
+
+Importante:
+- primero revisar si ya existe modelo/tabla Setting
+- si existe, adaptarse
+- si no existe, crear solución mínima key/value
+- generar solo archivos necesarios
+- no agregar archivos innecesarios
+
+
+================================
+Profile  
+==================================
+
+Implementar módulo UserProfile ligado a User.
+
+Objetivo:
+Crear entidad UserProfile para almacenar campos extra del usuario fuera de la tabla users.
+Relación 1 a 1 con User.
+No mover ni duplicar datos existentes de users innecesariamente.
+Debe servir como base para crecer con más campos después.
+
+ 
+Reglas:
+- Vue con `<script setup>`
+- Solo Composition API
+- No TypeScript
+- No Options API
+- No librerías nuevas
+- No API separada
+- Reutilizar patrones visuales y componentes existentes
+- Mantener estilo actual del proyecto
+- No refactorizar módulos no relacionados
+- Código simple y listo para producción
+
+Modelo:
+- UserProfile
+- ligado a User con relación 1:1
+
+Relaciones:
+- User hasOne UserProfile
+- UserProfile belongsTo User
+
+Campos requeridos por ahora:
+Personales:
+- name
+- phone
+
+Redes sociales:
+- facebook
+- instagram
+- x
+
+Base de datos:
+- crear tabla `user_profiles`
+- incluir `id`
+- `user_id` unique
+- `name` nullable string
+- `phone` nullable string
+- `facebook` nullable string
+- `instagram` nullable string
+- `x` nullable string
+- timestamps
+- foreign key a users con cascade on delete
+
+Reglas de datos:
+- cada user solo puede tener un profile
+- si no existe perfil, debe crearse cuando sea necesario
+- estructura preparada para agregar más campos después
+- no guardar estos campos en tabla users
+
+Controlador:
+- usar o adaptar flujo actual de perfiles si ya existe
+- si no existe, crear controlador mínimo para editar y actualizar perfil
+- métodos mínimos:
+  - edit()
+  - update()
+
+Rutas:
+- usar patrón actual del proyecto para perfiles
+- si ya existen rutas de profile, adaptarse
+- si no existen, crear rutas protegidas para editar/actualizar
+- no crear rutas innecesarias
+
+Vista:
+- crear o adaptar vista Inertia para edición de perfil
+- mantener estilo visual actual
+- usar componentes de campos existentes si ya están en el proyecto
+- usar `useForm`
+- usar toast success/error
+- usar validaciones touched si ya forman parte del patrón del proyecto
+
+Campos en formulario:
+- name
+- phone
+- facebook
+- instagram
+- x
+
+Validaciones backend:
+- name: nullable|string|max:150
+- phone: nullable|string|max:50
+- facebook: nullable|url|max:255
+- instagram: nullable|url|max:255
+- x: nullable|url|max:255
+
+Comportamiento:
+- cargar perfil existente si ya existe
+- si no existe, mostrar formulario vacío sin error
+- al guardar:
+  - crear perfil si no existe
+  - actualizar si existe
+- redirect back con flash success
+
+Integración:
+- no romper flujo actual de users
+- no mezclar estos campos en tabla users
+- mantener separación clara por seguridad y escalabilidad
+- si ya existe menú o acceso a perfil, reutilizarlo
+- cambios mínimos necesarios
+
+Importante:
+- primero revisar si ya existe modelo, controlador, vista o rutas de Profile/UserProfile
+- si existen, adaptarse a la estructura actual
+- generar solo archivos necesarios
+- no agregar archivos innecesarios
+
+==================================================
+Registro de usuarios
+===============================================
+Test Pass : Abc1234567$
+
+Implementar página de registro de usuarios.
+
+Stack:
+Laravel 12 + Inertia + Vue 3 + JavaScript + Bootstrap 5.3.
+
+Reglas:
+- Vue con `<script setup>`
+- Solo Composition API
+- No TypeScript
+- No Options API
+- Usar Inertia
+- No crear API separada
+- Reutilizar layout y componentes existentes
+- Mantener estilo visual del proyecto
+- Código simple y listo para producción
+
+Campos del formulario:
+- name
+- email
+- password
+- password_confirmation
+
+Rutas:
+- GET /register
+- POST /register
+
+Controlador:
+- AuthController o RegisterController según estructura actual
+- Métodos:
+  - showRegister()
+  - register()
+
+Vista:
+- resources/js/Pages/Auth/Register.vue
+
+UI requerida:
+- usar layout de autenticación existente si ya existe
+- formulario centrado
+- Bootstrap 5.3
+- campos claros y accesibles
+- botón "Crear cuenta"
+
+Componentes de formulario:
+- name → input text
+- email → input email
+- password → input password
+- password_confirmation → input password
+
+Frontend:
+- usar `useForm` de Inertia
+- enviar datos con POST
+- mostrar errores de validación debajo de cada campo
+- deshabilitar botón mientras se envía
+- mostrar toast o mensaje de error si falla
+- redirigir al dashboard o login después del registro según flujo existente
+
+Validaciones backend:
+- name required|string|max:150
+- email required|email|max:150|unique:users,email
+- password required|string|min:8|confirmed
+
+Reglas adicionales:
+- password_confirmation debe coincidir con password
+- email debe ser único
+- limpiar espacios en name y email
+
+Proceso de registro:
+1. validar datos
+2. crear usuario en tabla users y agregar name al profile
+3. guardar password encriptado
+4. asignar rol por defecto si el sistema usa roles (user)
+5. marcar usuario activo por defecto o según configuración del sistema
+6. iniciar sesión automáticamente o redirigir a login según flujo del proyecto
+
+Seguridad:
+- usar hashing de Laravel para password
+- no devolver password en respuestas
+- proteger contra registro duplicado
+- validar email correctamente
+
+Integración con UserProfile:
+- después de crear el usuario, crear automáticamente su UserProfile vacío
+- guardar `user_id` en user_profiles
+- no duplicar datos del perfil en users
+
+Comportamiento esperado:
+- formulario carga vacío
+- si hay errores de validación se muestran en pantalla
+- si el registro es exitoso:
+  - crear usuario
+  - crear user_profile
+  - redirigir correctamente
+
+Importante:
+- revisar si ya existe sistema de auth en el proyecto
+- si ya existe AuthController o rutas de auth, extenderlas en lugar de duplicarlas
+- generar solo archivos necesarios
+- no crear código innecesario
+
+Ajustar flujo de registro y activación de usuarios con estas reglas exactas.
+
+Contexto:
+Ya existe el registro y funciona.
+No romper el flujo actual.
+Solo modificar lo necesario para soportar activación por email, cambio de rol y dashboard separado para usuarios finales.
+
+Stack:
+Laravel 12 + Inertia + Vue 3 + JavaScript + Bootstrap 5.3 + Spatie Permission.
+
+Reglas:
+- No TypeScript
+- Vue con `<script setup>`
+- Solo Composition API
+- No Options API
+- No API separada
+- No librerías nuevas
+- No refactorizar módulos no relacionados
+- Reutilizar auth actual
+- Mantener código simple y listo para producción
+
+Objetivo funcional:
+Cuando un usuario se registra:
+1. se crea con cuenta inactiva
+2. se le asigna el rol inicial `normal` con ID 10
+3. se le envía correo de verificación de email
+4. no debe entrar al dashboard admin
+5. solo después de verificar su email:
+   - su cuenta se activa
+   - se le cambia el rol a `member` con ID 3
+6. después de verificar debe usar un dashboard exclusivo para usuarios member
+7. el dashboard admin sigue siendo solo para administradores del SaaS
+
+Flujo requerido:
+Registro:
+- crear usuario
+- guardar password encriptado
+- `is_active = false`
+- asignar rol inicial `normal` ID 10
+- enviar verificación de email
+- no asignar rol `member` al registrarse
+- no enviar al admin dashboard
+
+Verificación de email:
+- usar o adaptar el sistema de verificación de email de Laravel si ya existe
+- al confirmar el email:
+  - marcar email como verificado
+  - activar cuenta: `is_active = true`
+  - remover rol `normal`
+  - asignar rol `member` ID 3
+- después redirigir al dashboard de member, no al dashboard admin
+
+Roles:
+- rol inicial al registrarse: `normal` ID 10
+- rol final al verificar email: `member` ID 3
+- no usar rol admin en este flujo
+- si el proyecto usa nombres de roles además de IDs, validar por nombre y no depender solo del ID si se puede evitar
+
+Estados del usuario:
+- usuario recién registrado:
+  - email no verificado
+  - cuenta inactiva
+  - rol `normal`
+- usuario verificado:
+  - email verificado
+  - cuenta activa
+  - rol `member`
+
+Dashboard:
+Debe existir separación clara entre:
+- dashboard admin: solo administradores
+- dashboard member: solo usuarios finales con rol `member`
+
+Rutas:
+- mantener `/register`
+- mantener flujo de verificación email
+- crear o adaptar ruta para dashboard member, por ejemplo:
+  - `/member`
+  o la ruta que mejor encaje con la estructura actual
+- proteger dashboard admin con roles admin
+- proteger dashboard member con rol `member` y usuario activo
+- si el email no está verificado o la cuenta no está activa, no permitir acceso al dashboard member
+
+Middlewares / acceso:
+- revisar middlewares actuales de auth, verified y roles
+- aplicar reglas para que:
+  - admin solo entre a admin
+  - member solo entre a member dashboard
+  - usuario `normal` inactivo no entre al dashboard member
+- si ya existe middleware de usuario activo, reutilizarlo
+- si no existe, crear la solución mínima necesaria
+
+Controladores:
+- adaptar controlador de registro actual
+- adaptar flujo de verificación email actual
+- no duplicar lógica si Laravel ya cubre parte del proceso
+- agregar solo lo necesario para:
+  - crear usuario inactivo
+  - asignar rol normal
+  - activar y cambiar rol al verificar email
+  - redirigir al dashboard correcto
+
+Base de datos:
+- usar campo de activación existente si ya existe, por ejemplo `is_active`
+- si no existe, agregarlo de forma mínima
+- no duplicar campos innecesarios
+
+Correo:
+- enviar email de verificación inmediatamente después del registro
+- usar sistema nativo de Laravel si ya está disponible
+- no inventar sistema custom si el nativo ya resuelve el caso
+
+Comportamiento esperado:
+Caso 1: registro exitoso
+- usuario se crea inactivo
+- rol `normal`
+- email de verificación enviado
+- mostrar mensaje indicando que debe verificar su correo antes de acceder
+
+Caso 2: intenta entrar sin verificar
+- no debe entrar al dashboard member
+- mostrar mensaje claro de que debe verificar su email
+
+Caso 3: verifica email
+- cuenta se activa
+- cambia de `normal` a `member`
+- redirigir a dashboard member
+
+Caso 4: admin
+- sigue usando dashboard admin
+- no mezclar admin con member
+
+UI / Inertia:
+- mantener vistas auth actuales
+- agregar mensajes claros de:
+  - registro exitoso
+  - correo de verificación enviado
+  - email verificado correctamente
+- no redirigir al dashboard admin después del registro ni después de verificar si el usuario no es admin
+
+Integración con UserProfile:
+- si ya se crea UserProfile al registrarse, mantenerlo
+- no mover esta lógica salvo que sea necesario
+
+Importante:
+- primero revisar estructura actual de auth, roles, middlewares y dashboards
+- adaptarse a lo existente
+- generar solo archivos necesarios
+- no crear código innecesario
+- no romper login de administradores
+
+
+Implementar segundo dashboard separado para usuarios finales con rol `member`.
+
+Contexto:
+Ya existe dashboard funcional para `superadmin` y `admin`.
+No romper ese flujo.
+Se necesita un dashboard diferente para usuarios registrados con rol `member`.
+
+Stack:
+Laravel 12 + Inertia + Vue 3 + JavaScript + Bootstrap 5.3 + Spatie Permission.
+
+Reglas:
+- No TypeScript
+- Vue con `<script setup>`
+- Solo Composition API
+- No Options API
+- No API separada
+- No librerías nuevas
+- No refactorizar módulos no relacionados
+- Mantener el dashboard admin actual intacto
+- Reutilizar layouts, componentes y patrones existentes
+- Código simple y listo para producción
+
+Objetivo:
+Tener dos áreas claramente separadas:
+1. Dashboard Admin: solo `superadmin` y `admin`
+2. Dashboard Member: solo usuarios con rol `member`
+
+Reglas de acceso:
+- `superadmin` y `admin` entran solo al dashboard admin
+- `member` entra solo al dashboard member
+- usuarios con rol `normal` no deben entrar al dashboard member
+- usuarios inactivos no deben entrar a ningún dashboard protegido
+- usuarios sin email verificado no deben entrar al dashboard member si el flujo actual exige verificación
+
+Rutas:
+- mantener rutas actuales del admin
+- crear ruta exclusiva para member, por ejemplo:
+  - GET /member
+  o
+  - GET /member/dashboard
+- usar el patrón que mejor encaje con la estructura actual
+- no mezclar rutas member dentro del grupo `/admin`
+
+Controlador:
+- crear controlador mínimo para dashboard member, por ejemplo:
+  - Member/DashboardController
+  - método `index()`
+- no mover la lógica del dashboard admin actual
+- mantener separación clara entre controladores admin y member
+
+Vista:
+- crear vista Inertia exclusiva para member, por ejemplo:
+  - resources/js/Pages/Member/Dashboard.vue
+- no reutilizar la vista del admin si eso mezcla navegación, métricas o permisos
+- el dashboard member debe tener su propio layout o usar un layout separado si hace falta
+
+Layouts:
+- mantener layout admin actual para `superadmin` y `admin`
+- crear o adaptar layout member separado si es necesario
+- el layout member no debe mostrar menú ni enlaces del admin
+- navegación simple para usuario final autenticado
+
+Middleware / protección:
+- proteger dashboard admin con roles `superadmin` y `admin`
+- proteger dashboard member con rol `member`
+- además aplicar:
+  - `auth`
+  - `verified` si ya existe ese flujo
+  - validación de usuario activo si ya existe middleware para eso
+- si no existe middleware de usuario activo, crear la solución mínima necesaria
+- no duplicar middleware innecesariamente
+
+Redirección después de login:
+Ajustar flujo de login para que redirija según rol:
+- `superadmin` o `admin` -> dashboard admin
+- `member` -> dashboard member
+- `normal` -> no entrar al dashboard member
+- si el usuario no tiene rol permitido o no está activo, manejarlo con mensaje claro y seguro
+
+Redirección después de verificación:
+- si el usuario termina con rol `member`, redirigir al dashboard member
+- nunca mandar un `member` al dashboard admin
+
+Comportamiento esperado:
+Caso 1:
+- login con admin/superadmin
+- entra al dashboard admin actual
+
+Caso 2:
+- login con member
+- entra al dashboard member nuevo
+
+Caso 3:
+- usuario member intenta entrar a `/admin`
+- acceso denegado o redirección segura
+
+Caso 4:
+- admin intenta entrar al dashboard member
+- acceso denegado o redirección segura
+
+Caso 5:
+- usuario `normal` o inactivo intenta entrar al dashboard member
+- acceso denegado
+
+Dashboard member:
+Crear estructura base simple, no compleja.
+Debe ser una primera versión funcional.
+Contenido inicial sugerido:
+- saludo al usuario
+- resumen básico de su cuenta
+- datos del perfil
+- accesos rápidos a módulos que luego crecerán
+- diseño limpio con cards simples
+
+UI:
+- usar Inertia
+- usar Bootstrap 5.3
+- mantener consistencia visual con el proyecto
+- no copiar menú admin completo
+- crear experiencia más simple para usuarios finales
+
+Integración:
+- revisar flujo actual de login
+- revisar rutas actuales de dashboard
+- revisar middlewares y roles existentes
+- adaptarse a la estructura actual
+- cambios mínimos necesarios
+
+Importante:
+- no romper el dashboard admin existente
+- no mezclar admin y member en la misma vista
+- generar solo archivos necesarios
+- no agregar archivos innecesarios
+- mantener separación clara de roles, rutas, layouts y vistas
+
+
+Ajustar registro para reforzar seguridad y mejorar UX con estas reglas exactas.
+
+Contexto:
+Ya existe registro funcional con verificación por email.
+No romper el flujo actual.
+Solo agregar validación fuerte de contraseña, captcha, honeypot y mejorar mensaje post-registro.
+
+ 
+Objetivo:
+En registro se debe:
+1. exigir contraseña segura
+2. bloquear bots con captcha
+3. bloquear bots simples con honeypot
+4. mejorar UX después del registro exitoso
+5. no mandar al usuario directo al login sin contexto
+
+Campos actuales del registro:
+- name
+- email
+- password
+- password_confirmation
+
+Nuevos requisitos de seguridad:
+
+1. Contraseña segura
+Validar que `password` cumpla:
+- required
+- mínimo 8 caracteres
+- al menos 1 letra
+- al menos 1 número
+- confirmada con `password_confirmation`
+
+No exigir caracteres especiales por ahora, salvo que ya exista ese patrón en el proyecto.
+
+Validación backend esperada:
+- password required|string|min:8|regex para al menos una letra y un número|confirmed
+
+Además:
+- mostrar mensaje claro debajo del campo:
+  - "Mínimo 8 caracteres, con letras y números"
+
+2. Captcha
+Implementar captcha en el formulario de registro.
+Objetivo: reducir registros automáticos.
+
+Requerimientos:
+- usar solución estándar y confiable
+- preferir integración simple y compatible con Laravel + Inertia
+- validar captcha tanto en frontend como obligatoriamente en backend
+- si falla, mostrar error claro en el formulario
+- no permitir registro si captcha no es válido
+
+Importante:
+- primero revisar si el proyecto ya usa captcha en otro módulo
+- si ya existe, reutilizar esa implementación
+- si no existe, agregar la solución mínima necesaria
+- mantenerlo desacoplado para poder cambiar proveedor después
+
+3. Honeypot
+Agregar protección honeypot para bots simples.
+
+Requerimientos:
+- agregar un campo oculto que un usuario real no debe llenar
+- si ese campo llega con contenido, bloquear el registro
+- opcionalmente agregar timestamp mínimo para detectar envíos demasiado rápidos si encaja con la estructura actual
+- no afectar la experiencia del usuario real
+
+Importante:
+- la validación honeypot debe ocurrir en backend
+- si se detecta bot, no crear usuario
+- responder de forma segura sin exponer demasiados detalles
+
+UX después del registro:
+Actualmente se redirige a login y el usuario no entiende qué pasó.
+
+Nuevo comportamiento requerido:
+- después del registro exitoso, redirigir a una pantalla o vista clara indicando:
+  - que la cuenta fue creada
+  - que aún no está activa
+  - que se envió un correo de verificación
+  - que debe verificar su email antes de iniciar sesión
+- no redirigir al dashboard
+- no dejar solo una redirección muda al login
+
+Opciones válidas:
+- redirigir a una vista tipo:
+  - "Verifica tu correo"
+- o redirigir al login pero con flash message muy visible y claro
+
+Preferencia:
+- crear experiencia tipo "registro exitoso / revise su correo"
+- evitar confusión
+
+Mensaje esperado al usuario:
+- "Tu cuenta fue creada correctamente."
+- "Te enviamos un correo de verificación."
+- "Debes verificar tu email antes de iniciar sesión."
+- "Si no encuentras el correo, revisa spam."
+
+Flujo completo esperado:
+1. usuario llena formulario
+2. backend valida:
+   - name
+   - email
+   - password segura
+   - captcha
+   - honeypot
+3. si todo es válido:
+   - crear usuario
+   - crear profile si ya existe ese flujo
+   - cuenta inactiva
+   - rol `normal`
+   - enviar email de verificación
+4. redirigir a pantalla o estado claro de "correo enviado"
+5. no mandar al admin dashboard
+6. no dejar al usuario sin contexto
+
+Validaciones backend completas:
+- name required|string|max:150
+- email required|email|max:150|unique:users,email
+- password required|string|min:8|confirmed y debe contener letras y números
+- captcha required y validado con el proveedor elegido
+- honeypot vacío obligatoriamente
+
+Frontend / Inertia:
+- mantener Register.vue actual
+- agregar ayuda visual para contraseña
+- agregar captcha al formulario
+- agregar campo honeypot oculto
+- mostrar errores debajo de cada campo
+- deshabilitar submit mientras envía
+- evitar dobles envíos
+
+Seguridad:
+- toda validación crítica debe ocurrir en backend
+- no confiar solo en frontend
+- no crear usuario si captcha falla
+- no crear usuario si honeypot detecta bot
+- seguir usando hash seguro para password
+- mantener email único
+
+Integración:
+- revisar controlador actual de registro
+- revisar vista Register.vue actual
+- revisar flujo actual de verificación email
+- adaptarse a lo existente
+- cambios mínimos necesarios
+
+Importante:
+- primero revisar si ya existe implementación de captcha, honeypot o pantalla de verificación en el proyecto
+- si existen, reutilizar
+- si no existen, crear la solución mínima compatible
+- generar solo archivos necesarios
+- no agregar archivos innecesarios
+- no romper login ni verificación actual
+
+
+Implementar módulo Settings para configuración general del SaaS.
+
+Contexto:
+El sistema no manejará organizaciones ni tenants.
+Cada usuario es único.
+Settings será global para todo el SaaS.
+No romper módulos actuales.
+
+Stack:
+Laravel 12 + Inertia + Vue 3 + JavaScript + Bootstrap 5.3 + Spatie Permission.
+
+Reglas:
+- No TypeScript
+- Vue con `<script setup>`
+- Solo Composition API
+- No Options API
+- No API separada
+- No librerías nuevas
+- Reutilizar estructura visual actual del proyecto
+- Mantener estilo de CRUD existentes
+- Código simple, limpio y listo para producción
+- No refactorizar módulos no relacionados
+
+Objetivo:
+Crear módulo admin Settings global para guardar configuración general del sistema.
+
+Permisos:
+- settings.view
+- settings.update
+
+Rutas:
+- GET /admin/settings
+- PUT /admin/settings
+
+Controlador:
+- SettingController
+- métodos:
+  - index()
+  - update()
+
+Vista:
+- resources/js/Pages/Admin/Settings/Index.vue
+
+Persistencia:
+- usar estructura key/value
+- una sola tabla de settings globales
+- si una key no existe, crearla
+- si existe, actualizarla
+- cargar todos los valores al abrir la vista
+- guardar todo en un solo submit
+
+Campos MVP:
+General:
+- app.name
+- app.email
+- app.phone
+- app.description
+
+Regional:
+- regional.timezone
+- regional.locale
+
+Sistema:
+- system.allow_registration
+- system.require_user_approval
+- system.default_pagination
+
+Validaciones backend:
+- app.name required|string|max:150
+- app.email nullable|email|max:150
+- app.phone nullable|string|max:50
+- app.description nullable|string|max:500
+- regional.timezone required|string|max:100
+- regional.locale required|string|max:10
+- system.allow_registration boolean
+- system.require_user_approval boolean
+- system.default_pagination required|integer|min:5|max:100
+
+UI:
+- usar layout admin actual
+- usar PageTitle
+- usar Breadcrumb
+- usar cards simples
+- usar componentes de campos existentes si ya existen
+- usar useForm
+- mostrar errores por campo
+- usar toast success/error
+- botón único guardar cambios
+
+Comportamiento:
+- index carga todos los valores actuales
+- update valida y guarda
+- redirect back con flash success
+
+Integración:
+- agregar enlace al menú admin solo si el usuario tiene permiso
+- proteger rutas con permisos
+- registrar permisos si ya existe patrón para eso
+
+Importante:
+- primero revisar si ya existe modelo o tabla Setting
+- si existe, adaptarse
+- si no existe, crear solución mínima key/value
+- generar solo archivos necesarios
+- no agregar archivos innecesarios
+
+
+====================================================
+SUBSCRIPCIONES
+=====================================================
+
+Implementar base de planes y suscripciones para el SaaS.
+
+Contexto:
+Cada usuario es único.
+No hay organizaciones ni tenants.
+Ya existen auth, roles, dashboards separados, perfil y gestión de usuarios.
+Se necesita dejar preparada la base para manejar membresías/suscripciones más adelante.
+Por ahora no integrar pasarela de pago si no es necesario.
+Primero dejar estructura funcional y reutilizable.
+
+Stack:
+Laravel 12 + Inertia + Vue 3 + JavaScript + Bootstrap 5.3 + Spatie Permission.
+
+Reglas:
+- No TypeScript
+- Vue con `<script setup>`
+- Solo Composition API
+- No Options API
+- No API separada
+- No librerías nuevas innecesarias
+- No refactorizar módulos no relacionados
+- Reutilizar estilo actual del proyecto
+- Código simple y listo para producción
+
+Objetivo:
+Crear base administrativa para:
+1. definir planes
+2. asignar suscripciones a usuarios
+3. conocer estado de suscripción de cada usuario
+4. preparar el sistema para límites y pagos futuros
+
+Alcance de esta fase:
+- CRUD admin de planes
+- relación de suscripción por usuario
+- estado de suscripción
+- fechas de inicio y vencimiento
+- referencia a precio
+- base para límites futuros
+- mostrar plan actual en member dashboard o perfil si ya encaja
+
+No incluir todavía:
+- cobro real
+- Stripe
+- webhooks
+- facturación
+- upgrades automáticos
+- cobros recurrentes
+
+Entidades requeridas:
+
+1. Plan
+Campos mínimos sugeridos:
+- id
+- name
+- slug
+- description nullable
+- price nullable decimal
+- billing_period nullable string
+- is_active boolean
+- sort_order nullable integer
+- timestamps
+
+Opcional preparado para futuro:
+- features json nullable
+- limits json nullable
+
+2. Subscription
+Relación:
+- un usuario puede tener una suscripción actual
+- preparar estructura para historial si luego crece
+- por ahora puede manejarse una suscripción activa principal por usuario
+
+Campos mínimos sugeridos:
+- id
+- user_id
+- plan_id
+- status
+- starts_at nullable
+- ends_at nullable
+- canceled_at nullable
+- trial_ends_at nullable
+- price nullable decimal
+- billing_period nullable string
+- timestamps
+
+Estados sugeridos:
+- pending
+- trial
+- active
+- expired
+- canceled
+
+Modelos:
+- Plan
+- Subscription
+
+Relaciones:
+- User hasMany Subscription o hasOne current subscription según diseño actual
+- Subscription belongsTo User
+- Subscription belongsTo Plan
+- Plan hasMany Subscription
+
+Importante:
+- elegir estructura que permita crecer después a historial de suscripciones
+- no dejarlo rígido para un solo estado hardcodeado
+
+Permisos sugeridos:
+- plans.view
+- plans.create
+- plans.update
+- plans.delete
+- subscriptions.view
+- subscriptions.create
+- subscriptions.update
+- subscriptions.cancel
+
+Admin - módulo Planes:
+Rutas:
+- usar patrón admin actual del proyecto
+- crear CRUD admin de planes
+
+Controlador:
+- PlanController
+- métodos:
+  - index()
+  - create()
+  - store()
+  - edit()
+  - update()
+  - destroy()
+
+Vistas:
+- resources/js/Pages/Admin/Plans/Index.vue
+- resources/js/Pages/Admin/Plans/Create.vue
+- resources/js/Pages/Admin/Plans/Edit.vue
+
+Campos del formulario de planes:
+- name
+- slug
+- description
+- price
+- billing_period
+- is_active
+- sort_order
+
+Validaciones backend Plan:
+- name required|string|max:150
+- slug required|string|max:150|unique
+- description nullable|string|max:1000
+- price nullable|numeric|min:0
+- billing_period nullable|string|max:50
+- is_active boolean
+- sort_order nullable|integer|min:0
+
+Comportamiento Plan:
+- admin crea y edita planes
+- no eliminar si ya tiene suscripciones ligadas, salvo que el patrón actual permita soft delete o bloqueo seguro
+- mostrar solo planes activos en contextos de usuario final cuando después aplique
+
+Admin - asignación de suscripciones:
+Objetivo:
+Permitir al admin asignar o actualizar la suscripción de un usuario manualmente.
+
+Opciones válidas:
+- hacerlo dentro de edición de usuario
+o
+- crear módulo admin separado de suscripciones
+
+Preferencia:
+- cambios mínimos
+- si encaja, integrar suscripción dentro de edición de usuario admin
+
+Campos de suscripción:
+- plan_id
+- status
+- starts_at
+- ends_at
+- trial_ends_at
+- price
+- billing_period
+
+Validaciones backend Subscription:
+- user_id required|exists:users,id
+- plan_id required|exists:plans,id
+- status required|string|in:pending,trial,active,expired,canceled
+- starts_at nullable|date
+- ends_at nullable|date|after_or_equal:starts_at
+- trial_ends_at nullable|date
+- price nullable|numeric|min:0
+- billing_period nullable|string|max:50
+
+Comportamiento Subscription:
+- admin puede asignar plan a usuario
+- admin puede activar, cancelar o marcar vencida una suscripción
+- si el usuario ya tiene suscripción activa, decidir si se actualiza la actual o se crea una nueva según la estructura elegida
+- dejar base compatible con historial futuro
+- no mezclar con pagos reales todavía
+
+Member area:
+Mostrar al usuario final su plan actual de forma simple.
+
+Ubicación sugerida:
+- dashboard member
+o
+- perfil member
+
+Datos a mostrar:
+- nombre del plan
+- estado
+- precio si aplica
+- fecha de inicio
+- fecha de vencimiento
+- trial si aplica
+
+No permitir todavía:
+- cambio de plan por el usuario final
+- pagos
+- cancelación self-service
+salvo que ya quieras dejar botones deshabilitados o placeholders
+
+UI admin:
+- usar layout admin actual
+- usar PageTitle
+- usar Breadcrumb
+- usar Searchbar si ya existe
+- usar Field components existentes
+- usar useForm
+- usar toasts
+- usar ConfirmDialog si ya existe
+- usar cards y tablas según patrón del proyecto
+- paginación por servidor en listados
+
+UI member:
+- simple
+- sin opciones admin
+- solo lectura por ahora
+
+Integración:
+- revisar si ya existen modelos o tablas relacionadas con subscriptions/plans
+- si existen, adaptarse
+- si no existen, crear solución mínima compatible con crecimiento futuro
+- agregar al menú admin si tiene permiso
+- proteger rutas con permisos
+
+Seguridad:
+- validar todo en backend
+- no confiar en frontend para plan/status
+- member no debe acceder a administración de planes
+- no romper flujos actuales de auth, dashboards ni users
+
+Importante:
+- generar solo archivos necesarios
+- no agregar archivos innecesarios
+- no integrar Stripe todavía
+- dejar la estructura lista para conectar pagos después

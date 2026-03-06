@@ -1,0 +1,79 @@
+<?php
+
+namespace App\Http\Controllers\Auth;
+
+use App\Http\Controllers\Controller;
+use App\Services\ActivityLogger;
+use App\Services\UserNotificationService;
+use Illuminate\Foundation\Auth\EmailVerificationRequest;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Spatie\Permission\Models\Role;
+
+class EmailVerificationController extends Controller
+{
+    public function notice()
+    {
+        if (request()->user()->hasVerifiedEmail()) {
+            return redirect('/member');
+        }
+
+        return Inertia::render('Auth/VerifyEmail');
+    }
+
+    public function verify(EmailVerificationRequest $request, ActivityLogger $activity, UserNotificationService $notifications)
+    {
+        $request->fulfill();
+
+        $user = $request->user();
+        $user->is_active = true;
+        $user->save();
+
+        $normalRole = Role::query()
+            ->where('id', 10)
+            ->orWhere('name', 'normal')
+            ->first();
+
+        $memberRole = Role::query()
+            ->where('id', 3)
+            ->orWhere('name', 'member')
+            ->first();
+
+        if ($normalRole) {
+            $user->removeRole($normalRole);
+        }
+
+        if ($memberRole) {
+            $user->assignRole($memberRole);
+        }
+
+        $activity->log('user.email_verified', [
+            'user' => $user,
+            'actor' => $user,
+            'subject' => $user,
+            'description' => 'Email verificado',
+            'request' => $request,
+        ]);
+
+        $notifications->create(
+            $user,
+            'account',
+            'Email verificado',
+            'Tu email fue verificado correctamente.',
+            '/member'
+        );
+
+        return redirect('/member')->with('success', 'Email verificado correctamente.');
+    }
+
+    public function resend(Request $request)
+    {
+        if ($request->user()->hasVerifiedEmail()) {
+            return redirect('/member');
+        }
+
+        $request->user()->sendEmailVerificationNotification();
+
+        return back()->with('success', 'Enviamos un nuevo correo de verificacion.');
+    }
+}

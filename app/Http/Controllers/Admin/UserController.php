@@ -1,0 +1,408 @@
+<?php
+
+namespace App\Http\Controllers\Admin;
+
+use App\Http\Controllers\Controller;
+use App\Models\Plan;
+use App\Models\User;
+use App\Services\ActivityLogger;
+use App\Services\UserNotificationService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
+use Inertia\Inertia;
+use Spatie\Permission\Models\Role;
+
+class UserController extends Controller
+{
+    public function index(Request $request)
+    {
+        $search = trim((string) $request->input('search', ''));
+        $status = $request->input('status', '');
+        $verified = $request->input('verified', '');
+        $roleId = $request->input('role', '');
+
+        $users = User::query()
+            ->with(['roles:id,name', 'profile:id,user_id,phone'])
+            ->when($search !== '', function ($query) use ($search) {
+                $needle = mb_strtolower($search);
+                $query->where(function ($q) use ($search) {
+                    $q->whereRaw('LOWER(name) like ?', ['%'.mb_strtolower($search).'%'])
+                        ->orWhereRaw('LOWER(email) like ?', ['%'.mb_strtolower($search).'%']);
+
+                    if (is_numeric($search)) {
+                        $q->orWhere('id', (int) $search);
+                    }
+                });
+            })
+            ->when($status !== '', function ($query) use ($status) {
+                if ($status === 'active') {
+                    $query->where('is_active', true);
+                }
+                if ($status === 'inactive') {
+                    $query->where('is_active', false);
+                }
+            })
+            ->when($verified !== '', function ($query) use ($verified) {
+                if ($verified === 'verified') {
+                    $query->whereNotNull('email_verified_at');
+                }
+                if ($verified === 'unverified') {
+                    $query->whereNull('email_verified_at');
+                }
+            })
+            ->when($roleId !== '', function ($query) use ($roleId) {
+                $query->whereHas('roles', function ($q) use ($roleId) {
+                    $q->where('id', $roleId);
+                });
+            })
+            ->orderBy('id', 'desc')
+            ->paginate(10)
+            ->withQueryString()
+            ->through(fn ($user) => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'phone' => $user->profile?->phone,
+                'roles' => $user->roles->pluck('name')->values(),
+                'is_active' => (bool) $user->is_active,
+                'email_verified_at' => $user->email_verified_at,
+                'created_at' => $user->created_at?->toDateString(),
+            ]);
+
+        $roles = Role::query()
+            ->orderBy('name')
+            ->get(['id', 'name'])
+            ->map(fn ($role) => [
+                'id' => $role->id,
+                'label' => $role->name,
+            ]);
+
+        return Inertia::render('Admin/Users/Index', [
+            'users' => $users,
+            'roles' => $roles,
+            'filters' => [
+                'search' => $search,
+                'status' => $status,
+                'verified' => $verified,
+                'role' => $roleId,
+            ],
+        ]);
+    }
+
+    public function create()
+    {
+        $roles = Role::query()
+            ->where('blocked', false)
+            ->where('id', '!=', 2)
+            ->orderBy('name')
+            ->get(['id', 'name'])
+            ->map(fn ($role) => [
+                'id' => $role->id,
+                'label' => $role->name,
+            ]);
+
+        $plans = Plan::query()
+            ->where('is_active', true)
+            ->orderByRaw('sort_order is null, sort_order asc')
+            ->orderBy('id')
+            ->get(['id', 'name'])
+            ->map(fn ($plan) => [
+                'id' => $plan->id,
+                'label' => $plan->name,
+            ]);
+
+        $subscription = $user->currentSubscription;
+
+        return Inertia::render('Admin/Users/Create', [
+            'roles' => $roles,
+        ]);
+    }
+
+    public function store(Request $request, ActivityLogger $activity)
+    {
+        $rolesTable = config('permission.table_names.roles');
+
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:150'],
+            'email' => ['required', 'email', 'max:150', 'unique:users,email'],
+            'password' => ['required', 'string', 'min:8', 'regex:/^(?=.*[A-Za-z])(?=.*\d).+$/', 'confirmed'],
+            'is_active' => ['boolean'],
+            'roles' => ['array'],
+            'roles.*' => [
+                'integer',
+                Rule::exists($rolesTable, 'id')->where('blocked', false),
+                Rule::notIn([2]),
+            ],
+        ], [
+            'password.regex' => 'Minimo 8 caracteres, con letras y numeros.',
+        ]);
+
+        $user = User::create([
+            'name' => trim($data['name']),
+            'email' => strtolower(trim($data['email'])),
+            'password' => Hash::make($data['password']),
+            'is_active' => (bool) ($data['is_active'] ?? true),
+        ]);
+
+        $user->profile()->create();
+
+        $activity->log('user.created', [
+            'user' => $user,
+            'actor' => $request->user(),
+            'subject' => $user,
+            'description' => 'Usuario creado por admin',
+            'request' => $request,
+        ]);
+
+        $roles = Role::query()->whereIn('id', $data['roles'] ?? [])->get();
+        $user->syncRoles($roles);
+
+        return redirect()->route('admin.users.index');
+    }
+
+    public function edit(User $user)
+    {
+        $user->load('profile');
+
+        $roles = Role::query()
+            ->where('blocked', false)
+            ->where('id', '!=', 2)
+            ->orderBy('name')
+            ->get(['id', 'name'])
+            ->map(fn ($role) => [
+                'id' => $role->id,
+                'label' => $role->name,
+            ]);
+
+        return Inertia::render('Admin/Users/Edit', [
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'phone' => $user->profile?->phone,
+                'is_active' => (bool) $user->is_active,
+                'email_verified_at' => $user->email_verified_at,
+            ],
+            'roles' => $roles,
+            'userRoles' => $user->roles()->pluck('id')->all(),
+            'plans' => $plans,
+            'subscription' => $subscription ? [
+                'plan_id' => $subscription->plan_id,
+                'status' => $subscription->status,
+                'starts_at' => $subscription->starts_at?->toDateString(),
+                'ends_at' => $subscription->ends_at?->toDateString(),
+                'trial_ends_at' => $subscription->trial_ends_at?->toDateString(),
+                'price' => $subscription->price,
+                'billing_period' => $subscription->billing_period,
+            ] : null,
+        ]);
+    }
+
+    public function update(Request $request, User $user, ActivityLogger $activity, UserNotificationService $notifications)
+    {
+        $rolesTable = config('permission.table_names.roles');
+
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:150'],
+            'email' => [
+                'required',
+                'email',
+                'max:150',
+                Rule::unique('users', 'email')->ignore($user->id),
+            ],
+            'password' => ['nullable', 'string', 'min:8', 'regex:/^(?=.*[A-Za-z])(?=.*\d).+$/', 'confirmed'],
+            'is_active' => ['boolean'],
+            'roles' => ['array'],
+            'roles.*' => ['integer', Rule::exists($rolesTable, 'id')->where('blocked', false)],
+            'subscription.plan_id' => ['nullable', 'integer', Rule::exists('plans', 'id')],
+            'subscription.status' => ['nullable', 'string', Rule::in(['pending', 'trial', 'active', 'expired', 'canceled'])],
+            'subscription.starts_at' => ['nullable', 'date'],
+            'subscription.ends_at' => ['nullable', 'date', 'after_or_equal:subscription.starts_at'],
+            'subscription.trial_ends_at' => ['nullable', 'date'],
+            'subscription.price' => ['nullable', 'numeric', 'min:0'],
+            'subscription.billing_period' => ['nullable', 'string', 'max:50'],
+        ], [
+            'password.regex' => 'Minimo 8 caracteres, con letras y numeros.',
+        ]);
+
+        if (in_array(2, $data['roles'] ?? [], true)) {
+            return back()->withErrors([
+                'roles' => 'No se puede asignar este rol.',
+            ]);
+        }
+
+        $user->update([
+            'name' => trim($data['name']),
+            'email' => strtolower(trim($data['email'])),
+            'is_active' => (bool) ($data['is_active'] ?? $user->is_active),
+        ]);
+
+        if (! empty($data['password'])) {
+            $user->update([
+                'password' => Hash::make($data['password']),
+            ]);
+        }
+
+        $roles = Role::query()->whereIn('id', $data['roles'] ?? [])->get();
+        $previousRoles = $user->roles()->pluck('name')->values()->toArray();
+        $user->syncRoles($roles);
+        $currentRoles = $user->roles()->pluck('name')->values()->toArray();
+
+        if ($previousRoles !== $currentRoles) {
+            $activity->log('user.role_changed', [
+                'user' => $user,
+                'actor' => $request->user(),
+                'subject' => $user,
+                'description' => 'Cambio de roles',
+                'metadata' => [
+                    'from' => $previousRoles,
+                    'to' => $currentRoles,
+                ],
+                'request' => $request,
+            ]);
+        }
+
+        $subscriptionData = $data['subscription'] ?? null;
+        if ($subscriptionData && ! empty($subscriptionData['plan_id'])) {
+            if (empty($subscriptionData['status'])) {
+                return back()->withErrors([
+                    'subscription.status' => 'El estado es requerido cuando se asigna un plan.',
+                ]);
+            }
+
+            $existing = $user->currentSubscription;
+            $payload = [
+                'plan_id' => $subscriptionData['plan_id'],
+                'status' => $subscriptionData['status'],
+                'starts_at' => $subscriptionData['starts_at'] ?? null,
+                'ends_at' => $subscriptionData['ends_at'] ?? null,
+                'trial_ends_at' => $subscriptionData['trial_ends_at'] ?? null,
+                'price' => $subscriptionData['price'] ?? null,
+                'billing_period' => $subscriptionData['billing_period'] ?? null,
+            ];
+
+            if ($existing) {
+                $existing->update($payload);
+            } else {
+                $user->subscriptions()->create($payload);
+            }
+
+            $activity->log('subscription.updated', [
+                'user' => $user,
+                'actor' => $request->user(),
+                'subject' => $user->currentSubscription,
+                'description' => 'Suscripcion actualizada por admin',
+                'request' => $request,
+            ]);
+
+            $notifications->create(
+                $user,
+                'subscription',
+                'Suscripcion actualizada',
+                'Tu suscripcion fue actualizada por un administrador.',
+                '/member'
+            );
+        }
+
+        return redirect()->route('admin.users.index');
+    }
+
+    public function destroy(User $user, ActivityLogger $activity)
+    {
+        if ($user->id === 1) {
+            return back()->withErrors([
+                'delete' => 'No se puede eliminar este usuario.',
+            ]);
+        }
+
+        $user->delete();
+
+        $activity->log('user.deleted', [
+            'user' => $user,
+            'actor' => request()->user(),
+            'subject' => $user,
+            'description' => 'Usuario eliminado por admin',
+            'request' => request(),
+        ]);
+
+        return redirect()->route('admin.users.index');
+    }
+
+    public function activate(User $user, ActivityLogger $activity, UserNotificationService $notifications)
+    {
+        if ($user->id === 1) {
+            return back()->withErrors([
+                'activate' => 'No se puede modificar este usuario.',
+            ]);
+        }
+
+        $user->update(['is_active' => true]);
+
+        $activity->log('user.activated', [
+            'user' => $user,
+            'actor' => request()->user(),
+            'subject' => $user,
+            'description' => 'Usuario activado',
+            'request' => request(),
+        ]);
+
+        $notifications->create(
+            $user,
+            'account',
+            'Cuenta activada',
+            'Tu cuenta fue activada por un administrador.',
+            '/member'
+        );
+
+        return back()->with('success', 'Usuario activado correctamente.');
+    }
+
+    public function deactivate(User $user, ActivityLogger $activity, UserNotificationService $notifications)
+    {
+        if ($user->id === 1) {
+            return back()->withErrors([
+                'deactivate' => 'No se puede modificar este usuario.',
+            ]);
+        }
+
+        $user->update(['is_active' => false]);
+
+        $activity->log('user.deactivated', [
+            'user' => $user,
+            'actor' => request()->user(),
+            'subject' => $user,
+            'description' => 'Usuario desactivado',
+            'request' => request(),
+        ]);
+
+        $notifications->create(
+            $user,
+            'account',
+            'Cuenta desactivada',
+            'Tu cuenta fue desactivada por un administrador.',
+            '/member'
+        );
+
+        return back()->with('success', 'Usuario desactivado correctamente.');
+    }
+
+    public function resendVerification(User $user, ActivityLogger $activity)
+    {
+        if ($user->hasVerifiedEmail()) {
+            return back()->with('error', 'El usuario ya tiene email verificado.');
+        }
+
+        $user->sendEmailVerificationNotification();
+
+        $activity->log('user.verification_resent', [
+            'user' => $user,
+            'actor' => request()->user(),
+            'subject' => $user,
+            'description' => 'Reenvio de verificacion',
+            'request' => request(),
+        ]);
+
+        return back()->with('success', 'Correo de verificacion enviado.');
+    }
+}
