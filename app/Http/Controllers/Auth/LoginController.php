@@ -52,6 +52,10 @@ class LoginController extends Controller
         }
 
         if ($user->hasRole('member')) {
+            if ($request->session()->has('selected_plan_id')) {
+                return redirect('/member/plan-selection');
+            }
+
             return redirect()->intended(route('member.dashboard'));
         }
 

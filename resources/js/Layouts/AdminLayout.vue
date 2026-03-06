@@ -30,6 +30,9 @@
             <li v-if="canViewPlans" class="nav-item">
               <Link href="/admin/plans" class="nav-link" prefetch="hover">Planes</Link>
             </li>
+            <li v-if="canViewPayments" class="nav-item">
+              <Link href="/admin/payments" class="nav-link" prefetch="hover">Pagos</Link>
+            </li>
             <li v-if="canViewSettings" class="nav-item">
               <Link href="/admin/settings" class="nav-link" prefetch="hover">Settings</Link>
             </li>
@@ -55,10 +58,13 @@
               <li v-if="canViewSettings">
                 <Link href="/admin/settings" class="dropdown-item" prefetch="hover">Settings</Link>
               </li>
+              <li v-if="canViewPayments">
+                <Link href="/admin/payments" class="dropdown-item" prefetch="hover">Pagos</Link>
+              </li>
               <li v-if="canViewActivity">
                 <Link href="/admin/activity" class="dropdown-item" prefetch="hover">Actividad</Link>
               </li>
-              <li v-if="canViewSettings || canViewActivity"><hr class="dropdown-divider" /></li>
+              <li v-if="canViewSettings || canViewActivity || canViewPayments"><hr class="dropdown-divider" /></li>
               <li>
                 <Link href="/logout" method="post" as="button" class="dropdown-item">
                   Salir
@@ -91,4 +97,5 @@ const userId = computed(() => page.props.auth?.user?.id)
 const canViewSettings = computed(() => permissions.value.includes('settings.view') || userId.value === 1)
 const canViewPlans = computed(() => permissions.value.includes('plans.view') || userId.value === 1)
 const canViewActivity = computed(() => permissions.value.includes('activity.view') || userId.value === 1)
+const canViewPayments = computed(() => permissions.value.includes('payments.view') || userId.value === 1)
 </script>

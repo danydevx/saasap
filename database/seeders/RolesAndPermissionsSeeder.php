@@ -40,6 +40,9 @@ class RolesAndPermissionsSeeder extends Seeder
             'subscriptions.create',
             'subscriptions.update',
             'subscriptions.cancel',
+            'payments.view',
+            'payments.create',
+            'payments.update',
         ];
 
         foreach ($permissions as $permission) {
@@ -74,6 +77,9 @@ class RolesAndPermissionsSeeder extends Seeder
             'plans.delete',
             'subscriptions.view',
             'subscriptions.update',
+            'payments.view',
+            'payments.create',
+            'payments.update',
         ]);
 
         $user->givePermissionTo([]);

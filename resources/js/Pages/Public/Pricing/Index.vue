@@ -59,9 +59,14 @@
                 </ul>
 
                 <div class="mt-auto">
-                  <Link :href="primaryAction.href" class="btn btn-primary w-100">
-                    {{ primaryAction.label }}
-                  </Link>
+                  <button
+                    type="button"
+                    class="btn btn-primary w-100"
+                    :disabled="isAdmin"
+                    @click="selectPlan(plan)"
+                  >
+                    {{ actionLabel }}
+                  </button>
                   <div v-if="isAuthenticated && isMember" class="text-muted small text-center mt-2">
                     No puedes cambiar de plan desde aqui aun.
                   </div>
@@ -77,7 +82,7 @@
 
 <script setup>
 import { computed } from 'vue'
-import { Head, Link, usePage } from '@inertiajs/vue3'
+import { Head, Link, router, usePage } from '@inertiajs/vue3'
 
 const props = defineProps({
   plans: {
@@ -94,7 +99,7 @@ const page = usePage()
 const isAuthenticated = computed(() => !!page.props.auth?.user)
 const roles = computed(() => page.props.auth?.roles || [])
 const isMember = computed(() => roles.value.includes('member'))
-const isAdmin = computed(() => roles.value.includes('admin') || roles.value.includes('superadmin'))
+const isAdmin = computed(() => roles.value.includes('admin') || roles.value.includes('superadmin') || roles.value.includes('super-admin'))
 
 const dashboardHref = computed(() => {
   if (isMember.value) return '/member'
@@ -102,14 +107,9 @@ const dashboardHref = computed(() => {
   return '/member'
 })
 
-const primaryAction = computed(() => {
-  if (!isAuthenticated.value) {
-    return { label: 'Crear cuenta', href: '/register' }
-  }
-  if (isMember.value) {
-    return { label: 'Ver cuenta', href: '/member/account' }
-  }
-  return { label: 'Ir al panel', href: '/dashboard' }
+const actionLabel = computed(() => {
+  if (isAdmin.value) return 'No disponible'
+  return 'Elegir plan'
 })
 
 const limitLabels = {
@@ -167,5 +167,12 @@ const formatPrice = (value) => {
 const formatPeriod = (value) => {
   if (!value) return 'Por mes'
   return `/${value}`
+}
+
+const selectPlan = (plan) => {
+  if (isAdmin.value) return
+  router.post(`/pricing/select/${plan.id}`, {}, {
+    preserveScroll: true,
+  })
 }
 </script>

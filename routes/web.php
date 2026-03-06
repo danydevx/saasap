@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\ActivityLogController;
+use App\Http\Controllers\Admin\PaymentController;
 use App\Http\Controllers\Admin\PermissionController;
 use App\Http\Controllers\Admin\PlanController;
 use App\Http\Controllers\Admin\RoleController;
@@ -17,6 +18,8 @@ use App\Http\Controllers\Member\DashboardController;
 use App\Http\Controllers\Member\NotificationController;
 use App\Http\Controllers\Member\OnboardingController;
 use App\Http\Controllers\Member\PasswordController;
+use App\Http\Controllers\Member\PaymentController as MemberPaymentController;
+use App\Http\Controllers\Member\PlanSelectionController;
 use App\Http\Controllers\PricingController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -30,6 +33,7 @@ Route::get('/login', function () {
 })->middleware('guest')->name('login');
 
 Route::get('/pricing', [PricingController::class, 'index'])->name('pricing');
+Route::post('/pricing/select/{plan}', [PricingController::class, 'select'])->name('pricing.select');
 Route::get('/plans', function () {
     return redirect('/pricing');
 })->name('plans');
@@ -93,6 +97,13 @@ Route::get('/member/account', [AccountController::class, 'show'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.account.show');
 
+Route::get('/member/plan-selection', [PlanSelectionController::class, 'show'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.plan-selection.show');
+Route::put('/member/plan-selection/clear', [PlanSelectionController::class, 'clear'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.plan-selection.clear');
+
 Route::get('/member/profile', [UserProfileController::class, 'editMember'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.profile.edit');
@@ -120,6 +131,10 @@ Route::put('/member/notifications/{notification}/read', [NotificationController:
 Route::put('/member/notifications/read-all', [NotificationController::class, 'markAllAsRead'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.notifications.read-all');
+
+Route::get('/member/payments', [MemberPaymentController::class, 'index'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.payments.index');
 
 Route::get('/profile', [UserProfileController::class, 'edit'])
     ->middleware('auth')
@@ -201,6 +216,22 @@ Route::prefix('admin')->middleware(['auth', 'admin_or_user:1'])->group(function 
     Route::delete('/plans/{plan}', [PlanController::class, 'destroy'])
         ->middleware('permission_or_user:plans.delete,1')
         ->name('admin.plans.destroy');
+
+    Route::get('/payments', [PaymentController::class, 'index'])
+        ->middleware('permission_or_user:payments.view,1')
+        ->name('admin.payments.index');
+    Route::get('/payments/create', [PaymentController::class, 'create'])
+        ->middleware('permission_or_user:payments.create,1')
+        ->name('admin.payments.create');
+    Route::post('/payments', [PaymentController::class, 'store'])
+        ->middleware('permission_or_user:payments.create,1')
+        ->name('admin.payments.store');
+    Route::get('/payments/{payment}/edit', [PaymentController::class, 'edit'])
+        ->middleware('permission_or_user:payments.update,1')
+        ->name('admin.payments.edit');
+    Route::put('/payments/{payment}', [PaymentController::class, 'update'])
+        ->middleware('permission_or_user:payments.update,1')
+        ->name('admin.payments.update');
 
 });
 

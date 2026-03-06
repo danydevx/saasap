@@ -63,6 +63,11 @@ class EmailVerificationController extends Controller
             '/member'
         );
 
+        if ($request->session()->has('selected_plan_id')) {
+            return redirect('/member/plan-selection')
+                ->with('success', 'Email verificado correctamente.');
+        }
+
         return redirect('/member')->with('success', 'Email verificado correctamente.');
     }
 

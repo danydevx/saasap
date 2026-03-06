@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Plan;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class PricingController extends Controller
@@ -30,5 +31,29 @@ class PricingController extends Controller
             'plans' => $plans,
             'recommendedPlanId' => $recommendedPlanId,
         ]);
+    }
+
+    public function select(Request $request, Plan $plan)
+    {
+        if (! $plan->is_active) {
+            return back()->with('error', 'Este plan no esta disponible.');
+        }
+
+        $request->session()->put('selected_plan_id', $plan->id);
+
+        $user = $request->user();
+        if (! $user) {
+            return redirect('/register')->with('success', 'Plan seleccionado. Crea tu cuenta para continuar.');
+        }
+
+        if ($user->hasAnyRole(['admin', 'super-admin', 'superadmin'])) {
+            return redirect('/pricing')->with('error', 'Este flujo esta disponible solo para miembros.');
+        }
+
+        if ($user->hasRole('member')) {
+            return redirect('/member/plan-selection');
+        }
+
+        return redirect('/pricing');
     }
 }

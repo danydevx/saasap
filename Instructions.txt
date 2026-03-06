@@ -1146,3 +1146,1079 @@ Importante:
 - no agregar archivos innecesarios
 - no integrar Stripe todavía
 - dejar la estructura lista para conectar pagos después
+
+
+
+====================================================
+AUDITORIAS
+=====================================================
+
+ Implementar sistema base de actividad y auditoría para usuarios.
+
+Contexto:
+Ya existen auth, roles, dashboards separados, perfil, users admin y base de planes/suscripciones.
+Cada usuario es único.
+No hay organizaciones ni tenants.
+Se necesita registrar acciones importantes para seguridad, soporte y trazabilidad.
+No romper módulos actuales.
+
+Stack:
+Laravel 12 + Inertia + Vue 3 + JavaScript + Bootstrap 5.3 + Spatie Permission.
+
+Reglas:
+- No TypeScript
+- Vue con `<script setup>`
+- Solo Composition API
+- No Options API
+- No API separada
+- No librerías nuevas innecesarias
+- No refactorizar módulos no relacionados
+- Reutilizar estructura visual actual
+- Código simple y listo para producción
+
+Objetivo:
+Registrar eventos relevantes del sistema y permitir que admin consulte actividad básica de usuarios.
+
+Alcance de esta fase:
+- guardar logs de actividad relevantes
+- asociar actividad a usuario cuando aplique
+- guardar contexto mínimo útil
+- permitir consulta admin de actividad
+- opcionalmente mostrar actividad reciente del propio usuario en member area
+
+No incluir todavía:
+- sistema complejo de observabilidad
+- dashboards avanzados de métricas
+- cola/event streaming complejo
+- auditoría de absolutamente todo
+- diff completo de cambios por campo salvo que ya exista patrón
+
+Eventos iniciales a registrar:
+- registro de usuario
+- verificación de email
+- login exitoso
+- logout
+- solicitud de reset password
+- reset password completado
+- cambio de password autenticado
+- activación / desactivación de usuario por admin
+- cambio de rol
+- actualización de perfil
+- actualización de settings críticos
+- creación/edición de planes y suscripciones si esos módulos ya existen
+
+Entidad:
+Crear tabla de actividad, por ejemplo `activity_logs`.
+
+Campos mínimos sugeridos:
+- id
+- user_id nullable
+- actor_id nullable
+- event string
+- description nullable
+- subject_type nullable
+- subject_id nullable
+- ip_address nullable
+- user_agent nullable
+- metadata json nullable
+- created_at
+
+Conceptos:
+- `user_id`: usuario afectado o dueño del evento si aplica
+- `actor_id`: quien ejecutó la acción si aplica
+- `event`: clave del evento, por ejemplo `user.registered`
+- `subject_type` y `subject_id`: entidad relacionada si aplica
+- `metadata`: datos extra mínimos útiles
+
+Importante:
+- mantener estructura genérica y reusable
+- no hardcodear a un solo módulo
+- no guardar datos sensibles innecesarios
+
+Backend:
+Crear modelo `ActivityLog`.
+
+Relaciones sugeridas:
+- ActivityLog belongsTo User como `user`
+- ActivityLog belongsTo User como `actor` usando `actor_id`
+
+Registro de actividad:
+Crear helper, servicio o método centralizado para registrar actividad.
+No dispersar demasiada lógica repetida por todo el proyecto.
+
+Objetivo del servicio:
+- registrar evento
+- aceptar usuario afectado
+- aceptar actor
+- aceptar subject opcional
+- aceptar metadata opcional
+- capturar IP y user agent cuando exista request disponible
+
+Importante:
+- si no hay usuario autenticado, permitir actor null
+- si no hay usuario afectado, permitir user null
+
+Eventos:
+Usar nombres consistentes, por ejemplo:
+- user.registered
+- user.email_verified
+- user.login
+- user.logout
+- user.password_reset_requested
+- user.password_reset_completed
+- user.password_changed
+- user.profile_updated
+- user.activated
+- user.deactivated
+- user.role_changed
+- settings.updated
+- plan.created
+- plan.updated
+- subscription.updated
+
+Admin - consulta de actividad:
+Crear módulo admin simple para ver actividad.
+
+Permisos sugeridos:
+- activity.view
+
+Rutas:
+- GET /admin/activity
+
+Controlador:
+- ActivityLogController@index
+
+Vista:
+- resources/js/Pages/Admin/Activity/Index.vue
+
+Listado admin:
+- paginación por servidor
+- búsqueda o filtros simples si encajan
+- mostrar:
+  - fecha
+  - evento
+  - actor
+  - usuario afectado
+  - descripción
+  - IP
+  - subject si aplica
+
+Filtros sugeridos:
+- por evento
+- por usuario
+- por actor
+- por fecha si ya encaja con el patrón actual
+
+UI admin:
+- usar layout admin actual
+- usar PageTitle
+- usar Breadcrumb
+- usar tabla según estilo actual
+- usar Searchbar si ya existe
+- usar paginación por servidor
+- no crear UI compleja en esta fase
+
+Member area opcional:
+Si encaja fácilmente, mostrar actividad reciente del propio usuario en dashboard member o perfil.
+Solo sus propios eventos.
+No mostrar actividad administrativa global.
+
+Seguridad:
+- solo admin/superadmin ven actividad global
+- member solo puede ver su propia actividad si esa parte se implementa
+- no exponer metadata sensible
+- no guardar passwords, tokens, códigos, secretos ni datos delicados en logs
+- validar acceso en backend
+
+Integración:
+- revisar si ya existe algún sistema de logs o activity
+- si existe, adaptarse
+- si no existe, crear solución mínima reusable
+- agregar hooks mínimos en auth y módulos clave
+- no intentar registrar todo el sistema de una vez si complica demasiado
+- empezar por eventos más importantes
+
+Comportamiento esperado:
+- cuando pasa un evento relevante, se guarda registro
+- admin puede consultar historial paginado
+- estructura lista para crecer a más auditoría después
+
+Importante:
+- generar solo archivos necesarios
+- no agregar archivos innecesarios
+- no romper auth, dashboards, settings ni users
+- mantener implementación simple y extensible
+
+
+====================================================
+Instrucción 9: notificaciones internas del sistema.
+=====================================================
+
+Implementar sistema base de notificaciones internas para usuarios.
+
+Contexto:
+Ya existen auth, roles, dashboards separados, perfil, users admin, planes/suscripciones y actividad básica.
+Cada usuario es único.
+No hay organizaciones ni tenants.
+Se necesita sistema de notificaciones internas dentro del panel para informar eventos relevantes al usuario y al admin.
+No romper módulos actuales.
+
+Stack:
+Laravel 12 + Inertia + Vue 3 + JavaScript + Bootstrap 5.3 + Spatie Permission.
+
+Reglas:
+- No TypeScript
+- Vue con `<script setup>`
+- Solo Composition API
+- No Options API
+- No API separada
+- No librerías nuevas innecesarias
+- No refactorizar módulos no relacionados
+- Reutilizar estructura visual actual
+- Código simple y listo para producción
+
+Objetivo:
+Permitir crear, listar y marcar notificaciones internas como leídas dentro del sistema.
+
+Alcance de esta fase:
+- notificaciones guardadas en base de datos
+- asociadas a un usuario
+- mostrar listado en panel
+- marcar una como leída
+- marcar todas como leídas
+- mostrar contador de no leídas
+- permitir generar notificaciones desde eventos clave del sistema
+
+No incluir todavía:
+- websockets
+- tiempo real
+- push del navegador
+- emails automáticos ligados a todas las notificaciones
+- preferencias avanzadas de notificación
+
+Entidad:
+Crear tabla para notificaciones internas, por ejemplo `user_notifications`.
+
+Campos mínimos sugeridos:
+- id
+- user_id
+- type string
+- title string
+- message text nullable
+- url nullable string
+- is_read boolean default false
+- read_at nullable timestamp
+- metadata json nullable
+- created_at
+- updated_at
+
+Modelo:
+- UserNotification
+
+Relaciones:
+- User hasMany UserNotification
+- UserNotification belongsTo User
+
+Concepto:
+Cada notificación pertenece a un usuario específico.
+Debe ser simple y reusable.
+
+Tipos iniciales sugeridos:
+- system
+- account
+- security
+- billing
+- profile
+- subscription
+
+Eventos donde se pueden generar notificaciones internas:
+- cuenta verificada
+- password cambiada
+- perfil actualizado
+- suscripción asignada o actualizada
+- cuenta activada o desactivada por admin
+- aviso general del sistema si luego se implementa
+
+Backend:
+Crear servicio/helper simple para crear notificaciones.
+No repetir lógica por todas partes.
+
+Objetivo del servicio:
+- crear notificación para un usuario
+- aceptar:
+  - user
+  - type
+  - title
+  - message
+  - url opcional
+  - metadata opcional
+
+Importante:
+- mantener estructura genérica
+- permitir crecer sin rehacer el sistema
+
+Rutas member:
+- GET /member/notifications
+- GET /member/notifications/unread-count
+- PUT /member/notifications/{notification}/read
+- PUT /member/notifications/read-all
+
+Rutas admin:
+Solo si también se quiere que admin vea sus propias notificaciones internas desde su panel.
+No crear módulo global de envío masivo todavía.
+
+Controlador:
+Crear controlador para member, por ejemplo:
+- Member/NotificationController
+Métodos:
+- index()
+- unreadCount()
+- markAsRead()
+- markAllAsRead()
+
+Vista:
+- resources/js/Pages/Member/Notifications/Index.vue
+
+Comportamiento:
+- listar notificaciones del usuario autenticado
+- paginación por servidor
+- ordenar por más recientes primero
+- permitir marcar una como leída
+- permitir marcar todas como leídas
+- mostrar contador de no leídas
+- no permitir ver notificaciones de otros usuarios
+
+Validaciones / seguridad:
+- usar `auth()->user()`
+- no aceptar `user_id` desde frontend para marcar notificaciones
+- validar que la notificación pertenezca al usuario autenticado
+- no exponer metadata sensible
+- toda protección debe estar en backend
+
+UI member:
+- usar layout member
+- no usar layout admin
+- diseño simple con cards o lista
+- mostrar:
+  - título
+  - mensaje
+  - fecha
+  - estado leída/no leída
+  - enlace si existe
+- botón:
+  - marcar como leída
+  - marcar todas como leídas
+
+Indicador visual:
+- mostrar contador de no leídas en header/layout member si ya encaja
+- si existe navegación superior, integrar badge simple
+- no implementar tiempo real todavía
+
+Admin:
+Si el admin también usa sistema interno de notificaciones personales:
+- reutilizar la misma estructura por usuario
+- no crear módulo distinto
+- solo cambiar ubicación visual según layout
+- no implementar bandeja global de todos los usuarios en esta fase
+
+Generación de notificaciones:
+Agregar generación mínima en eventos clave ya existentes, por ejemplo:
+- email verificado -> notificación al usuario
+- password cambiado -> notificación al usuario
+- suscripción actualizada -> notificación al usuario
+- activación/desactivación -> notificación al usuario si aplica
+
+Paginación:
+- por servidor
+- mantener patrón actual del proyecto
+
+Integración:
+- revisar si ya existe sistema de notifications en Laravel o alguna implementación parcial
+- si existe, adaptarse
+- si no existe, crear solución mínima reusable
+- no romper dashboards, auth ni users
+
+Importante:
+- generar solo archivos necesarios
+- no agregar archivos innecesarios
+- mantener implementación simple
+- dejar estructura lista para crecer después a alertas globales o tiempo real
+
+=========================================================
+Instrucción 10: página de cuenta / suscripción del usuario member
+===================================================================
+
+
+Implementar página de cuenta o suscripción para el usuario `member`.
+
+Contexto:
+Ya existen auth, dashboards separados, perfil, cambio de password, users admin, planes/suscripciones, límites y notificaciones internas.
+Cada usuario es único.
+No hay organizaciones ni tenants.
+Se necesita una pantalla clara para que el usuario final vea el estado de su cuenta y su suscripción.
+No romper módulos actuales.
+
+Stack:
+Laravel 12 + Inertia + Vue 3 + JavaScript + Bootstrap 5.3 + Spatie Permission.
+
+Reglas:
+- No TypeScript
+- Vue con `<script setup>`
+- Solo Composition API
+- No Options API
+- No API separada
+- No librerías nuevas innecesarias
+- No refactorizar módulos no relacionados
+- Reutilizar estructura visual actual
+- Código simple y listo para producción
+
+Objetivo:
+Crear una pantalla en el área member donde el usuario vea:
+- información básica de su cuenta
+- estado de activación
+- email verificado
+- plan actual
+- estado de suscripción
+- fechas relevantes
+- límites principales de su plan
+
+Alcance de esta fase:
+- vista de solo lectura para el usuario final
+- mostrar datos de cuenta y suscripción
+- mostrar límites principales
+- accesos rápidos a perfil y cambio de password
+- preparar base para futura autogestión de plan
+
+No incluir todavía:
+- pagos
+- cambio de plan self-service
+- cancelación self-service
+- historial completo de facturación
+- descarga de facturas
+
+Ruta:
+- GET /member/account
+o
+- GET /member/subscription
+usar el patrón que mejor encaje con la estructura actual
+
+Controlador:
+- crear controlador separado para member, por ejemplo:
+  - Member/AccountController
+- método:
+  - show()
+
+Vista:
+- resources/js/Pages/Member/Account/Show.vue
+o la ruta equivalente según naming actual
+
+Layout:
+- usar layout member
+- no usar layout admin
+
+Datos a mostrar:
+Cuenta:
+- name
+- email
+- estado activo/inactivo
+- email verificado/no verificado
+- fecha de registro
+
+Suscripción:
+- plan actual
+- estado de suscripción
+- precio si existe
+- periodo si existe
+- starts_at
+- ends_at
+- trial_ends_at si existe
+- mensaje claro si no tiene suscripción activa
+
+Límites del plan:
+- max_items
+- max_requests_per_day
+- can_use_ai
+- can_export
+- can_upload_files
+o los límites reales definidos en el sistema
+
+Accesos rápidos:
+- editar perfil
+- cambiar password
+- ver notificaciones si ya existe módulo
+
+Comportamiento:
+- cargar usuario autenticado
+- cargar profile relacionado si existe
+- cargar suscripción activa si existe
+- cargar plan relacionado si existe
+- mostrar límites de forma legible
+- si no hay suscripción, mostrar estado base o fallback claro
+- no permitir editar desde esta pantalla por ahora
+
+UI:
+- usar Inertia
+- usar Bootstrap 5.3
+- cards simples
+- diseño limpio y claro
+- usar PageTitle si ya encaja en member
+- usar Breadcrumb si ya existe patrón en member
+- no crear tabla compleja si no hace falta
+
+Seguridad:
+- solo usuario autenticado
+- solo su propia cuenta
+- usar `auth()->user()`
+- no aceptar `user_id` desde frontend
+- no mostrar datos de otros usuarios
+
+Integración:
+- agregar acceso desde menú member o dashboard member
+- no romper perfil, password, notificaciones ni suscripciones admin
+- adaptarse a modelos actuales de Plan y Subscription
+
+Importante:
+- primero revisar si ya existe alguna vista de account, billing o subscription en member
+- si existe, adaptarse
+- generar solo archivos necesarios
+- no agregar archivos innecesarios
+
+==============================================================
+Instrucción 12: página pública de precios / planes
+===============================================================
+
+Implementar página pública de precios o planes del SaaS.
+
+Contexto:
+Ya existe base de planes y suscripciones.
+Cada usuario es único.
+No hay organizaciones ni tenants.
+Se necesita una página pública para mostrar planes disponibles del SaaS.
+Por ahora puede ser solo informativa, sin checkout real si todavía no se integra pagos.
+No romper módulos actuales.
+
+Stack:
+Laravel 12 + Inertia + Vue 3 + JavaScript + Bootstrap 5.3.
+
+Reglas:
+- No TypeScript
+- Vue con `<script setup>`
+- Solo Composition API
+- No Options API
+- No API separada
+- No librerías nuevas innecesarias
+- No refactorizar módulos no relacionados
+- Reutilizar estructura visual actual
+- Código simple y listo para producción
+
+Objetivo:
+Mostrar públicamente los planes activos del sistema para que visitantes y usuarios conozcan las opciones disponibles.
+
+Alcance de esta fase:
+- página pública de planes
+- mostrar solo planes activos
+- mostrar nombre, descripción, precio, periodo y beneficios/límites principales
+- botones de acción
+- dejar lista la estructura para conectar checkout después
+
+No incluir todavía:
+- pago real
+- checkout
+- Stripe
+- facturación
+- cambio automático de plan
+- comparador avanzado con demasiada lógica
+
+Ruta pública:
+- GET /pricing
+o
+- GET /plans
+usar el patrón que mejor encaje con el sitio público actual
+
+Controlador:
+- crear controlador público, por ejemplo:
+  - PricingController
+- método:
+  - index()
+
+Vista:
+- resources/js/Pages/Public/Pricing/Index.vue
+o naming equivalente según estructura actual
+
+Datos a mostrar:
+Por cada plan activo:
+- name
+- description
+- price
+- billing_period
+- limits principales
+- features principales si existen
+- estado visible solo si aplica internamente, pero no mostrar flags técnicos innecesarios
+
+Orden:
+- usar `sort_order` si ya existe
+- si no existe, ordenar por precio ascendente o criterio actual del sistema
+
+Botones por plan:
+Si el usuario no está autenticado:
+- "Crear cuenta"
+- opcional: "Elegir plan" redirigiendo a registro
+
+Si el usuario está autenticado como member:
+- mostrar botón informativo o placeholder según flujo actual
+- no implementar cambio de plan real todavía si no existe pago
+
+Si el usuario es admin:
+- no mezclar flujo admin con la vista pública
+- puede ver la página pública como cualquier visitante
+
+UI:
+- página pública limpia
+- cards de planes
+- diseño claro y legible
+- destacar plan recomendado si ya existe un criterio simple
+- usar Bootstrap 5.3
+- no crear diseño exageradamente complejo
+
+Contenido por plan:
+- nombre
+- descripción breve
+- precio
+- periodo
+- lista simple de beneficios o límites destacados
+- botón principal
+
+Límites / features:
+Si el plan tiene `limits` o `features` en JSON:
+- transformar esos datos a formato legible en la vista
+- no mostrar claves técnicas crudas
+- mostrar solo las más importantes
+
+Comportamiento:
+- visitantes ven lista de planes activos
+- no mostrar planes inactivos
+- si no hay planes, mostrar estado vacío claro
+- mantener vista pública separada del admin
+
+Integración:
+- revisar modelo Plan actual
+- revisar si ya existe página pública o landing
+- si existe, integrarse sin romper estructura
+- si no existe, crear solución mínima compatible
+- no romper suscripciones admin ni member account
+
+SEO básico:
+- título claro de página
+- contenido semántico
+- estructura preparada para futuro SEO
+- no sobrecargar con scripts innecesarios
+
+Importante:
+- generar solo archivos necesarios
+- no agregar archivos innecesarios
+- no implementar pagos todavía
+- dejar lista la base para conectar checkout después
+
+======================================================
+Instrucción 13: checkout / selección de plan inicial.
+======================================================
+
+Implementar flujo inicial de selección de plan para el SaaS.
+
+Contexto:
+Ya existe página pública de planes y base de planes/suscripciones.
+Cada usuario es único.
+No hay organizaciones ni tenants.
+Todavía no se requiere cobro real si no está integrado.
+Se necesita dejar el flujo inicial de selección de plan preparado para conectar pagos después.
+No romper módulos actuales.
+
+Stack:
+Laravel 12 + Inertia + Vue 3 + JavaScript + Bootstrap 5.3.
+
+Reglas:
+- No TypeScript
+- Vue con `<script setup>`
+- Solo Composition API
+- No Options API
+- No API separada
+- No librerías nuevas innecesarias
+- No refactorizar módulos no relacionados
+- Reutilizar estructura visual actual
+- Código simple y listo para producción
+
+Objetivo:
+Permitir que un visitante o usuario autenticado seleccione un plan y continúe con el flujo correcto, aunque todavía no exista pago real.
+
+Alcance de esta fase:
+- seleccionar plan desde página pública
+- guardar intención de plan
+- redirigir al flujo correcto según autenticación
+- preparar estructura para futuro checkout
+- permitir asignación inicial manual o placeholder según plan
+
+No incluir todavía:
+- Stripe
+- cobro real
+- webhooks
+- facturación
+- upgrades automáticos
+- pagos recurrentes
+
+Escenarios:
+1. visitante no autenticado elige plan
+2. usuario autenticado `member` elige plan
+3. admin visita página pública pero no debe entrar a checkout member como flujo principal
+
+Flujo esperado:
+
+Caso 1: visitante no autenticado
+- entra a `/pricing`
+- selecciona un plan
+- el sistema guarda la intención del plan elegido
+- redirige a registro o login según flujo actual
+- después de autenticarse o registrarse, el sistema puede recuperar la intención del plan para continuar
+
+Caso 2: usuario autenticado member
+- entra a `/pricing`
+- selecciona un plan
+- si aún no hay pagos, redirigir a una pantalla intermedia o acción placeholder
+- opcional:
+  - crear una solicitud de selección de plan
+  - o asignar flujo pendiente de aprobación/manual
+- mostrar mensaje claro de siguiente paso
+
+Caso 3: admin
+- puede ver la página pública
+- no debe entrar a flujo de contratación como usuario final salvo que explícitamente se soporte
+- manejar redirección segura si intenta avanzar
+
+Ruta pública sugerida:
+- POST /pricing/select/{plan}
+o
+- POST /plans/select/{plan}
+
+Rutas posteriores sugeridas:
+- GET /checkout/plan
+o
+- GET /member/plan-selection
+usar el patrón que mejor encaje con la estructura actual
+
+Controlador:
+Crear o adaptar controlador público/member, por ejemplo:
+- PricingController@select
+- Member/PlanSelectionController@show
+
+Persistencia de intención:
+Guardar temporalmente el plan seleccionado.
+
+Opciones válidas:
+- sesión
+- estado temporal simple asociado al usuario después de login
+- solución mínima y limpia
+
+Preferencia:
+- usar sesión para visitantes
+- si el usuario ya está autenticado, resolver directamente
+
+Reglas del plan seleccionado:
+- solo permitir seleccionar planes activos
+- validar existencia real del plan
+- no confiar en frontend
+
+Si todavía no hay checkout real:
+Implementar pantalla intermedia clara con alguno de estos comportamientos:
+- "Has seleccionado el plan X"
+- "Próximamente podrás completar el pago en línea"
+- "Tu solicitud fue registrada"
+- o flujo mínimo equivalente que prepare el sistema para después
+
+Opcional en esta fase:
+- crear tabla simple de `plan_selection_requests` o equivalente si quieres guardar intención persistente
+- solo si realmente hace falta
+- si no, usar sesión y flujo mínimo
+
+Member area:
+Si el usuario ya está autenticado y elige plan:
+- mostrar resumen del plan
+- mostrar estado actual de suscripción
+- mostrar siguiente paso
+- no cambiar automáticamente la suscripción si aún no hay reglas de negocio claras
+- no activar plan premium sin control
+
+UI:
+Pantalla intermedia o de confirmación debe mostrar:
+- nombre del plan
+- descripción
+- precio
+- periodo
+- beneficios principales
+- mensaje de siguiente paso
+- botón para volver o continuar según flujo actual
+
+Integración con registro/login:
+Si visitante elige plan y luego se registra:
+- conservar selección de plan en sesión si es posible
+- tras completar registro/verificación/login, recuperar intención cuando aplique
+- no romper flujo de verificación de email actual
+
+Integración con suscripciones:
+- no crear suscripción activa automáticamente si todavía no está definido el flujo
+- dejar preparado para que más adelante el checkout real cree la suscripción
+- si existe plan free/gratis y quieres asignarlo sin cobro, hacerlo solo si encaja con las reglas actuales
+
+Validaciones backend:
+- plan debe existir
+- plan debe estar activo
+- usuario debe tener acceso al flujo correcto según su rol
+- no permitir selección inválida
+
+Seguridad:
+- validar todo en backend
+- no confiar en frontend
+- no permitir asignaciones premium indebidas
+- no mezclar admin con member
+- mantener separación clara entre área pública, member y admin
+
+Comportamiento esperado:
+- visitante selecciona plan -> sistema recuerda plan -> redirige a auth
+- member selecciona plan -> ve pantalla intermedia clara
+- admin no entra al flujo member por error
+- no se activa ninguna suscripción de forma insegura
+
+Importante:
+- revisar página pública de pricing actual
+- revisar modelos Plan y Subscription actuales
+- adaptarse a la estructura existente
+- generar solo archivos necesarios
+- no agregar archivos innecesarios
+- dejar base lista para conectar pagos después
+
+==============================================
+Instrucción 14: billing básico administrativo y preparación para pasarela de pago
+==============================================
+
+Implementar base de billing administrativo y preparación para integrar pasarela de pago más adelante.
+
+Contexto:
+Ya existen planes, suscripciones, página pública de precios y flujo inicial de selección de plan.
+Cada usuario es único.
+No hay organizaciones ni tenants.
+Todavía no se requiere cobro real, pero sí dejar preparada la estructura para conectar Stripe u otra pasarela después.
+No romper módulos actuales.
+
+Stack:
+Laravel 12 + Inertia + Vue 3 + JavaScript + Bootstrap 5.3.
+
+Reglas:
+- No TypeScript
+- Vue con `<script setup>`
+- Solo Composition API
+- No Options API
+- No API separada
+- No librerías nuevas innecesarias en esta fase
+- No refactorizar módulos no relacionados
+- Reutilizar estructura visual actual
+- Código simple y listo para producción
+
+Objetivo:
+Dejar lista la base para billing del SaaS, aunque todavía no exista cobro real.
+
+Alcance de esta fase:
+- registrar intención o historial administrativo de cobros
+- asociar pagos a usuario y suscripción
+- guardar referencia externa futura
+- mostrar historial básico admin
+- mostrar resumen básico de pagos al usuario si aplica
+- preparar estructura para conexión con Stripe u otra pasarela
+
+No incluir todavía:
+- checkout real
+- cobro automático
+- webhooks reales
+- facturación fiscal
+- reembolsos automáticos
+- conciliación avanzada
+
+Entidad principal:
+Crear tabla de pagos, por ejemplo `payments`.
+
+Campos mínimos sugeridos:
+- id
+- user_id
+- subscription_id nullable
+- plan_id nullable
+- amount decimal
+- currency nullable string
+- status string
+- provider nullable string
+- provider_reference nullable string
+- payment_method nullable string
+- description nullable string
+- paid_at nullable timestamp
+- metadata json nullable
+- created_at
+- updated_at
+
+Estados sugeridos:
+- pending
+- paid
+- failed
+- canceled
+- refunded
+
+Modelo:
+- Payment
+
+Relaciones:
+- Payment belongsTo User
+- Payment belongsTo Subscription nullable
+- Payment belongsTo Plan nullable
+- User hasMany Payment
+- Subscription hasMany Payment si aplica
+
+Importante:
+- dejar estructura flexible para múltiples proveedores
+- no hardcodear Stripe todavía
+- permitir metadata JSON para respuesta futura del proveedor
+
+Objetivo funcional admin:
+Permitir al admin:
+- ver historial de pagos
+- registrar pago manual si aplica
+- cambiar estado manualmente si el negocio lo requiere
+- consultar relación entre plan, suscripción y usuario
+
+Permisos sugeridos:
+- payments.view
+- payments.create
+- payments.update
+
+Rutas admin:
+- GET /admin/payments
+- GET /admin/payments/create
+- POST /admin/payments
+- GET /admin/payments/{payment}/edit
+- PUT /admin/payments/{payment}
+
+Controlador:
+- PaymentController
+- métodos:
+  - index()
+  - create()
+  - store()
+  - edit()
+  - update()
+
+Vistas:
+- resources/js/Pages/Admin/Payments/Index.vue
+- resources/js/Pages/Admin/Payments/Create.vue
+- resources/js/Pages/Admin/Payments/Edit.vue
+
+Campos admin para pago manual:
+- user_id
+- subscription_id opcional
+- plan_id opcional
+- amount
+- currency
+- status
+- provider
+- provider_reference
+- payment_method
+- description
+- paid_at
+
+Validaciones backend:
+- user_id required|exists:users,id
+- subscription_id nullable|exists:subscriptions,id
+- plan_id nullable|exists:plans,id
+- amount required|numeric|min:0
+- currency nullable|string|max:10
+- status required|string|in:pending,paid,failed,canceled,refunded
+- provider nullable|string|max:50
+- provider_reference nullable|string|max:150
+- payment_method nullable|string|max:50
+- description nullable|string|max:500
+- paid_at nullable|date
+
+Comportamiento admin:
+- poder registrar pagos manuales
+- poder actualizar estado
+- listar pagos con paginación por servidor
+- filtros por:
+  - usuario
+  - estado
+  - proveedor
+  - fecha
+- búsqueda básica si ya encaja con patrón actual
+
+UI admin:
+- usar layout admin actual
+- usar PageTitle
+- usar Breadcrumb
+- usar Searchbar si ya existe
+- usar Field components existentes
+- usar useForm
+- usar toasts
+- usar ConfirmDialog si aplica
+- mantener estilo actual del proyecto
+
+Member area:
+Mostrar historial básico de pagos del usuario autenticado.
+
+Ruta sugerida:
+- GET /member/payments
+
+Controlador member:
+- Member/PaymentController@index
+
+Vista:
+- resources/js/Pages/Member/Payments/Index.vue
+
+Datos a mostrar al member:
+- fecha
+- monto
+- moneda
+- estado
+- plan relacionado si existe
+- referencia simple si aplica
+
+Reglas member:
+- solo ver sus propios pagos
+- no editar
+- no ver metadata sensible
+- no ver pagos de otros usuarios
+
+Preparación para proveedor externo:
+Dejar estructura lista para almacenar después:
+- provider = stripe, paypal, manual, etc.
+- provider_reference = id externo de checkout, payment intent, charge id, etc.
+- metadata = payload útil resumido
+
+Importante:
+- no integrar aún llamadas reales a Stripe
+- solo preparar arquitectura para que luego sea fácil conectar
+
+Integración con suscripciones:
+- payment puede ligarse a subscription y/o plan
+- no obligar todavía a que cada pago cree o actualice automáticamente suscripción
+- dejar lógica separada para no acoplar demasiado esta fase
+
+Comportamiento esperado:
+- admin puede registrar y consultar pagos
+- member puede ver su historial básico
+- sistema queda listo para integrar pasarela más adelante
+
+Seguridad:
+- validar todo en backend
+- admin protegido por permisos
+- member solo ve sus pagos
+- no exponer metadata sensible
+- no romper auth, plans, subscriptions ni dashboards
+
+Importante:
+- revisar si ya existe estructura de payments o billing
+- si existe, adaptarse
+- si no existe, crear solución mínima compatible
+- generar solo archivos necesarios
+- no agregar archivos innecesarios
