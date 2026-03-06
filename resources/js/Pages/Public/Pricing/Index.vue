@@ -62,10 +62,10 @@
                   <button
                     type="button"
                     class="btn btn-primary w-100"
-                    :disabled="isAdmin"
+                    :disabled="isAdmin || !plan.is_checkout_available"
                     @click="selectPlan(plan)"
                   >
-                    {{ actionLabel }}
+                    {{ actionLabel(plan) }}
                   </button>
                   <div v-if="isAuthenticated && isMember" class="text-muted small text-center mt-2">
                     No puedes cambiar de plan desde aqui aun.
@@ -107,10 +107,11 @@ const dashboardHref = computed(() => {
   return '/member'
 })
 
-const actionLabel = computed(() => {
+const actionLabel = (plan) => {
   if (isAdmin.value) return 'No disponible'
+  if (!plan?.is_checkout_available) return 'No disponible'
   return 'Elegir plan'
-})
+}
 
 const limitLabels = {
   max_items: 'Max items',
@@ -171,6 +172,7 @@ const formatPeriod = (value) => {
 
 const selectPlan = (plan) => {
   if (isAdmin.value) return
+  if (!plan.is_checkout_available) return
   router.post(`/pricing/select/${plan.id}`, {}, {
     preserveScroll: true,
   })

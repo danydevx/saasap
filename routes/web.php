@@ -14,6 +14,7 @@ use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Member\AccountController;
+use App\Http\Controllers\Member\CheckoutController;
 use App\Http\Controllers\Member\DashboardController;
 use App\Http\Controllers\Member\NotificationController;
 use App\Http\Controllers\Member\OnboardingController;
@@ -96,6 +97,16 @@ Route::get('/member', [DashboardController::class, 'index'])
 Route::get('/member/account', [AccountController::class, 'show'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.account.show');
+
+Route::post('/member/checkout/{plan}', [CheckoutController::class, 'create'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.checkout.create');
+Route::get('/member/checkout/success', [CheckoutController::class, 'success'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.checkout.success');
+Route::get('/member/checkout/cancel', [CheckoutController::class, 'cancel'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.checkout.cancel');
 
 Route::get('/member/plan-selection', [PlanSelectionController::class, 'show'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])

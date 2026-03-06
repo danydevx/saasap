@@ -82,6 +82,34 @@
           <div class="col-12">
             <div class="card border rounded-3">
               <div class="card-body">
+                <h3 class="h6 mb-3">Stripe</h3>
+                <div class="row g-3">
+                  <div class="col-12 col-md-6">
+                    <FieldText
+                      id="plan-stripe-product"
+                      label="Stripe product id"
+                      placeholder="prod_123"
+                      v-model="form.stripe_product_id"
+                      :formError="form.errors.stripe_product_id"
+                    />
+                  </div>
+                  <div class="col-12 col-md-6">
+                    <FieldText
+                      id="plan-stripe-price"
+                      label="Stripe price id"
+                      placeholder="price_123"
+                      v-model="form.stripe_price_id"
+                      :formError="form.errors.stripe_price_id"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12">
+            <div class="card border rounded-3">
+              <div class="card-body">
                 <h3 class="h6 mb-3">Limites</h3>
                 <div class="row g-3">
                   <div class="col-12 col-md-4">
@@ -165,6 +193,8 @@ const form = useForm({
   billing_period: props.plan.billing_period || '',
   is_active: !!props.plan.is_active,
   sort_order: props.plan.sort_order ?? '',
+  stripe_product_id: props.plan.stripe_product_id || '',
+  stripe_price_id: props.plan.stripe_price_id || '',
   limits: {
     max_items: props.plan.limits?.max_items ?? '',
     max_requests_per_day: props.plan.limits?.max_requests_per_day ?? '',

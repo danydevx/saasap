@@ -31,6 +31,7 @@ class PlanSelectionController extends Controller
                 'billing_period' => $plan->billing_period,
                 'features' => $plan->features ?? [],
                 'limits' => $plan->limits ?? [],
+                'stripe_price_id' => $plan->stripe_price_id,
             ] : null,
             'subscription' => $subscription ? [
                 'plan_name' => $subscription->plan?->name,

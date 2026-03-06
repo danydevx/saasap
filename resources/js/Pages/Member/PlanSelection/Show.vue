@@ -42,8 +42,11 @@
         <div class="card border-0 shadow-sm h-100">
           <div class="card-body">
             <h3 class="h6 mb-2">Siguiente paso</h3>
-            <p class="text-muted">
-              Tu seleccion quedo registrada. Cuando habilitemos pagos en linea podras finalizar el checkout.
+            <p class="text-muted" v-if="plan.stripe_price_id">
+              Estas a un paso de activar tu suscripcion. Continua al checkout seguro.
+            </p>
+            <p class="text-muted" v-else>
+              Este plan aun no tiene checkout disponible. Te avisaremos cuando puedas finalizar el pago.
             </p>
 
             <div v-if="subscription" class="alert alert-light border">
@@ -52,7 +55,20 @@
               <div class="text-muted small">Estado: {{ subscription.status }}</div>
             </div>
 
-            <button type="button" class="btn btn-primary w-100" @click="clearSelection">
+            <button
+              v-if="plan.stripe_price_id"
+              type="button"
+              class="btn btn-primary w-100"
+              @click="goToCheckout"
+            >
+              Continuar a pago
+            </button>
+            <button
+              v-else
+              type="button"
+              class="btn btn-outline-secondary w-100"
+              @click="clearSelection"
+            >
               Entendido
             </button>
           </div>
@@ -136,6 +152,12 @@ const formatPeriod = (value) => {
 
 const clearSelection = () => {
   router.put('/member/plan-selection/clear', {}, {
+    preserveScroll: true,
+  })
+}
+
+const goToCheckout = () => {
+  router.post(`/member/checkout/${props.plan.id}`, {}, {
     preserveScroll: true,
   })
 }

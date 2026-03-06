@@ -18,6 +18,9 @@ class Subscription extends Model
         'trial_ends_at',
         'price',
         'billing_period',
+        'provider',
+        'provider_reference',
+        'provider_customer_id',
     ];
 
     protected $casts = [

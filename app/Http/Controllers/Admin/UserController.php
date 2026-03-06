@@ -165,6 +165,18 @@ class UserController extends Controller
     {
         $user->load('profile');
 
+        $plans = Plan::query()
+            ->where('is_active', true)
+            ->orderByRaw('sort_order is null, sort_order asc')
+            ->orderBy('id')
+            ->get(['id', 'name'])
+            ->map(fn ($plan) => [
+                'id' => $plan->id,
+                'label' => $plan->name,
+            ]);
+
+        $subscription = $user->currentSubscription;
+
         $roles = Role::query()
             ->where('blocked', false)
             ->where('id', '!=', 2)

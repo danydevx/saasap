@@ -23,6 +23,7 @@ class PricingController extends Controller
                 'billing_period' => $plan->billing_period,
                 'features' => $plan->features ?? [],
                 'limits' => $plan->limits ?? [],
+                'is_checkout_available' => ! empty($plan->stripe_price_id),
             ]);
 
         $recommendedPlanId = $plans->first()['id'] ?? null;
@@ -37,6 +38,10 @@ class PricingController extends Controller
     {
         if (! $plan->is_active) {
             return back()->with('error', 'Este plan no esta disponible.');
+        }
+
+        if (empty($plan->stripe_price_id)) {
+            return back()->with('error', 'Este plan aun no tiene checkout disponible.');
         }
 
         $request->session()->put('selected_plan_id', $plan->id);

@@ -2222,3 +2222,510 @@ Importante:
 - si no existe, crear solución mínima compatible
 - generar solo archivos necesarios
 - no agregar archivos innecesarios
+
+=======================================================
+Instrucción 15: integración real de checkout con Stripe
+========================================================
+
+Implementar checkout real con Stripe para suscripciones del SaaS.
+
+Contexto:
+Ya existen planes, suscripciones, pricing público, selección inicial de plan y base de billing/pagos.
+Cada usuario es único.
+No hay organizaciones ni tenants.
+Ahora se requiere integrar checkout real con Stripe para que el usuario pueda pagar un plan y activar su suscripción.
+No romper módulos actuales.
+
+Stack:
+Laravel 12 + Inertia + Vue 3 + JavaScript + Bootstrap 5.3 + Stripe.
+
+Reglas:
+- No TypeScript
+- Vue con `<script setup>`
+- Solo Composition API
+- No Options API
+- No API separada separada del flujo web actual
+- No librerías innecesarias fuera de la integración necesaria con Stripe
+- No refactorizar módulos no relacionados
+- Reutilizar estructura visual actual
+- Código simple y listo para producción
+
+Objetivo:
+Permitir que un usuario `member` pueda seleccionar un plan, ir a Stripe Checkout, pagar y regresar con su suscripción/pago registrados correctamente.
+
+Alcance de esta fase:
+- integrar Stripe Checkout
+- crear sesión de checkout
+- redirigir al usuario a Stripe
+- manejar éxito y cancelación
+- registrar pago
+- crear o actualizar suscripción
+- almacenar referencias de Stripe
+- dejar base lista para webhooks
+
+No incluir todavía:
+- portal avanzado de facturación
+- reembolsos automáticos
+- cupones complejos
+- prorrateos avanzados
+- múltiples suscripciones paralelas por usuario salvo que ya esté definido
+
+Requisitos previos:
+- revisar si ya existe integración parcial de Stripe
+- revisar configuración actual de billing, plans, subscriptions y payments
+- adaptarse a lo existente
+- no duplicar estructuras si ya existen
+
+Configuración:
+Agregar soporte para claves de Stripe:
+- STRIPE_KEY
+- STRIPE_SECRET
+- STRIPE_WEBHOOK_SECRET si más adelante se usa webhook
+- usar config/services.php o patrón actual del proyecto
+
+Planes:
+Cada plan del sistema debe poder relacionarse con Stripe.
+
+Agregar campos si no existen:
+- stripe_price_id nullable
+- opcionalmente stripe_product_id nullable
+
+Reglas:
+- solo planes activos y con stripe_price_id válido pueden ir a checkout real
+- validar esto en backend
+
+Flujo esperado:
+1. usuario member ve pricing
+2. selecciona plan
+3. backend valida plan activo y disponible para Stripe
+4. backend crea Stripe Checkout Session
+5. usuario es redirigido a Stripe Checkout
+6. usuario paga o cancela
+7. Stripe regresa a success o cancel URL
+8. sistema registra resultado inicial
+9. crear o actualizar suscripción del usuario
+10. registrar pago
+11. redirigir a página member clara con mensaje de éxito o cancelación
+
+Rutas sugeridas:
+- POST /member/checkout/{plan}
+- GET /member/checkout/success
+- GET /member/checkout/cancel
+
+Opcional después:
+- POST /stripe/webhook
+
+Controlador:
+Crear controlador member para checkout, por ejemplo:
+- Member/CheckoutController
+Métodos:
+- create()
+- success()
+- cancel()
+
+Opcional futuro:
+- webhook()
+
+Validaciones backend:
+- usuario autenticado
+- rol member
+- usuario activo
+- email verificado si aplica según flujo actual
+- plan existente
+- plan activo
+- plan con stripe_price_id válido
+- no permitir checkout para admin dentro del flujo member
+
+Checkout Session:
+Crear sesión de Stripe Checkout para suscripción o pago según el diseño elegido.
+
+Preferencia:
+- usar modo `subscription` si los planes son recurrentes
+- usar modo `payment` solo si el plan es pago único
+
+Importante:
+- al construir la sesión, incluir metadata útil:
+  - user_id
+  - plan_id
+  - plan_slug si sirve
+- guardar referencia local si hace falta
+- usar success_url y cancel_url claras
+
+Persistencia recomendada:
+Guardar información mínima de la sesión creada:
+- user_id
+- plan_id
+- stripe_checkout_session_id
+- status inicial
+- timestamps
+si realmente hace falta para trazabilidad
+
+Si ya existe tabla payments suficiente:
+- reutilizarla
+- no crear tablas innecesarias
+
+Success flow:
+Al regresar de Stripe:
+- validar sesión de checkout
+- consultar Stripe si hace falta para confirmar estado
+- registrar pago en tabla payments
+- asociar plan y usuario
+- crear o actualizar suscripción
+- guardar:
+  - provider = stripe
+  - provider_reference
+  - amount
+  - currency
+  - status
+  - metadata resumida si aplica
+
+Subscription:
+Si pago/suscripción fue exitosa:
+- crear nueva suscripción o actualizar la actual según la regla actual del sistema
+- guardar:
+  - user_id
+  - plan_id
+  - status active o trial según corresponda
+  - starts_at
+  - ends_at si está disponible
+  - provider/reference de Stripe si aplica
+- no dejar múltiples suscripciones activas inconsistentes para el mismo usuario
+
+Payment:
+Registrar pago ligado al usuario y, si aplica, a la suscripción:
+- provider = stripe
+- provider_reference = id externo de Stripe
+- status = paid o equivalente
+- amount
+- currency
+- paid_at
+- metadata resumida opcional
+
+Cancel flow:
+Si el usuario cancela:
+- redirigir a página clara en member
+- mostrar mensaje de cancelación
+- no activar suscripción
+- no registrar pago exitoso
+
+UI member:
+Pricing / selección:
+- botón claro "Suscribirme" o "Continuar"
+
+Página success:
+- mensaje claro de éxito
+- resumen del plan activado
+- acceso a cuenta o dashboard
+
+Página cancel:
+- mensaje claro de cancelación
+- opción de volver a pricing
+
+Cuenta member:
+- reflejar nuevo plan o suscripción activa después del éxito
+
+Admin:
+No mezclar con dashboard admin.
+Admin puede seguir gestionando pagos/suscripciones desde su panel, pero no usar el flujo member como principal.
+
+Seguridad:
+- validar todo en backend
+- no confiar en precio desde frontend
+- usar price id guardado en backend
+- no aceptar amounts enviados por frontend para cobrar
+- validar usuario autenticado antes de crear checkout
+- manejar errores de Stripe con mensajes claros y seguros
+- no exponer secrets en frontend
+
+Errores:
+Si Stripe falla o responde error:
+- mostrar mensaje genérico claro
+- no romper la sesión del usuario
+- registrar error si ya existe sistema de logs
+
+Integración con notificaciones / actividad:
+Si ya existen módulos:
+- registrar actividad de:
+  - checkout iniciado
+  - pago exitoso
+  - pago cancelado
+  - suscripción activada
+- crear notificación interna al usuario si aplica
+
+Integración con email:
+Opcional en esta fase:
+- enviar correo de confirmación de pago o suscripción activada si ya existe patrón
+- si no existe, dejarlo para fase posterior
+
+Importante:
+- primero revisar si los planes son recurrentes o de pago único
+- adaptar Stripe Checkout según eso
+- revisar estructura actual de Plan, Subscription y Payment
+- generar solo archivos necesarios
+- no agregar archivos innecesarios
+- no romper pricing, member dashboard ni billing actual
+
+=========================================================
+Instrucción 16: webhooks de Stripe para sincronización real de pagos y suscripciones
+======================================================================
+
+Implementar webhooks de Stripe para sincronizar pagos y suscripciones del SaaS.
+
+Contexto:
+Ya existe checkout real con Stripe o está en proceso.
+Cada usuario es único.
+No hay organizaciones ni tenants.
+Se necesita sincronización confiable desde Stripe hacia el sistema para mantener pagos y suscripciones actualizados.
+No romper módulos actuales.
+
+Stack:
+Laravel 12 + Inertia + Vue 3 + JavaScript + Bootstrap 5.3 + Stripe.
+
+Reglas:
+- No TypeScript
+- Vue con `<script setup>`
+- Solo Composition API
+- No Options API
+- No API separada para frontend, pero sí endpoint backend para webhook
+- No librerías innecesarias fuera de Stripe
+- No refactorizar módulos no relacionados
+- Reutilizar estructura actual del proyecto
+- Código simple y listo para producción
+
+Objetivo:
+Recibir eventos reales de Stripe y sincronizar:
+- pagos
+- suscripciones
+- estados
+- referencias externas
+- actividad/notificaciones si ya existen
+
+Alcance de esta fase:
+- endpoint webhook backend
+- validación de firma de Stripe
+- manejo idempotente de eventos
+- actualización de Payment
+- actualización de Subscription
+- trazabilidad de eventos recibidos
+- preparación para producción
+
+No incluir todavía:
+- lógica exageradamente compleja de prorrateos
+- conciliación financiera avanzada
+- reembolsos automáticos complejos salvo actualización básica de estado
+- múltiples cuentas Stripe
+
+Configuración:
+Usar claves existentes:
+- STRIPE_SECRET
+- STRIPE_WEBHOOK_SECRET
+
+Config:
+- services.php o patrón actual del proyecto
+
+Ruta webhook:
+- POST /stripe/webhook
+
+Importante:
+- esta ruta debe quedar fuera de auth normal
+- no debe requerir sesión de usuario
+- protegerse únicamente con validación de firma de Stripe
+- excluir CSRF solo para esta ruta si aplica en la estructura actual
+
+Controlador:
+Crear controlador backend, por ejemplo:
+- StripeWebhookController
+Método principal:
+- handle()
+
+Opcional:
+- métodos privados por tipo de evento
+
+Validación:
+- leer payload bruto
+- leer firma Stripe-Signature
+- validar evento con `STRIPE_WEBHOOK_SECRET`
+- si la firma es inválida, responder error
+- si es válida, procesar evento
+- responder 200 cuando se procese correctamente o cuando el evento ya haya sido procesado
+
+Idempotencia:
+Obligatorio evitar procesar el mismo evento dos veces.
+
+Crear persistencia mínima para eventos recibidos, por ejemplo tabla:
+- stripe_webhook_events
+
+Campos mínimos sugeridos:
+- id
+- stripe_event_id unique
+- type
+- payload json nullable
+- processed_at nullable
+- status string nullable
+- created_at
+- updated_at
+
+Objetivo:
+- registrar evento recibido
+- saber si ya fue procesado
+- evitar duplicados
+- facilitar debugging
+
+Eventos Stripe prioritarios a manejar:
+1. checkout.session.completed
+2. invoice.payment_succeeded
+3. invoice.payment_failed
+4. customer.subscription.created
+5. customer.subscription.updated
+6. customer.subscription.deleted
+
+Opcionales después:
+- charge.refunded
+- payment_intent.payment_failed
+- invoice.paid
+- invoice.finalized
+
+Relación con entidades locales:
+Usar metadata enviada desde checkout cuando sea posible:
+- user_id
+- plan_id
+- local references si ya existen
+
+Si metadata no es suficiente:
+- buscar por:
+  - stripe customer id
+  - stripe subscription id
+  - checkout session id
+  - provider_reference
+según la estructura existente
+
+Modelo Payment:
+Actualizar o crear Payment según evento.
+
+Campos esperados a usar:
+- user_id
+- subscription_id nullable
+- plan_id nullable
+- amount
+- currency
+- status
+- provider = stripe
+- provider_reference
+- payment_method nullable
+- paid_at
+- metadata resumida
+
+Modelo Subscription:
+Actualizar o crear Subscription según evento.
+
+Campos esperados a usar:
+- user_id
+- plan_id
+- status
+- starts_at
+- ends_at
+- canceled_at
+- trial_ends_at
+- provider references de Stripe si existen
+- billing_period si aplica
+
+Estados:
+Mapear estados Stripe a estados internos consistentes.
+Mantener una sola convención interna reutilizable.
+
+Evento: checkout.session.completed
+Objetivo:
+- confirmar que la sesión de checkout terminó correctamente
+- guardar referencia inicial
+- si todavía no existe Payment o Subscription, crear o preparar datos mínimos
+- no duplicar registros si luego invoice/customer.subscription también llegan
+
+Evento: invoice.payment_succeeded
+Objetivo:
+- registrar pago exitoso
+- actualizar Payment a `paid`
+- asociar usuario/suscripción/plan
+- actualizar suscripción a activa si corresponde
+
+Evento: invoice.payment_failed
+Objetivo:
+- registrar o actualizar Payment a `failed`
+- actualizar suscripción si la regla actual requiere marcarla con problema de cobro
+- dejar trazabilidad clara
+
+Evento: customer.subscription.created
+Objetivo:
+- crear o actualizar suscripción local
+- guardar stripe subscription id
+- guardar status y fechas relevantes
+
+Evento: customer.subscription.updated
+Objetivo:
+- sincronizar cambios de estado
+- actualizar fechas
+- manejar cancelaciones, pausas o cambios de estado si aplica al modelo interno
+
+Evento: customer.subscription.deleted
+Objetivo:
+- marcar suscripción local como cancelada o terminada
+- guardar canceled_at o estado final
+- no eliminar físicamente registros
+
+Mapeo de referencias Stripe:
+Si no existen aún, considerar guardar en Subscription o User:
+- stripe_customer_id
+- stripe_subscription_id
+- stripe_price_id
+- stripe_product_id si ya existe en Plan
+Usar solo lo necesario, sin inflar la base innecesariamente.
+
+Actividad y notificaciones:
+Si ya existen módulos de actividad y notificaciones:
+- registrar actividad:
+  - pago exitoso
+  - pago fallido
+  - suscripción activada
+  - suscripción actualizada
+  - suscripción cancelada
+- crear notificación interna al usuario cuando aplique
+
+Correos:
+Opcional si ya existe patrón:
+- pago exitoso
+- suscripción activada
+- pago fallido
+Si no existe patrón, dejar para fase posterior
+
+Admin:
+No crear UI compleja del webhook.
+Opcionalmente, si ya encaja con el sistema, dejar trazabilidad visible después.
+Por ahora la prioridad es la sincronización backend.
+
+Logs y errores:
+- manejar errores de Stripe de forma segura
+- registrar errores útiles para debugging
+- no exponer detalles sensibles al cliente
+- responder códigos HTTP apropiados al webhook
+
+Comportamiento esperado:
+- Stripe envía evento
+- backend valida firma
+- backend revisa si ya fue procesado
+- si no fue procesado, sincroniza datos locales
+- marca evento como procesado
+- responde correctamente a Stripe
+
+Seguridad:
+- validar firma siempre
+- no confiar en llamadas no firmadas
+- no exponer endpoint sin validación
+- no depender del frontend para estados de pago
+- el webhook debe ser fuente de verdad para sincronización final
+
+Integración:
+- revisar estructura actual de checkout, payments y subscriptions
+- revisar si ya se almacenan referencias Stripe
+- adaptarse a lo existente
+- generar solo archivos necesarios
+- no agregar archivos innecesarios
+- no romper checkout actual ni dashboards

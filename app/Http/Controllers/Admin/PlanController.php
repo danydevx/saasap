@@ -59,6 +59,8 @@ class PlanController extends Controller
             'billing_period' => ['nullable', 'string', 'max:50'],
             'is_active' => ['boolean'],
             'sort_order' => ['nullable', 'integer', 'min:0'],
+            'stripe_product_id' => ['nullable', 'string', 'max:150'],
+            'stripe_price_id' => ['nullable', 'string', 'max:150'],
             'limits.max_items' => ['nullable', 'integer', 'min:0'],
             'limits.max_requests_per_day' => ['nullable', 'integer', 'min:0'],
             'limits.can_use_ai' => ['boolean'],
@@ -75,6 +77,8 @@ class PlanController extends Controller
             'is_active' => (bool) ($data['is_active'] ?? false),
             'sort_order' => $data['sort_order'] ?? null,
             'limits' => $data['limits'] ?? null,
+            'stripe_product_id' => $data['stripe_product_id'] ?? null,
+            'stripe_price_id' => $data['stripe_price_id'] ?? null,
         ]);
 
         $activity->log('plan.created', [
@@ -100,6 +104,8 @@ class PlanController extends Controller
                 'is_active' => (bool) $plan->is_active,
                 'sort_order' => $plan->sort_order,
                 'limits' => $plan->limits ?? [],
+                'stripe_product_id' => $plan->stripe_product_id,
+                'stripe_price_id' => $plan->stripe_price_id,
             ],
         ]);
     }
@@ -114,6 +120,8 @@ class PlanController extends Controller
             'billing_period' => ['nullable', 'string', 'max:50'],
             'is_active' => ['boolean'],
             'sort_order' => ['nullable', 'integer', 'min:0'],
+            'stripe_product_id' => ['nullable', 'string', 'max:150'],
+            'stripe_price_id' => ['nullable', 'string', 'max:150'],
             'limits.max_items' => ['nullable', 'integer', 'min:0'],
             'limits.max_requests_per_day' => ['nullable', 'integer', 'min:0'],
             'limits.can_use_ai' => ['boolean'],
@@ -130,6 +138,8 @@ class PlanController extends Controller
             'is_active' => (bool) ($data['is_active'] ?? false),
             'sort_order' => $data['sort_order'] ?? null,
             'limits' => $data['limits'] ?? null,
+            'stripe_product_id' => $data['stripe_product_id'] ?? null,
+            'stripe_price_id' => $data['stripe_price_id'] ?? null,
         ]);
 
         $activity->log('plan.updated', [
