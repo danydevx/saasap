@@ -22,6 +22,7 @@ use App\Http\Controllers\Member\PasswordController;
 use App\Http\Controllers\Member\PaymentController as MemberPaymentController;
 use App\Http\Controllers\Member\PlanSelectionController;
 use App\Http\Controllers\PricingController;
+use App\Http\Controllers\StripeWebhookController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -38,6 +39,8 @@ Route::post('/pricing/select/{plan}', [PricingController::class, 'select'])->nam
 Route::get('/plans', function () {
     return redirect('/pricing');
 })->name('plans');
+
+Route::post('/stripe/webhook', [StripeWebhookController::class, 'handle'])->name('stripe.webhook');
 
 Route::get('/register', [RegisterController::class, 'showRegister'])
     ->middleware('guest')

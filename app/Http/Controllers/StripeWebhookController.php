@@ -1,0 +1,473 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Payment;
+use App\Models\Plan;
+use App\Models\StripeWebhookEvent;
+use App\Models\Subscription;
+use App\Models\User;
+use App\Services\ActivityLogger;
+use App\Services\UserNotificationService;
+use Illuminate\Http\Request;
+use Stripe\Webhook;
+use Symfony\Component\HttpFoundation\Response;
+
+class StripeWebhookController extends Controller
+{
+    public function handle(Request $request, ActivityLogger $activity, UserNotificationService $notifications)
+    {
+        $payload = $request->getContent();
+        $signature = $request->header('Stripe-Signature');
+        $secret = config('services.stripe.webhook_secret');
+
+        if (empty($secret)) {
+            return response('Webhook secret missing', Response::HTTP_BAD_REQUEST);
+        }
+
+        try {
+            $event = Webhook::constructEvent($payload, $signature, $secret);
+        } catch (\Throwable $e) {
+            return response('Invalid signature', Response::HTTP_BAD_REQUEST);
+        }
+
+        $record = StripeWebhookEvent::firstOrCreate(
+            ['stripe_event_id' => $event->id],
+            [
+                'type' => $event->type,
+                'payload' => json_decode($payload, true),
+                'status' => 'received',
+            ]
+        );
+
+        if ($record->processed_at) {
+            return response('Already processed', Response::HTTP_OK);
+        }
+
+        try {
+            $this->processEvent($event, $activity, $notifications);
+
+            $record->update([
+                'status' => 'processed',
+                'processed_at' => now(),
+            ]);
+
+            return response('ok', Response::HTTP_OK);
+        } catch (\Throwable $e) {
+            $record->update([
+                'status' => 'failed',
+            ]);
+
+            return response('Webhook error', Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    private function processEvent($event, ActivityLogger $activity, UserNotificationService $notifications): void
+    {
+        switch ($event->type) {
+            case 'checkout.session.completed':
+                $this->handleCheckoutCompleted($event->data->object, $activity, $notifications);
+                break;
+            case 'invoice.payment_succeeded':
+                $this->handleInvoicePaymentSucceeded($event->data->object, $activity, $notifications);
+                break;
+            case 'invoice.payment_failed':
+                $this->handleInvoicePaymentFailed($event->data->object, $activity, $notifications);
+                break;
+            case 'customer.subscription.created':
+            case 'customer.subscription.updated':
+            case 'customer.subscription.deleted':
+                $this->handleSubscriptionEvent($event->data->object, $activity, $notifications);
+                break;
+            default:
+                break;
+        }
+    }
+
+    private function handleCheckoutCompleted($session, ActivityLogger $activity, UserNotificationService $notifications): void
+    {
+        $user = $this->resolveUserFromMetadata($session->metadata ?? null);
+        $plan = $this->resolvePlanFromMetadata($session->metadata ?? null);
+
+        if (! $user || ! $plan) {
+            return;
+        }
+
+        $subscriptionId = $session->subscription ?? null;
+        $customerId = $session->customer ?? null;
+
+        $localSubscription = $this->upsertSubscriptionFromStripe(
+            $user,
+            $plan,
+            $subscriptionId,
+            $customerId,
+            'active'
+        );
+
+        if (($session->payment_status ?? null) === 'paid') {
+            $paymentReference = $session->payment_intent ?? $session->id;
+            $this->upsertPayment([
+                'user_id' => $user->id,
+                'subscription_id' => $localSubscription?->id,
+                'plan_id' => $plan->id,
+                'amount' => $session->amount_total ? $session->amount_total / 100 : ($plan->price ?? 0),
+                'currency' => $session->currency ?? null,
+                'status' => 'paid',
+                'provider_reference' => $paymentReference,
+                'payment_method' => $session->payment_method_types[0] ?? null,
+                'metadata' => [
+                    'checkout_session_id' => $session->id,
+                ],
+            ]);
+
+            $this->notify($user, $notifications, 'Pago confirmado', 'Tu pago fue confirmado por Stripe.', '/member/account');
+            $this->logActivity($activity, 'checkout.paid', $user, $localSubscription, [
+                'stripe_session_id' => $session->id,
+            ]);
+        }
+    }
+
+    private function handleInvoicePaymentSucceeded($invoice, ActivityLogger $activity, UserNotificationService $notifications): void
+    {
+        $user = $this->resolveUserFromInvoice($invoice);
+        $plan = $this->resolvePlanFromInvoice($invoice);
+        $subscriptionId = $invoice->subscription ?? null;
+        $customerId = $invoice->customer ?? null;
+
+        if (! $user) {
+            return;
+        }
+
+        $localSubscription = null;
+        if ($plan && $subscriptionId) {
+            $localSubscription = $this->upsertSubscriptionFromStripe(
+                $user,
+                $plan,
+                $subscriptionId,
+                $customerId,
+                'active'
+            );
+        }
+
+        $paymentReference = $invoice->payment_intent ?? $invoice->id;
+        $this->upsertPayment([
+            'user_id' => $user->id,
+            'subscription_id' => $localSubscription?->id,
+            'plan_id' => $plan?->id,
+            'amount' => $invoice->amount_paid ? $invoice->amount_paid / 100 : 0,
+            'currency' => $invoice->currency ?? null,
+            'status' => 'paid',
+            'provider_reference' => $paymentReference,
+            'payment_method' => null,
+            'metadata' => [
+                'invoice_id' => $invoice->id,
+                'subscription_id' => $subscriptionId,
+            ],
+        ]);
+
+        $this->notify($user, $notifications, 'Pago confirmado', 'Tu pago fue confirmado por Stripe.', '/member/payments');
+        $this->logActivity($activity, 'payment.succeeded', $user, $localSubscription, [
+            'invoice_id' => $invoice->id,
+        ]);
+    }
+
+    private function handleInvoicePaymentFailed($invoice, ActivityLogger $activity, UserNotificationService $notifications): void
+    {
+        $user = $this->resolveUserFromInvoice($invoice);
+        $plan = $this->resolvePlanFromInvoice($invoice);
+        $subscriptionId = $invoice->subscription ?? null;
+        $customerId = $invoice->customer ?? null;
+
+        if (! $user) {
+            return;
+        }
+
+        $localSubscription = null;
+        if ($plan && $subscriptionId) {
+            $localSubscription = $this->upsertSubscriptionFromStripe(
+                $user,
+                $plan,
+                $subscriptionId,
+                $customerId,
+                'failed'
+            );
+        }
+
+        $paymentReference = $invoice->payment_intent ?? $invoice->id;
+        $this->upsertPayment([
+            'user_id' => $user->id,
+            'subscription_id' => $localSubscription?->id,
+            'plan_id' => $plan?->id,
+            'amount' => $invoice->amount_due ? $invoice->amount_due / 100 : 0,
+            'currency' => $invoice->currency ?? null,
+            'status' => 'failed',
+            'provider_reference' => $paymentReference,
+            'payment_method' => null,
+            'metadata' => [
+                'invoice_id' => $invoice->id,
+                'subscription_id' => $subscriptionId,
+            ],
+        ]);
+
+        $this->notify($user, $notifications, 'Pago fallido', 'Tu pago no pudo completarse.', '/member/payments');
+        $this->logActivity($activity, 'payment.failed', $user, $localSubscription, [
+            'invoice_id' => $invoice->id,
+        ]);
+    }
+
+    private function handleSubscriptionEvent($subscription, ActivityLogger $activity, UserNotificationService $notifications): void
+    {
+        $user = $this->resolveUserFromSubscription($subscription);
+        $plan = $this->resolvePlanFromSubscription($subscription);
+
+        if (! $user || ! $plan) {
+            return;
+        }
+
+        $status = $this->mapStripeSubscriptionStatus($subscription->status ?? null);
+        $localSubscription = $this->upsertSubscriptionFromStripe(
+            $user,
+            $plan,
+            $subscription->id,
+            $subscription->customer ?? null,
+            $status,
+            $subscription
+        );
+
+        $message = match ($status) {
+            'active' => 'Tu suscripcion esta activa.',
+            'canceled' => 'Tu suscripcion fue cancelada.',
+            'failed' => 'Tu suscripcion tuvo un problema de cobro.',
+            default => 'Tu suscripcion fue actualizada.',
+        };
+
+        $this->notify($user, $notifications, 'Suscripcion actualizada', $message, '/member/account');
+        $this->logActivity($activity, 'subscription.updated', $user, $localSubscription, [
+            'stripe_subscription_id' => $subscription->id,
+            'status' => $status,
+        ]);
+    }
+
+    private function resolveUserFromMetadata($metadata): ?User
+    {
+        $userId = $metadata->user_id ?? null;
+        if ($userId) {
+            return User::query()->find((int) $userId);
+        }
+
+        return null;
+    }
+
+    private function resolvePlanFromMetadata($metadata): ?Plan
+    {
+        $planId = $metadata->plan_id ?? null;
+        if ($planId) {
+            return Plan::query()->find((int) $planId);
+        }
+
+        return null;
+    }
+
+    private function resolveUserFromInvoice($invoice): ?User
+    {
+        $subscriptionId = $invoice->subscription ?? null;
+        if ($subscriptionId) {
+            $localSubscription = Subscription::query()
+                ->where('provider', 'stripe')
+                ->where('provider_reference', $subscriptionId)
+                ->first();
+            if ($localSubscription) {
+                return $localSubscription->user;
+            }
+        }
+
+        $customerId = $invoice->customer ?? null;
+        if ($customerId) {
+            $localSubscription = Subscription::query()
+                ->where('provider', 'stripe')
+                ->where('provider_customer_id', $customerId)
+                ->first();
+            if ($localSubscription) {
+                return $localSubscription->user;
+            }
+        }
+
+        return null;
+    }
+
+    private function resolvePlanFromInvoice($invoice): ?Plan
+    {
+        $line = $invoice->lines->data[0] ?? null;
+        $priceId = $line?->price?->id ?? null;
+        if ($priceId) {
+            return Plan::query()->where('stripe_price_id', $priceId)->first();
+        }
+
+        return null;
+    }
+
+    private function resolveUserFromSubscription($subscription): ?User
+    {
+        $localSubscription = Subscription::query()
+            ->where('provider', 'stripe')
+            ->where('provider_reference', $subscription->id)
+            ->first();
+
+        if ($localSubscription) {
+            return $localSubscription->user;
+        }
+
+        $customerId = $subscription->customer ?? null;
+        if ($customerId) {
+            $localSubscription = Subscription::query()
+                ->where('provider', 'stripe')
+                ->where('provider_customer_id', $customerId)
+                ->first();
+            if ($localSubscription) {
+                return $localSubscription->user;
+            }
+        }
+
+        return null;
+    }
+
+    private function resolvePlanFromSubscription($subscription): ?Plan
+    {
+        $item = $subscription->items->data[0] ?? null;
+        $priceId = $item?->price?->id ?? null;
+        if ($priceId) {
+            return Plan::query()->where('stripe_price_id', $priceId)->first();
+        }
+
+        return null;
+    }
+
+    private function mapStripeSubscriptionStatus(?string $status): string
+    {
+        return match ($status) {
+            'active', 'trialing' => 'active',
+            'canceled' => 'canceled',
+            'incomplete', 'past_due', 'unpaid' => 'failed',
+            default => 'pending',
+        };
+    }
+
+    private function upsertSubscriptionFromStripe(
+        User $user,
+        Plan $plan,
+        ?string $stripeSubscriptionId,
+        ?string $customerId,
+        string $status,
+        $stripeSubscription = null
+    ): ?Subscription {
+        $subscription = null;
+
+        if ($stripeSubscriptionId) {
+            $subscription = Subscription::query()
+                ->where('provider', 'stripe')
+                ->where('provider_reference', $stripeSubscriptionId)
+                ->first();
+        }
+
+        if (! $subscription) {
+            $subscription = Subscription::query()
+                ->where('user_id', $user->id)
+                ->latest('id')
+                ->first();
+        }
+
+        $payload = [
+            'user_id' => $user->id,
+            'plan_id' => $plan->id,
+            'status' => $status,
+            'starts_at' => now(),
+            'price' => $plan->price,
+            'billing_period' => $plan->billing_period,
+            'provider' => 'stripe',
+            'provider_reference' => $stripeSubscriptionId,
+            'provider_customer_id' => $customerId,
+        ];
+
+        if ($stripeSubscription) {
+            $payload['starts_at'] = $stripeSubscription->start_date
+                ? now()->setTimestamp($stripeSubscription->start_date)
+                : $payload['starts_at'];
+            $payload['ends_at'] = $stripeSubscription->current_period_end
+                ? now()->setTimestamp($stripeSubscription->current_period_end)
+                : null;
+            $payload['trial_ends_at'] = $stripeSubscription->trial_end
+                ? now()->setTimestamp($stripeSubscription->trial_end)
+                : null;
+            $payload['canceled_at'] = $stripeSubscription->canceled_at
+                ? now()->setTimestamp($stripeSubscription->canceled_at)
+                : null;
+        }
+
+        if ($subscription) {
+            $subscription->update($payload);
+
+            return $subscription;
+        }
+
+        return Subscription::create($payload);
+    }
+
+    private function upsertPayment(array $payload): void
+    {
+        $reference = $payload['provider_reference'] ?? null;
+        if (! $reference) {
+            return;
+        }
+
+        $payment = Payment::query()
+            ->where('provider', 'stripe')
+            ->where('provider_reference', $reference)
+            ->first();
+
+        if ($payment) {
+            $payment->update([
+                'status' => $payload['status'],
+                'amount' => $payload['amount'],
+                'currency' => $payload['currency'],
+                'subscription_id' => $payload['subscription_id'],
+                'plan_id' => $payload['plan_id'],
+                'payment_method' => $payload['payment_method'],
+                'metadata' => $payload['metadata'],
+                'paid_at' => $payload['status'] === 'paid' ? now() : $payment->paid_at,
+            ]);
+
+            return;
+        }
+
+        Payment::create([
+            'user_id' => $payload['user_id'],
+            'subscription_id' => $payload['subscription_id'],
+            'plan_id' => $payload['plan_id'],
+            'amount' => $payload['amount'],
+            'currency' => $payload['currency'],
+            'status' => $payload['status'],
+            'provider' => 'stripe',
+            'provider_reference' => $reference,
+            'payment_method' => $payload['payment_method'],
+            'description' => 'Pago Stripe',
+            'paid_at' => $payload['status'] === 'paid' ? now() : null,
+            'metadata' => $payload['metadata'],
+        ]);
+    }
+
+    private function notify(User $user, UserNotificationService $notifications, string $title, string $message, string $url): void
+    {
+        $notifications->create($user, 'billing', $title, $message, $url);
+    }
+
+    private function logActivity(ActivityLogger $activity, string $event, User $user, $subject = null, array $metadata = []): void
+    {
+        $activity->log($event, [
+            'user' => $user,
+            'actor' => $user,
+            'subject' => $subject,
+            'description' => $event,
+            'metadata' => $metadata,
+        ]);
+    }
+}
