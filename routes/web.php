@@ -15,6 +15,7 @@ use App\Http\Controllers\Admin\PlanFeatureFlagController;
 use App\Http\Controllers\Admin\QueueController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\RoleController;
+use App\Http\Controllers\Admin\SecurityEventController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\SupportTicketController as AdminSupportTicketController;
 use App\Http\Controllers\Admin\SystemErrorController;
@@ -399,6 +400,13 @@ Route::prefix('admin')->middleware(['auth', 'admin_or_user:1'])->group(function 
     Route::get('/system-monitor', [SystemMonitorController::class, 'index'])
         ->middleware('permission_or_user:reports.view,1')
         ->name('admin.system-monitor.index');
+
+    Route::get('/security-events', [SecurityEventController::class, 'index'])
+        ->middleware('permission_or_user:security-events.view,1')
+        ->name('admin.security-events.index');
+    Route::get('/security-events/{event}', [SecurityEventController::class, 'show'])
+        ->middleware('permission_or_user:security-events.view,1')
+        ->name('admin.security-events.show');
 
     Route::get('/feature-flags', [FeatureFlagController::class, 'index'])
         ->middleware('permission_or_user:feature-flags.view,1')

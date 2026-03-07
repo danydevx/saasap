@@ -79,6 +79,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'feature-flags.view',
             'feature-flags.create',
             'feature-flags.update',
+            'security-events.view',
         ];
 
         foreach ($permissions as $permission) {
@@ -149,6 +150,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'feature-flags.view',
             'feature-flags.create',
             'feature-flags.update',
+            'security-events.view',
         ]);
 
         $user->givePermissionTo([]);

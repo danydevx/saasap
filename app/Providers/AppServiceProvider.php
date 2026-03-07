@@ -27,7 +27,7 @@ class AppServiceProvider extends ServiceProvider
             $key = $email !== '' ? $email.'|'.$request->ip() : $request->ip();
 
             return Limit::perMinute(5)->by($key)->response(function () use ($request) {
-                return $this->throttleResponse($request, 'Demasiados intentos. Intente de nuevo en unos minutos.', 'email');
+                return $this->throttleResponse($request, 'Demasiados intentos. Intente de nuevo en unos minutos.', 'email', false, 'login');
             });
         });
 
@@ -152,8 +152,15 @@ class AppServiceProvider extends ServiceProvider
         });
     }
 
-    private function throttleResponse(Request $request, string $message, ?string $field = null, bool $useFlash = false)
+    private function throttleResponse(Request $request, string $message, ?string $field = null, bool $useFlash = false, ?string $action = null)
     {
+        if ($action === 'login') {
+            app(\App\Services\SecurityService::class)->log('rate_limit_triggered', null, $request, 'Rate limit en login', [
+                'action' => 'login',
+                'email' => strtolower((string) $request->input('email', '')),
+            ]);
+        }
+
         if ($useFlash) {
             return back()->with('error', $message)->setStatusCode(429);
         }

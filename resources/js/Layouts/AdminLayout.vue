@@ -75,6 +75,9 @@
             <li v-if="canViewMonitor" class="nav-item">
               <Link href="/admin/system-monitor" class="nav-link" prefetch="hover">Monitor</Link>
             </li>
+            <li v-if="canViewSecurity" class="nav-item">
+              <Link href="/admin/security-events" class="nav-link" prefetch="hover">Seguridad</Link>
+            </li>
           </ul>
 
           <div class="dropdown">
@@ -136,7 +139,10 @@
               <li v-if="canViewMonitor">
                 <Link href="/admin/system-monitor" class="dropdown-item" prefetch="hover">Monitor</Link>
               </li>
-              <li v-if="canViewSettings || canViewActivity || canViewPayments || canViewCoupons || canViewInvoices || canViewSupport || canViewHelp || canViewReports || canViewExports || canViewSystemErrors || canViewApiKeys || canViewWebhooks || canViewQueues || canViewFeatureFlags || canViewMonitor"><hr class="dropdown-divider" /></li>
+              <li v-if="canViewSecurity">
+                <Link href="/admin/security-events" class="dropdown-item" prefetch="hover">Seguridad</Link>
+              </li>
+              <li v-if="canViewSettings || canViewActivity || canViewPayments || canViewCoupons || canViewInvoices || canViewSupport || canViewHelp || canViewReports || canViewExports || canViewSystemErrors || canViewApiKeys || canViewWebhooks || canViewQueues || canViewFeatureFlags || canViewMonitor || canViewSecurity"><hr class="dropdown-divider" /></li>
               <li>
                 <Link href="/logout" method="post" as="button" class="dropdown-item">
                   Salir
@@ -182,4 +188,5 @@ const canViewWebhooks = computed(() => permissions.value.includes('webhooks.view
 const canViewQueues = computed(() => permissions.value.includes('queues.view') || userId.value === 1)
 const canViewFeatureFlags = computed(() => permissions.value.includes('feature-flags.view') || userId.value === 1)
 const canViewMonitor = computed(() => permissions.value.includes('reports.view') || userId.value === 1)
+const canViewSecurity = computed(() => permissions.value.includes('security-events.view') || userId.value === 1)
 </script>

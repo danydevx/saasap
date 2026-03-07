@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ApiKey;
 use App\Services\ActivityService;
 use App\Services\FeatureService;
+use App\Services\SecurityService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
@@ -38,7 +39,7 @@ class ApiKeyController extends Controller
         ]);
     }
 
-    public function store(Request $request, ActivityService $activity, FeatureService $features)
+    public function store(Request $request, ActivityService $activity, FeatureService $features, SecurityService $security)
     {
         if (! $features->enabled($request->user(), 'can_use_api', false)) {
             return back()->withErrors(['name' => 'No tiene permiso para usar integraciones API.']);
@@ -67,6 +68,10 @@ class ApiKeyController extends Controller
             'subject' => $apiKey,
             'description' => 'API key creada',
             'request' => $request,
+        ]);
+
+        $security->log('api_key_created', $request->user(), $request, 'API key creada', [
+            'key_prefix' => $apiKey->key_prefix,
         ]);
 
         return redirect()
@@ -108,7 +113,7 @@ class ApiKeyController extends Controller
         return back()->with('success', 'API key actualizada correctamente.');
     }
 
-    public function destroy(Request $request, ApiKey $apiKey, ActivityService $activity, FeatureService $features)
+    public function destroy(Request $request, ApiKey $apiKey, ActivityService $activity, FeatureService $features, SecurityService $security)
     {
         if (! $features->enabled($request->user(), 'can_use_api', false)) {
             return back()->withErrors(['name' => 'No tiene permiso para usar integraciones API.']);
@@ -129,6 +134,10 @@ class ApiKeyController extends Controller
             'subject' => $apiKey,
             'description' => 'API key revocada',
             'request' => $request,
+        ]);
+
+        $security->log('api_key_revoked', $request->user(), $request, 'API key revocada', [
+            'key_prefix' => $apiKey->key_prefix,
         ]);
 
         return back()->with('success', 'API key revocada correctamente.');

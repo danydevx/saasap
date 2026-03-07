@@ -4,12 +4,13 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Services\ActivityService;
+use App\Services\SecurityService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class LogoutController extends Controller
 {
-    public function destroy(Request $request, ActivityService $activity)
+    public function destroy(Request $request, ActivityService $activity, SecurityService $security)
     {
         $user = $request->user();
 
@@ -21,6 +22,8 @@ class LogoutController extends Controller
                 'description' => 'Cierre de sesion',
                 'request' => $request,
             ]);
+
+            $security->log('logout', $user, $request, 'Logout');
         }
 
         Auth::logout();

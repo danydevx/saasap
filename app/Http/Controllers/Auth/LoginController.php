@@ -4,13 +4,14 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Services\ActivityService;
+use App\Services\SecurityService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 
 class LoginController extends Controller
 {
-    public function store(Request $request, ActivityService $activity)
+    public function store(Request $request, ActivityService $activity, SecurityService $security)
     {
         $credentials = $request->validate([
             'email' => ['required', 'email'],
@@ -20,6 +21,9 @@ class LoginController extends Controller
         $remember = $request->boolean('remember');
 
         if (! Auth::attempt($credentials, $remember)) {
+            $security->log('login_failed', null, $request, 'Intento de login fallido', [
+                'email' => strtolower((string) $credentials['email']),
+            ]);
             throw ValidationException::withMessages([
                 'email' => 'Las credenciales no coinciden con nuestros registros.',
             ]);
@@ -46,6 +50,8 @@ class LoginController extends Controller
             'description' => 'Inicio de sesion',
             'request' => $request,
         ]);
+
+        $security->log('login_success', $user, $request, 'Login exitoso');
 
         if ($user->hasAnyRole(['admin', 'super-admin'])) {
             return redirect()->intended(route('dashboard'));

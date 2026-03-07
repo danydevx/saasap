@@ -8,6 +8,7 @@ use App\Models\PasswordResetRequest;
 use App\Models\User;
 use App\Notifications\PasswordChangedNotification;
 use App\Services\ActivityService;
+use App\Services\SecurityService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -21,7 +22,7 @@ class PasswordResetController extends Controller
         return Inertia::render('Auth/ForgotPassword');
     }
 
-    public function sendResetLink(Request $request, ActivityService $activity)
+    public function sendResetLink(Request $request, ActivityService $activity, SecurityService $security)
     {
         $data = $request->validate([
             'email' => ['required', 'email', 'max:150'],
@@ -54,6 +55,8 @@ class PasswordResetController extends Controller
                 'description' => 'Solicitud de reset password',
                 'request' => $request,
             ]);
+
+            $security->log('password_reset_requested', $user, $request, 'Solicitud de reset password');
         }
 
         return back()->with('success', 'Si el correo existe en el sistema, te enviamos instrucciones para restablecer tu password.');
@@ -110,7 +113,7 @@ class PasswordResetController extends Controller
         ]);
     }
 
-    public function resetPassword(Request $request, string $token, ActivityService $activity)
+    public function resetPassword(Request $request, string $token, ActivityService $activity, SecurityService $security)
     {
         $reset = $this->getVerifiedReset($token);
 
@@ -139,6 +142,8 @@ class PasswordResetController extends Controller
             'description' => 'Reset password completado',
             'request' => $request,
         ]);
+
+        $security->log('password_reset_completed', $reset->user, $request, 'Reset password completado');
 
         $reset->user->notify(new PasswordChangedNotification);
 
