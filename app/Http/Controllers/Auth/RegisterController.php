@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Jobs\SendVerificationEmailJob;
+use App\Models\Invitation;
 use App\Models\User;
 use App\Models\UserProfile;
 use App\Services\ActivityService;
@@ -17,13 +18,18 @@ use Spatie\Permission\Models\Role;
 
 class RegisterController extends Controller
 {
-    public function showRegister()
+    public function showRegister(Request $request)
     {
         if (! $this->allowRegistration()) {
             return redirect('/login')->with('error', 'El registro esta deshabilitado.');
         }
 
-        return Inertia::render('Auth/Register');
+        return Inertia::render('Auth/Register', [
+            'prefill' => [
+                'email' => (string) $request->query('email', ''),
+                'invite' => (string) $request->query('invite', ''),
+            ],
+        ]);
     }
 
     public function register(Request $request, ActivityService $activity)
@@ -38,6 +44,7 @@ class RegisterController extends Controller
             'name' => ['required', 'string', 'max:150'],
             'email' => ['required', 'email', 'max:150', 'unique:users,email'],
             'password' => ['required', 'string', 'min:8', 'regex:/^(?=.*[A-Za-z])(?=.*\d).+$/', 'confirmed'],
+            'invite' => ['nullable', 'string', 'max:255'],
             'company' => ['nullable', 'string', 'max:0'],
             'form_started_at' => ['required', 'integer', 'min:0'],
         ], [
@@ -83,6 +90,37 @@ class RegisterController extends Controller
 
         if ($role) {
             $user->syncRoles([$role]);
+        }
+
+        if (! empty($data['invite'])) {
+            $invitation = Invitation::query()
+                ->where('token', hash('sha256', $data['invite']))
+                ->first();
+
+            if ($invitation && $invitation->status === 'pending') {
+                if ($invitation->isExpired()) {
+                    $invitation->update(['status' => 'expired']);
+                } elseif (strtolower($invitation->email) === strtolower($user->email)) {
+                    $invitation->update([
+                        'status' => 'accepted',
+                        'accepted_at' => now(),
+                    ]);
+
+                    if ($invitation->role_name) {
+                        $invitedRole = Role::query()->where('name', $invitation->role_name)->first();
+                        if ($invitedRole && ! in_array($invitedRole->name, ['admin', 'superadmin', 'super-admin'], true)) {
+                            $user->assignRole($invitedRole);
+                        }
+                    }
+
+                    $activity->log('invitation_accepted', [
+                        'actor' => $user,
+                        'subject' => $invitation,
+                        'description' => 'Invitacion aceptada',
+                        'request' => $request,
+                    ]);
+                }
+            }
         }
 
         SendVerificationEmailJob::dispatch($user->id);

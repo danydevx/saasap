@@ -24,6 +24,7 @@
               </a>
               <ul class="dropdown-menu">
                 <li><Link href="/admin/users" class="dropdown-item" prefetch="hover">Usuarios</Link></li>
+                <li v-if="canViewInvitations"><Link href="/admin/invitations" class="dropdown-item" prefetch="hover">Invitaciones</Link></li>
                 <li><Link href="/admin/roles" class="dropdown-item" prefetch="hover">Roles</Link></li>
                 <li><Link href="/admin/permissions" class="dropdown-item" prefetch="hover">Permisos</Link></li>
               </ul>
@@ -132,6 +133,7 @@ const canViewActivity = computed(() => permissions.value.includes('activity.view
 const canViewPayments = computed(() => permissions.value.includes('payments.view') || userId.value === 1)
 const canViewCoupons = computed(() => permissions.value.includes('coupons.view') || userId.value === 1)
 const canViewInvoices = computed(() => permissions.value.includes('invoices.view') || userId.value === 1)
+const canViewInvitations = computed(() => permissions.value.includes('invitations.view') || userId.value === 1)
 const canViewSupport = computed(() => permissions.value.includes('support.view') || userId.value === 1)
 const canViewHelp = computed(() => permissions.value.includes('help.view') || userId.value === 1)
 const canViewReports = computed(() => permissions.value.includes('reports.view') || userId.value === 1)

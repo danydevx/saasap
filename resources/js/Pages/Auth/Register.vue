@@ -139,15 +139,23 @@ const form = useForm({
   email: '',
   password: '',
   password_confirmation: '',
+  invite: '',
   company: '',
   form_started_at: 0,
 })
 
+const prefill = computed(() => page.props.prefill || {})
 const registerError = computed(() => form.errors.register || page.props.flash?.error)
 const flashSuccess = computed(() => page.props.flash?.success)
 
 onMounted(() => {
   form.form_started_at = Math.floor(Date.now() / 1000)
+  if (prefill.value.email) {
+    form.email = prefill.value.email
+  }
+  if (prefill.value.invite) {
+    form.invite = prefill.value.invite
+  }
 })
 
 const submit = () => {

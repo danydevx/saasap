@@ -7739,8 +7739,566 @@ Importante:
 - no romper auth, billing ni webhooks críticos
 
 
+=======================================================
+Instrucción 40: gestión de medios / archivos del usuario
+=======================================================
 
 
+Implementar módulo base de gestión de medios y archivos para usuarios del SaaS.
+
+Contexto:
+Ya existen auth, perfiles, suscripciones, pagos, soporte, settings, feature flags y demás base del sistema.
+Cada usuario es único.
+No hay organizaciones ni tenants.
+Se necesita una base reusable para que los usuarios puedan subir, listar y eliminar archivos dentro del SaaS.
+No romper módulos actuales.
+
+Stack:
+Laravel 12 + Inertia + Vue 3 + JavaScript + Bootstrap 5.3.
+
+Reglas:
+- No TypeScript
+- Vue con `<script setup>`
+- Solo Composition API
+- No Options API
+- No API separada fuera del flujo web actual
+- No librerías nuevas innecesarias
+- No refactorizar módulos no relacionados
+- Reutilizar estructura actual del proyecto
+- Código simple y listo para producción
+
+Objetivo:
+Permitir al usuario autenticado gestionar sus propios archivos dentro del SaaS de forma segura y reusable.
+
+Alcance de esta fase:
+- subir archivos
+- listar archivos propios
+- ver datos básicos del archivo
+- descargar o abrir archivo si aplica
+- eliminar archivo
+- validar tipo y tamaño
+- almacenar metadatos
+- preparar límites por plan y uso de storage
+
+No incluir todavía:
+- editor de imágenes
+- folders anidados complejos
+- drag and drop avanzado si no hace falta
+- procesamiento multimedia complejo
+- conversión de formatos
+- CDN avanzada
+- compartición entre usuarios
+
+Entidad:
+Crear tabla `media_files` o equivalente.
+
+Campos mínimos sugeridos:
+- id
+- user_id
+- disk string
+- path string
+- filename string
+- original_name string
+- extension nullable string
+- mime_type nullable string
+- size bigint default 0
+- type nullable string
+- visibility string default private
+- metadata json nullable
+- created_at
+- updated_at
+
+Modelo:
+- MediaFile
+
+Relaciones:
+- User hasMany MediaFile
+- MediaFile belongsTo User
+
+Importante:
+- no depender solo del nombre del archivo
+- guardar ruta real en storage
+- almacenar tamaño y mime para validaciones y listados
+- `type` puede servir para clasificar: image, document, video, other
+
+Storage:
+Usar Storage de Laravel.
+Preferencia:
+- disk configurable por entorno
+- local para desarrollo
+- preparado para S3 o equivalente después
+- no hardcodear rutas manuales
+
+Acceso:
+- solo usuario autenticado
+- cada usuario solo puede ver y gestionar sus propios archivos
+- admin podrá tener módulo separado después si hace falta
+- no exponer archivos privados de otros usuarios
+
+Rutas member:
+- GET /member/files
+- POST /member/files
+- GET /member/files/{file}
+- GET /member/files/{file}/download
+- DELETE /member/files/{file}
+
+Controlador:
+- Member/MediaFileController
+
+Métodos:
+- index()
+- store()
+- show()
+- download()
+- destroy()
+
+Vista:
+- resources/js/Pages/Member/Files/Index.vue
+- resources/js/Pages/Member/Files/Show.vue optional si hace sentido
+
+Layout:
+- usar layout member
+- no usar layout admin
+
+Formulario de carga:
+Campos mínimos:
+- file
+- opcionalmente label/name si más adelante hace falta
+- opcionalmente type si el negocio lo necesita
+
+Validaciones backend:
+- file required|file|max:tamaño definido
+- validar mime types permitidos
+- opcionalmente validar extensiones permitidas
+- no confiar en frontend para tipo o tamaño
+
+Tipos permitidos iniciales sugeridos:
+- imágenes comunes
+- pdf
+- documentos office básicos
+- txt
+Puedes ajustar según el SaaS, pero mantener una lista clara y segura.
+
+Ejemplo conceptual:
+- image/jpeg
+- image/png
+- image/webp
+- application/pdf
+- application/msword
+- application/vnd.openxmlformats-officedocument.wordprocessingml.document
+
+Tamaño máximo:
+Definir tamaño razonable inicial, por ejemplo:
+- 5MB
+- 10MB
+o según Settings/plan si ya existe base para eso
+
+Comportamiento:
+Al subir archivo:
+- validar archivo
+- guardar físicamente en storage
+- guardar metadatos en BD
+- asociar al user autenticado
+- devolver success
+
+Al listar:
+- mostrar archivos del usuario autenticado
+- paginación por servidor
+- búsqueda simple opcional por nombre si encaja fácilmente
+- ordenar por más recientes
+
+Al descargar:
+- validar propiedad del archivo
+- servir descarga segura desde backend
+- no exponer rutas internas sin control
+
+Al eliminar:
+- borrar archivo físico
+- borrar registro BD
+- mostrar success
+- manejar casos donde el archivo físico ya no exista sin romper el sistema
+
+Datos a mostrar en listado:
+- original_name
+- type
+- mime_type
+- extension
+- size
+- created_at
+- acciones: ver, descargar, eliminar
+
+UI:
+- usar Inertia
+- usar Bootstrap 5.3
+- cards o tabla simple
+- input file claro
+- listado limpio
+- usar toast success/error
+- usar ConfirmDialog para eliminar si ya existe
+- usar paginación por servidor
+
+Visibilidad:
+Por ahora preferencia:
+- archivos privados por defecto
+- acceso solo por backend validando usuario
+- no usar URLs públicas directas salvo que el caso lo necesite
+
+Integración con límites por plan:
+Si ya existe sistema de límites/features:
+- preparar validaciones para:
+  - can_upload_files
+  - max_storage_mb
+  - max_files
+- si ya existe FeatureService o LimitService, integrarlo
+- si aún no está listo, dejar la base preparada
+
+Cálculo de uso:
+Preparar posibilidad de conocer:
+- total de archivos del usuario
+- total de almacenamiento usado
+Esto servirá para:
+- dashboard
+- límites por plan
+- reportes futuros
+
+Activity log:
+Si ya existe:
+- registrar:
+  - archivo subido
+  - archivo eliminado
+  - archivo descargado opcionalmente si hace sentido
+
+System errors:
+Si ya existe:
+- registrar fallas reales de storage solo cuando corresponda
+- no saturar logs con ruido innecesario
+
+Seguridad:
+- validar propiedad en cada acción
+- no aceptar user_id editable desde frontend
+- usar `auth()->user()`
+- no exponer archivos de otros usuarios
+- no confiar en el nombre del archivo
+- sanitizar nombres si hace falta
+- evitar path traversal
+- servir descargas de forma segura
+
+Integración:
+- revisar si ya existe manejo parcial de uploads o files
+- si existe, adaptarse
+- si no existe, crear solución mínima reusable
+- agregar acceso desde menú member si corresponde
+- no romper profile, support ni otros módulos actuales
+
+Mensajes esperados:
+- "Archivo subido correctamente."
+- "Archivo eliminado correctamente."
+- "No tiene permiso para acceder a este archivo."
+- "El archivo supera el tamaño permitido."
+- "El tipo de archivo no está permitido."
+
+Importante:
+- generar solo archivos necesarios
+- no agregar archivos innecesarios
+- mantener implementación simple y extensible
+- dejar base lista para futuros adjuntos, imágenes, documentos y límites por plan
+
+=================================================================
+Instrucción 41: sistema de invitaciones internas
+===================================================================
+
+Implementar sistema base de invitaciones internas para el SaaS.
+
+Contexto:
+Ya existen auth, usuarios, roles, member dashboard, suscripciones, pagos, archivos y demás base del sistema.
+Cada usuario es único.
+No hay organizaciones ni tenants.
+Se necesita permitir enviar invitaciones controladas por email para acceso a flujos específicos del sistema.
+No romper módulos actuales.
+
+Stack:
+Laravel 12 + Inertia + Vue 3 + JavaScript + Bootstrap 5.3.
+
+Reglas:
+- No TypeScript
+- Vue con `<script setup>`
+- Solo Composition API
+- No Options API
+- No API separada fuera del flujo web actual
+- No librerías nuevas innecesarias
+- No refactorizar módulos no relacionados
+- Reutilizar estructura actual del proyecto
+- Código simple y listo para producción
+
+Objetivo:
+Permitir crear, enviar, aceptar y controlar invitaciones por email dentro del SaaS.
+
+Alcance de esta fase:
+- crear invitación
+- enviar invitación por email
+- token seguro de invitación
+- expiración
+- estados de invitación
+- aceptación de invitación
+- impedir reutilización
+- base lista para futuras invitaciones a módulos, betas o accesos especiales
+
+No incluir todavía:
+- invitaciones masivas complejas
+- importación CSV de invitaciones
+- asignación a organizaciones
+- flujos multi-tenant
+- roles múltiples por invitación avanzada
+- campañas de referidos
+
+Casos de uso iniciales sugeridos:
+- invitar a un usuario a registrarse
+- invitar a un usuario a activar una feature
+- invitar a una beta o módulo específico
+- invitar a completar registro con contexto predefinido
+
+Entidad:
+Crear tabla `invitations` o equivalente.
+
+Campos mínimos sugeridos:
+- id
+- email
+- token
+- invited_by_user_id nullable
+- role_name nullable
+- status string
+- expires_at nullable timestamp
+- accepted_at nullable timestamp
+- revoked_at nullable timestamp
+- metadata json nullable
+- created_at
+- updated_at
+
+Modelo:
+- Invitation
+
+Relaciones:
+- Invitation belongsTo User as invitedBy nullable usando invited_by_user_id
+
+Importante:
+- token debe ser seguro, largo y único
+- no reutilizar invitaciones ya aceptadas o revocadas
+- permitir metadata para crecer después sin romper estructura
+
+Estados sugeridos:
+- pending
+- accepted
+- expired
+- revoked
+
+Campos opcionales útiles en metadata:
+- redirect_to
+- feature_flag
+- default_plan_id
+- message personalizada
+- contexto del flujo que originó la invitación
+
+Acceso:
+Definir si las invitaciones las puede crear:
+- solo admin/superadmin
+o
+- también usuarios member según feature/plan
+
+Preferencia inicial:
+- admin/superadmin crean invitaciones
+- dejar estructura preparada para member después
+
+Permisos sugeridos:
+- invitations.view
+- invitations.create
+- invitations.update
+- invitations.revoke
+
+Rutas admin:
+- GET /admin/invitations
+- GET /admin/invitations/create
+- POST /admin/invitations
+- GET /admin/invitations/{invitation}
+- PUT /admin/invitations/{invitation}/revoke
+- POST /admin/invitations/{invitation}/resend
+
+Controlador admin:
+- Admin/InvitationController
+
+Métodos:
+- index()
+- create()
+- store()
+- show()
+- revoke()
+- resend()
+
+Vistas admin:
+- resources/js/Pages/Admin/Invitations/Index.vue
+- resources/js/Pages/Admin/Invitations/Create.vue
+- resources/js/Pages/Admin/Invitations/Show.vue
+
+Campos admin para crear invitación:
+- email
+- role_name optional
+- expires_at optional
+- message optional
+- redirect_to optional
+- default_plan_id optional si encaja
+- feature_flag optional si encaja
+
+Validaciones backend:
+- email required|email|max:150
+- role_name nullable|string|max:100
+- expires_at nullable|date|after:now
+- message nullable|string|max:500
+- redirect_to nullable|string|max:255
+- default_plan_id nullable|exists:plans,id
+
+Reglas:
+- no crear invitación duplicada activa para el mismo email si esa es la regla elegida
+- si ya existe invitación pending vigente para ese email, decidir si:
+  - bloquear nueva
+  - o regenerar y reenviar
+- mantener criterio claro y consistente
+
+Correo:
+Al crear invitación:
+- enviar email con link seguro
+- incluir fecha de expiración si existe
+- incluir mensaje simple
+- usar sistema de emails transaccionales y branding actual
+
+Ruta pública de aceptación:
+- GET /invite/{token}
+
+Opcional:
+- POST /invite/{token}/accept si hace falta confirmación adicional
+- usar el patrón que mejor encaje con el flujo actual
+
+Controlador público/auth:
+- InvitationAcceptController o equivalente
+
+Métodos:
+- show()
+- accept() si aplica
+
+Vista pública:
+- resources/js/Pages/Auth/Invitation/Accept.vue
+o equivalente
+
+Flujo esperado:
+Caso 1: email invitado no tiene cuenta
+- abre link
+- sistema valida token y expiración
+- muestra pantalla de aceptación
+- redirige al registro con email precargado o flujo específico
+- al completar registro, marca invitación como aceptada
+
+Caso 2: email invitado ya tiene cuenta
+- abre link
+- sistema valida token
+- si ya está autenticado con el mismo email, puede aceptar directamente
+- si no está autenticado, pedir login
+- al aceptar, marcar invitación como aceptada
+
+Caso 3: token inválido, vencido o revocado
+- mostrar mensaje claro
+- no permitir continuar
+
+Reglas de aceptación:
+- validar token
+- validar estado pending
+- validar expiración
+- si aplica, validar email correcto
+- marcar accepted_at y status accepted
+- impedir segundo uso
+
+Integración con registro:
+Si el invitado aún no tiene cuenta:
+- permitir precargar email en registro
+- opcionalmente bloquear edición del email invitado si así conviene
+- no romper flujo actual de registro, verificación y activación
+
+Integración con roles:
+Si `role_name` viene en invitación:
+- aplicarlo al completar aceptación solo si encaja con reglas del sistema
+- no otorgar permisos peligrosos sin validación clara
+- preferir uso controlado, por ejemplo roles no administrativos o accesos específicos
+
+Integración con features:
+Si metadata trae `feature_flag` o `default_plan_id`:
+- dejar base preparada para usarlo
+- no complicar demasiado esta fase
+- primero asegurar invitación y aceptación correctas
+
+UI admin:
+- usar layout admin
+- usar PageTitle
+- usar Breadcrumb
+- usar Searchbar si ya existe
+- tabla simple con paginación por servidor
+- mostrar:
+  - email
+  - estado
+  - expiración
+  - invitado por
+  - fecha
+  - acciones
+
+UI pública:
+- pantalla clara
+- mensaje simple
+- branding del sistema
+- CTA claro:
+  - aceptar invitación
+  - ir a login
+  - crear cuenta
+
+Paginación:
+- por servidor en admin
+
+Actividad:
+Si ya existe activity log:
+- registrar:
+  - invitación creada
+  - invitación reenviada
+  - invitación revocada
+  - invitación aceptada
+
+Security events:
+Si ya existe auditoría de seguridad:
+- opcional registrar uso inválido repetido de tokens si hace sentido
+- no generar ruido innecesario
+
+System errors:
+- registrar fallos reales de envío o aceptación solo cuando corresponda
+- no romper la app si falla el correo; manejar mensaje claro
+
+Seguridad:
+- token seguro y único
+- validar expiración en backend
+- no confiar en frontend
+- no exponer información sensible de invitaciones ajenas
+- no permitir reutilización
+- sanitizar metadata si aplica
+- proteger acciones admin con permisos
+
+Mensajes esperados:
+- "Invitación creada correctamente."
+- "La invitación fue enviada correctamente."
+- "La invitación fue revocada."
+- "La invitación ha expirado."
+- "La invitación ya fue utilizada."
+- "Invitación aceptada correctamente."
+
+Importante:
+- revisar si ya existe algún flujo parcial de invitaciones o enlaces firmados
+- si existe, adaptarse
+- si no existe, crear solución mínima reusable
+- generar solo archivos necesarios
+- no agregar archivos innecesarios
+- mantener implementación simple y extensible
 
 
 

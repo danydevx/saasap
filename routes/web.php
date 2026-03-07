@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\ExportController;
 use App\Http\Controllers\Admin\FeatureFlagController;
 use App\Http\Controllers\Admin\HelpArticleController;
+use App\Http\Controllers\Admin\InvitationController;
 use App\Http\Controllers\Admin\InvoiceController as AdminInvoiceController;
 use App\Http\Controllers\Admin\PaymentController;
 use App\Http\Controllers\Admin\PermissionController;
@@ -24,6 +25,7 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\UserProfileController;
 use App\Http\Controllers\Admin\WebhookController as AdminWebhookController;
 use App\Http\Controllers\Auth\EmailVerificationController;
+use App\Http\Controllers\Auth\InvitationAcceptController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\Auth\PasswordResetController;
@@ -82,6 +84,9 @@ Route::post('/stripe/webhook', [StripeWebhookController::class, 'handle'])->name
 Route::get('/register', [RegisterController::class, 'showRegister'])
     ->middleware('guest')
     ->name('register');
+
+Route::get('/invite/{token}', [InvitationAcceptController::class, 'show'])->name('invite.show');
+Route::post('/invite/{token}/accept', [InvitationAcceptController::class, 'accept'])->name('invite.accept');
 
 Route::post('/login', [LoginController::class, 'store'])
     ->middleware(['guest', 'throttle:login'])
@@ -355,6 +360,25 @@ Route::prefix('admin')->middleware(['auth', 'admin_or_user:1'])->group(function 
     Route::post('/users/{user}/resend-verification', [UserController::class, 'resendVerification'])
         ->middleware('permission_or_user:users.resend_verification,1')
         ->name('admin.users.resend-verification');
+
+    Route::get('/invitations', [InvitationController::class, 'index'])
+        ->middleware('permission_or_user:invitations.view,1')
+        ->name('admin.invitations.index');
+    Route::get('/invitations/create', [InvitationController::class, 'create'])
+        ->middleware('permission_or_user:invitations.create,1')
+        ->name('admin.invitations.create');
+    Route::post('/invitations', [InvitationController::class, 'store'])
+        ->middleware('permission_or_user:invitations.create,1')
+        ->name('admin.invitations.store');
+    Route::get('/invitations/{invitation}', [InvitationController::class, 'show'])
+        ->middleware('permission_or_user:invitations.view,1')
+        ->name('admin.invitations.show');
+    Route::put('/invitations/{invitation}/revoke', [InvitationController::class, 'revoke'])
+        ->middleware('permission_or_user:invitations.revoke,1')
+        ->name('admin.invitations.revoke');
+    Route::post('/invitations/{invitation}/resend', [InvitationController::class, 'resend'])
+        ->middleware('permission_or_user:invitations.update,1')
+        ->name('admin.invitations.resend');
 
     Route::get('/roles', [RoleController::class, 'index'])->name('admin.roles.index');
     Route::get('/roles/create', [RoleController::class, 'create'])->name('admin.roles.create');
