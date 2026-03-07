@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Jobs\SendVerificationEmailJob;
 use App\Notifications\WelcomeNotification;
 use App\Services\ActivityService;
+use App\Services\NotificationPreferenceService;
 use App\Services\UserNotificationService;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\Request;
@@ -23,7 +24,7 @@ class EmailVerificationController extends Controller
         return Inertia::render('Auth/VerifyEmail');
     }
 
-    public function verify(EmailVerificationRequest $request, ActivityService $activity, UserNotificationService $notifications)
+    public function verify(EmailVerificationRequest $request, ActivityService $activity, UserNotificationService $notifications, NotificationPreferenceService $preferences)
     {
         $request->fulfill();
 
@@ -59,13 +60,15 @@ class EmailVerificationController extends Controller
 
         $notifications->create(
             $user,
-            'account',
+            'product',
             'Email verificado',
             'Tu email fue verificado correctamente.',
             '/member'
         );
 
-        $user->notify(new WelcomeNotification);
+        if ($preferences->allows($user, 'product', 'email')) {
+            $user->notify(new WelcomeNotification);
+        }
 
         if ($request->session()->has('selected_plan_id')) {
             return redirect('/member/plan-selection')

@@ -14,7 +14,12 @@ class UserNotificationService
         ?string $message = null,
         ?string $url = null,
         ?array $metadata = null
-    ): UserNotification {
+    ): ?UserNotification {
+        $preferences = app(NotificationPreferenceService::class);
+        if (! $preferences->allows($user, $type, 'in_app')) {
+            return null;
+        }
+
         return UserNotification::create([
             'user_id' => $user->id,
             'type' => $type,

@@ -8,6 +8,7 @@ use App\Models\PasswordResetRequest;
 use App\Models\User;
 use App\Notifications\PasswordChangedNotification;
 use App\Services\ActivityService;
+use App\Services\NotificationPreferenceService;
 use App\Services\SecurityService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -113,7 +114,7 @@ class PasswordResetController extends Controller
         ]);
     }
 
-    public function resetPassword(Request $request, string $token, ActivityService $activity, SecurityService $security)
+    public function resetPassword(Request $request, string $token, ActivityService $activity, SecurityService $security, NotificationPreferenceService $preferences)
     {
         $reset = $this->getVerifiedReset($token);
 
@@ -145,7 +146,9 @@ class PasswordResetController extends Controller
 
         $security->log('password_reset_completed', $reset->user, $request, 'Reset password completado');
 
-        $reset->user->notify(new PasswordChangedNotification);
+        if ($preferences->allows($reset->user, 'security', 'email')) {
+            $reset->user->notify(new PasswordChangedNotification);
+        }
 
         return redirect('/login')->with('success', 'Tu password fue actualizada correctamente. Ya puedes iniciar sesion.');
     }

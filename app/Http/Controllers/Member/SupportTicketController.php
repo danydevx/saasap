@@ -91,7 +91,7 @@ class SupportTicketController extends Controller
 
         $notifications->create(
             $request->user(),
-            'system',
+            'support',
             'Ticket creado',
             'Tu ticket fue creado correctamente.',
             '/member/support/'.$ticket->id
@@ -177,7 +177,7 @@ class SupportTicketController extends Controller
 
         $notifications->create(
             $request->user(),
-            'system',
+            'support',
             'Respuesta enviada',
             'Tu respuesta fue enviada.',
             '/member/support/'.$ticket->id

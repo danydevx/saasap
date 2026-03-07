@@ -42,6 +42,11 @@ class User extends Authenticatable implements MustVerifyEmailContract
         return $this->hasMany(UserNotification::class);
     }
 
+    public function notificationPreferences(): HasMany
+    {
+        return $this->hasMany(UserNotificationPreference::class);
+    }
+
     public function payments(): HasMany
     {
         return $this->hasMany(Payment::class);

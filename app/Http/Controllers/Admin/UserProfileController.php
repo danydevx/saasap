@@ -81,7 +81,7 @@ class UserProfileController extends Controller
 
         $notifications->create(
             $user,
-            'profile',
+            'product',
             'Perfil actualizado',
             'Tus datos de perfil fueron actualizados.',
             '/profile'

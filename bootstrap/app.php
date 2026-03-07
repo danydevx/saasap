@@ -3,6 +3,7 @@
 use App\Http\Middleware\ApiKeyAuth;
 use App\Http\Middleware\CheckMaintenanceMode;
 use App\Http\Middleware\EnsureAdminOrUser;
+use App\Http\Middleware\EnsureLegalDocumentsAccepted;
 use App\Http\Middleware\EnsurePermissionOrUser;
 use App\Http\Middleware\EnsureUserActive;
 use App\Http\Middleware\HandleInertiaRequests;
@@ -29,6 +30,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             CheckMaintenanceMode::class,
             HandleInertiaRequests::class,
+            EnsureLegalDocumentsAccepted::class,
         ]);
 
         $middleware->validateCsrfTokens(except: [

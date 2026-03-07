@@ -318,7 +318,7 @@ class UserController extends Controller
 
             $notifications->create(
                 $user,
-                'subscription',
+                'billing',
                 'Suscripcion actualizada',
                 'Tu suscripcion fue actualizada por un administrador.',
                 '/member'
@@ -375,7 +375,7 @@ class UserController extends Controller
 
         $notifications->create(
             $user,
-            'account',
+            'product',
             'Cuenta activada',
             'Tu cuenta fue activada por un administrador.',
             '/member'
@@ -404,7 +404,7 @@ class UserController extends Controller
 
         $notifications->create(
             $user,
-            'account',
+            'product',
             'Cuenta desactivada',
             'Tu cuenta fue desactivada por un administrador.',
             '/member'

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Member;
 use App\Http\Controllers\Controller;
 use App\Notifications\PasswordChangedNotification;
 use App\Services\ActivityService;
+use App\Services\NotificationPreferenceService;
 use App\Services\SecurityService;
 use App\Services\UserNotificationService;
 use App\Services\WebhookService;
@@ -20,7 +21,7 @@ class PasswordController extends Controller
         return Inertia::render('Member/Password/Edit');
     }
 
-    public function update(Request $request, ActivityService $activity, UserNotificationService $notifications, WebhookService $webhooks, SecurityService $security)
+    public function update(Request $request, ActivityService $activity, UserNotificationService $notifications, WebhookService $webhooks, SecurityService $security, NotificationPreferenceService $preferences)
     {
         $data = $request->validate([
             'current_password' => ['required', 'string'],
@@ -63,7 +64,9 @@ class PasswordController extends Controller
             '/member/password'
         );
 
-        $user->notify(new PasswordChangedNotification);
+        if ($preferences->allows($user, 'security', 'email')) {
+            $user->notify(new PasswordChangedNotification);
+        }
 
         return back()->with('success', 'Password actualizada correctamente.');
     }

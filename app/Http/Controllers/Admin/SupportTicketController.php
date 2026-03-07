@@ -145,7 +145,7 @@ class SupportTicketController extends Controller
         if ($ticket->user) {
             $notifications->create(
                 $ticket->user,
-                'system',
+                'support',
                 'Respuesta de soporte',
                 'Tienes una respuesta a tu ticket.',
                 '/member/support/'.$ticket->id

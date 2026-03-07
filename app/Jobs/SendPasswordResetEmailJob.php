@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\User;
 use App\Notifications\PasswordResetCodeNotification;
+use App\Services\NotificationPreferenceService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -27,6 +28,9 @@ class SendPasswordResetEmailJob implements ShouldQueue
             return;
         }
 
-        $user->notify(new PasswordResetCodeNotification($this->token, $this->code));
+        $preferences = app(NotificationPreferenceService::class);
+        if ($preferences->allows($user, 'security', 'email')) {
+            $user->notify(new PasswordResetCodeNotification($this->token, $this->code));
+        }
     }
 }

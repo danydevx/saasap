@@ -40,6 +40,7 @@ use App\Http\Controllers\Member\HelpArticleController as MemberHelpArticleContro
 use App\Http\Controllers\Member\InvoiceController as MemberInvoiceController;
 use App\Http\Controllers\Member\MediaFileController as MemberMediaFileController;
 use App\Http\Controllers\Member\NotificationController;
+use App\Http\Controllers\Member\NotificationPreferenceController;
 use App\Http\Controllers\Member\OnboardingController;
 use App\Http\Controllers\Member\PasswordController;
 use App\Http\Controllers\Member\PaymentController as MemberPaymentController;
@@ -87,6 +88,13 @@ Route::get('/register', [RegisterController::class, 'showRegister'])
 
 Route::get('/invite/{token}', [InvitationAcceptController::class, 'show'])->name('invite.show');
 Route::post('/invite/{token}/accept', [InvitationAcceptController::class, 'accept'])->name('invite.accept');
+
+Route::get('/legal/accept', [LegalAcceptanceController::class, 'show'])
+    ->middleware('auth')
+    ->name('legal.accept');
+Route::post('/legal/accept', [LegalAcceptanceController::class, 'store'])
+    ->middleware('auth')
+    ->name('legal.accept.store');
 
 Route::post('/login', [LoginController::class, 'store'])
     ->middleware(['guest', 'throttle:login'])
@@ -197,6 +205,13 @@ Route::put('/member/notifications/{notification}/read', [NotificationController:
 Route::put('/member/notifications/read-all', [NotificationController::class, 'markAllAsRead'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.notifications.read-all');
+
+Route::get('/member/notification-preferences', [NotificationPreferenceController::class, 'edit'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.notification-preferences.edit');
+Route::put('/member/notification-preferences', [NotificationPreferenceController::class, 'update'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.notification-preferences.update');
 
 Route::get('/member/activity', [MemberActivityController::class, 'index'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
@@ -379,6 +394,25 @@ Route::prefix('admin')->middleware(['auth', 'admin_or_user:1'])->group(function 
     Route::post('/invitations/{invitation}/resend', [InvitationController::class, 'resend'])
         ->middleware('permission_or_user:invitations.update,1')
         ->name('admin.invitations.resend');
+
+    Route::get('/legal-documents', [LegalDocumentController::class, 'index'])
+        ->middleware('permission_or_user:legal-documents.view,1')
+        ->name('admin.legal-documents.index');
+    Route::get('/legal-documents/create', [LegalDocumentController::class, 'create'])
+        ->middleware('permission_or_user:legal-documents.create,1')
+        ->name('admin.legal-documents.create');
+    Route::post('/legal-documents', [LegalDocumentController::class, 'store'])
+        ->middleware('permission_or_user:legal-documents.create,1')
+        ->name('admin.legal-documents.store');
+    Route::get('/legal-documents/{document}', [LegalDocumentController::class, 'show'])
+        ->middleware('permission_or_user:legal-documents.view,1')
+        ->name('admin.legal-documents.show');
+    Route::get('/legal-documents/{document}/edit', [LegalDocumentController::class, 'edit'])
+        ->middleware('permission_or_user:legal-documents.update,1')
+        ->name('admin.legal-documents.edit');
+    Route::put('/legal-documents/{document}', [LegalDocumentController::class, 'update'])
+        ->middleware('permission_or_user:legal-documents.update,1')
+        ->name('admin.legal-documents.update');
 
     Route::get('/roles', [RoleController::class, 'index'])->name('admin.roles.index');
     Route::get('/roles/create', [RoleController::class, 'create'])->name('admin.roles.create');

@@ -78,6 +78,7 @@
                 <li v-if="canViewSecurity"><Link href="/admin/security-events" class="dropdown-item" prefetch="hover">Seguridad</Link></li>
                 <li v-if="canViewSystemErrors"><Link href="/admin/system-errors" class="dropdown-item" prefetch="hover">Errores</Link></li>
                 <li v-if="canViewFeatureFlags"><Link href="/admin/feature-flags" class="dropdown-item" prefetch="hover">Feature Flags</Link></li>
+                <li v-if="canViewLegalDocuments"><Link href="/admin/legal-documents" class="dropdown-item" prefetch="hover">Legales</Link></li>
                 <li v-if="canViewSettings"><Link href="/admin/settings" class="dropdown-item" prefetch="hover">Settings</Link></li>
               </ul>
             </li>
@@ -145,6 +146,7 @@ const canViewQueues = computed(() => permissions.value.includes('queues.view') |
 const canViewFeatureFlags = computed(() => permissions.value.includes('feature-flags.view') || userId.value === 1)
 const canViewMonitor = computed(() => permissions.value.includes('reports.view') || userId.value === 1)
 const canViewSecurity = computed(() => permissions.value.includes('security-events.view') || userId.value === 1)
+const canViewLegalDocuments = computed(() => permissions.value.includes('legal-documents.view') || userId.value === 1)
 
 const showBillingMenu = computed(() =>
   canViewPlans.value || canViewCoupons.value || canViewPayments.value || canViewInvoices.value
@@ -159,6 +161,7 @@ const showSystemMenu = computed(() =>
   canViewSecurity.value ||
   canViewSystemErrors.value ||
   canViewFeatureFlags.value ||
+  canViewLegalDocuments.value ||
   canViewSettings.value
 )
 </script>
