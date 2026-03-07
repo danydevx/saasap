@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\ActivityLogController;
 use App\Http\Controllers\Admin\CouponController;
+use App\Http\Controllers\Admin\HelpArticleController;
 use App\Http\Controllers\Admin\InvoiceController as AdminInvoiceController;
 use App\Http\Controllers\Admin\PaymentController;
 use App\Http\Controllers\Admin\PermissionController;
@@ -20,6 +21,7 @@ use App\Http\Controllers\Member\AccountController;
 use App\Http\Controllers\Member\BillingController;
 use App\Http\Controllers\Member\CheckoutController;
 use App\Http\Controllers\Member\DashboardController;
+use App\Http\Controllers\Member\HelpArticleController as MemberHelpArticleController;
 use App\Http\Controllers\Member\InvoiceController as MemberInvoiceController;
 use App\Http\Controllers\Member\NotificationController;
 use App\Http\Controllers\Member\OnboardingController;
@@ -192,6 +194,13 @@ Route::post('/member/support/{ticket}/reply', [MemberSupportTicketController::cl
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.support.reply');
 
+Route::get('/member/help', [MemberHelpArticleController::class, 'index'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.help.index');
+Route::get('/member/help/{slug}', [MemberHelpArticleController::class, 'show'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.help.show');
+
 Route::get('/profile', [UserProfileController::class, 'edit'])
     ->middleware('auth')
     ->name('profile.edit');
@@ -330,6 +339,25 @@ Route::prefix('admin')->middleware(['auth', 'admin_or_user:1'])->group(function 
     Route::put('/support/{ticket}', [AdminSupportTicketController::class, 'update'])
         ->middleware('permission_or_user:support.update,1')
         ->name('admin.support.update');
+
+    Route::get('/help', [HelpArticleController::class, 'index'])
+        ->middleware('permission_or_user:help.view,1')
+        ->name('admin.help.index');
+    Route::get('/help/create', [HelpArticleController::class, 'create'])
+        ->middleware('permission_or_user:help.create,1')
+        ->name('admin.help.create');
+    Route::post('/help', [HelpArticleController::class, 'store'])
+        ->middleware('permission_or_user:help.create,1')
+        ->name('admin.help.store');
+    Route::get('/help/{article}/edit', [HelpArticleController::class, 'edit'])
+        ->middleware('permission_or_user:help.update,1')
+        ->name('admin.help.edit');
+    Route::put('/help/{article}', [HelpArticleController::class, 'update'])
+        ->middleware('permission_or_user:help.update,1')
+        ->name('admin.help.update');
+    Route::delete('/help/{article}', [HelpArticleController::class, 'destroy'])
+        ->middleware('permission_or_user:help.delete,1')
+        ->name('admin.help.destroy');
 
 });
 

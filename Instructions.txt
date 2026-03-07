@@ -3349,7 +3349,7 @@ Importante:
 - mantener implementación simple y extensible
 
 ===================================================
-
+Instrucción 19: facturas / comprobantes de pago para el usuario
 ======================================================
 
 Implementar módulo base de facturas o comprobantes de pago para usuarios `member` y consulta administrativa.
@@ -3586,3 +3586,782 @@ Importante:
 - generar solo archivos necesarios
 - no agregar archivos innecesarios
 - no romper payments, subscriptions, webhooks ni member billing
+
+================================================================
+Instrucción 20: soporte / tickets internos del usuario
+================================================================
+
+Implementar módulo base de soporte o tickets internos para usuarios `member` y atención administrativa.
+
+Contexto:
+Ya existen auth, dashboards separados, perfil, suscripciones, billing, pagos, comprobantes y notificaciones.
+Cada usuario es único.
+No hay organizaciones ni tenants.
+Se necesita un canal interno simple para que el usuario pueda solicitar ayuda y el admin pueda dar seguimiento.
+No romper módulos actuales.
+
+Stack:
+Laravel 12 + Inertia + Vue 3 + JavaScript + Bootstrap 5.3.
+
+Reglas:
+- No TypeScript
+- Vue con `<script setup>`
+- Solo Composition API
+- No Options API
+- No API separada fuera del flujo web actual
+- No librerías nuevas innecesarias
+- No refactorizar módulos no relacionados
+- Reutilizar estructura visual actual
+- Código simple y listo para producción
+
+Objetivo:
+Permitir que el usuario `member` cree tickets de soporte y que `admin/superadmin` los gestione desde el panel.
+
+Alcance de esta fase:
+- crear ticket
+- listar tickets del usuario autenticado
+- ver detalle del ticket
+- responder ticket internamente
+- admin puede cambiar estado y responder
+- mantener historial simple de conversación
+- notificar cambios importantes si ya existe sistema de notificaciones internas
+
+No incluir todavía:
+- chat en tiempo real
+- asignación compleja entre agentes
+- SLA avanzado
+- prioridades automáticas con IA
+- adjuntos complejos si no hacen falta
+- base de conocimiento pública
+
+Entidades requeridas:
+
+1. SupportTicket
+Campos mínimos sugeridos:
+- id
+- user_id
+- subject
+- message nullable
+- status string
+- priority string nullable
+- category nullable string
+- last_reply_at nullable timestamp
+- closed_at nullable timestamp
+- created_at
+- updated_at
+
+Estados sugeridos:
+- open
+- pending
+- answered
+- closed
+
+Prioridades sugeridas:
+- low
+- medium
+- high
+
+2. SupportTicketMessage
+Campos mínimos sugeridos:
+- id
+- support_ticket_id
+- user_id nullable
+- is_admin boolean default false
+- message text
+- created_at
+- updated_at
+
+Concepto:
+- el ticket guarda resumen general
+- los mensajes guardan la conversación
+- `is_admin` indica si el mensaje fue enviado por admin/staff
+- `user_id` identifica al autor cuando aplique
+
+Modelos:
+- SupportTicket
+- SupportTicketMessage
+
+Relaciones:
+- User hasMany SupportTicket
+- SupportTicket belongsTo User
+- SupportTicket hasMany SupportTicketMessage
+- SupportTicketMessage belongsTo SupportTicket
+- SupportTicketMessage belongsTo User nullable
+
+Permisos sugeridos:
+- support.view
+- support.reply
+- support.update
+- support.close
+
+Member area:
+Permitir al usuario final:
+- crear ticket
+- ver sus tickets
+- ver detalle
+- responder en tickets abiertos
+- no ver tickets de otros usuarios
+
+Rutas member sugeridas:
+- GET /member/support
+- GET /member/support/create
+- POST /member/support
+- GET /member/support/{ticket}
+- POST /member/support/{ticket}/reply
+
+Controlador member:
+- Member/SupportTicketController
+Métodos:
+- index()
+- create()
+- store()
+- show()
+- reply()
+
+Vistas member:
+- resources/js/Pages/Member/Support/Index.vue
+- resources/js/Pages/Member/Support/Create.vue
+- resources/js/Pages/Member/Support/Show.vue
+
+Campos al crear ticket:
+- subject
+- category
+- priority
+- message inicial
+
+Validaciones backend member:
+- subject required|string|max:150
+- category nullable|string|max:100
+- priority nullable|in:low,medium,high
+- message required|string|max:5000
+
+Validación reply:
+- message required|string|max:5000
+
+Comportamiento member:
+- al crear ticket:
+  - crear SupportTicket
+  - crear primer SupportTicketMessage con mensaje inicial
+  - status inicial = open
+  - last_reply_at = now()
+- al responder:
+  - solo en tickets permitidos
+  - agregar mensaje
+  - actualizar last_reply_at
+  - opcionalmente cambiar status a `pending` o `open` según regla elegida
+
+Admin area:
+Permitir a admin/superadmin:
+- ver todos los tickets
+- filtrar por estado, prioridad, categoría y usuario
+- ver detalle completo
+- responder
+- cambiar estado
+- cerrar ticket
+
+Rutas admin sugeridas:
+- GET /admin/support
+- GET /admin/support/{ticket}
+- POST /admin/support/{ticket}/reply
+- PUT /admin/support/{ticket}
+
+Controlador admin:
+- Admin/SupportTicketController o SupportTicketController dentro del namespace admin
+Métodos:
+- index()
+- show()
+- reply()
+- update()
+
+Vistas admin:
+- resources/js/Pages/Admin/Support/Index.vue
+- resources/js/Pages/Admin/Support/Show.vue
+
+Campos editables por admin:
+- status
+- priority
+- category
+
+Validaciones backend admin:
+- status required|in:open,pending,answered,closed
+- priority nullable|in:low,medium,high
+- category nullable|string|max:100
+- reply message required|string|max:5000 cuando se responda
+
+Comportamiento admin:
+- al responder:
+  - crear SupportTicketMessage con `is_admin = true`
+  - actualizar `last_reply_at`
+  - opcionalmente poner status = answered
+- al cerrar:
+  - guardar `closed_at`
+  - status = closed
+
+Reglas de acceso:
+- member solo ve sus propios tickets
+- admin/superadmin ve todos
+- member no puede responder tickets cerrados si esa es la regla elegida
+- validar todo en backend
+
+UI member:
+- usar layout member
+- usar Bootstrap 5.3
+- listado con cards o tabla simple
+- mostrar:
+  - subject
+  - status
+  - priority
+  - fecha
+  - última respuesta
+- detalle tipo conversación simple
+- formulario de respuesta abajo si ticket sigue abierto
+
+UI admin:
+- usar layout admin
+- usar PageTitle
+- usar Breadcrumb
+- usar Searchbar si ya existe
+- tabla/listado con paginación por servidor
+- filtros simples
+- detalle con conversación completa
+- formulario de respuesta y cambio de estado
+
+Paginación:
+- por servidor tanto en admin como en member
+
+Notificaciones:
+Si ya existe sistema de notificaciones internas:
+- notificar al admin cuando se crea un ticket nuevo
+- notificar al usuario cuando admin responde
+- opcionalmente notificar cambios de estado
+
+Actividad / auditoría:
+Si ya existe módulo de actividad:
+- registrar:
+  - ticket creado
+  - ticket respondido
+  - ticket cerrado
+  - ticket reabierto si luego aplica
+
+Mensajes esperados:
+- "Tu ticket fue creado correctamente."
+- "Tu respuesta fue enviada."
+- "El ticket fue actualizado."
+- "El ticket fue cerrado."
+
+Seguridad:
+- usar `auth()->user()`
+- no aceptar `user_id` editable desde frontend para asignar tickets
+- no exponer tickets ajenos
+- validar permisos en backend
+- no guardar datos sensibles innecesarios en metadata si luego se agrega
+
+Integración:
+- revisar si ya existe módulo de soporte, contacto o mensajes internos
+- si existe, adaptarse
+- si no existe, crear solución mínima reusable
+- no romper member dashboard, admin dashboard, notificaciones ni actividad
+
+Importante:
+- generar solo archivos necesarios
+- no agregar archivos innecesarios
+- mantener implementación simple y extensible
+
+==================================================
+Instrucción 20: soporte / tickets internos del usuario
+========================================================
+
+Implementar módulo base de soporte o tickets internos para usuarios `member` y atención administrativa.
+
+Contexto:
+Ya existen auth, dashboards separados, perfil, suscripciones, billing, pagos, comprobantes y notificaciones.
+Cada usuario es único.
+No hay organizaciones ni tenants.
+Se necesita un canal interno simple para que el usuario pueda solicitar ayuda y el admin pueda dar seguimiento.
+No romper módulos actuales.
+
+Stack:
+Laravel 12 + Inertia + Vue 3 + JavaScript + Bootstrap 5.3.
+
+Reglas:
+- No TypeScript
+- Vue con `<script setup>`
+- Solo Composition API
+- No Options API
+- No API separada fuera del flujo web actual
+- No librerías nuevas innecesarias
+- No refactorizar módulos no relacionados
+- Reutilizar estructura visual actual
+- Código simple y listo para producción
+
+Objetivo:
+Permitir que el usuario `member` cree tickets de soporte y que `admin/superadmin` los gestione desde el panel.
+
+Alcance de esta fase:
+- crear ticket
+- listar tickets del usuario autenticado
+- ver detalle del ticket
+- responder ticket internamente
+- admin puede cambiar estado y responder
+- mantener historial simple de conversación
+- notificar cambios importantes si ya existe sistema de notificaciones internas
+
+No incluir todavía:
+- chat en tiempo real
+- asignación compleja entre agentes
+- SLA avanzado
+- prioridades automáticas con IA
+- adjuntos complejos si no hacen falta
+- base de conocimiento pública
+
+Entidades requeridas:
+
+1. SupportTicket
+Campos mínimos sugeridos:
+- id
+- user_id
+- subject
+- message nullable
+- status string
+- priority string nullable
+- category nullable string
+- last_reply_at nullable timestamp
+- closed_at nullable timestamp
+- created_at
+- updated_at
+
+Estados sugeridos:
+- open
+- pending
+- answered
+- closed
+
+Prioridades sugeridas:
+- low
+- medium
+- high
+
+2. SupportTicketMessage
+Campos mínimos sugeridos:
+- id
+- support_ticket_id
+- user_id nullable
+- is_admin boolean default false
+- message text
+- created_at
+- updated_at
+
+Concepto:
+- el ticket guarda resumen general
+- los mensajes guardan la conversación
+- `is_admin` indica si el mensaje fue enviado por admin/staff
+- `user_id` identifica al autor cuando aplique
+
+Modelos:
+- SupportTicket
+- SupportTicketMessage
+
+Relaciones:
+- User hasMany SupportTicket
+- SupportTicket belongsTo User
+- SupportTicket hasMany SupportTicketMessage
+- SupportTicketMessage belongsTo SupportTicket
+- SupportTicketMessage belongsTo User nullable
+
+Permisos sugeridos:
+- support.view
+- support.reply
+- support.update
+- support.close
+
+Member area:
+Permitir al usuario final:
+- crear ticket
+- ver sus tickets
+- ver detalle
+- responder en tickets abiertos
+- no ver tickets de otros usuarios
+
+Rutas member sugeridas:
+- GET /member/support
+- GET /member/support/create
+- POST /member/support
+- GET /member/support/{ticket}
+- POST /member/support/{ticket}/reply
+
+Controlador member:
+- Member/SupportTicketController
+Métodos:
+- index()
+- create()
+- store()
+- show()
+- reply()
+
+Vistas member:
+- resources/js/Pages/Member/Support/Index.vue
+- resources/js/Pages/Member/Support/Create.vue
+- resources/js/Pages/Member/Support/Show.vue
+
+Campos al crear ticket:
+- subject
+- category
+- priority
+- message inicial
+
+Validaciones backend member:
+- subject required|string|max:150
+- category nullable|string|max:100
+- priority nullable|in:low,medium,high
+- message required|string|max:5000
+
+Validación reply:
+- message required|string|max:5000
+
+Comportamiento member:
+- al crear ticket:
+  - crear SupportTicket
+  - crear primer SupportTicketMessage con mensaje inicial
+  - status inicial = open
+  - last_reply_at = now()
+- al responder:
+  - solo en tickets permitidos
+  - agregar mensaje
+  - actualizar last_reply_at
+  - opcionalmente cambiar status a `pending` o `open` según regla elegida
+
+Admin area:
+Permitir a admin/superadmin:
+- ver todos los tickets
+- filtrar por estado, prioridad, categoría y usuario
+- ver detalle completo
+- responder
+- cambiar estado
+- cerrar ticket
+
+Rutas admin sugeridas:
+- GET /admin/support
+- GET /admin/support/{ticket}
+- POST /admin/support/{ticket}/reply
+- PUT /admin/support/{ticket}
+
+Controlador admin:
+- Admin/SupportTicketController o SupportTicketController dentro del namespace admin
+Métodos:
+- index()
+- show()
+- reply()
+- update()
+
+Vistas admin:
+- resources/js/Pages/Admin/Support/Index.vue
+- resources/js/Pages/Admin/Support/Show.vue
+
+Campos editables por admin:
+- status
+- priority
+- category
+
+Validaciones backend admin:
+- status required|in:open,pending,answered,closed
+- priority nullable|in:low,medium,high
+- category nullable|string|max:100
+- reply message required|string|max:5000 cuando se responda
+
+Comportamiento admin:
+- al responder:
+  - crear SupportTicketMessage con `is_admin = true`
+  - actualizar `last_reply_at`
+  - opcionalmente poner status = answered
+- al cerrar:
+  - guardar `closed_at`
+  - status = closed
+
+Reglas de acceso:
+- member solo ve sus propios tickets
+- admin/superadmin ve todos
+- member no puede responder tickets cerrados si esa es la regla elegida
+- validar todo en backend
+
+UI member:
+- usar layout member
+- usar Bootstrap 5.3
+- listado con cards o tabla simple
+- mostrar:
+  - subject
+  - status
+  - priority
+  - fecha
+  - última respuesta
+- detalle tipo conversación simple
+- formulario de respuesta abajo si ticket sigue abierto
+
+UI admin:
+- usar layout admin
+- usar PageTitle
+- usar Breadcrumb
+- usar Searchbar si ya existe
+- tabla/listado con paginación por servidor
+- filtros simples
+- detalle con conversación completa
+- formulario de respuesta y cambio de estado
+
+Paginación:
+- por servidor tanto en admin como en member
+
+Notificaciones:
+Si ya existe sistema de notificaciones internas:
+- notificar al admin cuando se crea un ticket nuevo
+- notificar al usuario cuando admin responde
+- opcionalmente notificar cambios de estado
+
+Actividad / auditoría:
+Si ya existe módulo de actividad:
+- registrar:
+  - ticket creado
+  - ticket respondido
+  - ticket cerrado
+  - ticket reabierto si luego aplica
+
+Mensajes esperados:
+- "Tu ticket fue creado correctamente."
+- "Tu respuesta fue enviada."
+- "El ticket fue actualizado."
+- "El ticket fue cerrado."
+
+Seguridad:
+- usar `auth()->user()`
+- no aceptar `user_id` editable desde frontend para asignar tickets
+- no exponer tickets ajenos
+- validar permisos en backend
+- no guardar datos sensibles innecesarios en metadata si luego se agrega
+
+Integración:
+- revisar si ya existe módulo de soporte, contacto o mensajes internos
+- si existe, adaptarse
+- si no existe, crear solución mínima reusable
+- no romper member dashboard, admin dashboard, notificaciones ni actividad
+
+Importante:
+- generar solo archivos necesarios
+- no agregar archivos innecesarios
+- mantener implementación simple y extensible
+
+===============================================================
+Instrucción 21: página de ayuda / centro de soporte básico
+===============================================================
+
+Implementar módulo base de ayuda o centro de soporte para usuarios `member`.
+
+Contexto:
+Ya existe módulo de tickets internos.
+Cada usuario es único.
+No hay organizaciones ni tenants.
+Se necesita una sección de ayuda para reducir tickets repetidos y centralizar información útil para el usuario.
+No romper módulos actuales.
+
+Stack:
+Laravel 12 + Inertia + Vue 3 + JavaScript + Bootstrap 5.3.
+
+Reglas:
+- No TypeScript
+- Vue con `<script setup>`
+- Solo Composition API
+- No Options API
+- No API separada fuera del flujo web actual
+- No librerías nuevas innecesarias
+- No refactorizar módulos no relacionados
+- Reutilizar estructura visual actual
+- Código simple y listo para producción
+
+Objetivo:
+Permitir mostrar artículos o preguntas frecuentes dentro del área member y, opcionalmente, también en una sección pública si después se necesita.
+
+Alcance de esta fase:
+- CRUD admin de artículos de ayuda
+- listado member de artículos publicados
+- vista detalle de artículo
+- categorías simples
+- búsqueda básica
+- estado publicado/no publicado
+- integración simple con tickets
+
+No incluir todavía:
+- editor complejo tipo block editor
+- comentarios
+- votos útiles/no útiles
+- centro de ayuda multilenguaje avanzado
+- recomendaciones con IA
+- versionado complejo
+
+Entidad:
+Crear tabla `help_articles` o equivalente.
+
+Campos mínimos sugeridos:
+- id
+- title
+- slug unique
+- excerpt nullable
+- content text
+- category nullable string
+- is_published boolean default false
+- sort_order nullable integer
+- published_at nullable timestamp
+- created_at
+- updated_at
+
+Modelo:
+- HelpArticle
+
+Permisos sugeridos:
+- help.view
+- help.create
+- help.update
+- help.delete
+- help.publish
+
+Admin:
+Permitir al admin:
+- listar artículos
+- crear
+- editar
+- publicar/despublicar
+- buscar
+- ordenar por categoría o estado
+
+Rutas admin:
+- GET /admin/help
+- GET /admin/help/create
+- POST /admin/help
+- GET /admin/help/{article}/edit
+- PUT /admin/help/{article}
+- DELETE /admin/help/{article}
+
+Controlador admin:
+- HelpArticleController
+Métodos:
+  - index()
+  - create()
+  - store()
+  - edit()
+  - update()
+  - destroy()
+
+Vistas admin:
+- resources/js/Pages/Admin/Help/Index.vue
+- resources/js/Pages/Admin/Help/Create.vue
+- resources/js/Pages/Admin/Help/Edit.vue
+
+Campos admin:
+- title
+- slug
+- excerpt
+- content
+- category
+- is_published
+- published_at
+- sort_order
+
+Validaciones backend:
+- title required|string|max:200
+- slug required|string|max:200|unique
+- excerpt nullable|string|max:500
+- content required|string
+- category nullable|string|max:100
+- is_published boolean
+- published_at nullable|date
+- sort_order nullable|integer|min:0
+
+Reglas:
+- solo mostrar artículos publicados al usuario final
+- si `is_published` cambia a true y no hay `published_at`, usar fecha actual
+- no mostrar artículos no publicados fuera del admin
+
+Member area:
+Permitir al usuario final:
+- ver listado de artículos publicados
+- buscar por título o contenido básico
+- filtrar por categoría simple si aplica
+- ver detalle del artículo
+- desde un artículo, poder ir a crear ticket si no resolvió su duda
+
+Rutas member:
+- GET /member/help
+- GET /member/help/{slug}
+
+Controlador member:
+- Member/HelpArticleController
+Métodos:
+  - index()
+  - show()
+
+Vistas member:
+- resources/js/Pages/Member/Help/Index.vue
+- resources/js/Pages/Member/Help/Show.vue
+
+Listado member:
+- paginación por servidor
+- búsqueda simple
+- mostrar:
+  - título
+  - extracto
+  - categoría
+  - fecha de publicación
+
+Detalle member:
+- mostrar artículo completo
+- mostrar categoría
+- mostrar fecha
+- mostrar botón o enlace:
+  - "¿No resolvió tu duda? Crear ticket"
+
+UI admin:
+- usar layout admin
+- usar PageTitle
+- usar Breadcrumb
+- usar Searchbar si ya existe
+- usar useForm
+- usar field components existentes si encajan
+- usar toast success/error
+- mantener estilo actual de CRUD
+
+UI member:
+- usar layout member
+- cards simples para listado
+- vista detalle limpia y legible
+- Bootstrap 5.3
+- diseño simple, sin editor complejo
+
+Paginación:
+- por servidor
+
+Búsqueda:
+- por título
+- opcionalmente excerpt/content si la estructura actual lo soporta fácilmente
+- evitar complejidad innecesaria
+
+Integración con tickets:
+- desde help member agregar CTA hacia soporte
+- objetivo: reducir fricción entre "buscar ayuda" y "crear ticket"
+
+Actividad y notificaciones:
+Si ya existen:
+- opcionalmente registrar actividad de creación/edición/publicación admin
+- no hace falta notificar al usuario por ver artículos
+
+Seguridad:
+- member solo ve artículos publicados
+- admin protegido por permisos
+- no exponer borradores o artículos no publicados
+- validar todo en backend
+
+Integración:
+- revisar si ya existe módulo FAQ, páginas o contenido reusable
+- si existe, adaptarse
+- si no existe, crear solución mínima reusable
+- no romper soporte/tickets ni dashboards
+
+Importante:
+- generar solo archivos necesarios
+- no agregar archivos innecesarios
+- mantener implementación simple y extensible
