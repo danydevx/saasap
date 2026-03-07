@@ -63,6 +63,9 @@
             <li v-if="canViewApiKeys" class="nav-item">
               <Link href="/admin/api-keys" class="nav-link" prefetch="hover">API Keys</Link>
             </li>
+            <li v-if="canViewWebhooks" class="nav-item">
+              <Link href="/admin/webhooks" class="nav-link" prefetch="hover">Webhooks</Link>
+            </li>
           </ul>
 
           <div class="dropdown">
@@ -112,7 +115,10 @@
               <li v-if="canViewApiKeys">
                 <Link href="/admin/api-keys" class="dropdown-item" prefetch="hover">API Keys</Link>
               </li>
-              <li v-if="canViewSettings || canViewActivity || canViewPayments || canViewCoupons || canViewInvoices || canViewSupport || canViewHelp || canViewReports || canViewExports || canViewSystemErrors || canViewApiKeys"><hr class="dropdown-divider" /></li>
+              <li v-if="canViewWebhooks">
+                <Link href="/admin/webhooks" class="dropdown-item" prefetch="hover">Webhooks</Link>
+              </li>
+              <li v-if="canViewSettings || canViewActivity || canViewPayments || canViewCoupons || canViewInvoices || canViewSupport || canViewHelp || canViewReports || canViewExports || canViewSystemErrors || canViewApiKeys || canViewWebhooks"><hr class="dropdown-divider" /></li>
               <li>
                 <Link href="/logout" method="post" as="button" class="dropdown-item">
                   Salir
@@ -154,4 +160,5 @@ const canViewReports = computed(() => permissions.value.includes('reports.view')
 const canViewExports = computed(() => permissions.value.includes('exports.view') || userId.value === 1)
 const canViewSystemErrors = computed(() => permissions.value.includes('system-errors.view') || userId.value === 1)
 const canViewApiKeys = computed(() => permissions.value.includes('api-keys.view') || userId.value === 1)
+const canViewWebhooks = computed(() => permissions.value.includes('webhooks.view') || userId.value === 1)
 </script>

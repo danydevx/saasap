@@ -7,6 +7,7 @@ use App\Models\Plan;
 use App\Models\User;
 use App\Services\ActivityService;
 use App\Services\UserNotificationService;
+use App\Services\WebhookService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
@@ -211,7 +212,7 @@ class UserController extends Controller
         ]);
     }
 
-    public function update(Request $request, User $user, ActivityService $activity, UserNotificationService $notifications)
+    public function update(Request $request, User $user, ActivityService $activity, UserNotificationService $notifications, WebhookService $webhooks)
     {
         $rolesTable = config('permission.table_names.roles');
 
@@ -308,6 +309,12 @@ class UserController extends Controller
                 'request' => $request,
             ]);
 
+            $webhooks->dispatchUserEvent($user, 'subscription.updated', [
+                'subscription_id' => $user->currentSubscription?->id,
+                'status' => $user->currentSubscription?->status,
+                'plan_id' => $user->currentSubscription?->plan_id,
+            ]);
+
             $notifications->create(
                 $user,
                 'subscription',
@@ -316,6 +323,12 @@ class UserController extends Controller
                 '/member'
             );
         }
+
+        $webhooks->dispatchUserEvent($user, 'user.updated', [
+            'user_id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+        ]);
 
         return redirect()->route('admin.users.index');
     }

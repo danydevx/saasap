@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Member;
 use App\Http\Controllers\Controller;
 use App\Services\ActivityService;
 use App\Services\UserNotificationService;
+use App\Services\WebhookService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
@@ -17,7 +18,7 @@ class PasswordController extends Controller
         return Inertia::render('Member/Password/Edit');
     }
 
-    public function update(Request $request, ActivityService $activity, UserNotificationService $notifications)
+    public function update(Request $request, ActivityService $activity, UserNotificationService $notifications, WebhookService $webhooks)
     {
         $data = $request->validate([
             'current_password' => ['required', 'string'],
@@ -44,6 +45,10 @@ class PasswordController extends Controller
             'subject' => $user,
             'description' => 'Cambio de password autenticado',
             'request' => $request,
+        ]);
+
+        $webhooks->dispatchUserEvent($user, 'user.password_changed', [
+            'user_id' => $user->id,
         ]);
 
         $notifications->create(

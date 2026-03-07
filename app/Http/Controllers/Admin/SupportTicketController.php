@@ -7,6 +7,7 @@ use App\Models\SupportTicket;
 use App\Models\SupportTicketMessage;
 use App\Services\ActivityService;
 use App\Services\UserNotificationService;
+use App\Services\WebhookService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -108,7 +109,7 @@ class SupportTicketController extends Controller
         ]);
     }
 
-    public function reply(Request $request, SupportTicket $ticket, ActivityService $activity, UserNotificationService $notifications)
+    public function reply(Request $request, SupportTicket $ticket, ActivityService $activity, UserNotificationService $notifications, WebhookService $webhooks)
     {
         $data = $request->validate([
             'message' => ['required', 'string', 'max:5000'],
@@ -135,6 +136,13 @@ class SupportTicketController extends Controller
         ]);
 
         if ($ticket->user) {
+            $webhooks->dispatchUserEvent($ticket->user, 'ticket.replied', [
+                'ticket_id' => $ticket->id,
+                'status' => $ticket->status,
+            ]);
+        }
+
+        if ($ticket->user) {
             $notifications->create(
                 $ticket->user,
                 'system',
@@ -147,7 +155,7 @@ class SupportTicketController extends Controller
         return back()->with('success', 'Respuesta enviada.');
     }
 
-    public function update(Request $request, SupportTicket $ticket, ActivityService $activity)
+    public function update(Request $request, SupportTicket $ticket, ActivityService $activity, WebhookService $webhooks)
     {
         $data = $request->validate([
             'status' => ['required', Rule::in(['open', 'pending', 'answered', 'closed'])],
@@ -162,13 +170,21 @@ class SupportTicketController extends Controller
             'closed_at' => $data['status'] === 'closed' ? now() : null,
         ]);
 
-        $activity->log($data['status'] === 'closed' ? 'ticket_closed' : 'ticket_updated', [
+        $type = $data['status'] === 'closed' ? 'ticket_closed' : 'ticket_updated';
+        $activity->log($type, [
             'user' => $ticket->user,
             'actor' => $request->user(),
             'subject' => $ticket,
             'description' => 'Ticket actualizado',
             'request' => $request,
         ]);
+
+        if ($ticket->user && $type === 'ticket_closed') {
+            $webhooks->dispatchUserEvent($ticket->user, 'ticket.closed', [
+                'ticket_id' => $ticket->id,
+                'status' => $ticket->status,
+            ]);
+        }
 
         return back()->with('success', 'El ticket fue actualizado.');
     }

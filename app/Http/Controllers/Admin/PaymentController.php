@@ -8,6 +8,7 @@ use App\Models\Plan;
 use App\Models\Subscription;
 use App\Models\User;
 use App\Services\ActivityService;
+use App\Services\WebhookService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -92,7 +93,7 @@ class PaymentController extends Controller
         ]);
     }
 
-    public function store(Request $request, ActivityService $activity)
+    public function store(Request $request, ActivityService $activity, WebhookService $webhooks)
     {
         $data = $this->validated($request);
 
@@ -111,6 +112,15 @@ class PaymentController extends Controller
             'description' => 'Pago creado',
             'request' => $request,
         ]);
+
+        if ($payment->user) {
+            $webhooks->dispatchUserEvent($payment->user, $type === 'payment_succeeded' ? 'payment.succeeded' : 'payment.failed', [
+                'payment_id' => $payment->id,
+                'amount' => $payment->amount,
+                'currency' => $payment->currency,
+                'status' => $payment->status,
+            ]);
+        }
 
         return redirect()->route('admin.payments.edit', $payment);
     }
@@ -139,7 +149,7 @@ class PaymentController extends Controller
         ]);
     }
 
-    public function update(Request $request, Payment $payment, ActivityService $activity)
+    public function update(Request $request, Payment $payment, ActivityService $activity, WebhookService $webhooks)
     {
         $data = $this->validated($request, $payment->id);
 
@@ -163,6 +173,15 @@ class PaymentController extends Controller
             'description' => 'Pago actualizado',
             'request' => $request,
         ]);
+
+        if ($payment->user && in_array($type, ['payment_succeeded', 'payment_failed'], true)) {
+            $webhooks->dispatchUserEvent($payment->user, $type === 'payment_succeeded' ? 'payment.succeeded' : 'payment.failed', [
+                'payment_id' => $payment->id,
+                'amount' => $payment->amount,
+                'currency' => $payment->currency,
+                'status' => $payment->status,
+            ]);
+        }
 
         return redirect()->route('admin.payments.edit', $payment)->with('success', 'Pago actualizado correctamente.');
     }

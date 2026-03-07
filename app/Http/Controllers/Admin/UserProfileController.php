@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Services\ActivityService;
 use App\Services\UserNotificationService;
+use App\Services\WebhookService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -42,7 +43,7 @@ class UserProfileController extends Controller
         ]);
     }
 
-    public function update(Request $request, ActivityService $activity, UserNotificationService $notifications)
+    public function update(Request $request, ActivityService $activity, UserNotificationService $notifications, WebhookService $webhooks)
     {
         $user = $request->user();
 
@@ -70,6 +71,12 @@ class UserProfileController extends Controller
             'subject' => $user->profile,
             'description' => 'Perfil actualizado',
             'request' => $request,
+        ]);
+
+        $webhooks->dispatchUserEvent($user, 'user.updated', [
+            'user_id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
         ]);
 
         $notifications->create(

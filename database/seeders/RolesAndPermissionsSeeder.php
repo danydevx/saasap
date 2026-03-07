@@ -70,6 +70,9 @@ class RolesAndPermissionsSeeder extends Seeder
             'api-keys.view',
             'api-keys.update',
             'api-keys.revoke',
+            'webhooks.manage',
+            'webhooks.view',
+            'webhooks.update',
         ];
 
         foreach ($permissions as $permission) {
@@ -132,12 +135,15 @@ class RolesAndPermissionsSeeder extends Seeder
             'api-keys.view',
             'api-keys.update',
             'api-keys.revoke',
+            'webhooks.view',
+            'webhooks.update',
         ]);
 
         $user->givePermissionTo([]);
         $normal->givePermissionTo([]);
         $member->givePermissionTo([
             'api-keys.manage',
+            'webhooks.manage',
         ]);
     }
 }

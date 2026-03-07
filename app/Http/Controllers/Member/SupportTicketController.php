@@ -7,6 +7,7 @@ use App\Models\SupportTicket;
 use App\Models\SupportTicketMessage;
 use App\Services\ActivityService;
 use App\Services\UserNotificationService;
+use App\Services\WebhookService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -40,7 +41,7 @@ class SupportTicketController extends Controller
         return Inertia::render('Member/Support/Create');
     }
 
-    public function store(Request $request, ActivityService $activity, UserNotificationService $notifications)
+    public function store(Request $request, ActivityService $activity, UserNotificationService $notifications, WebhookService $webhooks)
     {
         $data = $request->validate([
             'subject' => ['required', 'string', 'max:150'],
@@ -72,6 +73,12 @@ class SupportTicketController extends Controller
             'subject' => $ticket,
             'description' => 'Ticket creado',
             'request' => $request,
+        ]);
+
+        $webhooks->dispatchUserEvent($request->user(), 'ticket.created', [
+            'ticket_id' => $ticket->id,
+            'subject' => $ticket->subject,
+            'status' => $ticket->status,
         ]);
 
         $notifications->create(
@@ -118,7 +125,7 @@ class SupportTicketController extends Controller
         ]);
     }
 
-    public function reply(Request $request, SupportTicket $ticket, ActivityService $activity, UserNotificationService $notifications)
+    public function reply(Request $request, SupportTicket $ticket, ActivityService $activity, UserNotificationService $notifications, WebhookService $webhooks)
     {
         if ($ticket->user_id !== $request->user()->id) {
             abort(403);
@@ -150,6 +157,11 @@ class SupportTicketController extends Controller
             'subject' => $ticket,
             'description' => 'Respuesta de usuario',
             'request' => $request,
+        ]);
+
+        $webhooks->dispatchUserEvent($request->user(), 'ticket.replied', [
+            'ticket_id' => $ticket->id,
+            'status' => $ticket->status,
         ]);
 
         $notifications->create(

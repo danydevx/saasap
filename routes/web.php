@@ -17,6 +17,7 @@ use App\Http\Controllers\Admin\SupportTicketController as AdminSupportTicketCont
 use App\Http\Controllers\Admin\SystemErrorController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\UserProfileController;
+use App\Http\Controllers\Admin\WebhookController as AdminWebhookController;
 use App\Http\Controllers\Auth\EmailVerificationController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\LogoutController;
@@ -36,6 +37,7 @@ use App\Http\Controllers\Member\PaymentController as MemberPaymentController;
 use App\Http\Controllers\Member\PlanSelectionController;
 use App\Http\Controllers\Member\PreferenceController as MemberPreferenceController;
 use App\Http\Controllers\Member\SupportTicketController as MemberSupportTicketController;
+use App\Http\Controllers\Member\WebhookController as MemberWebhookController;
 use App\Http\Controllers\PricingController;
 use App\Http\Controllers\StripeWebhookController;
 use Illuminate\Support\Facades\Route;
@@ -218,6 +220,31 @@ Route::delete('/member/api-keys/{apiKey}', [MemberApiKeyController::class, 'dest
     ->middleware(['auth', 'verified', 'active', 'role:member', 'permission:api-keys.manage'])
     ->name('member.api-keys.destroy');
 
+Route::get('/member/webhooks', [MemberWebhookController::class, 'index'])
+    ->middleware(['auth', 'verified', 'active', 'role:member', 'permission:webhooks.manage'])
+    ->name('member.webhooks.index');
+Route::post('/member/webhooks', [MemberWebhookController::class, 'store'])
+    ->middleware(['auth', 'verified', 'active', 'role:member', 'permission:webhooks.manage'])
+    ->name('member.webhooks.store');
+Route::put('/member/webhooks/{webhook}', [MemberWebhookController::class, 'update'])
+    ->middleware(['auth', 'verified', 'active', 'role:member', 'permission:webhooks.manage'])
+    ->name('member.webhooks.update');
+Route::delete('/member/webhooks/{webhook}', [MemberWebhookController::class, 'destroy'])
+    ->middleware(['auth', 'verified', 'active', 'role:member', 'permission:webhooks.manage'])
+    ->name('member.webhooks.destroy');
+Route::post('/member/webhooks/{webhook}/test', [MemberWebhookController::class, 'test'])
+    ->middleware(['auth', 'verified', 'active', 'role:member', 'permission:webhooks.manage'])
+    ->name('member.webhooks.test');
+Route::post('/member/webhooks/{webhook}/regenerate-secret', [MemberWebhookController::class, 'regenerateSecret'])
+    ->middleware(['auth', 'verified', 'active', 'role:member', 'permission:webhooks.manage'])
+    ->name('member.webhooks.regenerate-secret');
+Route::get('/member/webhooks/{webhook}/deliveries', [MemberWebhookController::class, 'deliveries'])
+    ->middleware(['auth', 'verified', 'active', 'role:member', 'permission:webhooks.manage'])
+    ->name('member.webhooks.deliveries');
+Route::post('/member/webhooks/deliveries/{delivery}/retry', [MemberWebhookController::class, 'retryDelivery'])
+    ->middleware(['auth', 'verified', 'active', 'role:member', 'permission:webhooks.manage'])
+    ->name('member.webhooks.deliveries.retry');
+
 Route::get('/member/help', [MemberHelpArticleController::class, 'index'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.help.index');
@@ -332,6 +359,16 @@ Route::prefix('admin')->middleware(['auth', 'admin_or_user:1'])->group(function 
     Route::put('/api-keys/{apiKey}/revoke', [AdminApiKeyController::class, 'revoke'])
         ->middleware('permission_or_user:api-keys.revoke,1')
         ->name('admin.api-keys.revoke');
+
+    Route::get('/webhooks', [AdminWebhookController::class, 'index'])
+        ->middleware('permission_or_user:webhooks.view,1')
+        ->name('admin.webhooks.index');
+    Route::get('/webhooks/{webhook}', [AdminWebhookController::class, 'show'])
+        ->middleware('permission_or_user:webhooks.view,1')
+        ->name('admin.webhooks.show');
+    Route::get('/webhooks/{webhook}/deliveries', [AdminWebhookController::class, 'deliveries'])
+        ->middleware('permission_or_user:webhooks.view,1')
+        ->name('admin.webhooks.deliveries');
 
     Route::get('/plans', [PlanController::class, 'index'])
         ->middleware('permission_or_user:plans.view,1')

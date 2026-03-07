@@ -10,13 +10,14 @@ use App\Models\Subscription;
 use App\Services\ActivityService;
 use App\Services\SystemErrorService;
 use App\Services\UserNotificationService;
+use App\Services\WebhookService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Stripe\StripeClient;
 
 class CheckoutController extends Controller
 {
-    public function create(Request $request, Plan $plan, ActivityService $activity, UserNotificationService $notifications, SystemErrorService $errors)
+    public function create(Request $request, Plan $plan, ActivityService $activity, UserNotificationService $notifications, SystemErrorService $errors, WebhookService $webhooks)
     {
         $user = $request->user();
 
@@ -122,7 +123,7 @@ class CheckoutController extends Controller
         }
     }
 
-    public function success(Request $request, ActivityService $activity, UserNotificationService $notifications, SystemErrorService $errors)
+    public function success(Request $request, ActivityService $activity, UserNotificationService $notifications, SystemErrorService $errors, WebhookService $webhooks)
     {
         $user = $request->user();
         $sessionId = (string) $request->query('session_id', '');
@@ -265,6 +266,13 @@ class CheckoutController extends Controller
                     'stripe_session_id' => $session->id,
                 ],
                 'request' => $request,
+            ]);
+
+            $webhooks->dispatchUserEvent($user, 'payment.succeeded', [
+                'subscription_id' => $localSubscription?->id,
+                'plan_id' => $plan->id,
+                'amount' => $session->amount_total ? $session->amount_total / 100 : ($plan->price ?? 0),
+                'currency' => $session->currency ?? null,
             ]);
 
             $notifications->create(
