@@ -78,6 +78,7 @@
                 <li v-if="canViewSecurity"><Link href="/admin/security-events" class="dropdown-item" prefetch="hover">Seguridad</Link></li>
                 <li v-if="canViewSystemErrors"><Link href="/admin/system-errors" class="dropdown-item" prefetch="hover">Errores</Link></li>
                 <li v-if="canViewFeatureFlags"><Link href="/admin/feature-flags" class="dropdown-item" prefetch="hover">Feature Flags</Link></li>
+                <li v-if="canViewAnnouncements"><Link href="/admin/announcements" class="dropdown-item" prefetch="hover">Anuncios</Link></li>
                 <li v-if="canViewLegalDocuments"><Link href="/admin/legal-documents" class="dropdown-item" prefetch="hover">Legales</Link></li>
                 <li v-if="canViewSettings"><Link href="/admin/settings" class="dropdown-item" prefetch="hover">Settings</Link></li>
               </ul>
@@ -144,6 +145,7 @@ const canViewApiKeys = computed(() => permissions.value.includes('api-keys.view'
 const canViewWebhooks = computed(() => permissions.value.includes('webhooks.view') || userId.value === 1)
 const canViewQueues = computed(() => permissions.value.includes('queues.view') || userId.value === 1)
 const canViewFeatureFlags = computed(() => permissions.value.includes('feature-flags.view') || userId.value === 1)
+const canViewAnnouncements = computed(() => permissions.value.includes('announcements.view') || userId.value === 1)
 const canViewMonitor = computed(() => permissions.value.includes('reports.view') || userId.value === 1)
 const canViewSecurity = computed(() => permissions.value.includes('security-events.view') || userId.value === 1)
 const canViewLegalDocuments = computed(() => permissions.value.includes('legal-documents.view') || userId.value === 1)
@@ -161,6 +163,7 @@ const showSystemMenu = computed(() =>
   canViewSecurity.value ||
   canViewSystemErrors.value ||
   canViewFeatureFlags.value ||
+  canViewAnnouncements.value ||
   canViewLegalDocuments.value ||
   canViewSettings.value
 )

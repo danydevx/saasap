@@ -53,6 +53,33 @@
 
     <main class="py-4">
       <div class="container">
+        <div v-if="announcements.length" class="mb-3">
+          <div
+            v-for="announcement in announcements"
+            :key="announcement.id"
+            class="alert d-flex align-items-start gap-3"
+            :class="alertClass(announcement.type, announcement.priority)"
+          >
+            <div class="flex-grow-1">
+              <div class="fw-semibold">{{ announcement.title }}</div>
+              <div class="small">{{ announcement.message }}</div>
+              <Link
+                v-if="announcement.action_label && announcement.action_url"
+                :href="announcement.action_url"
+                class="btn btn-sm btn-outline-secondary mt-2"
+              >
+                {{ announcement.action_label }}
+              </Link>
+            </div>
+            <button
+              v-if="announcement.dismissible"
+              type="button"
+              class="btn-close"
+              aria-label="Close"
+              @click="dismiss(announcement.id)"
+            ></button>
+          </div>
+        </div>
         <slot />
       </div>
     </main>
@@ -61,13 +88,35 @@
 
 <script setup>
 import { computed } from 'vue'
-import { Link, usePage } from '@inertiajs/vue3'
+import { Link, router, usePage } from '@inertiajs/vue3'
 
 const page = usePage()
 const unreadCount = computed(() => page.props.notificationUnreadCount || 0)
 const features = computed(() => page.props.features || {})
+const announcements = computed(() => page.props.systemAnnouncements || [])
 
 const canUseApi = computed(() => features.value.can_use_api !== false)
 const canUseWebhooks = computed(() => features.value.can_use_webhooks !== false)
 const canSupport = computed(() => features.value.module_support !== false)
+
+const dismiss = (id) => {
+  router.put(`/member/announcements/${id}/dismiss`, {}, { preserveScroll: true })
+}
+
+const alertClass = (type, priority) => {
+  const classes = {
+    info: 'alert-info',
+    success: 'alert-success',
+    warning: 'alert-warning',
+    danger: 'alert-danger',
+  }
+  const base = classes[type] || 'alert-info'
+  if (priority === 'critical') {
+    return `${base} border border-2 border-danger`
+  }
+  if (priority === 'high') {
+    return `${base} border border-1 border-warning`
+  }
+  return base
+}
 </script>

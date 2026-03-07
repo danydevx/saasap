@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Services\FeatureService;
+use App\Services\SystemAnnouncementService;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -19,6 +20,22 @@ class HandleInertiaRequests extends Middleware
     {
         $user = $request->user();
         $featureService = app(FeatureService::class);
+        $announcements = null;
+        if ($user) {
+            $announcements = app(SystemAnnouncementService::class)
+                ->activeForUser($user)
+                ->map(fn ($announcement) => [
+                    'id' => $announcement->id,
+                    'title' => $announcement->title,
+                    'message' => $announcement->message,
+                    'type' => $announcement->type,
+                    'priority' => $announcement->priority,
+                    'dismissible' => $announcement->dismissible,
+                    'action_label' => $announcement->action_label,
+                    'action_url' => $announcement->action_url,
+                ])
+                ->values();
+        }
 
         return [
             ...parent::share($request),
@@ -39,6 +56,7 @@ class HandleInertiaRequests extends Middleware
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),
             ],
+            'systemAnnouncements' => $announcements,
         ];
     }
 }

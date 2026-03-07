@@ -19,6 +19,7 @@ use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\SecurityEventController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\SupportTicketController as AdminSupportTicketController;
+use App\Http\Controllers\Admin\SystemAnnouncementController as AdminSystemAnnouncementController;
 use App\Http\Controllers\Admin\SystemErrorController;
 use App\Http\Controllers\Admin\SystemMonitorController;
 use App\Http\Controllers\Admin\UserController;
@@ -48,6 +49,7 @@ use App\Http\Controllers\Member\PlanSelectionController;
 use App\Http\Controllers\Member\PreferenceController as MemberPreferenceController;
 use App\Http\Controllers\Member\SessionController as MemberSessionController;
 use App\Http\Controllers\Member\SupportTicketController as MemberSupportTicketController;
+use App\Http\Controllers\Member\SystemAnnouncementController as MemberSystemAnnouncementController;
 use App\Http\Controllers\Member\WebhookController as MemberWebhookController;
 use App\Http\Controllers\PricingController;
 use App\Http\Controllers\StripeWebhookController;
@@ -205,6 +207,13 @@ Route::put('/member/notifications/{notification}/read', [NotificationController:
 Route::put('/member/notifications/read-all', [NotificationController::class, 'markAllAsRead'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.notifications.read-all');
+
+Route::get('/member/announcements/active', [MemberSystemAnnouncementController::class, 'active'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.announcements.active');
+Route::put('/member/announcements/{announcement}/dismiss', [MemberSystemAnnouncementController::class, 'dismiss'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.announcements.dismiss');
 
 Route::get('/member/notification-preferences', [NotificationPreferenceController::class, 'edit'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
@@ -519,6 +528,25 @@ Route::prefix('admin')->middleware(['auth', 'admin_or_user:1'])->group(function 
     Route::put('/feature-flags/{flag}', [FeatureFlagController::class, 'update'])
         ->middleware('permission_or_user:feature-flags.update,1')
         ->name('admin.feature-flags.update');
+
+    Route::get('/announcements', [AdminSystemAnnouncementController::class, 'index'])
+        ->middleware('permission_or_user:announcements.view,1')
+        ->name('admin.announcements.index');
+    Route::get('/announcements/create', [AdminSystemAnnouncementController::class, 'create'])
+        ->middleware('permission_or_user:announcements.create,1')
+        ->name('admin.announcements.create');
+    Route::post('/announcements', [AdminSystemAnnouncementController::class, 'store'])
+        ->middleware('permission_or_user:announcements.create,1')
+        ->name('admin.announcements.store');
+    Route::get('/announcements/{announcement}/edit', [AdminSystemAnnouncementController::class, 'edit'])
+        ->middleware('permission_or_user:announcements.update,1')
+        ->name('admin.announcements.edit');
+    Route::put('/announcements/{announcement}', [AdminSystemAnnouncementController::class, 'update'])
+        ->middleware('permission_or_user:announcements.update,1')
+        ->name('admin.announcements.update');
+    Route::delete('/announcements/{announcement}', [AdminSystemAnnouncementController::class, 'destroy'])
+        ->middleware('permission_or_user:announcements.delete,1')
+        ->name('admin.announcements.destroy');
 
     Route::get('/plans/{plan}/features', [PlanFeatureFlagController::class, 'edit'])
         ->middleware('permission_or_user:feature-flags.update,1')
