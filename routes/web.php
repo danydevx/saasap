@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\PermissionController;
 use App\Http\Controllers\Admin\PlanController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\SettingController;
+use App\Http\Controllers\Admin\SupportTicketController as AdminSupportTicketController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\UserProfileController;
 use App\Http\Controllers\Auth\EmailVerificationController;
@@ -25,6 +26,7 @@ use App\Http\Controllers\Member\OnboardingController;
 use App\Http\Controllers\Member\PasswordController;
 use App\Http\Controllers\Member\PaymentController as MemberPaymentController;
 use App\Http\Controllers\Member\PlanSelectionController;
+use App\Http\Controllers\Member\SupportTicketController as MemberSupportTicketController;
 use App\Http\Controllers\PricingController;
 use App\Http\Controllers\StripeWebhookController;
 use Illuminate\Support\Facades\Route;
@@ -174,6 +176,22 @@ Route::get('/member/invoices/{invoice}/download', [MemberInvoiceController::clas
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.invoices.download');
 
+Route::get('/member/support', [MemberSupportTicketController::class, 'index'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.support.index');
+Route::get('/member/support/create', [MemberSupportTicketController::class, 'create'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.support.create');
+Route::post('/member/support', [MemberSupportTicketController::class, 'store'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.support.store');
+Route::get('/member/support/{ticket}', [MemberSupportTicketController::class, 'show'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.support.show');
+Route::post('/member/support/{ticket}/reply', [MemberSupportTicketController::class, 'reply'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.support.reply');
+
 Route::get('/profile', [UserProfileController::class, 'edit'])
     ->middleware('auth')
     ->name('profile.edit');
@@ -299,6 +317,19 @@ Route::prefix('admin')->middleware(['auth', 'admin_or_user:1'])->group(function 
     Route::get('/invoices/{invoice}/download', [AdminInvoiceController::class, 'download'])
         ->middleware('permission_or_user:invoices.download,1')
         ->name('admin.invoices.download');
+
+    Route::get('/support', [AdminSupportTicketController::class, 'index'])
+        ->middleware('permission_or_user:support.view,1')
+        ->name('admin.support.index');
+    Route::get('/support/{ticket}', [AdminSupportTicketController::class, 'show'])
+        ->middleware('permission_or_user:support.view,1')
+        ->name('admin.support.show');
+    Route::post('/support/{ticket}/reply', [AdminSupportTicketController::class, 'reply'])
+        ->middleware('permission_or_user:support.reply,1')
+        ->name('admin.support.reply');
+    Route::put('/support/{ticket}', [AdminSupportTicketController::class, 'update'])
+        ->middleware('permission_or_user:support.update,1')
+        ->name('admin.support.update');
 
 });
 

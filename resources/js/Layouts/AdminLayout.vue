@@ -36,6 +36,9 @@
             <li v-if="canViewInvoices" class="nav-item">
               <Link href="/admin/invoices" class="nav-link" prefetch="hover">Comprobantes</Link>
             </li>
+            <li v-if="canViewSupport" class="nav-item">
+              <Link href="/admin/support" class="nav-link" prefetch="hover">Soporte</Link>
+            </li>
             <li v-if="canViewPayments" class="nav-item">
               <Link href="/admin/payments" class="nav-link" prefetch="hover">Pagos</Link>
             </li>
@@ -70,13 +73,16 @@
               <li v-if="canViewInvoices">
                 <Link href="/admin/invoices" class="dropdown-item" prefetch="hover">Comprobantes</Link>
               </li>
+              <li v-if="canViewSupport">
+                <Link href="/admin/support" class="dropdown-item" prefetch="hover">Soporte</Link>
+              </li>
               <li v-if="canViewPayments">
                 <Link href="/admin/payments" class="dropdown-item" prefetch="hover">Pagos</Link>
               </li>
               <li v-if="canViewActivity">
                 <Link href="/admin/activity" class="dropdown-item" prefetch="hover">Actividad</Link>
               </li>
-              <li v-if="canViewSettings || canViewActivity || canViewPayments || canViewCoupons || canViewInvoices"><hr class="dropdown-divider" /></li>
+              <li v-if="canViewSettings || canViewActivity || canViewPayments || canViewCoupons || canViewInvoices || canViewSupport"><hr class="dropdown-divider" /></li>
               <li>
                 <Link href="/logout" method="post" as="button" class="dropdown-item">
                   Salir
@@ -112,4 +118,5 @@ const canViewActivity = computed(() => permissions.value.includes('activity.view
 const canViewPayments = computed(() => permissions.value.includes('payments.view') || userId.value === 1)
 const canViewCoupons = computed(() => permissions.value.includes('coupons.view') || userId.value === 1)
 const canViewInvoices = computed(() => permissions.value.includes('invoices.view') || userId.value === 1)
+const canViewSupport = computed(() => permissions.value.includes('support.view') || userId.value === 1)
 </script>

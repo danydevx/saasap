@@ -51,6 +51,10 @@ class RolesAndPermissionsSeeder extends Seeder
             'invoices.create',
             'invoices.update',
             'invoices.download',
+            'support.view',
+            'support.reply',
+            'support.update',
+            'support.close',
         ];
 
         foreach ($permissions as $permission) {
@@ -96,6 +100,10 @@ class RolesAndPermissionsSeeder extends Seeder
             'invoices.create',
             'invoices.update',
             'invoices.download',
+            'support.view',
+            'support.reply',
+            'support.update',
+            'support.close',
         ]);
 
         $user->givePermissionTo([]);

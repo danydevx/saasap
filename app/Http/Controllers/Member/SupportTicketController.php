@@ -1,0 +1,165 @@
+<?php
+
+namespace App\Http\Controllers\Member;
+
+use App\Http\Controllers\Controller;
+use App\Models\SupportTicket;
+use App\Models\SupportTicketMessage;
+use App\Services\ActivityLogger;
+use App\Services\UserNotificationService;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
+
+class SupportTicketController extends Controller
+{
+    public function index(Request $request)
+    {
+        $tickets = SupportTicket::query()
+            ->where('user_id', $request->user()->id)
+            ->orderByDesc('last_reply_at')
+            ->orderByDesc('id')
+            ->paginate(10)
+            ->withQueryString()
+            ->through(fn ($ticket) => [
+                'id' => $ticket->id,
+                'subject' => $ticket->subject,
+                'status' => $ticket->status,
+                'priority' => $ticket->priority,
+                'category' => $ticket->category,
+                'last_reply_at' => $ticket->last_reply_at?->toDateTimeString(),
+                'created_at' => $ticket->created_at?->toDateString(),
+            ]);
+
+        return Inertia::render('Member/Support/Index', [
+            'tickets' => $tickets,
+        ]);
+    }
+
+    public function create()
+    {
+        return Inertia::render('Member/Support/Create');
+    }
+
+    public function store(Request $request, ActivityLogger $activity, UserNotificationService $notifications)
+    {
+        $data = $request->validate([
+            'subject' => ['required', 'string', 'max:150'],
+            'category' => ['nullable', 'string', 'max:100'],
+            'priority' => ['nullable', 'string', 'in:low,medium,high'],
+            'message' => ['required', 'string', 'max:5000'],
+        ]);
+
+        $ticket = SupportTicket::create([
+            'user_id' => $request->user()->id,
+            'subject' => trim($data['subject']),
+            'message' => $data['message'],
+            'status' => 'open',
+            'priority' => $data['priority'] ?? null,
+            'category' => $data['category'] ?? null,
+            'last_reply_at' => now(),
+        ]);
+
+        SupportTicketMessage::create([
+            'support_ticket_id' => $ticket->id,
+            'user_id' => $request->user()->id,
+            'is_admin' => false,
+            'message' => $data['message'],
+        ]);
+
+        $activity->log('support.ticket_created', [
+            'user' => $request->user(),
+            'actor' => $request->user(),
+            'subject' => $ticket,
+            'description' => 'Ticket creado',
+            'request' => $request,
+        ]);
+
+        $notifications->create(
+            $request->user(),
+            'system',
+            'Ticket creado',
+            'Tu ticket fue creado correctamente.',
+            '/member/support/'.$ticket->id
+        );
+
+        return redirect()->route('member.support.show', $ticket)->with('success', 'Tu ticket fue creado correctamente.');
+    }
+
+    public function show(Request $request, SupportTicket $ticket)
+    {
+        if ($ticket->user_id !== $request->user()->id) {
+            abort(403);
+        }
+
+        $ticket->load(['messages.user:id,name,email']);
+
+        return Inertia::render('Member/Support/Show', [
+            'ticket' => [
+                'id' => $ticket->id,
+                'subject' => $ticket->subject,
+                'status' => $ticket->status,
+                'priority' => $ticket->priority,
+                'category' => $ticket->category,
+                'last_reply_at' => $ticket->last_reply_at?->toDateTimeString(),
+                'created_at' => $ticket->created_at?->toDateTimeString(),
+                'closed_at' => $ticket->closed_at?->toDateTimeString(),
+                'messages' => $ticket->messages->map(fn ($message) => [
+                    'id' => $message->id,
+                    'message' => $message->message,
+                    'is_admin' => (bool) $message->is_admin,
+                    'author' => $message->user ? [
+                        'id' => $message->user->id,
+                        'name' => $message->user->name,
+                        'email' => $message->user->email,
+                    ] : null,
+                    'created_at' => $message->created_at?->toDateTimeString(),
+                ]),
+            ],
+        ]);
+    }
+
+    public function reply(Request $request, SupportTicket $ticket, ActivityLogger $activity, UserNotificationService $notifications)
+    {
+        if ($ticket->user_id !== $request->user()->id) {
+            abort(403);
+        }
+
+        if ($ticket->status === 'closed') {
+            return back()->with('error', 'El ticket esta cerrado.');
+        }
+
+        $data = $request->validate([
+            'message' => ['required', 'string', 'max:5000'],
+        ]);
+
+        SupportTicketMessage::create([
+            'support_ticket_id' => $ticket->id,
+            'user_id' => $request->user()->id,
+            'is_admin' => false,
+            'message' => $data['message'],
+        ]);
+
+        $ticket->update([
+            'status' => 'open',
+            'last_reply_at' => now(),
+        ]);
+
+        $activity->log('support.ticket_replied', [
+            'user' => $request->user(),
+            'actor' => $request->user(),
+            'subject' => $ticket,
+            'description' => 'Respuesta de usuario',
+            'request' => $request,
+        ]);
+
+        $notifications->create(
+            $request->user(),
+            'system',
+            'Respuesta enviada',
+            'Tu respuesta fue enviada.',
+            '/member/support/'.$ticket->id
+        );
+
+        return back()->with('success', 'Tu respuesta fue enviada.');
+    }
+}
