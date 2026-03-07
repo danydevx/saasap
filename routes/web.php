@@ -36,6 +36,7 @@ use App\Http\Controllers\Member\CheckoutController;
 use App\Http\Controllers\Member\DashboardController;
 use App\Http\Controllers\Member\HelpArticleController as MemberHelpArticleController;
 use App\Http\Controllers\Member\InvoiceController as MemberInvoiceController;
+use App\Http\Controllers\Member\MediaFileController as MemberMediaFileController;
 use App\Http\Controllers\Member\NotificationController;
 use App\Http\Controllers\Member\OnboardingController;
 use App\Http\Controllers\Member\PasswordController;
@@ -277,6 +278,22 @@ Route::get('/member/preferences', [MemberPreferenceController::class, 'edit'])
 Route::put('/member/preferences', [MemberPreferenceController::class, 'update'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.preferences.update');
+
+Route::get('/member/files', [MemberMediaFileController::class, 'index'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.files.index');
+Route::post('/member/files', [MemberMediaFileController::class, 'store'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.files.store');
+Route::get('/member/files/{file}', [MemberMediaFileController::class, 'show'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.files.show');
+Route::get('/member/files/{file}/download', [MemberMediaFileController::class, 'download'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.files.download');
+Route::delete('/member/files/{file}', [MemberMediaFileController::class, 'destroy'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.files.destroy');
 
 Route::get('/member/sessions', [MemberSessionController::class, 'index'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])

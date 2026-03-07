@@ -82,6 +82,11 @@ class User extends Authenticatable implements MustVerifyEmailContract
         return $this->hasMany(UserFeatureFlag::class);
     }
 
+    public function mediaFiles(): HasMany
+    {
+        return $this->hasMany(MediaFile::class);
+    }
+
     public function currentSubscription()
     {
         return $this->hasOne(Subscription::class)->latestOfMany();
