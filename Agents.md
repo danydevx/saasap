@@ -1,350 +1,206 @@
 # AGENTS.md
 
-## Proyecto
+Este proyecto es un SaaS Starter construido con:
 
-SaaS multiusuario construido con:
+Laravel 12  
+Inertia.js  
+Vue 3  
+JavaScript (NO TypeScript)  
+Bootstrap 5.3  
+Bootstrap Icons  
+Pinia  
+Axios  
+Spatie laravel-permission  
+Stripe  
 
--   Laravel 12
--   Inertia.js
--   Vue 3
--   JavaScript (NO TypeScript)
--   Pinia
--   Axios
--   Bootstrap 5.3
--   Bootstrap Icons
--   vue-toast-notification
--   Spatie laravel-permission
+El objetivo es proporcionar una base reusable para construir múltiples aplicaciones SaaS.
 
-El objetivo es desarrollar:
+---
 
--   dashboard administrativo
--   frontend público
--   módulos CRUD reutilizables
--   gestión de usuarios, roles y permisos
--   base escalable para SaaS multiusuario
+# Reglas obligatorias
 
-------------------------------------------------------------------------
+1. Usar Vue 3 con JavaScript.
+2. Usar `<script setup>` obligatoriamente.
+3. Usar Composition API.
+4. No usar Options API.
+5. No usar TypeScript.
+6. El frontend usa Inertia.js (no crear SPA separada).
+7. Usar Bootstrap 5.3 para UI.
+8. Usar Bootstrap Icons para iconos.
 
-## Reglas críticas (obligatorias)
+---
 
-Estas reglas no deben romperse.
+# Arquitectura del proyecto
 
-1.  Usar Vue 3 con JavaScript. Nunca usar TypeScript.
-2.  Usar Composition API con `<script setup>` obligatoriamente.
-3.  No usar Options API bajo ninguna circunstancia.
-4.  El panel usa Inertia.js. No crear SPA desacoplada ni API
-    innecesaria.
-5.  UI basada únicamente en Bootstrap 5.3.
-6.  No diseñar estilos personalizados.
-7.  Íconos únicamente Bootstrap Icons.
-8.  Estado global con Pinia solo cuando sea necesario.
-9.  Notificaciones con vue-toast-notification.
-10. Peticiones HTTP con axios cuando aplique.
-11. Código simple, limpio y listo para producción.
-12. Entregar código completo listo para copiar y pegar.
-13. No usar emojis.
+El sistema tiene tres áreas principales.
 
-------------------------------------------------------------------------
+Admin  
+Panel de administración del SaaS.
 
-## Tecnologías permitidas
+Member  
+Área del usuario registrado.
 
-### Backend
+Public  
+Login, registro y recuperación de contraseña.
 
--   Laravel 12
--   Inertia Laravel
--   Spatie Permission
+---
 
-### Frontend
+# Convenciones de rutas
 
--   Vue 3
--   Pinia
--   Axios
--   Bootstrap 5.3
--   Bootstrap Icons
--   vue-toast-notification
--   vue-notify
+Admin
 
-------------------------------------------------------------------------
+/admin/*
 
-## Tecnologías prohibidas
+Member
 
-No usar:
+/member/*
 
--   TypeScript
--   Tailwind
--   Vuetify
--   Quasar
--   PrimeVue
--   UI frameworks externos
--   librerías innecesarias
--   sistemas de estilos personalizados
+Public
 
-------------------------------------------------------------------------
+/login  
+/register  
 
-## Reglas Laravel 12
+---
 
-Laravel 12 usa configuración moderna.
+# Convención de permisos
 
-No usar `Kernel.php` como referencia.
+Formato:
 
-La configuración central está en:
+module.action
 
-`bootstrap/app.php`
+Ejemplos:
 
-Middlewares se registran con:
+users.view  
+users.create  
+users.update  
+users.delete  
 
-`->withMiddleware()`
+---
 
-------------------------------------------------------------------------
+# Convención de módulos
 
-## Spatie Permission
+Los módulos del sistema se controlan mediante:
 
-Middleware correcto:
+system_modules
 
-`Spatie\Permission\Middleware\RoleMiddleware`
+Ejemplos de módulos:
 
-No usar `Middlewares`.
+users  
+billing  
+support  
+media  
+exports  
+api  
+webhooks  
+automations  
+legal  
+notifications  
 
-Agregar `HasRoles` al modelo `User`.
+Si un módulo está desactivado:
 
-------------------------------------------------------------------------
+- no debe aparecer en el menú
+- sus rutas no deben ejecutarse
+- sus funcionalidades deben ignorarse
 
-## Reglas Vue
+---
 
-Todos los componentes deben usar Composition API.
+# Feature Flags
 
-Usar siempre:
+Las features se controlan mediante feature flags.
 
-`<script setup>`
+No mezclar:
 
-Prohibido usar:
+Settings  
+Feature Flags  
+Modules
 
--   data()
--   methods
--   computed en Options API
--   watch en Options API
--   created()
--   mounted()
+---
 
-Si el agente genera Options API debe reescribir el componente usando
-Composition API.
+# Settings
 
-------------------------------------------------------------------------
+Los settings globales deben obtenerse mediante un servicio central.
 
-## Reglas de UI (Bootstrap estricto)
+No hardcodear valores del sistema.
 
-La interfaz debe usar únicamente Bootstrap 5.3.
+Ejemplos:
 
-No diseñar estilos personalizados.
+app_name  
+support_email  
+billing_enabled  
 
-No inventar:
+---
 
--   colores
--   paletas
--   gradientes
--   sombras personalizadas
--   temas visuales
--   variables CSS
--   estilos globales
+# Permisos y seguridad
 
-Usar únicamente clases estándar de Bootstrap:
+Siempre validar en backend:
 
--   grid
--   container
--   cards
--   tables
--   forms
--   buttons
--   utilities
+auth  
+rol  
+permiso  
+policy  
+ownership  
 
-------------------------------------------------------------------------
+No confiar en frontend.
 
-## Estructura del frontend
+---
 
-    resources/js
-    ├── app.js
-    ├── Pages
-    │   ├── Dashboard.vue
-    │   ├── Users
-    │   ├── Roles
-    │   ├── Permissions
-    │   └── Front
-    ├── Layouts
-    │   ├── AdminLayout.vue
-    │   └── FrontLayout.vue
-    ├── Components
-    ├── Stores
-    ├── Composables
-    └── Services
+# Convenciones frontend
 
-------------------------------------------------------------------------
+Usar:
 
-## Reglas Inertia
+Layout Admin  
+Layout Member  
+Layout Auth
 
-Las páginas se renderizan con:
+Componentes comunes:
 
-`Inertia::render(...)`
+PageTitle  
+Breadcrumb  
+Searchbar  
+ConfirmDialog  
 
-Las páginas viven en:
+---
 
-`resources/js/Pages`
+# CRUD
 
-Blade solo se usa como root view de Inertia.
+Los CRUD deben seguir estructura consistente:
 
-------------------------------------------------------------------------
+Index  
+Create  
+Edit  
 
-## Reglas CRUD
+Usar:
 
-Todos los CRUD deben seguir el mismo patrón visual:
+useForm  
+validaciones  
+toast notifications  
 
--   PageTitle
--   Breadcrumb
--   Searchbar
--   Formularios consistentes
--   useForm
--   toasts
--   ConfirmDialog
--   card layout
+---
 
-------------------------------------------------------------------------
+# Nuevos módulos
 
-## Reglas para formularios
+Cuando el agente cree un módulo debe:
 
-1.  Formularios claros y consistentes.
-2.  Validaciones visibles.
-3.  Evitar duplicación entre create y edit.
+1 crear rutas  
+2 crear controlador  
+3 crear vistas Inertia  
+4 crear permisos  
+5 agregar menú  
+6 respetar módulos activos  
+7 respetar permisos  
+8 documentar si es necesario  
 
-------------------------------------------------------------------------
+---
 
-## Reglas para modelos
+# No hacer
 
-Antes de crear un modelo nuevo:
+No refactorizar arquitectura completa.  
+No mover carpetas masivamente.  
+No crear librerías nuevas innecesarias.  
+No usar TypeScript.
 
-Preguntar si el modelo ya existe o si el usuario quiere mostrar su
-versión.
+---
 
-No inventar columnas ni relaciones.
+# Objetivo
 
-------------------------------------------------------------------------
-
-## Dashboard
-
-Debe incluir:
-
--   navbar o sidebar
--   breadcrumbs
--   tarjetas
--   tablas
--   filtros
--   búsqueda
--   formularios consistentes
--   confirmaciones
--   toasts
-
-Debe verse limpio, rápido y profesional.
-
-------------------------------------------------------------------------
-
-## Frontend público
-
-Debe incluir:
-
--   home
--   landing
--   páginas informativas
--   formularios
--   login
--   registro
-
-Usar Bootstrap como base visual.
-
-------------------------------------------------------------------------
-
-## Multiusuario
-
-Spatie maneja roles y permisos.
-
-El SaaS debe contemplar:
-
--   users
--   organizations
--   organization_user
-
-Filtrar datos por organización cuando aplique.
-
-------------------------------------------------------------------------
-
-## Comandos base
-
-### Instalar dependencias
-
-composer install\
-npm install
-
-### Desarrollo
-
-npm run dev\
-php artisan serve
-
-### Producción
-
-npm run build
-
-### Migraciones
-
-php artisan migrate
-
-### Seeders
-
-php artisan db:seed
-
-------------------------------------------------------------------------
-
-## Prioridad de desarrollo
-
-1.  layout admin
-2.  auth
-3.  dashboard
-4.  users
-5.  roles
-6.  permissions
-7.  organizations
-8.  frontend público
-
-------------------------------------------------------------------------
-
-## Objetivo del agente
-
-Generar código que sea:
-
--   simple
--   claro
--   coherente con Laravel 12
--   compatible con Inertia + Vue
--   listo para producción
--   fácil de extender
--   visualmente profesional
-
-
-## Reglas de tablas y paginación
-
-La paginación debe hacerse siempre del lado del servidor.
-
-No cargar todos los registros en el frontend para después paginarlos en la tabla.
-
-Reglas obligatorias:
-- usar paginación backend con Laravel
-- devolver resultados paginados desde el controlador
-- usar `paginate()` o `simplePaginate()` según el caso
-- aplicar búsqueda, filtros y ordenamiento en la consulta del servidor
-- la tabla solo debe renderizar los registros recibidos en la página actual
-- conservar parámetros de búsqueda, filtros, orden y página en la URL
-- no usar paginación en memoria
-- no usar `all()` ni `get()` para listados grandes del dashboard
-
-Para tablas administrativas:
-- index debe consultar solo los registros necesarios para la página actual
-- la UI debe consumir `links`, `current_page`, `last_page`, `per_page`, `total` y `data` 
-- cada cambio de búsqueda, filtro, orden o página debe disparar una nueva petición al servidor
-
-Si el agente genera una tabla cargando todos los registros, debe reescribirla usando paginación del servidor.
+Mantener el proyecto consistente, seguro y reusable como SaaS starter.
