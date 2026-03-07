@@ -11,6 +11,7 @@
         <Link href="/member/profile" class="btn btn-outline-secondary btn-sm">Editar perfil</Link>
         <Link href="/member/password" class="btn btn-outline-secondary btn-sm">Cambiar password</Link>
         <Link href="/member/notifications" class="btn btn-outline-secondary btn-sm">Notificaciones</Link>
+        <Link href="/member/invoices" class="btn btn-outline-secondary btn-sm">Comprobantes</Link>
       </div>
     </div>
 

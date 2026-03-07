@@ -7,6 +7,7 @@
         <div class="ms-auto d-flex align-items-center gap-2">
           <Link href="/member/account" class="btn btn-outline-secondary btn-sm">Cuenta</Link>
           <Link href="/member/payments" class="btn btn-outline-secondary btn-sm">Pagos</Link>
+          <Link href="/member/invoices" class="btn btn-outline-secondary btn-sm">Comprobantes</Link>
           <Link href="/member/notifications" class="btn btn-outline-secondary btn-sm">
             Notificaciones
             <span v-if="unreadCount > 0" class="badge text-bg-primary ms-1">

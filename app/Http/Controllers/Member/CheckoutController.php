@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Member;
 
 use App\Http\Controllers\Controller;
+use App\Models\Coupon;
 use App\Models\Payment;
 use App\Models\Plan;
 use App\Models\Subscription;
@@ -31,10 +32,33 @@ class CheckoutController extends Controller
             return back()->with('error', 'Stripe no esta configurado correctamente.');
         }
 
+        $coupon = $this->resolveCouponFromSession($request, $plan);
+        if ($coupon && empty($coupon->stripe_promotion_code_id) && empty($coupon->stripe_coupon_id)) {
+            return back()->with('error', 'El cupon no esta disponible para Stripe.');
+        }
+
         try {
             $stripe = new StripeClient($stripeSecret);
 
-            $session = $stripe->checkout->sessions->create([
+            $discounts = [];
+            if ($coupon) {
+                if (! empty($coupon->stripe_promotion_code_id)) {
+                    $discounts[] = ['promotion_code' => $coupon->stripe_promotion_code_id];
+                } elseif (! empty($coupon->stripe_coupon_id)) {
+                    $discounts[] = ['coupon' => $coupon->stripe_coupon_id];
+                }
+            }
+
+            $metadata = [
+                'user_id' => (string) $user->id,
+                'plan_id' => (string) $plan->id,
+                'plan_slug' => (string) $plan->slug,
+            ];
+            if ($coupon) {
+                $metadata['coupon_id'] = (string) $coupon->id;
+            }
+
+            $payload = [
                 'mode' => 'subscription',
                 'payment_method_types' => ['card'],
                 'customer_email' => $user->email,
@@ -42,14 +66,16 @@ class CheckoutController extends Controller
                     'price' => $plan->stripe_price_id,
                     'quantity' => 1,
                 ]],
-                'metadata' => [
-                    'user_id' => (string) $user->id,
-                    'plan_id' => (string) $plan->id,
-                    'plan_slug' => (string) $plan->slug,
-                ],
+                'metadata' => $metadata,
                 'success_url' => url('/member/checkout/success?session_id={CHECKOUT_SESSION_ID}'),
                 'cancel_url' => url('/member/checkout/cancel'),
-            ]);
+            ];
+
+            if (! empty($discounts)) {
+                $payload['discounts'] = $discounts;
+            }
+
+            $session = $stripe->checkout->sessions->create($payload);
 
             $request->session()->put('stripe_checkout_session_id', $session->id);
             $request->session()->put('selected_plan_id', $plan->id);
@@ -200,6 +226,8 @@ class CheckoutController extends Controller
                     ? $session->amount_total / 100
                     : ($plan->price ?? 0);
 
+                $couponId = $session->metadata->coupon_id ?? null;
+
                 Payment::create([
                     'user_id' => $user->id,
                     'subscription_id' => $localSubscription->id,
@@ -215,11 +243,12 @@ class CheckoutController extends Controller
                     'metadata' => [
                         'checkout_session_id' => $session->id,
                         'subscription_id' => $stripeSubscription?->id,
+                        'coupon_id' => $couponId,
                     ],
                 ]);
             }
 
-            $request->session()->forget(['selected_plan_id', 'stripe_checkout_session_id']);
+            $request->session()->forget(['selected_plan_id', 'stripe_checkout_session_id', 'applied_coupon_id']);
 
             $activity->log('checkout.paid', [
                 'user' => $user,
@@ -290,5 +319,83 @@ class CheckoutController extends Controller
         );
 
         return Inertia::render('Member/Checkout/Cancel');
+    }
+
+    public function validateCoupon(Request $request)
+    {
+        $data = $request->validate([
+            'code' => ['required', 'string', 'max:50'],
+            'plan_id' => ['required', 'integer', 'exists:plans,id'],
+        ]);
+
+        $plan = Plan::query()->where('is_active', true)->find($data['plan_id']);
+        if (! $plan) {
+            $request->session()->forget('applied_coupon_id');
+
+            return back()->with('error', 'Plan no disponible.');
+        }
+        $coupon = Coupon::query()
+            ->where('code', strtoupper(trim($data['code'])))
+            ->first();
+
+        if (! $coupon || ! $this->isCouponValidForPlan($coupon, $plan)) {
+            $request->session()->forget('applied_coupon_id');
+
+            return back()->with('error', 'Cupon invalido o no aplicable.');
+        }
+
+        $request->session()->put('applied_coupon_id', $coupon->id);
+
+        return back()->with('success', 'Cupon aplicado correctamente.');
+    }
+
+    public function clearCoupon(Request $request)
+    {
+        $request->session()->forget('applied_coupon_id');
+
+        return back()->with('success', 'Cupon removido.');
+    }
+
+    private function resolveCouponFromSession(Request $request, Plan $plan): ?Coupon
+    {
+        $couponId = $request->session()->get('applied_coupon_id');
+        if (! $couponId) {
+            return null;
+        }
+
+        $coupon = Coupon::query()->find($couponId);
+        if (! $coupon || ! $this->isCouponValidForPlan($coupon, $plan)) {
+            $request->session()->forget('applied_coupon_id');
+
+            return null;
+        }
+
+        return $coupon;
+    }
+
+    private function isCouponValidForPlan(Coupon $coupon, Plan $plan): bool
+    {
+        if (! $coupon->is_active) {
+            return false;
+        }
+
+        $now = now();
+        if ($coupon->starts_at && $coupon->starts_at->gt($now)) {
+            return false;
+        }
+
+        if ($coupon->ends_at && $coupon->ends_at->lt($now)) {
+            return false;
+        }
+
+        if ($coupon->usage_limit && $coupon->used_count >= $coupon->usage_limit) {
+            return false;
+        }
+
+        if (! $coupon->applies_to_all_plans) {
+            return $coupon->plans()->where('plans.id', $plan->id)->exists();
+        }
+
+        return true;
     }
 }

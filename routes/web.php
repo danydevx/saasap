@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\Admin\ActivityLogController;
+use App\Http\Controllers\Admin\CouponController;
+use App\Http\Controllers\Admin\InvoiceController as AdminInvoiceController;
 use App\Http\Controllers\Admin\PaymentController;
 use App\Http\Controllers\Admin\PermissionController;
 use App\Http\Controllers\Admin\PlanController;
@@ -17,6 +19,7 @@ use App\Http\Controllers\Member\AccountController;
 use App\Http\Controllers\Member\BillingController;
 use App\Http\Controllers\Member\CheckoutController;
 use App\Http\Controllers\Member\DashboardController;
+use App\Http\Controllers\Member\InvoiceController as MemberInvoiceController;
 use App\Http\Controllers\Member\NotificationController;
 use App\Http\Controllers\Member\OnboardingController;
 use App\Http\Controllers\Member\PasswordController;
@@ -109,6 +112,12 @@ Route::post('/member/billing/portal', [BillingController::class, 'portal'])
 Route::post('/member/checkout/{plan}', [CheckoutController::class, 'create'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.checkout.create');
+Route::post('/member/checkout/coupon/validate', [CheckoutController::class, 'validateCoupon'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.checkout.coupon.validate');
+Route::put('/member/checkout/coupon/clear', [CheckoutController::class, 'clearCoupon'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.checkout.coupon.clear');
 Route::get('/member/checkout/success', [CheckoutController::class, 'success'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.checkout.success');
@@ -154,6 +163,16 @@ Route::put('/member/notifications/read-all', [NotificationController::class, 'ma
 Route::get('/member/payments', [MemberPaymentController::class, 'index'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.payments.index');
+
+Route::get('/member/invoices', [MemberInvoiceController::class, 'index'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.invoices.index');
+Route::get('/member/invoices/{invoice}', [MemberInvoiceController::class, 'show'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.invoices.show');
+Route::get('/member/invoices/{invoice}/download', [MemberInvoiceController::class, 'download'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.invoices.download');
 
 Route::get('/profile', [UserProfileController::class, 'edit'])
     ->middleware('auth')
@@ -251,6 +270,35 @@ Route::prefix('admin')->middleware(['auth', 'admin_or_user:1'])->group(function 
     Route::put('/payments/{payment}', [PaymentController::class, 'update'])
         ->middleware('permission_or_user:payments.update,1')
         ->name('admin.payments.update');
+
+    Route::get('/coupons', [CouponController::class, 'index'])
+        ->middleware('permission_or_user:coupons.view,1')
+        ->name('admin.coupons.index');
+    Route::get('/coupons/create', [CouponController::class, 'create'])
+        ->middleware('permission_or_user:coupons.create,1')
+        ->name('admin.coupons.create');
+    Route::post('/coupons', [CouponController::class, 'store'])
+        ->middleware('permission_or_user:coupons.create,1')
+        ->name('admin.coupons.store');
+    Route::get('/coupons/{coupon}/edit', [CouponController::class, 'edit'])
+        ->middleware('permission_or_user:coupons.update,1')
+        ->name('admin.coupons.edit');
+    Route::put('/coupons/{coupon}', [CouponController::class, 'update'])
+        ->middleware('permission_or_user:coupons.update,1')
+        ->name('admin.coupons.update');
+    Route::delete('/coupons/{coupon}', [CouponController::class, 'destroy'])
+        ->middleware('permission_or_user:coupons.delete,1')
+        ->name('admin.coupons.destroy');
+
+    Route::get('/invoices', [AdminInvoiceController::class, 'index'])
+        ->middleware('permission_or_user:invoices.view,1')
+        ->name('admin.invoices.index');
+    Route::get('/invoices/{invoice}', [AdminInvoiceController::class, 'show'])
+        ->middleware('permission_or_user:invoices.view,1')
+        ->name('admin.invoices.show');
+    Route::get('/invoices/{invoice}/download', [AdminInvoiceController::class, 'download'])
+        ->middleware('permission_or_user:invoices.download,1')
+        ->name('admin.invoices.download');
 
 });
 

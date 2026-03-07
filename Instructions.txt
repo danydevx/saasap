@@ -3089,3 +3089,500 @@ Importante:
 - generar solo archivos necesarios
 - no agregar archivos innecesarios
 - no romper sincronización por webhooks
+
+=====================================================
+Instrucción 18: cupones y promociones básicas
+
+========================================================
+Implementar sistema base de cupones y promociones para el SaaS.
+
+Contexto:
+Ya existe checkout con Stripe, webhooks, suscripciones y portal de billing para usuarios `member`.
+Cada usuario es único.
+No hay organizaciones ni tenants.
+Se necesita agregar soporte básico para cupones o promociones en el flujo de selección/contratación de planes.
+No romper módulos actuales.
+
+Stack:
+Laravel 12 + Inertia + Vue 3 + JavaScript + Bootstrap 5.3 + Stripe.
+
+Reglas:
+- No TypeScript
+- Vue con `<script setup>`
+- Solo Composition API
+- No Options API
+- No API separada fuera del flujo web actual
+- No librerías nuevas innecesarias
+- No refactorizar módulos no relacionados
+- Reutilizar estructura visual actual
+- Código simple y listo para producción
+
+Objetivo:
+Permitir aplicar cupones básicos a planes o suscripciones, con control administrativo y compatibilidad con Stripe.
+
+Alcance de esta fase:
+- CRUD admin de cupones
+- validación de cupones
+- aplicar cupón en flujo de selección/checkout
+- soporte para descuento fijo o porcentaje
+- fechas de vigencia
+- límite de uso general
+- estado activo/inactivo
+- compatibilidad con Stripe si el checkout ya es real
+
+No incluir todavía:
+- promociones extremadamente complejas
+- combinaciones de múltiples cupones
+- reglas avanzadas por segmentos
+- referidos
+- descuentos automáticos por volumen
+- campañas avanzadas
+
+Entidad:
+Crear tabla `coupons` o equivalente.
+
+Campos mínimos sugeridos:
+- id
+- code unique
+- name
+- description nullable
+- type string
+- value decimal
+- is_active boolean
+- starts_at nullable
+- ends_at nullable
+- usage_limit nullable integer
+- used_count integer default 0
+- applies_to_all_plans boolean default true
+- metadata json nullable
+- created_at
+- updated_at
+
+Opcional si se requiere por plan:
+- relación many-to-many con `plans`
+o
+- estructura equivalente
+
+Tipos de descuento:
+- fixed
+- percent
+
+Reglas del cupón:
+- código único
+- activo/inactivo
+- puede tener vigencia por fechas
+- puede tener límite total de usos
+- puede aplicar a todos los planes o solo a algunos
+- no permitir uso si está vencido o inactivo
+- no permitir uso si excedió límite
+
+Modelo:
+- Coupon
+
+Relaciones:
+Si aplica a planes específicos:
+- Coupon belongsToMany Plan
+- Plan belongsToMany Coupon
+
+Permisos sugeridos:
+- coupons.view
+- coupons.create
+- coupons.update
+- coupons.delete
+
+Admin - CRUD cupones:
+Rutas:
+- usar patrón admin actual
+- crear CRUD admin completo
+
+Controlador:
+- CouponController
+- métodos:
+  - index()
+  - create()
+  - store()
+  - edit()
+  - update()
+  - destroy()
+
+Vistas:
+- resources/js/Pages/Admin/Coupons/Index.vue
+- resources/js/Pages/Admin/Coupons/Create.vue
+- resources/js/Pages/Admin/Coupons/Edit.vue
+
+Campos admin:
+- code
+- name
+- description
+- type
+- value
+- is_active
+- starts_at
+- ends_at
+- usage_limit
+- applies_to_all_plans
+- selección de planes si no aplica a todos
+
+Validaciones backend:
+- code required|string|max:50|unique
+- name required|string|max:150
+- description nullable|string|max:500
+- type required|in:fixed,percent
+- value required|numeric|min:0
+- is_active boolean
+- starts_at nullable|date
+- ends_at nullable|date|after_or_equal:starts_at
+- usage_limit nullable|integer|min:1
+- applies_to_all_plans boolean
+
+Validaciones adicionales:
+- si type = percent, value debe ser razonable, por ejemplo <= 100
+- si no aplica a todos los planes, validar selección de planes
+- no eliminar cupones usados si eso rompe historial; preferir desactivar si ya existe uso
+
+Checkout / selección de plan:
+Permitir que el usuario capture un código de cupón antes de iniciar checkout.
+
+Ubicación:
+- en página de pricing si encaja
+o
+- en página intermedia de selección/checkout
+
+Flujo esperado:
+1. usuario selecciona plan
+2. puede ingresar código de cupón
+3. backend valida cupón
+4. si es válido:
+   - calcula descuento
+   - muestra resumen actualizado
+   - aplica el cupón al flujo de checkout
+5. si es inválido:
+   - mostrar error claro
+
+Importante:
+- validar siempre en backend
+- no confiar en frontend para descuentos
+- no calcular precio final solo del lado del cliente
+
+Compatibilidad con Stripe:
+Si el checkout real ya usa Stripe:
+- revisar si se usará:
+  - cupones creados también en Stripe
+  - o descuentos internos reflejados al crear la sesión de checkout
+
+Preferencia:
+- si Stripe ya controla el cobro real, mantener consistencia con Stripe
+- no inventar descuentos locales que no coincidan con el cobro real
+
+Opciones válidas:
+1. guardar referencia `stripe_coupon_id` o `stripe_promotion_code_id` en `coupons`
+2. usar cupón local solo para validación y luego mapearlo a Stripe al crear checkout
+
+Si Stripe aún no está listo para cupones:
+- dejar primero la lógica local y estructura preparada
+- pero no mostrar cobro final engañoso si aún no coincide con Stripe
+
+Rutas member/públicas sugeridas:
+- POST /pricing/coupon/validate
+o
+- POST /member/checkout/coupon/validate
+usar el patrón que mejor encaje
+
+Controlador público/member:
+- método para validar cupón
+- devolver resumen seguro del descuento aplicado
+- no exponer lógica sensible innecesaria
+
+Comportamiento esperado:
+- cupón válido -> aplica descuento
+- cupón inválido -> error claro
+- cupón vencido/inactivo/sin usos -> error claro
+- cupón no aplicable al plan -> error claro
+
+Uso del cupón:
+Definir cuándo aumenta `used_count`.
+
+Preferencia:
+- incrementar solo cuando el pago o checkout válido se complete de verdad
+- no al solo validar
+- si Stripe/webhook es la fuente final, actualizar uso cuando el pago se confirme
+
+Member area:
+Opcionalmente mostrar en resumen de checkout:
+- subtotal
+- descuento
+- total estimado
+si ya encaja con el flujo actual
+
+UI:
+- usar Bootstrap 5.3
+- formulario simple de cupón
+- mensajes claros
+- cards limpias
+- no crear experiencia compleja
+
+Seguridad:
+- validar todo en backend
+- no confiar en frontend para descuentos
+- no permitir cupones inactivos o vencidos
+- no exponer reglas internas innecesarias
+- mantener coherencia con cobro real
+
+Integración:
+- revisar pricing actual
+- revisar checkout actual con Stripe
+- revisar modelos Plan, Subscription y Payment
+- adaptarse a lo existente
+- si ya hay integración Stripe avanzada, mantener consistencia
+- no romper checkout, webhooks ni billing portal
+
+Actividad y notificaciones:
+Si ya existen:
+- registrar actividad cuando un cupón se use correctamente
+- opcionalmente notificar al usuario en resumen de compra
+
+Importante:
+- primero revisar si ya existe estructura de descuentos o promociones
+- si existe, adaptarse
+- generar solo archivos necesarios
+- no agregar archivos innecesarios
+- mantener implementación simple y extensible
+
+===================================================
+
+======================================================
+
+Implementar módulo base de facturas o comprobantes de pago para usuarios `member` y consulta administrativa.
+
+Contexto:
+Ya existen checkout con Stripe, webhooks, suscripciones, billing portal y cupones/promociones básicas.
+Cada usuario es único.
+No hay organizaciones ni tenants.
+Se necesita que el usuario pueda consultar sus comprobantes de pago y que el admin tenga trazabilidad básica de documentos relacionados a pagos.
+No romper módulos actuales.
+
+Stack:
+Laravel 12 + Inertia + Vue 3 + JavaScript + Bootstrap 5.3 + Stripe.
+
+Reglas:
+- No TypeScript
+- Vue con `<script setup>`
+- Solo Composition API
+- No Options API
+- No API separada fuera del flujo web actual
+- No librerías nuevas innecesarias
+- No refactorizar módulos no relacionados
+- Reutilizar estructura visual actual
+- Código simple y listo para producción
+
+Objetivo:
+Permitir almacenar y mostrar comprobantes/facturas básicos asociados a pagos o suscripciones.
+
+Alcance de esta fase:
+- registrar documento de pago
+- asociarlo a usuario y pago
+- mostrar listado al usuario final
+- mostrar listado/consulta al admin
+- permitir descarga si existe archivo o URL
+- dejar base lista para facturación más avanzada después
+
+No incluir todavía:
+- CFDI real
+- timbrado fiscal
+- integración SAT
+- notas de crédito
+- facturación automática compleja
+- generación de PDF extremadamente compleja si no hace falta
+
+Entidad:
+Crear tabla `invoices` o equivalente.
+
+Campos mínimos sugeridos:
+- id
+- user_id
+- payment_id nullable
+- subscription_id nullable
+- number nullable string
+- type string default `receipt`
+- status string
+- amount nullable decimal
+- currency nullable string
+- issued_at nullable timestamp
+- due_at nullable timestamp
+- paid_at nullable timestamp
+- file_path nullable string
+- file_url nullable string
+- provider_reference nullable string
+- metadata json nullable
+- created_at
+- updated_at
+
+Tipos sugeridos:
+- receipt
+- invoice
+
+Estados sugeridos:
+- pending
+- issued
+- paid
+- canceled
+
+Modelo:
+- Invoice
+
+Relaciones:
+- Invoice belongsTo User
+- Invoice belongsTo Payment nullable
+- Invoice belongsTo Subscription nullable
+- User hasMany Invoice
+- Payment hasOne o hasMany Invoice según diseño elegido
+
+Importante:
+- la estructura debe servir tanto para comprobantes simples como para crecer a facturación después
+- no acoplarla únicamente a Stripe
+
+Permisos sugeridos:
+- invoices.view
+- invoices.create
+- invoices.update
+- invoices.download
+
+Origen de la factura/comprobante:
+Opciones válidas:
+1. crear registro local a partir de un pago confirmado
+2. guardar referencia al documento del proveedor externo si Stripe lo expone
+3. guardar URL o archivo generado localmente
+
+Preferencia:
+- en esta fase, crear registro local asociado al pago
+- si Stripe entrega invoice URL o hosted invoice URL, guardarla si aplica
+- no complicar con PDF custom si no es necesario
+
+Generación:
+Cuando un pago quede confirmado:
+- crear o actualizar un Invoice asociado al Payment
+- guardar monto, moneda, fecha y referencia
+- guardar URL externa si existe
+- mantener consistencia con Payment y Subscription
+
+Admin:
+Crear módulo admin simple de consulta de comprobantes.
+
+Rutas admin:
+- GET /admin/invoices
+- GET /admin/invoices/{invoice}
+opcionalmente:
+- GET /admin/invoices/{invoice}/download
+
+Controlador admin:
+- InvoiceController
+- métodos:
+  - index()
+  - show()
+  - download() si aplica
+
+Vista admin:
+- resources/js/Pages/Admin/Invoices/Index.vue
+- resources/js/Pages/Admin/Invoices/Show.vue
+
+Listado admin:
+- paginación por servidor
+- filtros por:
+  - usuario
+  - estado
+  - tipo
+  - fecha
+- mostrar:
+  - número o referencia
+  - usuario
+  - monto
+  - moneda
+  - estado
+  - fecha
+  - acciones
+
+Member area:
+Crear listado de comprobantes del usuario autenticado.
+
+Rutas member:
+- GET /member/invoices
+- GET /member/invoices/{invoice}
+- GET /member/invoices/{invoice}/download si aplica
+
+Controlador member:
+- Member/InvoiceController
+- métodos:
+  - index()
+  - show()
+  - download()
+
+Vista member:
+- resources/js/Pages/Member/Invoices/Index.vue
+- resources/js/Pages/Member/Invoices/Show.vue
+
+Comportamiento member:
+- listar solo sus comprobantes
+- ver detalle básico
+- descargar o abrir enlace si existe
+- no editar
+
+Datos a mostrar:
+- número o referencia
+- tipo
+- estado
+- monto
+- moneda
+- fecha de emisión
+- fecha de pago
+- plan o suscripción relacionada si existe
+- enlace de descarga o visualización si existe
+
+UI:
+- usar layout admin para admin
+- usar layout member para member
+- usar Bootstrap 5.3
+- cards o tabla simple
+- mantener estilo visual actual
+- usar paginación por servidor
+
+Validaciones backend:
+Si hay creación manual o actualización admin:
+- user_id required|exists:users,id
+- payment_id nullable|exists:payments,id
+- subscription_id nullable|exists:subscriptions,id
+- number nullable|string|max:100
+- type required|in:receipt,invoice
+- status required|in:pending,issued,paid,canceled
+- amount nullable|numeric|min:0
+- currency nullable|string|max:10
+- issued_at nullable|date
+- due_at nullable|date
+- paid_at nullable|date
+- file_path nullable|string|max:255
+- file_url nullable|url|max:500
+- provider_reference nullable|string|max:150
+
+Integración con Stripe:
+Si Stripe devuelve invoice id o invoice pdf/url:
+- guardar referencia en provider_reference
+- guardar file_url si aplica
+- no depender completamente de ello si el proveedor cambia después
+
+Seguridad:
+- member solo ve sus propios comprobantes
+- admin protegido por permisos
+- no exponer archivos de otros usuarios
+- validar acceso siempre en backend
+- no exponer metadata sensible
+
+Actividad y notificaciones:
+Si ya existen:
+- registrar actividad al generarse comprobante
+- crear notificación al usuario si aplica
+
+Importante:
+- primero revisar si ya existe estructura de invoices o receipts
+- si existe, adaptarse
+- generar solo archivos necesarios
+- no agregar archivos innecesarios
+- no romper payments, subscriptions, webhooks ni member billing

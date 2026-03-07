@@ -4,27 +4,31 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Payment extends Model
+class Invoice extends Model
 {
     protected $fillable = [
         'user_id',
+        'payment_id',
         'subscription_id',
-        'plan_id',
+        'number',
+        'type',
+        'status',
         'amount',
         'currency',
-        'status',
-        'provider',
-        'provider_reference',
-        'payment_method',
-        'description',
+        'issued_at',
+        'due_at',
         'paid_at',
+        'file_path',
+        'file_url',
+        'provider_reference',
         'metadata',
     ];
 
     protected $casts = [
         'amount' => 'decimal:2',
+        'issued_at' => 'datetime',
+        'due_at' => 'datetime',
         'paid_at' => 'datetime',
         'metadata' => 'array',
     ];
@@ -34,18 +38,13 @@ class Payment extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function payment(): BelongsTo
+    {
+        return $this->belongsTo(Payment::class);
+    }
+
     public function subscription(): BelongsTo
     {
         return $this->belongsTo(Subscription::class);
-    }
-
-    public function plan(): BelongsTo
-    {
-        return $this->belongsTo(Plan::class);
-    }
-
-    public function invoices(): HasMany
-    {
-        return $this->hasMany(Invoice::class);
     }
 }

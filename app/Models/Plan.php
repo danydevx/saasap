@@ -36,4 +36,9 @@ class Plan extends Model
     {
         return $this->hasMany(Payment::class);
     }
+
+    public function coupons(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(Coupon::class)->withTimestamps();
+    }
 }

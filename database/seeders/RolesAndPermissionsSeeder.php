@@ -43,6 +43,14 @@ class RolesAndPermissionsSeeder extends Seeder
             'payments.view',
             'payments.create',
             'payments.update',
+            'coupons.view',
+            'coupons.create',
+            'coupons.update',
+            'coupons.delete',
+            'invoices.view',
+            'invoices.create',
+            'invoices.update',
+            'invoices.download',
         ];
 
         foreach ($permissions as $permission) {
@@ -80,6 +88,14 @@ class RolesAndPermissionsSeeder extends Seeder
             'payments.view',
             'payments.create',
             'payments.update',
+            'coupons.view',
+            'coupons.create',
+            'coupons.update',
+            'coupons.delete',
+            'invoices.view',
+            'invoices.create',
+            'invoices.update',
+            'invoices.download',
         ]);
 
         $user->givePermissionTo([]);

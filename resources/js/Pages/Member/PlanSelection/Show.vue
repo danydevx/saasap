@@ -34,6 +34,44 @@
                 <span>{{ item }}</span>
               </li>
             </ul>
+
+            <div class="border-top pt-3 mt-3">
+              <div class="fw-semibold mb-2">Cupon</div>
+              <div v-if="coupon" class="d-flex flex-wrap align-items-center justify-content-between">
+                <div>
+                  <div class="fw-semibold">{{ coupon.code }}</div>
+                  <div class="text-muted small">{{ coupon.name }}</div>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-secondary" @click="clearCoupon">
+                  Quitar
+                </button>
+              </div>
+              <form v-else class="d-flex flex-wrap gap-2" @submit.prevent="applyCoupon">
+                <input
+                  v-model="couponCode"
+                  type="text"
+                  class="form-control"
+                  placeholder="Codigo de cupon"
+                />
+                <button type="submit" class="btn btn-outline-primary" :disabled="processingCoupon">
+                  Aplicar
+                </button>
+              </form>
+              <div v-if="coupon && price !== null" class="mt-3">
+                <div class="d-flex justify-content-between text-muted">
+                  <span>Subtotal</span>
+                  <span>{{ formatPrice(price) }}</span>
+                </div>
+                <div class="d-flex justify-content-between text-muted">
+                  <span>Descuento</span>
+                  <span>-{{ formatPrice(coupon.discount_amount) }}</span>
+                </div>
+                <div class="d-flex justify-content-between fw-semibold">
+                  <span>Total estimado</span>
+                  <span>{{ formatPrice(totalAfterDiscount) }}</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -79,6 +117,7 @@
 </template>
 
 <script setup>
+import { computed, ref } from 'vue'
 import { Head, Link, router } from '@inertiajs/vue3'
 import MemberLayout from '@/Layouts/MemberLayout.vue'
 
@@ -87,10 +126,29 @@ const props = defineProps({
     type: Object,
     default: null,
   },
+  coupon: {
+    type: Object,
+    default: null,
+  },
+  price: {
+    type: [Number, String, null],
+    default: null,
+  },
   subscription: {
     type: Object,
     default: null,
   },
+})
+
+const couponCode = ref('')
+const processingCoupon = ref(false)
+
+const totalAfterDiscount = computed(() => {
+  if (props.price === null || !props.coupon) return props.price
+  const priceValue = Number(props.price)
+  if (Number.isNaN(priceValue)) return props.price
+  const discountValue = Number(props.coupon.discount_amount || 0)
+  return Math.max(0, priceValue - discountValue)
 })
 
 const limitLabels = {
@@ -148,6 +206,26 @@ const formatPrice = (value) => {
 const formatPeriod = (value) => {
   if (!value) return 'Por mes'
   return `/${value}`
+}
+
+const applyCoupon = () => {
+  if (!couponCode.value.trim() || !props.plan) return
+  processingCoupon.value = true
+  router.post('/member/checkout/coupon/validate', {
+    code: couponCode.value.trim(),
+    plan_id: props.plan.id,
+  }, {
+    preserveScroll: true,
+    onFinish: () => {
+      processingCoupon.value = false
+    },
+  })
+}
+
+const clearCoupon = () => {
+  router.put('/member/checkout/coupon/clear', {}, {
+    preserveScroll: true,
+  })
 }
 
 const clearSelection = () => {

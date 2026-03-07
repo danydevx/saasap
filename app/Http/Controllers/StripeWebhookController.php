@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Coupon;
 use App\Models\Payment;
 use App\Models\Plan;
 use App\Models\StripeWebhookEvent;
@@ -150,6 +151,7 @@ class StripeWebhookController extends Controller
         }
 
         $paymentReference = $invoice->payment_intent ?? $invoice->id;
+        $coupon = $this->resolveCouponFromInvoice($invoice);
         $this->upsertPayment([
             'user_id' => $user->id,
             'subscription_id' => $localSubscription?->id,
@@ -162,8 +164,20 @@ class StripeWebhookController extends Controller
             'metadata' => [
                 'invoice_id' => $invoice->id,
                 'subscription_id' => $subscriptionId,
+                'coupon_id' => $coupon?->id,
             ],
         ]);
+
+        $payment = Payment::query()
+            ->where('provider', 'stripe')
+            ->where('provider_reference', $paymentReference)
+            ->first();
+
+        $this->upsertInvoiceFromStripe($invoice, $user, $payment, $localSubscription);
+
+        if ($coupon) {
+            $this->incrementCouponUsage($coupon);
+        }
 
         $this->notify($user, $notifications, 'Pago confirmado', 'Tu pago fue confirmado por Stripe.', '/member/payments');
         $this->logActivity($activity, 'payment.succeeded', $user, $localSubscription, [
@@ -208,6 +222,13 @@ class StripeWebhookController extends Controller
                 'subscription_id' => $subscriptionId,
             ],
         ]);
+
+        $payment = Payment::query()
+            ->where('provider', 'stripe')
+            ->where('provider_reference', $paymentReference)
+            ->first();
+
+        $this->upsertInvoiceFromStripe($invoice, $user, $payment, $localSubscription, 'pending');
 
         $this->notify($user, $notifications, 'Pago fallido', 'Tu pago no pudo completarse.', '/member/payments');
         $this->logActivity($activity, 'payment.failed', $user, $localSubscription, [
@@ -301,6 +322,27 @@ class StripeWebhookController extends Controller
         $priceId = $line?->price?->id ?? null;
         if ($priceId) {
             return Plan::query()->where('stripe_price_id', $priceId)->first();
+        }
+
+        return null;
+    }
+
+    private function resolveCouponFromInvoice($invoice): ?Coupon
+    {
+        $discounts = $invoice->discounts ? $invoice->discounts->data : [];
+        $discount = $discounts[0] ?? null;
+        if (! $discount) {
+            return null;
+        }
+
+        $promotionCodeId = $discount->promotion_code ?? null;
+        if ($promotionCodeId) {
+            return Coupon::query()->where('stripe_promotion_code_id', $promotionCodeId)->first();
+        }
+
+        $couponId = $discount->coupon->id ?? null;
+        if ($couponId) {
+            return Coupon::query()->where('stripe_coupon_id', $couponId)->first();
         }
 
         return null;
@@ -453,6 +495,64 @@ class StripeWebhookController extends Controller
             'paid_at' => $payload['status'] === 'paid' ? now() : null,
             'metadata' => $payload['metadata'],
         ]);
+    }
+
+    private function upsertInvoiceFromStripe($invoice, User $user, ?Payment $payment, ?Subscription $subscription, ?string $statusOverride = null): void
+    {
+        $status = $statusOverride ?: $this->mapStripeInvoiceStatus($invoice->status ?? null);
+
+        $record = Invoice::query()
+            ->where('provider_reference', $invoice->id)
+            ->first();
+
+        $payload = [
+            'user_id' => $user->id,
+            'payment_id' => $payment?->id,
+            'subscription_id' => $subscription?->id,
+            'number' => $invoice->number ?? null,
+            'type' => 'receipt',
+            'status' => $status,
+            'amount' => $invoice->amount_paid ? $invoice->amount_paid / 100 : ($invoice->amount_due ? $invoice->amount_due / 100 : null),
+            'currency' => $invoice->currency ?? null,
+            'issued_at' => $invoice->created ? now()->setTimestamp($invoice->created) : null,
+            'due_at' => $invoice->due_date ? now()->setTimestamp($invoice->due_date) : null,
+            'paid_at' => $invoice->status === 'paid' && $invoice->status_transitions?->paid_at
+                ? now()->setTimestamp($invoice->status_transitions->paid_at)
+                : null,
+            'file_url' => $invoice->hosted_invoice_url ?? $invoice->invoice_pdf ?? null,
+            'provider_reference' => $invoice->id,
+            'metadata' => [
+                'invoice_id' => $invoice->id,
+                'subscription_id' => $invoice->subscription ?? null,
+            ],
+        ];
+
+        if ($record) {
+            $record->update($payload);
+
+            return;
+        }
+
+        Invoice::create($payload);
+    }
+
+    private function mapStripeInvoiceStatus(?string $status): string
+    {
+        return match ($status) {
+            'paid' => 'paid',
+            'open' => 'issued',
+            'void', 'uncollectible' => 'canceled',
+            default => 'pending',
+        };
+    }
+
+    private function incrementCouponUsage(Coupon $coupon): void
+    {
+        if ($coupon->usage_limit && $coupon->used_count >= $coupon->usage_limit) {
+            return;
+        }
+
+        $coupon->increment('used_count');
     }
 
     private function notify(User $user, UserNotificationService $notifications, string $title, string $message, string $url): void
