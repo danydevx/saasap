@@ -145,6 +145,7 @@ class SettingController extends Controller
 
     public function update(Request $request, ActivityService $activity, SettingService $settings)
     {
+        $previousMaintenance = $this->toBool($settings->get('system.maintenance_mode'));
         $data = $request->validate([
             'app.name' => ['required', 'string', 'max:150'],
             'app.short_name' => ['nullable', 'string', 'max:80'],
@@ -251,6 +252,15 @@ class SettingController extends Controller
         // compatibilidad con keys antiguas
         $settings->set('system.allow_registration', $this->boolToString($data['auth']['allow_registration'] ?? false));
         $settings->set('system.require_user_approval', $this->boolToString($data['auth']['require_admin_approval'] ?? false));
+
+        $currentMaintenance = $this->toBool($data['system']['maintenance_mode'] ?? false);
+        if ($previousMaintenance !== $currentMaintenance) {
+            $activity->log($currentMaintenance ? 'maintenance_enabled' : 'maintenance_disabled', [
+                'actor' => $request->user(),
+                'description' => $currentMaintenance ? 'Modo mantenimiento activado' : 'Modo mantenimiento desactivado',
+                'request' => $request,
+            ]);
+        }
 
         $activity->log('settings_updated', [
             'actor' => $request->user(),

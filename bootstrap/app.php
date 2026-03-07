@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\ApiKeyAuth;
+use App\Http\Middleware\CheckMaintenanceMode;
 use App\Http\Middleware\EnsureAdminOrUser;
 use App\Http\Middleware\EnsurePermissionOrUser;
 use App\Http\Middleware\EnsureUserActive;
@@ -26,6 +27,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(append: [
+            CheckMaintenanceMode::class,
             HandleInertiaRequests::class,
         ]);
 

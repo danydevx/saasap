@@ -47,6 +47,7 @@ use App\Http\Controllers\Member\SupportTicketController as MemberSupportTicketCo
 use App\Http\Controllers\Member\WebhookController as MemberWebhookController;
 use App\Http\Controllers\PricingController;
 use App\Http\Controllers\StripeWebhookController;
+use App\Services\SettingService;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -55,6 +56,15 @@ Route::get('/', function () {
 });
 
 Route::get('/health', HealthController::class)->name('health');
+
+Route::get('/maintenance', function () {
+    $settings = app(SettingService::class);
+
+    return Inertia::render('Public/Maintenance/Index', [
+        'message' => $settings->get('system.maintenance_message') ?: 'El sistema esta en mantenimiento. Intente nuevamente mas tarde.',
+        'title' => $settings->get('system.maintenance_title') ?: 'Mantenimiento en progreso',
+    ]);
+})->name('maintenance');
 
 Route::get('/login', function () {
     return Inertia::render('Auth/Login');

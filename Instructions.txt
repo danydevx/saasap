@@ -7110,7 +7110,7 @@ Instrucción 37: sesiones activas del usuario y cierre de sesiones
 =========================================================ç
 
 
-Instrucción 37: sesiones activas del usuario y cierre de sesiones
+ 
 Implementar módulo de sesiones activas para usuarios del SaaS.
 
 Contexto:
@@ -7293,9 +7293,450 @@ Importante:
 - mantener implementación simple y extensible
 
 
+=========================================================
+Instrucción 38: System Settings completos del SaaS
+==========================================================
 
 
+Implementar módulo completo de System Settings para configuración global del SaaS.
 
+Contexto:
+Ya existe base inicial de Settings o está en proceso.
+Cada usuario es único.
+No hay organizaciones ni tenants.
+Se necesita ampliar Settings para convertirlo en un centro real de configuración global del sistema.
+No romper módulos actuales.
+
+Stack:
+Laravel 12 + Inertia + Vue 3 + JavaScript + Bootstrap 5.3 + Spatie Permission.
+
+Reglas:
+- No TypeScript
+- Vue con `<script setup>`
+- Solo Composition API
+- No Options API
+- No API separada
+- No librerías nuevas innecesarias
+- No refactorizar módulos no relacionados
+- Reutilizar estructura visual actual del proyecto
+- Mantener estilo de CRUD existentes
+- Código simple, limpio y listo para producción
+
+Objetivo:
+Centralizar la configuración global del SaaS en un módulo admin reutilizable y escalable.
+
+Acceso:
+- solo `superadmin` y `admin` con permisos adecuados
+- sugerir permisos:
+  - settings.view
+  - settings.update
+
+Rutas:
+- GET /admin/settings
+- PUT /admin/settings
+
+Controlador:
+- SettingController
+- métodos:
+  - index()
+  - update()
+
+Vista:
+- resources/js/Pages/Admin/Settings/Index.vue
+
+Persistencia:
+- usar estructura key/value global
+- una sola tabla de settings globales
+- si una key no existe, crearla
+- si existe, actualizarla
+- cargar todos los valores al abrir la vista
+- guardar todo en un solo submit
+- centralizar acceso mediante helper/servicio simple para leer settings con fallback
+
+Grupos de settings requeridos:
+
+1. General
+- app.name
+- app.short_name
+- app.email
+- app.phone
+- app.website
+- app.address
+- app.description
+
+2. Branding
+- branding.logo
+- branding.favicon
+- branding.primary_color
+- branding.secondary_color
+- branding.footer_text
+- branding.auth_image optional
+- branding.system_tagline optional
+
+3. Regional
+- regional.timezone
+- regional.locale
+- regional.currency
+
+4. Registro y acceso
+- auth.allow_registration
+- auth.require_email_verification
+- auth.require_admin_approval
+- auth.login_with_email_only boolean if aplica
+- auth.password_min_length
+- auth.password_require_letters
+- auth.password_require_numbers
+
+5. Sistema
+- system.default_pagination
+- system.maintenance_mode
+- system.maintenance_message
+- system.enable_activity_log
+- system.enable_system_errors
+- system.enable_internal_notifications
+
+6. Billing
+- billing.enabled
+- billing.default_plan_id nullable
+- billing.currency
+- billing.trial_days nullable
+- billing.allow_plan_changes
+- billing.allow_cancellations
+
+7. Features globales
+- features.api_enabled
+- features.webhooks_enabled
+- features.support_enabled
+- features.help_center_enabled
+- features.exports_enabled
+- features.member_billing_enabled
+
+8. Email
+- mail.from_name
+- mail.from_address
+- mail.reply_to_address optional
+- mail.footer_signature optional
+
+Validaciones backend sugeridas:
+
+General:
+- app.name required|string|max:150
+- app.short_name nullable|string|max:80
+- app.email nullable|email|max:150
+- app.phone nullable|string|max:50
+- app.website nullable|url|max:255
+- app.address nullable|string|max:255
+- app.description nullable|string|max:500
+
+Branding:
+- branding.logo nullable|string|max:255 o validación de archivo si ya existe upload
+- branding.favicon nullable|string|max:255 o validación de archivo
+- branding.primary_color nullable|string|max:20
+- branding.secondary_color nullable|string|max:20
+- branding.footer_text nullable|string|max:255
+- branding.auth_image nullable|string|max:255
+- branding.system_tagline nullable|string|max:255
+
+Regional:
+- regional.timezone required|string|max:100
+- regional.locale required|string|max:10
+- regional.currency required|string|max:10
+
+Auth:
+- auth.allow_registration boolean
+- auth.require_email_verification boolean
+- auth.require_admin_approval boolean
+- auth.login_with_email_only boolean
+- auth.password_min_length required|integer|min:6|max:32
+- auth.password_require_letters boolean
+- auth.password_require_numbers boolean
+
+Sistema:
+- system.default_pagination required|integer|min:5|max:100
+- system.maintenance_mode boolean
+- system.maintenance_message nullable|string|max:500
+- system.enable_activity_log boolean
+- system.enable_system_errors boolean
+- system.enable_internal_notifications boolean
+
+Billing:
+- billing.enabled boolean
+- billing.default_plan_id nullable|exists:plans,id
+- billing.currency nullable|string|max:10
+- billing.trial_days nullable|integer|min:0|max:365
+- billing.allow_plan_changes boolean
+- billing.allow_cancellations boolean
+
+Features:
+- features.api_enabled boolean
+- features.webhooks_enabled boolean
+- features.support_enabled boolean
+- features.help_center_enabled boolean
+- features.exports_enabled boolean
+- features.member_billing_enabled boolean
+
+Mail:
+- mail.from_name nullable|string|max:150
+- mail.from_address nullable|email|max:150
+- mail.reply_to_address nullable|email|max:150
+- mail.footer_signature nullable|string|max:255
+
+Comportamiento:
+- index carga todos los valores actuales agrupados
+- update valida y guarda todos los grupos
+- redirect back con flash success
+- limpiar cache de settings si existe cache
+- usar fallbacks seguros si faltan settings
+- no romper flujos existentes si algún setting aún no es consumido por todo el sistema
+
+UI:
+- usar layout admin actual
+- usar PageTitle
+- usar Breadcrumb
+- usar cards o acordeones simples por grupo
+- usar componentes de campos existentes si ya existen
+- usar useForm
+- mostrar errores por campo
+- usar toast success/error
+- botón único guardar cambios
+
+Comportamiento funcional esperado:
+- admin puede configurar datos globales del SaaS
+- branding se refleja en emails, login o vistas si ya está conectado
+- toggles globales pueden habilitar o deshabilitar módulos
+- auth settings impactan flujos futuros sin romper el sistema actual
+- maintenance_mode queda preparado para usarse en el siguiente módulo
+- los valores pueden ser leídos desde cualquier parte del backend de forma consistente
+
+Integración:
+- agregar enlace al menú admin solo si el usuario tiene permiso
+- proteger rutas con permisos
+- registrar permisos si ya existe patrón para eso
+- revisar primero si ya existe modelo o tabla Setting
+- si existe, adaptarse
+- si no existe, crear solución mínima key/value
+- integrar con:
+  - emails transaccionales
+  - auth
+  - billing
+  - help center
+  - notifications
+  - feature flags si ya existen
+- no duplicar configuraciones en múltiples lugares
+
+Seguridad:
+- no guardar secretos sensibles aquí si ya usan .env
+- no mover STRIPE_SECRET, credenciales SMTP o claves privadas a Settings en esta fase
+- Settings es para configuración funcional y branding, no para secretos críticos
+- validar todo en backend
+
+Importante:
+- generar solo archivos necesarios
+- no agregar archivos innecesarios
+- mantener implementación simple y extensible
+
+
+==================================================
+Instrucción 39: modo mantenimiento del SaaS
+=========================================================
+
+
+Implementar módulo de modo mantenimiento del SaaS con control desde admin.
+
+Contexto:
+Ya existen System Settings completos o están en proceso.
+Cada usuario es único.
+No hay organizaciones ni tenants.
+Se necesita permitir activar un modo mantenimiento global del sistema desde el panel admin, sin depender solo de comandos manuales.
+No romper módulos actuales.
+
+Stack:
+Laravel 12 + Inertia + Vue 3 + JavaScript + Bootstrap 5.3.
+
+Reglas:
+- No TypeScript
+- Vue con `<script setup>`
+- Solo Composition API
+- No Options API
+- No API separada
+- No librerías nuevas innecesarias
+- No refactorizar módulos no relacionados
+- Reutilizar estructura actual del proyecto
+- Código simple y listo para producción
+
+Objetivo:
+Permitir activar y desactivar el modo mantenimiento del SaaS desde admin y controlar qué usuarios pueden seguir entrando mientras el sistema está en mantenimiento.
+
+Alcance de esta fase:
+- activar/desactivar modo mantenimiento
+- mensaje personalizado de mantenimiento
+- permitir acceso a admins autorizados durante mantenimiento
+- bloquear acceso a usuarios member y público
+- pantalla clara de mantenimiento
+- integración con settings globales
+- trazabilidad básica del cambio
+
+No incluir todavía:
+- programación automática de mantenimiento
+- countdown avanzado
+- múltiples ventanas de mantenimiento
+- whitelist compleja por IP
+- bypass temporal con links firmados
+- modo mantenimiento por módulo
+
+Configuración:
+Usar Settings globales o estructura existente para:
+- system.maintenance_mode
+- system.maintenance_message
+
+Opcionales si encajan:
+- system.maintenance_title
+- system.maintenance_allow_admins
+
+Preferencia:
+- integrar con Settings ya existentes
+- no duplicar estado en varios lugares
+- mantener una sola fuente de verdad
+
+Comportamiento esperado:
+Cuando `system.maintenance_mode = true`:
+- usuarios públicos no deben navegar normalmente
+- usuarios member no deben acceder a su área privada
+- admin y superadmin autenticados sí pueden seguir entrando al panel admin
+- login admin debe seguir funcionando si es necesario
+- login/registro público puede bloquearse o mostrar mantenimiento según regla elegida
+- rutas críticas del sistema deben respetar el mantenimiento
+
+Excepciones permitidas:
+Durante mantenimiento deben poder seguir funcionando solo las rutas mínimas necesarias, por ejemplo:
+- login admin si aplica
+- logout
+- ruta de mantenimiento
+- health check si ya existe
+- webhook Stripe o integraciones críticas solo si el negocio lo requiere
+- endpoints internos estrictamente necesarios
+
+Importante:
+- definir lista blanca mínima de rutas seguras
+- no bloquear webhooks importantes si eso rompe facturación o sincronización
+- no bloquear tareas backend necesarias
+
+Middleware:
+Crear middleware global o dedicado para mantenimiento, por ejemplo:
+- CheckMaintenanceMode
+
+Objetivo del middleware:
+- leer setting de mantenimiento
+- determinar si el usuario actual puede pasar
+- redirigir o responder pantalla de mantenimiento si no puede
+
+Reglas del middleware:
+1. si maintenance_mode está apagado -> dejar pasar
+2. si maintenance_mode está activo:
+   - si usuario autenticado tiene rol `admin` o `superadmin`, dejar pasar
+   - si ruta está en whitelist técnica, dejar pasar
+   - en cualquier otro caso, mostrar mantenimiento
+
+Vista pública de mantenimiento:
+Crear vista clara y simple.
+No usar menú normal del sitio.
+Debe mostrar:
+- título de mantenimiento
+- mensaje personalizado
+- branding básico del sistema si ya existe
+- texto corto y claro
+
+Vista sugerida:
+- resources/js/Pages/Public/Maintenance/Index.vue
+o solución equivalente si prefieres una vista backend simple
+
+Rutas:
+No hace falta crear demasiadas rutas nuevas.
+Opciones válidas:
+- renderizar una vista directa desde middleware/controlador
+- o usar una ruta dedicada:
+  - GET /maintenance
+
+Preferencia:
+- solución simple
+- evitar complejidad innecesaria
+
+Admin / Settings:
+El control principal puede estar dentro de Settings.
+Si ya existe módulo Settings completo:
+- no crear módulo separado innecesario
+- integrar:
+  - toggle `system.maintenance_mode`
+  - textarea `system.maintenance_message`
+
+Opcional:
+- card especial en dashboard admin para activar/desactivar rápidamente
+solo si encaja con la estructura actual
+
+UI admin:
+- usar layout admin
+- usar fields existentes
+- usar switch para activar/desactivar
+- usar textarea para mensaje
+- usar toast success/error
+- advertencia clara de que solo admins podrán entrar mientras esté activo
+
+Mensajes esperados:
+- "Modo mantenimiento activado correctamente."
+- "Modo mantenimiento desactivado correctamente."
+- "El sistema está en mantenimiento. Intente nuevamente más tarde."
+
+Seguridad:
+- solo admins autorizados pueden activar/desactivar mantenimiento
+- member no puede bypass
+- no confiar en frontend
+- toda lógica debe estar en backend/middleware
+- proteger rutas correctamente
+- no romper auth admin
+
+Integración:
+- revisar Settings actuales
+- revisar rutas públicas, member y admin
+- revisar webhooks y endpoints técnicos que no deben bloquearse
+- adaptarse a la estructura actual
+- mantener compatibilidad con:
+  - Stripe webhooks
+  - health endpoint
+  - login admin si la regla del negocio lo exige
+  - queues y scheduler, que no dependen de navegación web
+
+Activity log:
+Si ya existe activity log:
+- registrar:
+  - mantenimiento activado
+  - mantenimiento desactivado
+  - usuario admin que realizó el cambio
+
+Security / system errors:
+- no registrar cada acceso bloqueado como error del sistema
+- solo registrar errores reales si el middleware falla
+
+Comportamiento esperado:
+Caso 1:
+- maintenance off -> sistema funciona normal
+
+Caso 2:
+- maintenance on + usuario público -> ve pantalla de mantenimiento
+
+Caso 3:
+- maintenance on + member -> no entra al área member, ve mantenimiento
+
+Caso 4:
+- maintenance on + admin autenticado -> puede seguir entrando al admin
+
+Caso 5:
+- maintenance on + webhook crítico -> sigue funcionando si está en whitelist
+
+Importante:
+- generar solo archivos necesarios
+- no agregar archivos innecesarios
+- mantener implementación simple y extensible
+- no romper auth, billing ni webhooks críticos
 
 
 
