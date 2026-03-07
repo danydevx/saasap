@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Services\FeatureService;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -17,6 +18,7 @@ class HandleInertiaRequests extends Middleware
     public function share(Request $request): array
     {
         $user = $request->user();
+        $featureService = app(FeatureService::class);
 
         return [
             ...parent::share($request),
@@ -32,6 +34,7 @@ class HandleInertiaRequests extends Middleware
             'notificationUnreadCount' => $user
                 ? $user->notifications()->where('is_read', false)->count()
                 : 0,
+            'features' => $user ? $featureService->allForUser($user) : [],
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),

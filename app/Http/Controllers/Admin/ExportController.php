@@ -10,6 +10,7 @@ use App\Models\Subscription;
 use App\Models\SupportTicket;
 use App\Models\User;
 use App\Services\ActivityService;
+use App\Services\FeatureService;
 use App\Services\SystemErrorService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -18,8 +19,11 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ExportController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request, FeatureService $features)
     {
+        if (! $features->enabled($request->user(), 'can_export', true)) {
+            return redirect('/dashboard')->with('error', 'No tienes acceso a exportaciones.');
+        }
         $roles = Role::query()
             ->orderBy('name')
             ->get(['id', 'name'])
@@ -99,8 +103,11 @@ class ExportController extends Controller
         ]);
     }
 
-    public function users(Request $request, ActivityService $activity, SystemErrorService $errors)
+    public function users(Request $request, ActivityService $activity, SystemErrorService $errors, FeatureService $features)
     {
+        if (! $features->enabled($request->user(), 'can_export', true)) {
+            return back()->withErrors(['user' => 'No tienes acceso a exportaciones.']);
+        }
         $query = User::query()->with(['roles:id,name']);
 
         $q = trim((string) $request->input('q', ''));
@@ -188,8 +195,11 @@ class ExportController extends Controller
         });
     }
 
-    public function subscriptions(Request $request, ActivityService $activity, SystemErrorService $errors)
+    public function subscriptions(Request $request, ActivityService $activity, SystemErrorService $errors, FeatureService $features)
     {
+        if (! $features->enabled($request->user(), 'can_export', true)) {
+            return back()->withErrors(['user' => 'No tienes acceso a exportaciones.']);
+        }
         $query = Subscription::query()->with(['user:id,name,email', 'plan:id,name']);
 
         $status = $request->input('status', '');
@@ -260,8 +270,11 @@ class ExportController extends Controller
         });
     }
 
-    public function payments(Request $request, ActivityService $activity, SystemErrorService $errors)
+    public function payments(Request $request, ActivityService $activity, SystemErrorService $errors, FeatureService $features)
     {
+        if (! $features->enabled($request->user(), 'can_export', true)) {
+            return back()->withErrors(['user' => 'No tienes acceso a exportaciones.']);
+        }
         $query = Payment::query()->with(['user:id,name,email', 'plan:id,name']);
 
         $status = $request->input('status', '');
@@ -342,8 +355,11 @@ class ExportController extends Controller
         });
     }
 
-    public function tickets(Request $request, ActivityService $activity, SystemErrorService $errors)
+    public function tickets(Request $request, ActivityService $activity, SystemErrorService $errors, FeatureService $features)
     {
+        if (! $features->enabled($request->user(), 'can_export', true)) {
+            return back()->withErrors(['user' => 'No tienes acceso a exportaciones.']);
+        }
         $query = SupportTicket::query()->with(['user:id,name,email']);
 
         $status = $request->input('status', '');
@@ -421,8 +437,11 @@ class ExportController extends Controller
         });
     }
 
-    public function activities(Request $request, ActivityService $activity, SystemErrorService $errors)
+    public function activities(Request $request, ActivityService $activity, SystemErrorService $errors, FeatureService $features)
     {
+        if (! $features->enabled($request->user(), 'can_export', true)) {
+            return back()->withErrors(['user' => 'No tienes acceso a exportaciones.']);
+        }
         $query = Activity::query()->with(['user:id,name']);
 
         $userId = trim((string) $request->input('user_id', ''));

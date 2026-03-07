@@ -2,7 +2,13 @@
   <AdminLayout>
     <Head title="Editar plan" />
 
-    <PageHeader :title="'Editar plan'" :breadcrumbs="breadcrumbs" backHref="/admin/plans" />
+    <PageHeader :title="'Editar plan'" :breadcrumbs="breadcrumbs" backHref="/admin/plans">
+      <template #actions>
+        <Link :href="`/admin/plans/${plan.id}/features`" class="btn btn-outline-primary">
+          Features
+        </Link>
+      </template>
+    </PageHeader>
 
     <div class="card border-0 shadow-sm">
       <div class="card-body">

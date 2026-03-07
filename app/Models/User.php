@@ -77,6 +77,11 @@ class User extends Authenticatable implements MustVerifyEmailContract
         return $this->hasMany(WebhookEndpoint::class);
     }
 
+    public function featureFlags(): HasMany
+    {
+        return $this->hasMany(UserFeatureFlag::class);
+    }
+
     public function currentSubscription()
     {
         return $this->hasOne(Subscription::class)->latestOfMany();

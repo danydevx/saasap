@@ -5,11 +5,13 @@ use App\Http\Controllers\Admin\ApiKeyController as AdminApiKeyController;
 use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\ExportController;
+use App\Http\Controllers\Admin\FeatureFlagController;
 use App\Http\Controllers\Admin\HelpArticleController;
 use App\Http\Controllers\Admin\InvoiceController as AdminInvoiceController;
 use App\Http\Controllers\Admin\PaymentController;
 use App\Http\Controllers\Admin\PermissionController;
 use App\Http\Controllers\Admin\PlanController;
+use App\Http\Controllers\Admin\PlanFeatureFlagController;
 use App\Http\Controllers\Admin\QueueController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\RoleController;
@@ -389,6 +391,29 @@ Route::prefix('admin')->middleware(['auth', 'admin_or_user:1'])->group(function 
     Route::delete('/failed-jobs/flush', [QueueController::class, 'flush'])
         ->middleware('permission_or_user:queues.flush-failed,1')
         ->name('admin.queues.flush');
+
+    Route::get('/feature-flags', [FeatureFlagController::class, 'index'])
+        ->middleware('permission_or_user:feature-flags.view,1')
+        ->name('admin.feature-flags.index');
+    Route::get('/feature-flags/create', [FeatureFlagController::class, 'create'])
+        ->middleware('permission_or_user:feature-flags.create,1')
+        ->name('admin.feature-flags.create');
+    Route::post('/feature-flags', [FeatureFlagController::class, 'store'])
+        ->middleware('permission_or_user:feature-flags.create,1')
+        ->name('admin.feature-flags.store');
+    Route::get('/feature-flags/{flag}/edit', [FeatureFlagController::class, 'edit'])
+        ->middleware('permission_or_user:feature-flags.update,1')
+        ->name('admin.feature-flags.edit');
+    Route::put('/feature-flags/{flag}', [FeatureFlagController::class, 'update'])
+        ->middleware('permission_or_user:feature-flags.update,1')
+        ->name('admin.feature-flags.update');
+
+    Route::get('/plans/{plan}/features', [PlanFeatureFlagController::class, 'edit'])
+        ->middleware('permission_or_user:feature-flags.update,1')
+        ->name('admin.plans.features.edit');
+    Route::put('/plans/{plan}/features', [PlanFeatureFlagController::class, 'update'])
+        ->middleware('permission_or_user:feature-flags.update,1')
+        ->name('admin.plans.features.update');
 
     Route::get('/plans', [PlanController::class, 'index'])
         ->middleware('permission_or_user:plans.view,1')

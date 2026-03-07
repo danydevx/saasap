@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\SupportTicket;
 use App\Models\SupportTicketMessage;
 use App\Services\ActivityService;
+use App\Services\FeatureService;
 use App\Services\UserNotificationService;
 use App\Services\WebhookService;
 use Illuminate\Http\Request;
@@ -36,13 +37,20 @@ class SupportTicketController extends Controller
         ]);
     }
 
-    public function create()
+    public function create(FeatureService $features)
     {
+        if (! $features->enabled(request()->user(), 'module_support', true)) {
+            return redirect('/member')->with('error', 'El modulo de soporte no esta habilitado.');
+        }
+
         return Inertia::render('Member/Support/Create');
     }
 
-    public function store(Request $request, ActivityService $activity, UserNotificationService $notifications, WebhookService $webhooks)
+    public function store(Request $request, ActivityService $activity, UserNotificationService $notifications, WebhookService $webhooks, FeatureService $features)
     {
+        if (! $features->enabled($request->user(), 'can_create_tickets', true)) {
+            return back()->withErrors(['message' => 'No tienes permitido crear tickets.']);
+        }
         $data = $request->validate([
             'subject' => ['required', 'string', 'max:150'],
             'category' => ['nullable', 'string', 'max:100'],
@@ -125,8 +133,11 @@ class SupportTicketController extends Controller
         ]);
     }
 
-    public function reply(Request $request, SupportTicket $ticket, ActivityService $activity, UserNotificationService $notifications, WebhookService $webhooks)
+    public function reply(Request $request, SupportTicket $ticket, ActivityService $activity, UserNotificationService $notifications, WebhookService $webhooks, FeatureService $features)
     {
+        if (! $features->enabled($request->user(), 'module_support', true)) {
+            return back()->withErrors(['message' => 'El modulo de soporte no esta habilitado.']);
+        }
         if ($ticket->user_id !== $request->user()->id) {
             abort(403);
         }

@@ -76,6 +76,9 @@ class RolesAndPermissionsSeeder extends Seeder
             'queues.view',
             'queues.retry',
             'queues.flush-failed',
+            'feature-flags.view',
+            'feature-flags.create',
+            'feature-flags.update',
         ];
 
         foreach ($permissions as $permission) {
@@ -143,6 +146,9 @@ class RolesAndPermissionsSeeder extends Seeder
             'queues.view',
             'queues.retry',
             'queues.flush-failed',
+            'feature-flags.view',
+            'feature-flags.create',
+            'feature-flags.update',
         ]);
 
         $user->givePermissionTo([]);

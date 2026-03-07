@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\WebhookDelivery;
 use App\Models\WebhookEndpoint;
 use App\Services\ActivityService;
+use App\Services\FeatureService;
 use App\Services\WebhookService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -13,8 +14,12 @@ use Inertia\Inertia;
 
 class WebhookController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request, FeatureService $features)
     {
+        if (! $features->enabled($request->user(), 'can_use_webhooks', false)) {
+            return redirect('/member')->with('error', 'No tiene permiso para usar webhooks.');
+        }
+
         $endpoints = WebhookEndpoint::query()
             ->where('user_id', $request->user()->id)
             ->orderByDesc('id')
@@ -36,8 +41,12 @@ class WebhookController extends Controller
         ]);
     }
 
-    public function store(Request $request, ActivityService $activity)
+    public function store(Request $request, ActivityService $activity, FeatureService $features)
     {
+        if (! $features->enabled($request->user(), 'can_use_webhooks', false)) {
+            return back()->withErrors(['name' => 'No tiene permiso para usar webhooks.']);
+        }
+
         $data = $request->validate([
             'name' => ['required', 'string', 'max:150'],
             'url' => ['required', 'url', 'max:500'],
@@ -71,8 +80,12 @@ class WebhookController extends Controller
             ->with('webhook_secret', $secret);
     }
 
-    public function update(Request $request, WebhookEndpoint $webhook, ActivityService $activity)
+    public function update(Request $request, WebhookEndpoint $webhook, ActivityService $activity, FeatureService $features)
     {
+        if (! $features->enabled($request->user(), 'can_use_webhooks', false)) {
+            return back()->withErrors(['name' => 'No tiene permiso para usar webhooks.']);
+        }
+
         if ($webhook->user_id !== $request->user()->id) {
             abort(403);
         }
@@ -98,8 +111,12 @@ class WebhookController extends Controller
         return back()->with('success', 'Webhook actualizado correctamente.');
     }
 
-    public function destroy(Request $request, WebhookEndpoint $webhook, ActivityService $activity)
+    public function destroy(Request $request, WebhookEndpoint $webhook, ActivityService $activity, FeatureService $features)
     {
+        if (! $features->enabled($request->user(), 'can_use_webhooks', false)) {
+            return back()->withErrors(['name' => 'No tiene permiso para usar webhooks.']);
+        }
+
         if ($webhook->user_id !== $request->user()->id) {
             abort(403);
         }
@@ -116,8 +133,12 @@ class WebhookController extends Controller
         return back()->with('success', 'Webhook eliminado correctamente.');
     }
 
-    public function test(Request $request, WebhookEndpoint $webhook, WebhookService $service, ActivityService $activity)
+    public function test(Request $request, WebhookEndpoint $webhook, WebhookService $service, ActivityService $activity, FeatureService $features)
     {
+        if (! $features->enabled($request->user(), 'can_use_webhooks', false)) {
+            return back()->withErrors(['name' => 'No tiene permiso para usar webhooks.']);
+        }
+
         if ($webhook->user_id !== $request->user()->id) {
             abort(403);
         }
@@ -135,8 +156,12 @@ class WebhookController extends Controller
         return back()->with('success', 'Evento de prueba enviado.');
     }
 
-    public function regenerateSecret(Request $request, WebhookEndpoint $webhook, ActivityService $activity)
+    public function regenerateSecret(Request $request, WebhookEndpoint $webhook, ActivityService $activity, FeatureService $features)
     {
+        if (! $features->enabled($request->user(), 'can_use_webhooks', false)) {
+            return back()->withErrors(['name' => 'No tiene permiso para usar webhooks.']);
+        }
+
         if ($webhook->user_id !== $request->user()->id) {
             abort(403);
         }
@@ -157,8 +182,12 @@ class WebhookController extends Controller
             ->with('webhook_secret', $secret);
     }
 
-    public function deliveries(Request $request, WebhookEndpoint $webhook)
+    public function deliveries(Request $request, WebhookEndpoint $webhook, FeatureService $features)
     {
+        if (! $features->enabled($request->user(), 'can_use_webhooks', false)) {
+            return redirect('/member')->with('error', 'No tiene permiso para usar webhooks.');
+        }
+
         if ($webhook->user_id !== $request->user()->id) {
             abort(403);
         }
@@ -189,8 +218,12 @@ class WebhookController extends Controller
         ]);
     }
 
-    public function retryDelivery(Request $request, WebhookDelivery $delivery, WebhookService $service, ActivityService $activity)
+    public function retryDelivery(Request $request, WebhookDelivery $delivery, WebhookService $service, ActivityService $activity, FeatureService $features)
     {
+        if (! $features->enabled($request->user(), 'can_use_webhooks', false)) {
+            return back()->withErrors(['name' => 'No tiene permiso para usar webhooks.']);
+        }
+
         $delivery->load('endpoint');
         if (! $delivery->endpoint || $delivery->endpoint->user_id !== $request->user()->id) {
             abort(403);

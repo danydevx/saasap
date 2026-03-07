@@ -5,14 +5,19 @@ namespace App\Http\Controllers\Member;
 use App\Http\Controllers\Controller;
 use App\Models\ApiKey;
 use App\Services\ActivityService;
+use App\Services\FeatureService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 
 class ApiKeyController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request, FeatureService $features)
     {
+        if (! $features->enabled($request->user(), 'can_use_api', false)) {
+            return redirect('/member')->with('error', 'No tiene permiso para usar integraciones API.');
+        }
+
         $keys = ApiKey::query()
             ->where('user_id', $request->user()->id)
             ->orderByDesc('id')
@@ -33,8 +38,12 @@ class ApiKeyController extends Controller
         ]);
     }
 
-    public function store(Request $request, ActivityService $activity)
+    public function store(Request $request, ActivityService $activity, FeatureService $features)
     {
+        if (! $features->enabled($request->user(), 'can_use_api', false)) {
+            return back()->withErrors(['name' => 'No tiene permiso para usar integraciones API.']);
+        }
+
         $data = $request->validate([
             'name' => ['required', 'string', 'max:150'],
             'expires_at' => ['nullable', 'date', 'after:now'],
@@ -66,8 +75,12 @@ class ApiKeyController extends Controller
             ->with('api_key_plain', $plainKey);
     }
 
-    public function update(Request $request, ApiKey $apiKey, ActivityService $activity)
+    public function update(Request $request, ApiKey $apiKey, ActivityService $activity, FeatureService $features)
     {
+        if (! $features->enabled($request->user(), 'can_use_api', false)) {
+            return back()->withErrors(['name' => 'No tiene permiso para usar integraciones API.']);
+        }
+
         if ($apiKey->user_id !== $request->user()->id) {
             abort(403);
         }
@@ -95,8 +108,12 @@ class ApiKeyController extends Controller
         return back()->with('success', 'API key actualizada correctamente.');
     }
 
-    public function destroy(Request $request, ApiKey $apiKey, ActivityService $activity)
+    public function destroy(Request $request, ApiKey $apiKey, ActivityService $activity, FeatureService $features)
     {
+        if (! $features->enabled($request->user(), 'can_use_api', false)) {
+            return back()->withErrors(['name' => 'No tiene permiso para usar integraciones API.']);
+        }
+
         if ($apiKey->user_id !== $request->user()->id) {
             abort(403);
         }

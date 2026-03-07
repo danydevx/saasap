@@ -69,6 +69,9 @@
             <li v-if="canViewQueues" class="nav-item">
               <Link href="/admin/queues" class="nav-link" prefetch="hover">Colas</Link>
             </li>
+            <li v-if="canViewFeatureFlags" class="nav-item">
+              <Link href="/admin/feature-flags" class="nav-link" prefetch="hover">Feature Flags</Link>
+            </li>
           </ul>
 
           <div class="dropdown">
@@ -124,7 +127,10 @@
               <li v-if="canViewQueues">
                 <Link href="/admin/queues" class="dropdown-item" prefetch="hover">Colas</Link>
               </li>
-              <li v-if="canViewSettings || canViewActivity || canViewPayments || canViewCoupons || canViewInvoices || canViewSupport || canViewHelp || canViewReports || canViewExports || canViewSystemErrors || canViewApiKeys || canViewWebhooks || canViewQueues"><hr class="dropdown-divider" /></li>
+              <li v-if="canViewFeatureFlags">
+                <Link href="/admin/feature-flags" class="dropdown-item" prefetch="hover">Feature Flags</Link>
+              </li>
+              <li v-if="canViewSettings || canViewActivity || canViewPayments || canViewCoupons || canViewInvoices || canViewSupport || canViewHelp || canViewReports || canViewExports || canViewSystemErrors || canViewApiKeys || canViewWebhooks || canViewQueues || canViewFeatureFlags"><hr class="dropdown-divider" /></li>
               <li>
                 <Link href="/logout" method="post" as="button" class="dropdown-item">
                   Salir
@@ -168,4 +174,5 @@ const canViewSystemErrors = computed(() => permissions.value.includes('system-er
 const canViewApiKeys = computed(() => permissions.value.includes('api-keys.view') || userId.value === 1)
 const canViewWebhooks = computed(() => permissions.value.includes('webhooks.view') || userId.value === 1)
 const canViewQueues = computed(() => permissions.value.includes('queues.view') || userId.value === 1)
+const canViewFeatureFlags = computed(() => permissions.value.includes('feature-flags.view') || userId.value === 1)
 </script>

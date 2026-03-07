@@ -8,11 +8,11 @@
           <Link href="/member/account" class="btn btn-outline-secondary btn-sm">Cuenta</Link>
           <Link href="/member/payments" class="btn btn-outline-secondary btn-sm">Pagos</Link>
           <Link href="/member/invoices" class="btn btn-outline-secondary btn-sm">Comprobantes</Link>
-          <Link href="/member/support" class="btn btn-outline-secondary btn-sm">Soporte</Link>
+          <Link v-if="canSupport" href="/member/support" class="btn btn-outline-secondary btn-sm">Soporte</Link>
           <Link href="/member/help" class="btn btn-outline-secondary btn-sm">Ayuda</Link>
           <Link href="/member/preferences" class="btn btn-outline-secondary btn-sm">Preferencias</Link>
-          <Link href="/member/api-keys" class="btn btn-outline-secondary btn-sm">API Keys</Link>
-          <Link href="/member/webhooks" class="btn btn-outline-secondary btn-sm">Webhooks</Link>
+          <Link v-if="canUseApi" href="/member/api-keys" class="btn btn-outline-secondary btn-sm">API Keys</Link>
+          <Link v-if="canUseWebhooks" href="/member/webhooks" class="btn btn-outline-secondary btn-sm">Webhooks</Link>
           <Link href="/member/notifications" class="btn btn-outline-secondary btn-sm">
             Notificaciones
             <span v-if="unreadCount > 0" class="badge text-bg-primary ms-1">
@@ -62,4 +62,9 @@ import { Link, usePage } from '@inertiajs/vue3'
 
 const page = usePage()
 const unreadCount = computed(() => page.props.notificationUnreadCount || 0)
+const features = computed(() => page.props.features || {})
+
+const canUseApi = computed(() => features.value.can_use_api !== false)
+const canUseWebhooks = computed(() => features.value.can_use_webhooks !== false)
+const canSupport = computed(() => features.value.module_support !== false)
 </script>

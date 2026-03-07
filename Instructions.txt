@@ -6072,3 +6072,541 @@ Importante:
 - generar solo archivos necesarios
 - no agregar archivos innecesarios
 - mantener implementación simple y extensible
+
+
+=====================================================
+Instrucción 30: webhooks salientes del SaaS
+========================================================
+
+Implementar sistema base de webhooks salientes para integraciones del SaaS.
+
+Contexto:
+Ya existe sistema de API keys para integraciones.
+Cada usuario es único.
+No hay organizaciones ni tenants.
+Se necesita permitir que el SaaS notifique sistemas externos cuando ocurran eventos importantes.
+No romper módulos actuales.
+
+Stack:
+Laravel 12 + Inertia + Vue 3 + JavaScript + Bootstrap 5.3.
+
+Reglas:
+- No TypeScript
+- Vue con `<script setup>`
+- Solo Composition API
+- No Options API
+- No librerías nuevas innecesarias
+- No refactorizar módulos no relacionados
+- Reutilizar estructura visual actual
+- Código simple y listo para producción
+- Mantener separación clara entre lógica web, jobs y entregas webhook
+
+Objetivo:
+Permitir que el sistema envíe eventos HTTP POST a URLs externas configuradas por el usuario o por el admin cuando ocurran acciones relevantes.
+
+Alcance de esta fase:
+- registrar endpoints webhook
+- activar/desactivar endpoints
+- seleccionar eventos a escuchar
+- enviar payloads JSON a URLs externas
+- registrar intentos de entrega
+- permitir reintento manual
+- firmar payload con secreto
+- dejar base lista para crecer
+
+No incluir todavía:
+- reintentos extremadamente complejos
+- colas distribuidas avanzadas
+- firmas asimétricas
+- versionado avanzado de eventos
+- transformaciones custom por endpoint
+- filtros complejos por payload
+- UI de monitoreo exageradamente avanzada
+
+Concepto:
+Un webhook saliente pertenece a un usuario o al sistema, según el diseño elegido.
+Cuando ocurre un evento permitido, el SaaS envía una petición POST al endpoint registrado.
+
+Preferencia:
+- webhooks por usuario `member`
+- cada usuario gestiona sus propios endpoints
+- admin puede consultarlos para soporte si hace falta
+
+Entidades requeridas:
+
+1. WebhookEndpoint
+Campos mínimos sugeridos:
+- id
+- user_id
+- name
+- url
+- secret
+- is_active boolean default true
+- events json
+- last_used_at nullable timestamp
+- failure_count integer default 0
+- created_at
+- updated_at
+
+2. WebhookDelivery
+Campos mínimos sugeridos:
+- id
+- webhook_endpoint_id
+- event
+- payload json nullable
+- response_status nullable integer
+- response_body nullable text
+- error_message nullable text
+- delivered_at nullable timestamp
+- failed_at nullable timestamp
+- attempt_count integer default 1
+- created_at
+- updated_at
+
+Modelos:
+- WebhookEndpoint
+- WebhookDelivery
+
+Relaciones:
+- User hasMany WebhookEndpoint
+- WebhookEndpoint belongsTo User
+- WebhookEndpoint hasMany WebhookDelivery
+- WebhookDelivery belongsTo WebhookEndpoint
+
+Importante:
+- almacenar `secret` de forma segura
+- si se muestra en UI, mostrarlo solo al crear o regenerar si se quiere seguir patrón similar a API keys
+- `events` debe ser flexible y reusable
+
+Eventos iniciales sugeridos:
+- user.updated
+- user.password_changed
+- subscription.created
+- subscription.updated
+- subscription.canceled
+- payment.succeeded
+- payment.failed
+- ticket.created
+- ticket.replied
+- ticket.closed
+
+Puedes ajustar la lista según lo que ya existe, pero mantener nombres consistentes y legibles.
+
+Permisos / acceso:
+Member:
+- webhooks.manage
+
+Admin:
+- webhooks.view
+- webhooks.update
+
+Rutas member:
+- GET /member/webhooks
+- POST /member/webhooks
+- PUT /member/webhooks/{webhook}
+- DELETE /member/webhooks/{webhook}
+- POST /member/webhooks/{webhook}/test
+- POST /member/webhooks/{webhook}/regenerate-secret
+- GET /member/webhooks/{webhook}/deliveries
+- POST /member/webhooks/deliveries/{delivery}/retry
+
+Controlador member:
+- Member/WebhookController
+Métodos:
+  - index()
+  - store()
+  - update()
+  - destroy()
+  - test()
+  - regenerateSecret()
+  - deliveries()
+  - retryDelivery()
+
+Vista:
+- resources/js/Pages/Member/Webhooks/Index.vue
+- resources/js/Pages/Member/Webhooks/Deliveries.vue
+
+Admin:
+Opcionalmente permitir consulta desde admin para soporte.
+No mostrar el secreto completo.
+Solo metadatos y entregas.
+
+Rutas admin sugeridas:
+- GET /admin/webhooks
+- GET /admin/webhooks/{webhook}
+- GET /admin/webhooks/{webhook}/deliveries
+
+Controlador admin:
+- Admin/WebhookController
+Métodos:
+  - index()
+  - show()
+  - deliveries()
+
+Campos del endpoint:
+- name
+- url
+- events[]
+- is_active
+
+Validaciones backend:
+- name required|string|max:150
+- url required|url|max:500
+- events required|array|min:1
+- events.* in lista blanca de eventos permitidos
+- is_active boolean
+
+Secret:
+- generar secreto aleatorio largo al crear endpoint
+- permitir regenerarlo manualmente
+- si se regenera, invalidar firma anterior para futuras entregas
+
+Comportamiento:
+- usuario crea endpoint
+- selecciona eventos
+- sistema guarda endpoint activo
+- cuando ocurre un evento registrado:
+  - se despacha entrega webhook
+  - se firma payload
+  - se guarda resultado en deliveries
+
+Formato de entrega:
+- método POST
+- content-type application/json
+- payload JSON consistente
+
+Payload base sugerido:
+- id del evento
+- type
+- created_at
+- data
+- user_id si aplica
+- object o recurso relacionado resumido
+
+Ejemplo conceptual:
+{
+  "id": "...",
+  "type": "payment.succeeded",
+  "created_at": "...",
+  "data": {
+    ...
+  }
+}
+
+Firma:
+Enviar firma en header, por ejemplo:
+- X-Signature
+o
+- X-SaaS-Signature
+
+Preferencia:
+- firmar con HMAC SHA-256 usando el secreto del endpoint
+- incluir timestamp si se quiere dejar base lista
+- documentar claramente el formato de firma
+
+Headers sugeridos:
+- Content-Type: application/json
+- X-Webhook-Event: payment.succeeded
+- X-Webhook-Signature: ...
+- X-Webhook-Timestamp: ...
+
+Entregas:
+Cada envío debe registrarse en `WebhookDelivery` con:
+- evento
+- payload
+- status HTTP
+- respuesta
+- error
+- delivered_at o failed_at
+- número de intento
+
+Reintentos:
+Implementar base simple.
+Opciones válidas:
+- reintento manual desde UI
+- reintento automático simple con job si ya hay colas configuradas
+
+Preferencia:
+- dejar reintento manual obligatorio
+- automático opcional si ya existe infraestructura de jobs/queues
+
+Jobs:
+Si el proyecto ya usa colas:
+- enviar webhooks mediante Job
+- no bloquear request principal
+- mejor práctica para integración real
+
+Si aún no hay colas:
+- dejarlo preparado
+- pero preferir Job si ya existe la base
+
+Test webhook:
+Permitir botón de prueba.
+Debe enviar un evento mock controlado al endpoint.
+Sirve para validar:
+- URL
+- firma
+- recepción
+- trazabilidad
+
+UI member:
+- usar layout member
+- cards o tabla simple
+- listar endpoints con:
+  - nombre
+  - url
+  - eventos
+  - activo/inactivo
+  - último uso
+  - acciones
+- mostrar historial de deliveries:
+  - evento
+  - status
+  - fecha
+  - intento
+  - botón reintentar si falló
+
+UI admin:
+- layout admin
+- solo consulta/soporte si se implementa
+- no mostrar secreto completo
+
+Actividad:
+Si ya existe activity log:
+- registrar:
+  - webhook endpoint creado
+  - actualizado
+  - eliminado
+  - secreto regenerado
+  - delivery reintentado
+
+System errors:
+Si ya existe módulo de errores:
+- registrar fallas técnicas relevantes de entrega si hace sentido
+- no saturar logs con cada 4xx externo si ya queda trazado en deliveries
+
+Seguridad:
+- validar que member solo gestione sus propios endpoints
+- no exponer secretos completos después de creación salvo regeneración controlada
+- validar URL correctamente
+- firmar payloads siempre
+- no permitir eventos arbitrarios fuera de la lista blanca
+- proteger reintentos y vistas en backend
+
+Integración:
+Disparar envíos cuando ocurran eventos reales del sistema:
+- pagos
+- suscripciones
+- tickets
+- cambios relevantes de usuario
+Reutilizar servicios/eventos existentes si ya los hay.
+No duplicar lógica dispersa.
+
+Mensajes esperados:
+- "Webhook creado correctamente."
+- "Webhook actualizado correctamente."
+- "Secreto regenerado correctamente. Copie el nuevo valor ahora."
+- "Evento de prueba enviado."
+- "Entrega reenviada correctamente."
+- "No tiene permiso para gestionar este webhook."
+
+Importante:
+- revisar si ya existe infraestructura de jobs, events o listeners
+- si existe, adaptarse
+- si no existe, crear solución mínima reusable
+- generar solo archivos necesarios
+- no agregar archivos innecesarios
+- mantener implementación simple y extensible
+
+==================================================================
+Instrucción 31: sistema de colas, jobs y tareas programadas del SaaS
+=================================================================
+Implementar base de colas, jobs y tareas programadas para el SaaS.
+
+Contexto:
+Ya existen auth, suscripciones, pagos, webhooks entrantes y salientes, tickets, activity log, exportaciones, errores del sistema y API keys.
+Cada usuario es único.
+No hay organizaciones ni tenants.
+Se necesita mover procesos pesados o externos a jobs/queues para mejorar rendimiento, estabilidad y escalabilidad.
+No romper módulos actuales.
+
+Stack:
+Laravel 12 + Inertia + Vue 3 + JavaScript + Bootstrap 5.3.
+
+Reglas:
+- No TypeScript
+- Vue con `<script setup>`
+- Solo Composition API
+- No Options API
+- No API separada fuera del flujo web actual
+- No librerías nuevas innecesarias
+- No refactorizar módulos no relacionados
+- Reutilizar estructura actual del proyecto
+- Código simple y listo para producción
+
+Objetivo:
+Implementar infraestructura base para ejecutar procesos en segundo plano y tareas programadas de forma ordenada.
+
+Alcance de esta fase:
+- configurar queue driver del proyecto
+- crear jobs para tareas pesadas o externas
+- crear tareas programadas para mantenimiento básico
+- dejar trazabilidad mínima de ejecuciones
+- preparar el sistema para crecer
+
+No incluir todavía:
+- procesamiento distribuido complejo
+- múltiples colas avanzadas por prioridad si no hacen falta
+- observabilidad externa avanzada
+- workers horizontales sofisticados
+- orquestación con terceros
+
+Objetivo técnico:
+Mover fuera del request principal procesos como:
+- envío de correos
+- entregas de webhooks salientes
+- generación de exportaciones grandes
+- notificaciones pesadas
+- sincronizaciones externas
+- limpieza de datos temporales
+- tareas periódicas del SaaS
+
+Configuración:
+Revisar y dejar funcional:
+- queue connection
+- failed jobs
+- scheduler
+
+Usar solución nativa de Laravel.
+Si no existe configuración previa, implementar la mínima necesaria.
+
+Recomendación:
+- local: database o sync según fase del proyecto
+- producción: database o redis según infraestructura disponible
+
+Base de datos:
+Crear o verificar tablas necesarias para:
+- jobs
+- failed_jobs
+- opcionalmente batches si luego hará falta
+
+No crear tablas innecesarias fuera de lo necesario.
+
+Jobs iniciales sugeridos:
+1. SendVerificationEmailJob
+2. SendPasswordResetEmailJob
+3. DeliverWebhookJob
+4. SendInternalNotificationJob si ya aplica
+5. GenerateExportJob si las exportaciones crecen
+6. CleanupExpiredPasswordResetsJob
+7. CleanupOldWebhookDeliveriesJob
+8. CleanupOldSystemErrorsJob o limpieza equivalente si aplica
+9. SyncSubscriptionStateJob si luego hace falta una revisión periódica
+
+Puedes adaptar nombres según arquitectura actual, pero mantenerlos claros.
+
+Tareas programadas iniciales sugeridas:
+1. limpiar tokens de reset expirados
+2. limpiar registros temporales obsoletos
+3. revisar suscripciones vencidas si el sistema local lo requiere además de webhooks
+4. reintentar procesos pendientes simples si ya aplica
+5. limpieza de logs antiguos si el negocio lo permite
+
+Scheduler:
+Registrar tareas periódicas usando scheduler nativo de Laravel.
+Frecuencias sugeridas:
+- cada hora
+- diario
+- semanal
+según el caso
+
+No poner tareas pesadas innecesarias cada minuto si no hace falta.
+
+Control administrativo:
+Crear módulo admin simple para monitorear estado básico de colas y jobs fallidos.
+
+Permisos sugeridos:
+- queues.view
+- queues.retry
+- queues.flush-failed si aplica
+
+Rutas admin sugeridas:
+- GET /admin/queues
+- GET /admin/failed-jobs
+- POST /admin/failed-jobs/{id}/retry
+- DELETE /admin/failed-jobs/{id}
+- POST /admin/failed-jobs/retry-all opcional
+- DELETE /admin/failed-jobs/flush opcional
+
+Controlador admin:
+- Admin/QueueController
+Métodos:
+  - index()
+  - failed()
+  - retry()
+  - destroy()
+  - retryAll() opcional
+  - flush() opcional
+
+Vistas admin:
+- resources/js/Pages/Admin/Queues/Index.vue
+- resources/js/Pages/Admin/Queues/Failed.vue
+
+UI admin:
+- usar layout admin
+- usar PageTitle
+- usar Breadcrumb
+- tabla simple
+- Bootstrap 5.3
+- mostrar:
+  - total jobs fallidos
+  - último fallo
+  - tipo de job
+  - fecha
+  - acciones reintentar / eliminar
+
+Comportamiento:
+- jobs pesados no deben ejecutarse inline si ya se movieron a cola
+- si una tarea falla, debe registrarse en failed_jobs
+- admin puede consultar y reintentar jobs fallidos
+- scheduler debe ejecutar limpiezas y mantenimientos básicos
+
+Integración con módulos actuales:
+Aplicar jobs al menos en:
+- correos de registro/verificación/reset
+- webhooks salientes
+- exportaciones si el volumen lo requiere
+- tareas de mantenimiento de suscripciones y tokens
+- notificaciones internas si son pesadas
+
+Manejo de errores:
+- no ocultar fallos silenciosamente
+- registrar errores razonables en system errors si ya existe integración
+- no duplicar ruido innecesario entre failed_jobs y system_errors
+- usar logs claros
+
+Actividad:
+Si ya existe activity log:
+- registrar acciones administrativas como:
+  - retry de job fallido
+  - limpieza masiva de failed jobs
+- no registrar cada ejecución normal de job para no meter ruido
+
+Seguridad:
+- solo admin/superadmin en módulo de monitoreo de colas
+- no exponer payloads sensibles de jobs
+- no mostrar secretos, tokens ni datos delicados en UI
+
+Integración con producción:
+Dejar documentado y funcional:
+- cómo correr queue worker
+- cómo correr scheduler
+- cómo supervisar ambos procesos en servidor
+
+Importante:
+- revisar si el proyecto ya tiene colas configuradas
+- si existe configuración previa, adaptarse
+- si no existe, crear solución mínima reusable
+- generar solo archivos necesarios
+- no agregar archivos innecesarios
+- mantener implementación simple y extensible

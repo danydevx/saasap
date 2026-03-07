@@ -4,14 +4,19 @@ namespace App\Http\Controllers\Member;
 
 use App\Http\Controllers\Controller;
 use App\Services\ActivityService;
+use App\Services\FeatureService;
 use App\Services\UserNotificationService;
 use Illuminate\Http\Request;
 use Stripe\StripeClient;
 
 class BillingController extends Controller
 {
-    public function portal(Request $request, ActivityService $activity, UserNotificationService $notifications)
+    public function portal(Request $request, ActivityService $activity, UserNotificationService $notifications, FeatureService $features)
     {
+        if (! $features->enabled($request->user(), 'can_access_billing', true)) {
+            return back()->with('error', 'No tienes acceso a facturacion.');
+        }
+
         $user = $request->user();
         $subscription = $user->currentSubscription;
 
