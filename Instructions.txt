@@ -10548,3 +10548,154 @@ Importante:
 - no agregar archivos innecesarios
 - mantener implementación simple, segura y extensible
 - este paso es de consolidación final del framework SaaS interno
+
+Tarea 52 — Preflight check antes de publicar el repositorio
+Realizar verificación final antes de publicar el proyecto como SaaS Starter.
+
+IMPORTANTE
+
+Solo validar.
+No refactorizar arquitectura.
+No mover carpetas.
+
+--------------------------------------------------
+
+1. Instalación limpia
+
+Validar que funcione:
+
+composer install
+cp .env.example .env
+php artisan key:generate
+php artisan migrate --seed
+npm install
+npm run build
+
+--------------------------------------------------
+
+2. Variables de entorno
+
+Verificar existencia de:
+
+.env.example
+
+Validar variables importantes:
+
+APP_NAME
+APP_URL
+DB_CONNECTION
+MAIL_*
+STRIPE_KEY
+STRIPE_SECRET
+QUEUE_CONNECTION
+
+--------------------------------------------------
+
+3. Migraciones
+
+Validar tablas principales:
+
+users
+roles
+permissions
+settings
+subscriptions
+payments
+modules
+feature_flags
+notifications
+activity_logs
+
+--------------------------------------------------
+
+4. Seeders
+
+Verificar seeders base:
+
+roles
+permissions
+modules
+feature flags
+settings
+message templates
+
+--------------------------------------------------
+
+5. Superadmin
+
+Validar forma clara de crear administrador inicial.
+
+--------------------------------------------------
+
+6. Rutas
+
+Verificar:
+
+admin protegidas
+member protegidas
+public accesibles
+
+--------------------------------------------------
+
+7. Dashboard
+
+Validar:
+
+dashboard admin
+dashboard member
+menús correctos
+
+--------------------------------------------------
+
+8. Jobs
+
+Validar uso de colas en:
+
+emails
+webhooks
+exports
+automatizaciones
+
+--------------------------------------------------
+
+9. Archivos
+
+Validar seguridad en:
+
+storage
+media
+exports
+
+--------------------------------------------------
+
+10. Documentación
+
+Verificar existencia de:
+
+README.md
+AGENTS.md
+docs/
+
+--------------------------------------------------
+
+11. Limpieza del repo
+
+Verificar que NO existan:
+
+vendor
+node_modules
+.env
+logs grandes
+archivos temporales
+
+Revisar .gitignore.
+
+--------------------------------------------------
+
+Resultado esperado
+
+Entregar:
+
+lista de problemas
+advertencias menores
+confirmación de que el repo está listo para publicarse
