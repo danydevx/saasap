@@ -80,6 +80,19 @@
                 <span class="text-muted">Trial</span>
                 <span>{{ formatDate(subscription.trial_ends_at) }}</span>
               </div>
+              <div class="mt-3">
+                <button
+                  type="button"
+                  class="btn btn-primary btn-sm"
+                  :disabled="!subscription.can_manage"
+                  @click="openBillingPortal"
+                >
+                  Gestionar suscripcion
+                </button>
+                <div v-if="!subscription.can_manage" class="text-muted small mt-2">
+                  La gestion automatica no esta disponible por ahora.
+                </div>
+              </div>
             </div>
             <div v-else class="text-muted">
               No tienes una suscripcion activa por ahora.
@@ -132,7 +145,7 @@
 </template>
 
 <script setup>
-import { Head, Link } from '@inertiajs/vue3'
+import { Head, Link, router } from '@inertiajs/vue3'
 import MemberLayout from '@/Layouts/MemberLayout.vue'
 
 const props = defineProps({
@@ -162,5 +175,11 @@ const formatDate = (value) => {
 const formatPrice = (value) => {
   if (value === null || value === undefined || value === '') return '-'
   return Number(value).toLocaleString()
+}
+
+const openBillingPortal = () => {
+  router.post('/member/billing/portal', {}, {
+    preserveScroll: true,
+  })
 }
 </script>

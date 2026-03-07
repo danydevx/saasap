@@ -14,6 +14,7 @@ use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Member\AccountController;
+use App\Http\Controllers\Member\BillingController;
 use App\Http\Controllers\Member\CheckoutController;
 use App\Http\Controllers\Member\DashboardController;
 use App\Http\Controllers\Member\NotificationController;
@@ -100,6 +101,10 @@ Route::get('/member', [DashboardController::class, 'index'])
 Route::get('/member/account', [AccountController::class, 'show'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.account.show');
+
+Route::post('/member/billing/portal', [BillingController::class, 'portal'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.billing.portal');
 
 Route::post('/member/checkout/{plan}', [CheckoutController::class, 'create'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])

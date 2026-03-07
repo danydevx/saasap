@@ -30,6 +30,7 @@ class AccountController extends Controller
                 'starts_at' => $subscription->starts_at?->toDateTimeString(),
                 'ends_at' => $subscription->ends_at?->toDateTimeString(),
                 'trial_ends_at' => $subscription->trial_ends_at?->toDateTimeString(),
+                'can_manage' => $subscription->provider === 'stripe' && ! empty($subscription->provider_customer_id),
             ] : null,
             'limits' => $plan?->limits ?? [],
         ]);

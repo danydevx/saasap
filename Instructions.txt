@@ -2729,3 +2729,363 @@ Integración:
 - generar solo archivos necesarios
 - no agregar archivos innecesarios
 - no romper checkout actual ni dashboards
+
+php artisan serve
+npm run dev
+stripe login
+stripe listen --forward-to localhost:8000/stripe/webhook
+stripe trigger checkout.session.completed
+php artisan config:clear
+
+Configurar Stripe en entorno local para desarrollo del SaaS.
+
+Contexto:
+El sistema ya tiene planes, suscripciones y checkout preparado.
+Se requiere usar Stripe en modo test en local.
+El objetivo es poder probar checkout y webhooks desde la máquina local.
+
+Stack:
+Laravel 12 + Inertia + Vue 3 + Stripe.
+
+Reglas:
+- usar Stripe en modo test
+- nunca usar claves live en local
+- no exponer STRIPE_SECRET en frontend
+- webhook no debe requerir auth ni sesión
+- validar siempre firma del webhook
+
+1. Claves de Stripe
+
+En Stripe Dashboard:
+Developers → API keys
+
+Copiar claves de test:
+
+- Publishable key
+- Secret key
+
+Agregar en `.env`:
+
+STRIPE_KEY=pk_test_xxxxxxxxx
+STRIPE_SECRET=sk_test_xxxxxxxxx
+
+APP_URL=http://127.0.0.1:8000
+
+2. Configuración Laravel
+
+Agregar configuración Stripe en:
+
+config/services.php
+
+stripe => [
+    'key' => env('STRIPE_KEY'),
+    'secret' => env('STRIPE_SECRET'),
+]
+
+Limpiar cache:
+
+php artisan config:clear
+
+3. Endpoint webhook
+
+Crear ruta webhook sin auth:
+
+POST /stripe/webhook
+
+Debe estar fuera de middleware auth.
+
+Si CSRF está activo:
+excluir esta ruta de CSRF.
+
+Controlador esperado:
+StripeWebhookController@handle
+
+4. Instalar Stripe CLI
+
+Instalar Stripe CLI en la máquina local.
+
+Verificar instalación:
+
+stripe --version
+
+5. Autenticarse con Stripe
+
+stripe login
+
+Esto conectará la CLI con tu cuenta de Stripe.
+
+6. Escuchar webhooks en local
+
+Ejecutar:
+
+stripe listen --forward-to localhost:8000/stripe/webhook
+
+La CLI mostrará algo como:
+
+whsec_xxxxxxxxx
+
+Ese valor es el webhook secret.
+
+7. Guardar webhook secret
+
+Agregar en `.env`:
+
+STRIPE_WEBHOOK_SECRET=whsec_xxxxxxxxx
+
+Limpiar config nuevamente:
+
+php artisan config:clear
+
+8. URLs de checkout
+
+Cuando se cree Stripe Checkout Session usar:
+
+success_url:
+http://127.0.0.1:8000/member/checkout/success?session_id={CHECKOUT_SESSION_ID}
+
+cancel_url:
+http://127.0.0.1:8000/member/checkout/cancel
+
+No confiar solo en success_url para lógica crítica.
+La actualización real debe ocurrir vía webhook.
+
+9. Probar eventos desde CLI
+
+Para probar webhook manualmente:
+
+stripe trigger checkout.session.completed
+
+Otros ejemplos:
+
+stripe trigger invoice.payment_succeeded
+stripe trigger customer.subscription.created
+stripe trigger customer.subscription.deleted
+
+10. Flujo esperado en local
+
+1. usuario selecciona plan
+2. backend crea Stripe Checkout Session
+3. usuario es redirigido a Stripe test checkout
+4. pago se realiza con tarjeta de prueba
+5. Stripe redirige a success_url
+6. Stripe envía evento webhook
+7. Laravel recibe webhook
+8. Laravel actualiza Payment y Subscription
+
+11. Tarjeta de prueba
+
+Stripe test card:
+
+4242 4242 4242 4242
+
+Fecha futura  
+CVC cualquiera
+
+12. Seguridad
+
+- nunca enviar STRIPE_SECRET al frontend
+- validar firma Stripe-Signature en webhook
+- validar que plan exista y esté activo antes de crear checkout
+- no confiar en amounts enviados por frontend
+- usar stripe_price_id guardado en backend
+
+13. Integración con modelos
+
+Checkout debe usar:
+
+Plan:
+- stripe_price_id
+
+Payment:
+- provider = stripe
+- provider_reference = Stripe id
+
+Subscription:
+- stripe_subscription_id
+- status
+- starts_at
+- ends_at
+
+14. Comportamiento esperado
+
+- checkout funciona en modo test
+- webhook llega correctamente a local
+- pagos se registran en Payment
+- suscripción se actualiza en Subscription
+- usuario ve plan activo en member dashboard
+
+Importante:
+- no agregar librerías innecesarias
+- usar Stripe SDK oficial si ya está instalado
+- generar solo código necesario
+- no romper checkout ni billing existentes
+
+=======================================================
+Instrucción 17: portal de suscripción del usuario member
+=======================================================
+
+Implementar portal de gestión de suscripción para usuarios `member`.
+
+Contexto:
+Ya existe integración con Stripe Checkout y webhooks para sincronización real de pagos y suscripciones.
+Cada usuario es único.
+No hay organizaciones ni tenants.
+Se necesita que el usuario final pueda gestionar su suscripción desde su área privada sin depender siempre del admin.
+No romper módulos actuales.
+
+Stack:
+Laravel 12 + Inertia + Vue 3 + JavaScript + Bootstrap 5.3 + Stripe.
+
+Reglas:
+- No TypeScript
+- Vue con `<script setup>`
+- Solo Composition API
+- No Options API
+- No API separada fuera del flujo web actual
+- No librerías nuevas innecesarias
+- No refactorizar módulos no relacionados
+- Reutilizar estructura visual actual
+- Código simple y listo para producción
+
+Objetivo:
+Permitir que el usuario `member` gestione su suscripción desde su cuenta.
+
+Alcance de esta fase:
+- ver estado actual de suscripción
+- abrir portal de Stripe Billing si se usará portal nativo
+o, si no se usa portal nativo todavía:
+- cancelar suscripción
+- reactivar si el estado lo permite
+- ver próximos cobros o fechas importantes
+- ver método o referencia básica de cobro si ya está disponible
+- mantener sincronización con Stripe y con la base local
+
+Preferencia:
+Si Stripe Customer Portal encaja con la arquitectura actual:
+- usar Stripe Billing Portal
+porque reduce mucho trabajo y errores.
+
+No incluir todavía:
+- cupones avanzados
+- cambios con prorrateo complejo custom
+- múltiples suscripciones simultáneas
+- split billing
+- facturación fiscal avanzada
+
+Escenarios:
+1. usuario member con suscripción activa entra a su cuenta
+2. ve estado actual de plan
+3. puede abrir portal o gestionar su suscripción
+4. puede cancelar si el negocio lo permite
+5. puede ver cambios reflejados luego vía webhooks
+
+Rutas sugeridas:
+Opción A: usar Stripe Billing Portal
+- POST /member/billing/portal
+
+Opción B: gestión mínima propia
+- GET /member/subscription/manage
+- PUT /member/subscription/cancel
+- PUT /member/subscription/reactivate
+
+Usar la opción que mejor encaje con la integración actual.
+
+Controlador:
+Crear controlador member para billing, por ejemplo:
+- Member/BillingController
+Métodos posibles:
+- show()
+- portal()
+- cancel()
+- reactivate()
+
+Vista:
+Si se usa portal Stripe:
+- no hace falta vista compleja, solo botón desde cuenta/suscripción
+Si se usa gestión mínima propia:
+- resources/js/Pages/Member/Billing/Show.vue
+
+Modelo de negocio:
+Definir y respetar reglas actuales:
+- si la suscripción puede cancelarse al final del periodo
+- si puede reactivarse antes de vencer
+- si el cambio lo gobierna Stripe como fuente de verdad
+- no duplicar lógica inconsistente entre local y Stripe
+
+Opción recomendada: Stripe Billing Portal
+Si el proyecto ya usa Stripe real:
+- crear sesión de portal para el customer Stripe del usuario
+- redirigir a Stripe Billing Portal
+- al volver, seguir usando webhooks para sincronizar cambios
+
+Requisitos para portal:
+- usuario debe tener stripe_customer_id válido
+- suscripción existente si aplica
+- return_url clara a member account o subscription page
+
+Comportamiento Billing Portal:
+- usuario abre portal
+- gestiona método de pago, cancelación o plan según configuración de Stripe
+- Stripe procesa cambios
+- webhooks actualizan datos locales
+- usuario vuelve al área member con datos sincronizados
+
+Si no se usa portal y se hace cancelación propia:
+- backend llama a Stripe para cancelar suscripción
+- preferir cancelación al final del periodo si esa es la regla
+- actualizar estado local de forma segura
+- dejar webhook como fuente final de sincronización
+
+Datos a mostrar al usuario:
+- plan actual
+- estado
+- fecha de inicio
+- fecha de renovación o fin
+- cancelación programada si existe
+- último pago básico si ya existe relación
+- botón gestionar suscripción
+- botón cancelar si aplica
+- mensaje claro si no tiene suscripción activa
+
+UI:
+- usar layout member
+- usar Bootstrap 5.3
+- cards simples
+- experiencia clara y enfocada
+- integrar desde:
+  - /member/account
+  - o página específica /member/billing
+
+Seguridad:
+- solo usuario autenticado `member`
+- usar `auth()->user()`
+- no aceptar `user_id` editable desde frontend
+- validar que la suscripción pertenezca al usuario
+- no confiar en frontend para estados ni acciones de billing
+- no exponer secretos Stripe
+
+Integración:
+- revisar si User o Subscription ya guarda:
+  - stripe_customer_id
+  - stripe_subscription_id
+- adaptarse a estructura existente
+- mantener webhooks como fuente de verdad final
+- no romper checkout, pricing ni member dashboard
+
+Mensajes esperados:
+- "Tu suscripción se actualizará al final del periodo actual."
+- "Tu suscripción fue reactivada correctamente."
+- "No fue posible abrir el portal de facturación."
+- "No tienes una suscripción activa para gestionar."
+
+Actividad y notificaciones:
+Si ya existen:
+- registrar actividad de apertura de portal, cancelación o reactivación
+- crear notificación interna al usuario cuando aplique
+
+Importante:
+- primero revisar integración Stripe actual
+- si Billing Portal ya está disponible, reutilizarlo
+- generar solo archivos necesarios
+- no agregar archivos innecesarios
+- no romper sincronización por webhooks
