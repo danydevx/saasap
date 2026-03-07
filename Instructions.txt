@@ -4365,3 +4365,503 @@ Importante:
 - generar solo archivos necesarios
 - no agregar archivos innecesarios
 - mantener implementación simple y extensible
+
+===============================================
+Instrucción 22: preferencias del usuario member
+==============================================
+
+
+Implementar módulo de preferencias para el usuario `member`.
+
+Contexto:
+Ya existen auth, dashboards separados, perfil, cuenta, notificaciones, soporte y centro de ayuda.
+Cada usuario es único.
+No hay organizaciones ni tenants.
+Se necesita una sección donde el usuario pueda guardar preferencias personales de uso dentro del SaaS.
+No romper módulos actuales.
+
+Stack:
+Laravel 12 + Inertia + Vue 3 + JavaScript + Bootstrap 5.3.
+
+Reglas:
+- No TypeScript
+- Vue con `<script setup>`
+- Solo Composition API
+- No Options API
+- No API separada fuera del flujo web actual
+- No librerías nuevas innecesarias
+- No refactorizar módulos no relacionados
+- Reutilizar estructura visual actual
+- Código simple y listo para producción
+
+Objetivo:
+Permitir que el usuario `member` gestione sus preferencias personales.
+
+Alcance de esta fase:
+- guardar preferencias por usuario
+- editar desde área member
+- leer preferencias desde backend y frontend
+- estructura flexible para crecer con nuevas preferencias después
+
+No incluir todavía:
+- preferencias extremadamente avanzadas
+- personalización total del layout
+- configuraciones por módulo demasiado complejas
+- sincronización en tiempo real entre dispositivos
+
+Persistencia:
+Usar estructura flexible.
+
+Opciones válidas:
+1. tabla `user_preferences`
+2. campo JSON en `user_profiles`
+3. solución equivalente ya existente en el proyecto
+
+Preferencia:
+- usar estructura clara y flexible
+- si no existe nada previo, crear solución mínima reutilizable
+- evitar hardcodear demasiadas columnas si puede resolverse con key/value o JSON
+
+Preferencias iniciales sugeridas:
+- locale
+- timezone
+- email_notifications boolean
+- system_notifications boolean
+- onboarding_completed boolean si aún no existe en otro lado
+- dashboard_welcome_dismissed boolean si aplica
+
+Puedes ajustar nombres según la arquitectura actual, pero mantenerlas simples y útiles.
+
+Rutas member:
+- GET /member/preferences
+- PUT /member/preferences
+
+Controlador:
+- Member/PreferenceController
+Métodos:
+  - edit()
+  - update()
+
+Vista:
+- resources/js/Pages/Member/Preferences/Edit.vue
+
+Layout:
+- usar layout member
+- no usar layout admin
+
+Campos del formulario:
+- locale
+- timezone
+- email_notifications
+- system_notifications
+- onboarding_completed solo si realmente encaja en esta pantalla
+- cualquier otra preferencia mínima ya existente que convenga unificar
+
+Validaciones backend:
+- locale nullable|string|max:10
+- timezone nullable|string|max:100
+- email_notifications boolean
+- system_notifications boolean
+
+Comportamiento:
+- cargar preferencias actuales del usuario autenticado
+- si no existen, usar valores por defecto razonables
+- al guardar:
+  - crear estructura si no existe
+  - actualizar si existe
+- redirect back con success flash
+
+Valores por defecto sugeridos:
+- locale: valor global del sistema o `es`
+- timezone: valor global del sistema o `America/Mexico_City`
+- email_notifications: true
+- system_notifications: true
+
+UI:
+- usar Inertia
+- usar Bootstrap 5.3
+- cards simples
+- usar useForm
+- usar componentes de campo existentes si ya están en el proyecto
+- mostrar errores por campo
+- usar toast success/error
+- botón único guardar cambios
+
+Integración:
+- agregar acceso desde menú member o página account
+- permitir que dashboard/layout lean preferencias si ya hace sentido
+- no romper profile, account, notifications ni onboarding
+
+Lectura de preferencias:
+Preparar helper, accessor o servicio simple para obtener preferencias del usuario autenticado.
+Objetivo:
+- leer preferencia por clave
+- fallback a valor por defecto si no existe
+
+Seguridad:
+- solo usuario autenticado
+- solo sus propias preferencias
+- usar `auth()->user()`
+- no aceptar `user_id` editable desde frontend
+- validar todo en backend
+
+Actividad:
+Si ya existe módulo de activity:
+- registrar actualización de preferencias
+
+Notificaciones:
+No crear notificación por cada cambio de preferencia salvo que ya exista patrón claro.
+Mantenerlo simple.
+
+Importante:
+- revisar si ya existe campo o estructura para preferencias
+- si existe, adaptarse
+- si no existe, crear solución mínima reusable
+- generar solo archivos necesarios
+- no agregar archivos innecesarios
+- mantener implementación simple y extensible
+
+==================================================
+Instrucción 23: dashboard admin con métricas reales del SaaS
+==================================================
+Implementar mejora del dashboard admin para mostrar métricas reales del SaaS.
+
+Contexto:
+Ya existen users, roles, member dashboard, settings, planes, suscripciones, pagos, tickets, help center y preferencias.
+Cada usuario es único.
+No hay organizaciones ni tenants.
+Se necesita que el dashboard admin deje de ser solo visual y muestre información útil para operar el SaaS.
+No romper módulos actuales.
+
+Stack:
+Laravel 12 + Inertia + Vue 3 + JavaScript + Bootstrap 5.3.
+
+Reglas:
+- No TypeScript
+- Vue con `<script setup>`
+- Solo Composition API
+- No Options API
+- No API separada fuera del flujo web actual
+- No librerías nuevas innecesarias
+- No refactorizar módulos no relacionados
+- Reutilizar estructura visual actual
+- Código simple y listo para producción
+
+Objetivo:
+Mostrar en el dashboard admin métricas globales del sistema, accesos rápidos y estados importantes.
+
+Alcance de esta fase:
+- métricas generales
+- resumen de usuarios
+- resumen de suscripciones
+- resumen de pagos
+- resumen de tickets
+- accesos rápidos a módulos administrativos
+- información reciente útil
+- mantenerlo simple y rápido
+
+No incluir todavía:
+- gráficas complejas
+- analytics avanzados
+- BI
+- reportes descargables
+- filtros demasiado sofisticados
+
+Acceso:
+- solo `superadmin` y `admin`
+- `member` no entra aquí
+
+Ruta:
+- usar dashboard admin actual
+- no crear un dashboard nuevo si ya existe
+- mejorar el actual
+
+Controlador:
+- adaptar controlador actual del dashboard admin
+- cargar métricas reales desde backend
+
+Vista:
+- reutilizar vista actual del dashboard admin
+- mantener layout admin
+
+Métricas mínimas sugeridas:
+
+Usuarios:
+- total de usuarios
+- usuarios activos
+- usuarios inactivos
+- usuarios con email verificado
+- usuarios pendientes de verificación
+- usuarios registrados recientemente
+
+Suscripciones:
+- total de suscripciones
+- activas
+- trial
+- vencidas
+- canceladas
+
+Planes:
+- total de planes activos
+- plan más usado si se puede obtener fácilmente
+
+Pagos:
+- total de pagos
+- pagos exitosos
+- pagos fallidos
+- monto total recaudado
+- monto recaudado del mes si es simple obtenerlo
+
+Soporte:
+- tickets abiertos
+- tickets pendientes
+- tickets cerrados
+- últimos tickets creados
+
+Sistema:
+- notificaciones pendientes si aplica
+- actividad reciente si ya existe módulo de activity
+- últimos registros relevantes
+
+Secciones sugeridas del dashboard:
+1. tarjetas de resumen
+2. tabla o lista de actividad reciente
+3. tabla o lista de tickets recientes
+4. accesos rápidos:
+   - usuarios
+   - planes
+   - suscripciones
+   - pagos
+   - soporte
+   - settings
+
+Consultas backend:
+- hacer consultas simples y claras
+- evitar lógica innecesariamente compleja
+- evitar N+1
+- cargar solo datos necesarios
+- si algo es costoso, usar conteos básicos primero
+
+UI:
+- usar layout admin actual
+- usar Bootstrap 5.3
+- usar cards
+- usar iconos si ya forman parte del proyecto
+- mantener diseño limpio
+- no meter demasiada información en una sola pantalla
+- priorizar resumen operativo
+
+Comportamiento:
+- dashboard debe cargar rápido
+- mostrar estados vacíos claros si aún no hay datos
+- mostrar números reales desde base de datos
+- no hardcodear métricas
+
+Paginación:
+- no necesaria para tarjetas
+- si se muestran listas recientes, limitar a pocos registros
+
+Seguridad:
+- solo admin/superadmin
+- validar acceso en backend
+- no exponer datos sensibles innecesarios
+
+Integración:
+- revisar dashboard admin actual
+- revisar modelos existentes:
+  - User
+  - Subscription
+  - Plan
+  - Payment
+  - SupportTicket
+  - ActivityLog si existe
+- adaptarse a la estructura actual
+- no romper navegación admin
+
+Importante:
+- generar solo archivos necesarios
+- no agregar archivos innecesarios
+- mantener implementación simple y extensible
+
+================================================
+Instrucción 24: reportes básicos administrativos
+==================================================
+Implementar módulo de reportes básicos administrativos para el SaaS.
+
+Contexto:
+Ya existen users, roles, member dashboard, settings, planes, suscripciones, pagos, tickets, help center, preferencias y dashboard admin con métricas.
+Cada usuario es único.
+No hay organizaciones ni tenants.
+Se necesita una sección de reportes básicos para que admin/superadmin consulten información resumida del sistema.
+No romper módulos actuales.
+
+Stack:
+Laravel 12 + Inertia + Vue 3 + JavaScript + Bootstrap 5.3.
+
+Reglas:
+- No TypeScript
+- Vue con `<script setup>`
+- Solo Composition API
+- No Options API
+- No API separada fuera del flujo web actual
+- No librerías nuevas innecesarias
+- No refactorizar módulos no relacionados
+- Reutilizar estructura visual actual
+- Código simple y listo para producción
+
+Objetivo:
+Permitir a `admin` y `superadmin` consultar reportes básicos del sistema con filtros simples y datos agregados útiles para operación.
+
+Alcance de esta fase:
+- pantalla de reportes
+- filtros por rango de fechas
+- resumen de usuarios
+- resumen de suscripciones
+- resumen de pagos
+- resumen de soporte
+- datos listos para exportación futura
+- mantenerlo simple y rápido
+
+No incluir todavía:
+- exportación avanzada
+- gráficas complejas
+- BI
+- dashboards comparativos complejos
+- reportes programados
+- data warehouse
+
+Acceso:
+- solo `superadmin` y `admin`
+- `member` no entra aquí
+
+Permisos sugeridos:
+- reports.view
+
+Ruta:
+- GET /admin/reports
+
+Controlador:
+- Admin/ReportController
+- método:
+  - index()
+
+Vista:
+- resources/js/Pages/Admin/Reports/Index.vue
+
+Filtros requeridos:
+- date_from
+- date_to
+
+Opcionales simples si encajan fácilmente:
+- plan_id
+- payment_status
+- ticket_status
+
+Comportamiento filtros:
+- si no se envía rango, usar un rango por defecto razonable, por ejemplo últimos 30 días
+- validar fechas
+- no permitir rangos inválidos
+
+Validaciones backend:
+- date_from nullable|date
+- date_to nullable|date|after_or_equal:date_from
+- plan_id nullable|exists:plans,id
+- payment_status nullable|string
+- ticket_status nullable|string
+
+Reportes mínimos requeridos:
+
+1. Usuarios
+- total registrados en el rango
+- total activos
+- total inactivos
+- total verificados
+- total no verificados
+
+2. Suscripciones
+- total creadas en el rango
+- activas
+- trial
+- expiradas
+- canceladas
+
+3. Pagos
+- total de pagos en el rango
+- total exitosos
+- total fallidos
+- monto total cobrado
+- monto total cobrado por plan si es simple obtenerlo
+
+4. Soporte
+- tickets creados en el rango
+- abiertos
+- pendientes
+- cerrados
+
+Opcionales sencillos:
+- top planes más contratados
+- usuarios registrados recientemente
+- últimos pagos
+- últimos tickets
+
+Consultas backend:
+- usar agregaciones simples
+- evitar N+1
+- evitar lógica compleja innecesaria
+- cargar solo datos necesarios
+- si algo cuesta mucho, usar conteos básicos primero
+
+UI:
+- usar layout admin actual
+- usar PageTitle
+- usar Breadcrumb
+- usar cards para métricas
+- usar formulario de filtros simple
+- usar Bootstrap 5.3
+- diseño limpio y operativo
+- no crear una interfaz recargada
+
+Secciones sugeridas:
+1. filtros
+2. cards de resumen
+3. bloques por módulo:
+   - usuarios
+   - suscripciones
+   - pagos
+   - soporte
+
+Integración:
+- agregar acceso desde menú admin si corresponde
+- no romper dashboard admin
+- reutilizar modelos existentes:
+  - User
+  - Subscription
+  - Payment
+  - SupportTicket
+  - Plan
+
+Preparación para futuro:
+Dejar estructura clara para que después pueda agregarse:
+- exportación CSV/Excel
+- PDF
+- gráficas
+- reportes por plan
+- comparaciones mensuales
+
+Seguridad:
+- validar acceso en backend
+- solo admin/superadmin
+- no exponer datos sensibles innecesarios
+- no mostrar información privada de usuarios más allá de lo necesario para agregados
+
+Comportamiento esperado:
+- admin entra a reportes
+- elige rango de fechas
+- ve métricas agregadas reales
+- la pantalla responde rápido
+- estados vacíos claros si no hay datos
+
+Importante:
+- generar solo archivos necesarios
+- no agregar archivos innecesarios
+- mantener implementación simple y extensible

@@ -60,6 +60,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'help.update',
             'help.delete',
             'help.publish',
+            'reports.view',
         ];
 
         foreach ($permissions as $permission) {
@@ -114,6 +115,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'help.update',
             'help.delete',
             'help.publish',
+            'reports.view',
         ]);
 
         $user->givePermissionTo([]);

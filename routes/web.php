@@ -368,6 +368,10 @@ Route::prefix('admin')->middleware(['auth', 'admin_or_user:1'])->group(function 
         ->middleware('permission_or_user:help.delete,1')
         ->name('admin.help.destroy');
 
+    Route::get('/reports', [ReportController::class, 'index'])
+        ->middleware('permission_or_user:reports.view,1')
+        ->name('admin.reports.index');
+
 });
 
 Route::prefix('admin')->middleware(['auth', 'admin_or_user:1', 'permission_or_user:permissions.view,1'])->group(function () {
