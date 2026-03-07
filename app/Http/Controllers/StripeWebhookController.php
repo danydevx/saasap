@@ -9,6 +9,7 @@ use App\Models\StripeWebhookEvent;
 use App\Models\Subscription;
 use App\Models\User;
 use App\Services\ActivityService;
+use App\Services\ModuleService;
 use App\Services\SystemErrorService;
 use App\Services\UserNotificationService;
 use App\Services\WebhookService;
@@ -20,6 +21,11 @@ class StripeWebhookController extends Controller
 {
     public function handle(Request $request, ActivityService $activity, UserNotificationService $notifications, SystemErrorService $errors, WebhookService $webhooks)
     {
+        // Evita procesar eventos de Stripe si el modulo billing esta desactivado.
+        if (! app(ModuleService::class)->isEnabled('billing')) {
+            return response()->json(['status' => 'ignored'], 200);
+        }
+
         $payload = $request->getContent();
         $signature = $request->header('Stripe-Signature');
         $secret = config('services.stripe.webhook_secret');

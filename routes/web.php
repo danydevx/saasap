@@ -30,12 +30,14 @@ use App\Http\Controllers\Admin\UserProfileController;
 use App\Http\Controllers\Admin\WebhookController as AdminWebhookController;
 use App\Http\Controllers\Auth\EmailVerificationController;
 use App\Http\Controllers\Auth\InvitationAcceptController;
+use App\Http\Controllers\Auth\LegalAcceptanceController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\Member\AccountController;
+use App\Http\Controllers\Member\ActivityController as MemberActivityController;
 use App\Http\Controllers\Member\ApiKeyController as MemberApiKeyController;
 use App\Http\Controllers\Member\BillingController;
 use App\Http\Controllers\Member\CheckoutController;
@@ -158,27 +160,27 @@ Route::get('/member/account', [AccountController::class, 'show'])
     ->name('member.account.show');
 
 Route::post('/member/billing/portal', [BillingController::class, 'portal'])
-    ->middleware(['auth', 'verified', 'active', 'role:member', 'throttle:billing-portal'])
+    ->middleware(['auth', 'verified', 'active', 'role:member', 'module:billing', 'throttle:billing-portal'])
     ->name('member.billing.portal');
 
 Route::post('/member/checkout/{plan}', [CheckoutController::class, 'create'])
-    ->middleware(['auth', 'verified', 'active', 'role:member', 'throttle:checkout-create'])
+    ->middleware(['auth', 'verified', 'active', 'role:member', 'module:billing', 'throttle:checkout-create'])
     ->name('member.checkout.create');
 Route::post('/member/checkout/coupon/validate', [CheckoutController::class, 'validateCoupon'])
-    ->middleware(['auth', 'verified', 'active', 'role:member', 'throttle:checkout-coupon'])
+    ->middleware(['auth', 'verified', 'active', 'role:member', 'module:billing', 'throttle:checkout-coupon'])
     ->name('member.checkout.coupon.validate');
 Route::put('/member/checkout/coupon/clear', [CheckoutController::class, 'clearCoupon'])
-    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->middleware(['auth', 'verified', 'active', 'role:member', 'module:billing'])
     ->name('member.checkout.coupon.clear');
 Route::get('/member/checkout/success', [CheckoutController::class, 'success'])
-    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->middleware(['auth', 'verified', 'active', 'role:member', 'module:billing'])
     ->name('member.checkout.success');
 Route::get('/member/checkout/cancel', [CheckoutController::class, 'cancel'])
-    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->middleware(['auth', 'verified', 'active', 'role:member', 'module:billing'])
     ->name('member.checkout.cancel');
 
 Route::get('/member/plan-selection', [PlanSelectionController::class, 'show'])
-    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->middleware(['auth', 'verified', 'active', 'role:member', 'module:billing'])
     ->name('member.plan-selection.show');
 
 Route::get('/member/integrations', [IntegrationController::class, 'index'])
@@ -188,7 +190,7 @@ Route::get('/member/integrations/docs', [IntegrationController::class, 'apiDocum
     ->middleware(['auth', 'verified', 'active', 'role:member', 'module:integrations'])
     ->name('member.integrations.docs');
 Route::put('/member/plan-selection/clear', [PlanSelectionController::class, 'clear'])
-    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->middleware(['auth', 'verified', 'active', 'role:member', 'module:billing'])
     ->name('member.plan-selection.clear');
 
 Route::get('/member/profile', [UserProfileController::class, 'editMember'])
@@ -234,7 +236,7 @@ Route::put('/member/notification-preferences', [NotificationPreferenceController
     ->name('member.notification-preferences.update');
 
 Route::get('/member/activity', [MemberActivityController::class, 'index'])
-    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->middleware(['auth', 'verified', 'active', 'role:member', 'module:activity'])
     ->name('member.activity.index');
 
 Route::get('/member/payments', [MemberPaymentController::class, 'index'])
@@ -397,22 +399,22 @@ Route::prefix('admin')->middleware(['auth', 'admin_or_user:1'])->group(function 
         ->name('admin.users.resend-verification');
 
     Route::get('/invitations', [InvitationController::class, 'index'])
-        ->middleware('permission_or_user:invitations.view,1')
+        ->middleware(['permission_or_user:invitations.view,1', 'module:invitations'])
         ->name('admin.invitations.index');
     Route::get('/invitations/create', [InvitationController::class, 'create'])
-        ->middleware('permission_or_user:invitations.create,1')
+        ->middleware(['permission_or_user:invitations.create,1', 'module:invitations'])
         ->name('admin.invitations.create');
     Route::post('/invitations', [InvitationController::class, 'store'])
-        ->middleware('permission_or_user:invitations.create,1')
+        ->middleware(['permission_or_user:invitations.create,1', 'module:invitations'])
         ->name('admin.invitations.store');
     Route::get('/invitations/{invitation}', [InvitationController::class, 'show'])
-        ->middleware('permission_or_user:invitations.view,1')
+        ->middleware(['permission_or_user:invitations.view,1', 'module:invitations'])
         ->name('admin.invitations.show');
     Route::put('/invitations/{invitation}/revoke', [InvitationController::class, 'revoke'])
-        ->middleware('permission_or_user:invitations.revoke,1')
+        ->middleware(['permission_or_user:invitations.revoke,1', 'module:invitations'])
         ->name('admin.invitations.revoke');
     Route::post('/invitations/{invitation}/resend', [InvitationController::class, 'resend'])
-        ->middleware('permission_or_user:invitations.update,1')
+        ->middleware(['permission_or_user:invitations.update,1', 'module:invitations'])
         ->name('admin.invitations.resend');
 
     Route::get('/legal-documents', [LegalDocumentController::class, 'index'])
@@ -442,7 +444,7 @@ Route::prefix('admin')->middleware(['auth', 'admin_or_user:1'])->group(function 
     Route::delete('/roles/{role}', [RoleController::class, 'destroy'])->name('admin.roles.destroy');
 
     Route::get('/activity', [AdminActivityController::class, 'index'])
-        ->middleware('permission_or_user:activity.view,1')
+        ->middleware(['permission_or_user:activity.view,1', 'module:activity'])
         ->name('admin.activity.index');
 
     Route::get('/exports', [ExportController::class, 'index'])
@@ -465,13 +467,13 @@ Route::prefix('admin')->middleware(['auth', 'admin_or_user:1'])->group(function 
         ->name('admin.exports.activities');
 
     Route::get('/system-errors', [SystemErrorController::class, 'index'])
-        ->middleware('permission_or_user:system-errors.view,1')
+        ->middleware(['permission_or_user:system-errors.view,1', 'module:system-errors'])
         ->name('admin.system-errors.index');
     Route::get('/system-errors/{error}', [SystemErrorController::class, 'show'])
-        ->middleware('permission_or_user:system-errors.view,1')
+        ->middleware(['permission_or_user:system-errors.view,1', 'module:system-errors'])
         ->name('admin.system-errors.show');
     Route::put('/system-errors/{error}/resolve', [SystemErrorController::class, 'resolve'])
-        ->middleware('permission_or_user:system-errors.update,1')
+        ->middleware(['permission_or_user:system-errors.update,1', 'module:system-errors'])
         ->name('admin.system-errors.resolve');
 
     Route::get('/api-keys', [AdminApiKeyController::class, 'index'])
@@ -495,22 +497,22 @@ Route::prefix('admin')->middleware(['auth', 'admin_or_user:1'])->group(function 
         ->name('admin.webhooks.deliveries');
 
     Route::get('/queues', [QueueController::class, 'index'])
-        ->middleware('permission_or_user:queues.view,1')
+        ->middleware(['permission_or_user:queues.view,1', 'module:queues'])
         ->name('admin.queues.index');
     Route::get('/failed-jobs', [QueueController::class, 'failed'])
-        ->middleware('permission_or_user:queues.view,1')
+        ->middleware(['permission_or_user:queues.view,1', 'module:queues'])
         ->name('admin.queues.failed');
     Route::post('/failed-jobs/{id}/retry', [QueueController::class, 'retry'])
-        ->middleware('permission_or_user:queues.retry,1')
+        ->middleware(['permission_or_user:queues.retry,1', 'module:queues'])
         ->name('admin.queues.retry');
     Route::delete('/failed-jobs/{id}', [QueueController::class, 'destroy'])
-        ->middleware('permission_or_user:queues.flush-failed,1')
+        ->middleware(['permission_or_user:queues.flush-failed,1', 'module:queues'])
         ->name('admin.queues.destroy');
     Route::post('/failed-jobs/retry-all', [QueueController::class, 'retryAll'])
-        ->middleware('permission_or_user:queues.retry,1')
+        ->middleware(['permission_or_user:queues.retry,1', 'module:queues'])
         ->name('admin.queues.retry-all');
     Route::delete('/failed-jobs/flush', [QueueController::class, 'flush'])
-        ->middleware('permission_or_user:queues.flush-failed,1')
+        ->middleware(['permission_or_user:queues.flush-failed,1', 'module:queues'])
         ->name('admin.queues.flush');
 
     Route::get('/system-monitor', [SystemMonitorController::class, 'index'])
@@ -518,10 +520,10 @@ Route::prefix('admin')->middleware(['auth', 'admin_or_user:1'])->group(function 
         ->name('admin.system-monitor.index');
 
     Route::get('/security-events', [SecurityEventController::class, 'index'])
-        ->middleware('permission_or_user:security-events.view,1')
+        ->middleware(['permission_or_user:security-events.view,1', 'module:security-events'])
         ->name('admin.security-events.index');
     Route::get('/security-events/{event}', [SecurityEventController::class, 'show'])
-        ->middleware('permission_or_user:security-events.view,1')
+        ->middleware(['permission_or_user:security-events.view,1', 'module:security-events'])
         ->name('admin.security-events.show');
 
     Route::get('/feature-flags', [FeatureFlagController::class, 'index'])

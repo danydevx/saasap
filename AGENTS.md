@@ -1,23 +1,39 @@
 # Guia para agentes internos
 
-## Principios
-- Mantener compatibilidad con lo ya construido.
-- Evitar refactors innecesarios.
-- Preferir cambios incrementales y seguros.
+## Stack
+- Laravel 12
+- Inertia + Vue 3 (Composition API, `<script setup>`)
+- Bootstrap 5.3
+- Spatie Permission
 
-## Comentarios en codigo
-- Todos los comentarios deben estar en espanol.
-- No incluir comentarios en ingles.
+## Reglas generales
+- Todos los comentarios en codigo deben estar en espanol.
+- No usar TypeScript.
+- No refactorizar modulos no relacionados.
+- Mantener compatibilidad con lo existente.
 
-## Convenciones clave
+## Frontend
+- Usar layouts existentes: `AdminLayout` y `MemberLayout`.
+- Inertia: props compartidos incluyen `auth`, `features`, `modules`.
+- Ocultar UI cuando el permiso o modulo no aplica, pero siempre validar en backend.
+
+## Backend
 - Permisos: `modulo.accion`.
-- Modulos activables: usar `module:clave` en rutas.
-- Policies: validar acceso por recurso, no solo por rutas.
+- Modulos: `module:clave` en rutas.
+- Policies para recursos (no depender solo de middleware).
+- Servicios base a reutilizar: `SettingService`, `FeatureService`, `ModuleService`, `AccessService`.
 
-## Checklist de cambios
-- Actualizar seeders si se agregan permisos o modulos.
-- Revisar menu admin/member si se agregan secciones nuevas.
-- Evitar exponer secretos en frontend.
+## Seguridad
+- No exponer secretos en frontend.
+- Validar propiedad del recurso en policies.
+- Respetar modulo y feature flag antes de ejecutar acciones.
+
+## Crear modulos nuevos
+1. Definir key en `system_modules`.
+2. Agregar rutas con `module:clave`.
+3. Crear permisos en seeder.
+4. Implementar policies si aplica.
+5. Actualizar menus y docs.
 
 ## Comandos utiles
 - `php artisan saas:install`

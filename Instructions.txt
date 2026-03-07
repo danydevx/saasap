@@ -8954,3 +8954,1597 @@ Importante:
 - mantener implementación simple
 - generar solo archivos necesarios
 - mantener arquitectura extensible
+
+
+=============================================
+Instrucción 47: portal de integraciones (API keys y webhooks)
+====================================================
+
+
+Implementar portal de integraciones del SaaS para centralizar API keys, webhooks y documentación básica para desarrolladores.
+
+IMPORTANTE PARA EL AGENTE:
+- Explicar el código con comentarios en español.
+- Los comentarios dentro del código deben estar en español.
+- Las clases y métodos pueden mantener nombres en inglés siguiendo la convención del proyecto.
+- No generar comentarios en inglés.
+
+Contexto:
+El SaaS ya tiene:
+- API keys
+- Webhooks entrantes
+- Webhooks salientes
+- Sistema de colas
+- Automatizaciones
+- Logs del sistema
+
+Actualmente estas funcionalidades están separadas.
+Se necesita un portal de integraciones que centralice todo lo relacionado con integraciones externas.
+
+Stack:
+Laravel 12 + Inertia + Vue 3 + JavaScript + Bootstrap 5.3.
+
+Reglas:
+- No TypeScript
+- Vue con `<script setup>`
+- Solo Composition API
+- No Options API
+- No librerías externas innecesarias
+- Reutilizar modelos existentes de API keys y webhooks
+- Código simple y listo para producción
+- Comentarios en español
+
+Objetivo:
+Crear un centro de integraciones donde el usuario pueda gestionar conexiones externas de su cuenta.
+
+Alcance de esta fase:
+- página central de integraciones
+- gestión de API keys
+- gestión de webhooks
+- ver estado de integraciones
+- probar endpoints
+- documentación básica de API
+- mostrar ejemplos de uso
+
+No incluir todavía:
+- SDK oficial
+- generador de clientes API
+- marketplace de integraciones externas
+- OAuth completo
+- integraciones con terceros como Zapier
+
+Portal de integraciones:
+
+Crear página principal:
+
+/member/integrations
+
+Vista:
+
+resources/js/Pages/Member/Integrations/Index.vue
+
+Contenido:
+
+Sección 1:
+API Keys
+
+Sección 2:
+Webhooks
+
+Sección 3:
+Documentación básica de API
+
+Sección 4:
+Estado de integraciones
+
+API Keys:
+
+Reutilizar sistema existente de API keys.
+
+Mostrar:
+
+- nombre
+- prefijo de key
+- fecha creación
+- último uso
+- estado activo/inactivo
+
+Permitir:
+
+- crear nueva key
+- revocar key
+- ver metadata
+
+Rutas existentes sugeridas:
+
+GET /member/api-keys
+POST /member/api-keys
+DELETE /member/api-keys/{key}
+
+No duplicar lógica existente.
+
+Webhooks:
+
+Reutilizar sistema existente de webhooks.
+
+Mostrar:
+
+- URL endpoint
+- eventos suscritos
+- estado activo/inactivo
+- últimos intentos de entrega
+
+Permitir:
+
+- crear webhook
+- editar webhook
+- eliminar webhook
+- probar webhook manualmente
+
+Rutas sugeridas:
+
+GET /member/webhooks
+POST /member/webhooks
+PUT /member/webhooks/{webhook}
+DELETE /member/webhooks/{webhook}
+POST /member/webhooks/{webhook}/test
+
+Eventos disponibles:
+
+Ejemplos:
+
+user.created
+subscription.created
+subscription.canceled
+payment.succeeded
+payment.failed
+ticket.created
+ticket.replied
+
+La lista debe provenir del backend.
+
+Estado de integraciones:
+
+Mostrar información útil para el usuario:
+
+- número de API keys activas
+- número de webhooks activos
+- últimos eventos enviados
+- errores recientes
+
+Datos provenientes de:
+
+- api_keys
+- webhook_deliveries
+- system_errors
+
+Documentación básica:
+
+Crear sección simple de documentación.
+
+Debe explicar:
+
+Autenticación API:
+
+Header:
+
+Authorization: Bearer {API_KEY}
+
+Ejemplo:
+
+curl https://api.tusistema.com/api/me \
+  -H "Authorization: Bearer YOUR_API_KEY"
+
+Ejemplo de respuesta:
+
+{
+  "id": 10,
+  "name": "Juan Pérez",
+  "email": "juan@email.com"
+}
+
+Eventos webhook:
+
+Explicar formato:
+
+{
+  "event": "payment.succeeded",
+  "data": {
+    ...
+  }
+}
+
+Firma webhook:
+
+Explicar header:
+
+X-Signature
+
+Firmado con HMAC SHA256 usando el secret del webhook.
+
+Ejemplo conceptual.
+
+Controlador:
+
+Member/IntegrationController
+
+Métodos:
+
+- index()
+- apiDocumentation()
+
+No crear demasiados endpoints nuevos si ya existen.
+
+UI:
+
+Usar layout member.
+
+Mostrar tarjetas para:
+
+- API keys
+- Webhooks
+- Documentación
+
+Bootstrap 5.3.
+
+Diseño limpio y simple.
+
+Integración con feature flags:
+
+Si existe sistema de features:
+
+features.api_enabled
+features.webhooks_enabled
+
+Mostrar u ocultar secciones según el feature.
+
+Permisos:
+
+Solo usuarios autenticados pueden ver integraciones.
+
+Si el plan del usuario no permite integraciones:
+
+Mostrar mensaje:
+
+"Las integraciones API no están disponibles en su plan."
+
+Logging:
+
+Registrar eventos:
+
+- API key creada
+- API key revocada
+- webhook creado
+- webhook eliminado
+- webhook probado
+
+Usar activity log existente.
+
+Errores:
+
+Registrar errores de entrega de webhooks.
+
+No registrar cada request API normal.
+
+Seguridad:
+
+- no mostrar API keys completas
+- mostrar solo prefijo
+- mostrar clave completa solo al momento de creación
+- validar propiedad del webhook
+- validar propiedad de API key
+
+Comportamiento esperado:
+
+Usuario entra a Integrations.
+
+Puede:
+
+- crear API keys
+- crear webhooks
+- ver estado de integraciones
+- ver documentación básica
+
+Esto convierte el SaaS en una plataforma integrable.
+
+Importante:
+
+- reutilizar módulos existentes
+- no duplicar modelos
+- generar solo archivos necesarios
+- comentarios del código en español
+- mantener arquitectura simple y extensible
+
+===================================
+Instrucción 47: portal de integraciones (API keys y webhooks)
+====================================
+
+
+
+Implementar portal de integraciones del SaaS para centralizar API keys, webhooks y documentación básica para desarrolladores.
+
+IMPORTANTE PARA EL AGENTE:
+- Explicar el código con comentarios en español.
+- Los comentarios dentro del código deben estar en español.
+- Las clases y métodos pueden mantener nombres en inglés siguiendo la convención del proyecto.
+- No generar comentarios en inglés.
+
+Contexto:
+El SaaS ya tiene:
+- API keys
+- Webhooks entrantes
+- Webhooks salientes
+- Sistema de colas
+- Automatizaciones
+- Logs del sistema
+
+Actualmente estas funcionalidades están separadas.
+Se necesita un portal de integraciones que centralice todo lo relacionado con integraciones externas.
+
+Stack:
+Laravel 12 + Inertia + Vue 3 + JavaScript + Bootstrap 5.3.
+
+Reglas:
+- No TypeScript
+- Vue con `<script setup>`
+- Solo Composition API
+- No Options API
+- No librerías externas innecesarias
+- Reutilizar modelos existentes de API keys y webhooks
+- Código simple y listo para producción
+- Comentarios en español
+
+Objetivo:
+Crear un centro de integraciones donde el usuario pueda gestionar conexiones externas de su cuenta.
+
+Alcance de esta fase:
+- página central de integraciones
+- gestión de API keys
+- gestión de webhooks
+- ver estado de integraciones
+- probar endpoints
+- documentación básica de API
+- mostrar ejemplos de uso
+
+No incluir todavía:
+- SDK oficial
+- generador de clientes API
+- marketplace de integraciones externas
+- OAuth completo
+- integraciones con terceros como Zapier
+
+Portal de integraciones:
+
+Crear página principal:
+
+/member/integrations
+
+Vista:
+
+resources/js/Pages/Member/Integrations/Index.vue
+
+Contenido:
+
+Sección 1:
+API Keys
+
+Sección 2:
+Webhooks
+
+Sección 3:
+Documentación básica de API
+
+Sección 4:
+Estado de integraciones
+
+API Keys:
+
+Reutilizar sistema existente de API keys.
+
+Mostrar:
+
+- nombre
+- prefijo de key
+- fecha creación
+- último uso
+- estado activo/inactivo
+
+Permitir:
+
+- crear nueva key
+- revocar key
+- ver metadata
+
+Rutas existentes sugeridas:
+
+GET /member/api-keys
+POST /member/api-keys
+DELETE /member/api-keys/{key}
+
+No duplicar lógica existente.
+
+Webhooks:
+
+Reutilizar sistema existente de webhooks.
+
+Mostrar:
+
+- URL endpoint
+- eventos suscritos
+- estado activo/inactivo
+- últimos intentos de entrega
+
+Permitir:
+
+- crear webhook
+- editar webhook
+- eliminar webhook
+- probar webhook manualmente
+
+Rutas sugeridas:
+
+GET /member/webhooks
+POST /member/webhooks
+PUT /member/webhooks/{webhook}
+DELETE /member/webhooks/{webhook}
+POST /member/webhooks/{webhook}/test
+
+Eventos disponibles:
+
+Ejemplos:
+
+user.created
+subscription.created
+subscription.canceled
+payment.succeeded
+payment.failed
+ticket.created
+ticket.replied
+
+La lista debe provenir del backend.
+
+Estado de integraciones:
+
+Mostrar información útil para el usuario:
+
+- número de API keys activas
+- número de webhooks activos
+- últimos eventos enviados
+- errores recientes
+
+Datos provenientes de:
+
+- api_keys
+- webhook_deliveries
+- system_errors
+
+Documentación básica:
+
+Crear sección simple de documentación.
+
+Debe explicar:
+
+Autenticación API:
+
+Header:
+
+Authorization: Bearer {API_KEY}
+
+Ejemplo:
+
+curl https://api.tusistema.com/api/me \
+  -H "Authorization: Bearer YOUR_API_KEY"
+
+Ejemplo de respuesta:
+
+{
+  "id": 10,
+  "name": "Juan Pérez",
+  "email": "juan@email.com"
+}
+
+Eventos webhook:
+
+Explicar formato:
+
+{
+  "event": "payment.succeeded",
+  "data": {
+    ...
+  }
+}
+
+Firma webhook:
+
+Explicar header:
+
+X-Signature
+
+Firmado con HMAC SHA256 usando el secret del webhook.
+
+Ejemplo conceptual.
+
+Controlador:
+
+Member/IntegrationController
+
+Métodos:
+
+- index()
+- apiDocumentation()
+
+No crear demasiados endpoints nuevos si ya existen.
+
+UI:
+
+Usar layout member.
+
+Mostrar tarjetas para:
+
+- API keys
+- Webhooks
+- Documentación
+
+Bootstrap 5.3.
+
+Diseño limpio y simple.
+
+Integración con feature flags:
+
+Si existe sistema de features:
+
+features.api_enabled
+features.webhooks_enabled
+
+Mostrar u ocultar secciones según el feature.
+
+Permisos:
+
+Solo usuarios autenticados pueden ver integraciones.
+
+Si el plan del usuario no permite integraciones:
+
+Mostrar mensaje:
+
+"Las integraciones API no están disponibles en su plan."
+
+Logging:
+
+Registrar eventos:
+
+- API key creada
+- API key revocada
+- webhook creado
+- webhook eliminado
+- webhook probado
+
+Usar activity log existente.
+
+Errores:
+
+Registrar errores de entrega de webhooks.
+
+No registrar cada request API normal.
+
+Seguridad:
+
+- no mostrar API keys completas
+- mostrar solo prefijo
+- mostrar clave completa solo al momento de creación
+- validar propiedad del webhook
+- validar propiedad de API key
+
+Comportamiento esperado:
+
+Usuario entra a Integrations.
+
+Puede:
+
+- crear API keys
+- crear webhooks
+- ver estado de integraciones
+- ver documentación básica
+
+Esto convierte el SaaS en una plataforma integrable.
+
+Importante:
+
+- reutilizar módulos existentes
+- no duplicar modelos
+- generar solo archivos necesarios
+- comentarios del código en español
+- mantener arquitectura simple y extensible
+
+==========================================================
+Instrucción 48: RBAC avanzado (roles, permisos y políticas finas)
+==========================================================
+
+
+
+Implementar capa avanzada de control de acceso (RBAC) para el SaaS.
+
+IMPORTANTE PARA EL AGENTE:
+- Explicar el código con comentarios en español.
+- Los comentarios dentro del código deben estar en español.
+- Las clases, métodos y variables pueden mantener nombres en inglés si siguen la convención del proyecto.
+- No generar comentarios en inglés.
+
+Contexto:
+El sistema ya tiene:
+- usuarios
+- roles
+- permisos
+- dashboard admin
+- dashboard member
+- módulos admin y member
+- feature flags
+- planes y límites
+
+Actualmente ya existe control de acceso básico, pero se necesita formalizar una capa RBAC más robusta y consistente para crecer el SaaS sin desorden.
+No romper módulos actuales.
+
+Stack:
+Laravel 12 + Inertia + Vue 3 + JavaScript + Bootstrap 5.3 + Spatie laravel-permission.
+
+Reglas:
+- No TypeScript
+- Vue con `<script setup>`
+- Solo Composition API
+- No Options API
+- No librerías nuevas innecesarias
+- Reutilizar Spatie Permission ya existente
+- Código simple y listo para producción
+- Comentarios en español
+- No refactorizar módulos no relacionados salvo lo necesario para unificar acceso
+
+Objetivo:
+Fortalecer y unificar el control de acceso del sistema mediante:
+- roles claros
+- permisos agrupados
+- políticas por recurso
+- protección consistente de rutas, controladores y UI
+- reglas especiales para acciones sensibles
+
+Alcance de esta fase:
+- auditoría y normalización de permisos existentes
+- agrupación lógica por módulo
+- creación de políticas donde haga sentido
+- helper central para consultas de acceso
+- protección consistente en backend y frontend
+- reglas especiales para acciones críticas
+- mejorar experiencia admin para visualizar permisos
+
+No incluir todavía:
+- jerarquías extremadamente complejas de roles
+- permisos dinámicos por tenant
+- ABAC avanzado
+- herencia compleja de permisos
+- motor externo de autorización
+
+Objetivo funcional:
+El sistema debe poder responder de forma consistente preguntas como:
+- ¿este usuario puede ver este módulo?
+- ¿puede editar este recurso?
+- ¿puede eliminarlo?
+- ¿puede realizar una acción sensible?
+- ¿su plan y sus features además le permiten hacerlo?
+
+Base actual:
+Revisar roles y permisos existentes.
+No duplicar permisos.
+No crear permisos ambiguos.
+Normalizar nombres si es necesario, pero con cambios mínimos y seguros.
+
+Roles base esperados:
+- superadmin
+- admin
+- member
+- normal
+
+Permisos:
+Agrupar permisos por módulo.
+Ejemplos de naming consistentes:
+
+users.view
+users.create
+users.update
+users.delete
+users.activate
+users.deactivate
+users.assign_roles
+
+roles.view
+roles.create
+roles.update
+roles.delete
+
+settings.view
+settings.update
+
+plans.view
+plans.create
+plans.update
+plans.delete
+
+subscriptions.view
+subscriptions.create
+subscriptions.update
+subscriptions.cancel
+
+payments.view
+payments.create
+payments.update
+
+support.view
+support.reply
+support.update
+support.close
+
+reports.view
+exports.download
+activity.view
+system-errors.view
+queues.view
+queues.retry
+
+api-keys.manage
+webhooks.manage
+feature-flags.view
+feature-flags.update
+
+Puedes adaptar nombres a los ya existentes, pero deben quedar consistentes.
+
+Fase 1: auditoría de permisos
+Revisar:
+- permisos actuales
+- rutas protegidas
+- controladores
+- menús visibles
+- acciones sensibles
+
+Detectar:
+- permisos duplicados
+- permisos inconsistentes
+- acciones sin protección
+- diferencias entre frontend y backend
+
+Fase 2: centralización de acceso
+Crear helper/servicio simple para autorización reutilizable cuando haga sentido.
+Ejemplo conceptual:
+- AccessService
+o helper equivalente
+
+Debe ayudar a:
+- consultar permisos
+- combinar rol + permiso + feature flag si aplica
+- reducir lógica repetida en vistas y controladores
+
+Importante:
+- esto no reemplaza policies o gates donde correspondan
+- solo ayuda a centralizar lógica repetida
+
+Fase 3: policies por recurso
+Implementar Policies donde haga sentido para recursos del sistema.
+
+Recursos sugeridos:
+- UserPolicy
+- SupportTicketPolicy
+- PaymentPolicy
+- SubscriptionPolicy
+- MediaFilePolicy
+- ApiKeyPolicy
+- WebhookEndpointPolicy
+
+Objetivo:
+Que la decisión no dependa solo de middleware por ruta, sino también del recurso concreto.
+
+Ejemplos:
+- un member solo puede ver su propio ticket
+- un member solo puede borrar su propio archivo
+- un admin puede ver pagos, pero quizá no eliminarlos
+- solo superadmin puede tocar acciones extremadamente críticas
+
+Reglas sensibles sugeridas:
+- solo superadmin puede cambiar ciertos roles críticos
+- evitar que un admin baje o suba privilegios sin control si rompe seguridad
+- proteger acciones como:
+  - revocar API keys ajenas
+  - tocar settings globales críticos
+  - manipular feature flags
+  - mantenimiento del sistema
+  - ver system errors o security events
+  - retry/flush de failed jobs
+
+Fase 4: UI coherente
+La interfaz debe ocultar acciones que el usuario no puede hacer.
+Pero importante:
+- ocultar UI no sustituye validación backend
+- backend debe seguir validando siempre
+
+Aplicar control en:
+- menú lateral
+- botones de acción
+- botones create/edit/delete
+- módulos admin
+- accesos rápidos del dashboard
+
+Frontend:
+Compartir permisos útiles al frontend mediante Inertia cuando haga sentido.
+Ejemplo:
+- auth.user.roles
+- auth.user.permissions
+- flags resueltas si aplica
+
+Crear helper simple frontend si hace falta para consultas como:
+- can('users.update')
+- hasRole('admin')
+
+Mantenerlo simple.
+No duplicar lógica compleja si backend ya lo resuelve.
+
+Admin: visualización de roles y permisos
+Mejorar módulo actual de roles/usuarios si hace falta para:
+- ver permisos asignados claramente
+- agrupar permisos por módulo
+- evitar listas caóticas
+- facilitar mantenimiento
+
+No hace falta crear un sistema nuevo.
+Solo mejorar claridad y consistencia.
+
+Validación de acceso en backend:
+Aplicar donde corresponda:
+- middleware de permiso en rutas
+- authorize() con policies en controladores
+- checks por recurso en acciones sensibles
+
+No confiar en frontend.
+No asumir que por ocultar un botón ya está seguro.
+
+Integración con feature flags y planes:
+Si una acción depende también de:
+- feature flag
+- plan
+- límite
+debe combinarse con el permiso del usuario.
+
+Ejemplo:
+Para usar API keys:
+- permiso o rol adecuado
+- feature can_use_api
+- plan que lo permita
+
+Crear criterio consistente:
+Acceso final = permiso/rol + estado usuario + feature/límite si aplica
+
+Estado del usuario:
+También considerar:
+- usuario activo
+- email verificado si aplica
+- rol correcto
+- sesión/autorización correcta
+
+Testing esperado:
+Verificar al menos estos casos:
+- member no entra al admin
+- admin no puede ejecutar acciones de superadmin restringidas
+- member solo ve sus propios recursos
+- backend bloquea acceso directo aunque frontend oculte botones
+- permisos se reflejan correctamente en UI
+- policies respetan propiedad del recurso
+
+Activity log:
+Si ya existe:
+- registrar cambios de roles y permisos
+- registrar acciones críticas relacionadas con acceso
+
+Security events:
+Si ya existe:
+- opcional registrar intentos de acceso no autorizado relevantes
+- sin generar ruido excesivo
+
+Documentación interna:
+Agregar convención clara para futuros módulos:
+Cada módulo nuevo debe definir:
+- permisos
+- policies si aplica
+- middleware de ruta
+- reglas frontend de visibilidad
+
+Comportamiento esperado:
+El sistema debe quedar con control de acceso consistente, mantenible y seguro, listo para crecer sin mezclar reglas dispersas.
+
+Importante:
+- revisar primero estructura actual de roles, permisos y middlewares
+- adaptarse a lo existente
+- no duplicar lógica innecesaria
+- generar solo archivos necesarios
+- no agregar archivos innecesarios
+- mantener implementación simple y extensible
+
+ 
+
+ç========================================================
+ Instrucción 49: arquitectura de módulos activables (marketplace interno)
+=========================================================
+Implementar arquitectura de módulos activables dentro del SaaS.
+
+IMPORTANTE PARA EL AGENTE:
+- Explicar el código con comentarios en español.
+- Todos los comentarios dentro del código deben estar en español.
+- Las clases y métodos pueden usar nombres en inglés.
+- No generar comentarios en inglés.
+
+Contexto:
+El sistema ya tiene muchos módulos:
+
+- users
+- roles
+- permissions
+- settings
+- billing
+- support
+- exports
+- media/files
+- api keys
+- webhooks
+- automations
+- legal documents
+- notifications
+- announcements
+- feature flags
+- integrations
+
+El sistema seguirá creciendo.
+
+Para evitar que el código se vuelva desordenado, se necesita una arquitectura donde los módulos del sistema puedan activarse o desactivarse de forma controlada.
+
+Esto permite:
+
+- reutilizar el SaaS para diferentes productos
+- activar solo los módulos necesarios
+- convertir el proyecto en un **SaaS framework interno**
+
+Stack:
+Laravel 12 + Inertia + Vue 3 + JavaScript + Bootstrap 5.3.
+
+Reglas:
+- No TypeScript
+- Vue con `<script setup>`
+- Solo Composition API
+- No Options API
+- No librerías externas nuevas
+- Código simple y listo para producción
+- Comentarios en español
+
+Objetivo:
+Crear una base donde cada funcionalidad importante del sistema sea tratada como un **módulo activable**.
+
+Ejemplos de módulos:
+
+users  
+billing  
+support  
+exports  
+media  
+api  
+webhooks  
+automations  
+legal  
+notifications  
+announcements  
+integrations  
+
+Un módulo puede:
+
+- estar activo
+- estar desactivado
+
+Si está desactivado:
+
+- no aparece en el menú
+- sus rutas no deben ejecutarse
+- sus funcionalidades deben ignorarse
+
+Entidad principal:
+
+Crear tabla `system_modules`.
+
+Campos sugeridos:
+
+id  
+key  
+name  
+description nullable  
+is_active boolean default true  
+created_at  
+updated_at  
+
+Modelo:
+
+SystemModule
+
+Campo `key` debe identificar el módulo.
+
+Ejemplos:
+
+users  
+billing  
+support  
+exports  
+media  
+api  
+webhooks  
+automations  
+legal  
+notifications  
+announcements  
+integrations  
+
+Seeder inicial:
+
+Insertar módulos base del sistema.
+
+Esto permite activar/desactivar módulos desde base de datos.
+
+Servicio central:
+
+Crear servicio para consultar módulos activos.
+
+Ejemplo conceptual:
+
+ModuleService::isEnabled('billing')
+
+Debe devolver:
+
+true o false
+
+Este servicio debe usarse en:
+
+- rutas
+- controladores
+- frontend
+- menú lateral
+
+Reglas de funcionamiento:
+
+Si módulo desactivado:
+
+- no mostrar menú
+- bloquear acceso a rutas
+- no ejecutar automatizaciones relacionadas
+- ignorar features dependientes
+
+Middleware:
+
+Crear middleware opcional:
+
+CheckModuleEnabled
+
+Uso conceptual:
+
+middleware('module:billing')
+
+Este middleware:
+
+1. consulta ModuleService
+2. si módulo desactivado -> abortar acceso
+
+Rutas:
+
+Se puede aplicar middleware a grupos de rutas.
+
+Ejemplo conceptual:
+
+routes billing -> requieren módulo billing activo
+
+Esto evita que módulos desactivados se ejecuten.
+
+Admin:
+
+Crear pantalla para gestionar módulos.
+
+Ruta:
+
+/admin/modules
+
+Controlador:
+
+Admin/SystemModuleController
+
+Métodos:
+
+index  
+update  
+
+Vista:
+
+resources/js/Pages/Admin/SystemModules/Index.vue
+
+UI admin:
+
+Mostrar lista de módulos:
+
+- nombre
+- descripción
+- estado activo
+- toggle activar/desactivar
+
+Bootstrap 5.3.
+
+No permitir desactivar módulos críticos.
+
+Módulos críticos sugeridos:
+
+users  
+roles  
+permissions  
+settings  
+
+Estos deben permanecer siempre activos.
+
+Validaciones backend:
+
+- validar que módulos críticos no puedan desactivarse
+- validar que key exista
+
+Integración con menú:
+
+El menú del panel debe consultar:
+
+ModuleService
+
+Ejemplo conceptual:
+
+si módulo support activo -> mostrar menú soporte
+
+si no -> ocultar.
+
+Esto permite que el SaaS cambie de comportamiento sin modificar código.
+
+Integración con feature flags:
+
+Feature flags controlan funciones dentro de módulos.
+
+Modules controlan módulos completos.
+
+Ejemplo:
+
+module billing -> habilita sistema de facturación
+
+feature billing_portal -> habilita portal de pagos dentro del módulo
+
+Integración con automatizaciones:
+
+Si módulo desactivado:
+
+AutomationService no debe ejecutar automatizaciones de ese módulo.
+
+Integración con integraciones externas:
+
+Si módulo webhooks desactivado:
+
+- no ejecutar webhooks
+- no permitir crear webhooks
+
+Activity log:
+
+Registrar:
+
+- módulo activado
+- módulo desactivado
+
+Security:
+
+Solo superadmin debe poder activar/desactivar módulos.
+
+No permitir que un admin normal lo haga si rompe el sistema.
+
+Comportamiento esperado:
+
+El sistema debe poder ejecutarse con distintos conjuntos de módulos.
+
+Ejemplo:
+
+Producto A:
+
+users  
+billing  
+support  
+
+Producto B:
+
+users  
+api  
+webhooks  
+automations  
+
+Producto C:
+
+users  
+media  
+exports  
+
+Esto permite reutilizar el mismo SaaS como base para múltiples productos.
+
+Importante:
+
+- revisar primero módulos actuales
+- crear lista clara de módulos
+- no duplicar lógica existente
+- generar solo archivos necesarios
+- mantener implementación simple y extensible
+
+=================================================
+Instrucción 50: núcleo SaaS reusable / starter kit interno
+==================================================
+
+
+Implementar el núcleo reusable del SaaS para convertir el proyecto en un starter kit interno reutilizable.
+
+IMPORTANTE PARA EL AGENTE:
+- Explicar el código con comentarios en español.
+- Todos los comentarios dentro del código deben estar en español.
+- Las clases, métodos y variables pueden mantener nombres en inglés si siguen la convención del proyecto.
+- No generar comentarios en inglés.
+- Pensar este paso como la consolidación final del sistema, no como un módulo aislado.
+
+Contexto:
+El sistema ya tiene una base muy amplia, incluyendo:
+
+- auth
+- registro
+- verificación email
+- reset password
+- roles y permisos
+- dashboard admin
+- dashboard member
+- settings
+- suscripciones
+- pagos
+- billing
+- tickets
+- help center
+- activity log
+- security events
+- exports
+- system errors
+- API keys
+- webhooks
+- jobs/queues
+- feature flags
+- onboarding
+- emails transaccionales
+- anuncios
+- automatizaciones
+- archivos/media
+- invitaciones
+- documentos legales
+- preferencias avanzadas de notificación
+- módulos activables
+
+Ahora se necesita consolidar todo esto en una base reusable para futuros proyectos SaaS.
+
+Stack:
+Laravel 12 + Inertia + Vue 3 + JavaScript + Bootstrap 5.3 + Spatie Permission.
+
+Reglas:
+- No TypeScript
+- Vue con `<script setup>`
+- Solo Composition API
+- No Options API
+- No librerías nuevas innecesarias
+- No refactorizar por refactorizar
+- Mantener compatibilidad con lo ya construido
+- Código simple, limpio y listo para producción
+- Comentarios en español
+- Priorizar reutilización, consistencia y documentación interna
+
+Objetivo:
+Transformar el proyecto actual en una base maestra reutilizable para lanzar nuevos SaaS sin empezar desde cero.
+
+Alcance de esta fase:
+- consolidar arquitectura
+- definir estructura base del proyecto
+- unificar convenciones
+- limpiar duplicidades obvias
+- documentar módulos
+- definir seeders base
+- preparar instalación inicial
+- dejar helpers y servicios reutilizables
+- dejar componentes frontend reutilizables
+- dejar base de configuración y activación de módulos
+- dejar guía para nuevos proyectos
+
+No incluir todavía:
+- crear otro repositorio separado automáticamente
+- empaquetarlo como producto comercial público
+- migrar a multi-tenant
+- reescribir todo el sistema desde cero
+- romper módulos que ya funcionan
+
+Objetivo técnico:
+El sistema debe quedar listo para que, en un futuro, puedas hacer algo como:
+
+1. clonar proyecto base
+2. configurar branding y settings
+3. activar módulos necesarios
+4. ajustar planes/features
+5. lanzar nuevo SaaS con mínima fricción
+
+Arquitectura:
+Revisar y consolidar estructura actual del proyecto.
+
+Objetivos:
+- separar claramente áreas admin, member y public
+- separar lógica reusable en servicios/helpers/actions si ya aplica
+- identificar módulos del sistema
+- evitar lógica repetida
+- mantener convención consistente en nombres, rutas y vistas
+
+Áreas esperadas:
+- Admin
+- Member
+- Public/Auth
+- Services
+- Policies
+- Middleware
+- Jobs
+- Notifications/Mail
+- Modules/Domain folders si ya encaja con la estructura real
+
+No hacer una reorganización masiva destructiva.
+Hacer consolidación razonable y segura.
+
+Módulos base del núcleo SaaS:
+Definir y documentar cuáles son módulos base reutilizables:
+
+1. Auth
+2. Users
+3. Roles/Permissions
+4. Settings
+5. Member Area
+6. Plans/Subscriptions
+7. Payments/Billing
+8. Notifications
+9. Support
+10. Help Center
+11. Activity Log
+12. Security Events
+13. System Errors
+14. Exports
+15. API Keys
+16. Webhooks
+17. Jobs/Queues
+18. Feature Flags
+19. Announcements
+20. Automations
+21. Media Files
+22. Invitations
+23. Legal Documents
+24. Module Management
+
+Cada módulo debe tener:
+- propósito claro
+- rutas
+- permisos
+- vistas principales
+- dependencias importantes
+- si puede activarse/desactivarse
+
+Configuración reusable:
+Consolidar settings globales.
+Debe ser claro qué se configura al arrancar un nuevo SaaS:
+
+- app.name
+- branding
+- timezone
+- locale
+- billing
+- auth
+- features globales
+- maintenance
+- email branding
+- módulos activos
+
+Seeders base:
+Preparar seeders reutilizables para instalación inicial del sistema.
+
+Seeders sugeridos:
+- roles base
+- permisos base
+- módulos base
+- feature flags base
+- settings base
+- plantillas base de mensajes
+- planes base opcionales
+- documentos legales base opcionales
+- automatizaciones base opcionales
+
+Debe existir una instalación inicial coherente del SaaS.
+
+Usuario inicial:
+Definir flujo claro para crear superadmin inicial.
+No hardcodear datos inseguros.
+Puede ser mediante:
+- seeder configurable
+- comando artisan
+- setup inicial
+
+Preferencia:
+comando o seeder claro y reusable.
+
+Comandos internos sugeridos:
+Crear o consolidar comandos útiles para bootstrap del SaaS.
+Ejemplos:
+- crear superadmin
+- instalar seeders base
+- resetear settings básicos
+- revisar módulos activos
+- revisar health/status básico
+
+No crear comandos innecesarios, solo los realmente útiles.
+
+Helpers / Services reutilizables:
+Consolidar servicios clave ya construidos, por ejemplo:
+- SettingService
+- FeatureService
+- ModuleService
+- AccessService
+- TemplateRenderService
+- AutomationService
+- NotificationPreferenceService
+- SecurityService
+
+Objetivo:
+que futuros módulos del SaaS reutilicen estos servicios en vez de reinventar lógica.
+
+Frontend reusable:
+Consolidar componentes frontend reutilizables ya usados en el proyecto.
+Ejemplos:
+- layouts admin/member/auth
+- PageTitle
+- Breadcrumb
+- Searchbar
+- ConfirmDialog
+- cards base
+- field components
+- tablas/paginación reutilizable
+- badges/alerts del sistema
+
+Objetivo:
+tener base visual consistente para futuros módulos.
+
+Documentación interna:
+Crear documentación interna mínima del starter kit.
+
+Archivos sugeridos:
+- README interno del proyecto
+- AGENTS.md actualizado para el agente
+- documento de módulos disponibles
+- documento de convenciones
+- documento de instalación
+
+Debe explicar:
+- stack
+- reglas del proyecto
+- cómo crear nuevos módulos
+- cómo proteger rutas
+- cómo usar permisos
+- cómo usar settings/features/modules
+- cómo trabajar con admin/member/public
+- cómo correr queues/scheduler
+- cómo configurar Stripe/correo/storage
+
+Convenciones:
+Documentar convenciones obligatorias del starter kit:
+- naming de permisos
+- naming de rutas
+- estructura de vistas
+- uso de policies
+- uso de services
+- uso de settings
+- uso de feature flags
+- uso de modules
+
+Objetivo:
+que futuros desarrollos mantengan consistencia.
+
+Instalación inicial:
+Dejar checklist clara de arranque de un nuevo SaaS:
+1. instalar dependencias
+2. configurar .env
+3. migrar
+4. seeders base
+5. crear superadmin
+6. activar módulos necesarios
+7. configurar settings/branding
+8. correr queues/scheduler
+9. probar auth y billing
+10. revisar health monitor
+
+No necesariamente como wizard visual.
+Puede ser documentación interna + comandos simples.
+
+Integración con módulos activables:
+El núcleo debe respetar `system_modules`.
+Debe ser fácil lanzar un nuevo producto activando solo ciertos módulos.
+
+Ejemplo:
+SaaS A:
+- users
+- billing
+- support
+
+SaaS B:
+- users
+- api
+- webhooks
+- automations
+
+SaaS C:
+- users
+- media
+- exports
+
+Esto es parte central del starter kit.
+
+Integración con feature flags:
+El núcleo debe soportar que un mismo módulo tenga features internas activables por plan o usuario.
+
+Integración con billing:
+El núcleo debe quedar listo para monetización si el nuevo SaaS lo requiere.
+No duplicar lógica de pagos en futuros proyectos.
+
+Integración con seguridad:
+El núcleo debe conservar:
+- activity log
+- security events
+- rate limiting
+- sessions
+- system errors
+
+Porque son parte del valor reusable del sistema.
+
+Admin:
+Crear o ajustar una sección admin tipo:
+- System Core
+o
+- Starter Overview
+solo si realmente aporta valor.
+Si no, basta con documentación y estructura interna.
+No crear UI innecesaria por estética.
+
+Activity log:
+Registrar acciones administrativas relevantes de consolidación solo si aplica.
+No generar ruido innecesario.
+
+Refactor permitido:
+Sí, pero controlado.
+Solo refactorizar cuando:
+- elimina duplicidad clara
+- mejora reuso real
+- no rompe funcionalidad existente
+- deja el núcleo más limpio
+
+No rehacer todo por gusto.
+
+Resultado esperado:
+El proyecto debe quedar como una base SaaS reusable con:
+- arquitectura coherente
+- módulos claros
+- configuración centralizada
+- convenciones documentadas
+- seeders base
+- servicios reutilizables
+- componentes reutilizables
+- guía clara para iniciar nuevos productos
+
+Importante:
+- revisar primero toda la estructura actual
+- consolidar lo ya existente
+- no duplicar módulos
+- generar solo archivos necesarios
+- no agregar archivos innecesarios
+- mantener implementación simple, segura y extensible
+- este paso es de consolidación final del framework SaaS interno

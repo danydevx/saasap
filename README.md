@@ -1,29 +1,48 @@
 # Starter Kit SaaS Interno
 
-Este proyecto es una base reusable para lanzar nuevos SaaS con rapidez, manteniendo una arquitectura consistente y escalable.
+Base reusable para lanzar productos SaaS con rapidez y consistencia.
 
-## Contenido principal
-- Autenticacion, registro y verificacion de email
-- Admin y Member dashboards
-- Roles, permisos y policies (RBAC)
-- Settings, feature flags y modulos activables
+## Stack
+- Laravel 12
+- Inertia + Vue 3 (Composition API, `<script setup>`)
+- Bootstrap 5.3
+- Spatie Permission
+
+## Modulos principales
+- Auth y registro
+- Roles y permisos (RBAC)
+- Admin / Member dashboards
+- Settings, Feature Flags y Modulos activables
 - Billing, pagos y suscripciones
-- Soporte, help center, activity log y security events
+- Soporte y help center
 - Notificaciones, anuncios y automatizaciones
-- Integraciones: API keys y webhooks
+- Integraciones (API keys y webhooks)
 
-## Documentacion interna
-- `docs/STARTER.md` resumen del core y arquitectura
-- `docs/MODULOS.md` listado de modulos disponibles
-- `docs/CONVENCIONES.md` reglas de naming y estructura
-- `docs/INSTALACION.md` guia de instalacion y bootstrap
+## Requisitos
+- PHP 8.2+
+- Base de datos configurada
+- Node/Bun segun el proyecto
 
-## Primeros pasos (resumen)
+## Instalacion rapida
 1. Configurar `.env`
 2. `php artisan migrate`
 3. `php artisan saas:install`
 4. `php artisan saas:create-superadmin`
-5. `php artisan queue:work` y `php artisan schedule:work`
+5. `php artisan queue:work`
+6. `php artisan schedule:work`
+
+## Comandos principales
+- `php artisan saas:install`
+- `php artisan saas:create-superadmin`
+
+## Documentacion interna
+- `docs/architecture.md`
+- `docs/modules.md`
+- `docs/permissions.md`
+- `docs/settings-features-modules.md`
+- `docs/local-setup.md`
+- `docs/deployment.md`
+- `docs/new-module-checklist.md`
 
 ## Nota
-Este repositorio esta pensado como starter kit interno. Ajusta modulos y features segun el producto objetivo.
+Este proyecto es un starter kit interno. Ajusta modulos y features segun el producto objetivo.

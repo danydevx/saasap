@@ -19,7 +19,10 @@ class FeatureService
     {
         $flag = FeatureFlag::query()->where('key', $key)->first();
         if (! $flag || ! $flag->is_active) {
-            return $default;
+            // Si no existe el flag, busca un fallback en settings para evitar inconsistencias.
+            $fallback = $this->fallbackSettingValue($key);
+
+            return $fallback !== null ? $fallback : $default;
         }
 
         $userValue = $this->userOverrideValue($user, $flag->id);
@@ -37,6 +40,21 @@ class FeatureService
         }
 
         return $default;
+    }
+
+    private function fallbackSettingValue(string $key): mixed
+    {
+        // Solo aplica a flags globales guardados en settings con prefijo features.
+        if (! str_starts_with($key, 'features.')) {
+            return null;
+        }
+
+        $value = app(SettingService::class)->get($key, null);
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        return $this->toBool($value);
     }
 
     public function enabledForCurrentUser(string $key, bool $default = false): bool

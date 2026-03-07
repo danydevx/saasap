@@ -23,7 +23,7 @@
               {{ unreadCount }}
             </span>
           </Link>
-          <Link href="/member/activity" class="btn btn-outline-secondary btn-sm">Actividad</Link>
+          <Link v-if="canActivity" href="/member/activity" class="btn btn-outline-secondary btn-sm">Actividad</Link>
           <div class="dropdown">
             <button
               class="btn btn-outline-secondary btn-sm dropdown-toggle"
@@ -104,6 +104,7 @@ const canUseWebhooks = computed(() => modules.value.webhooks !== false && featur
 const canSupport = computed(() => modules.value.support !== false && features.value.module_support !== false)
 const canMedia = computed(() => modules.value.media !== false)
 const canNotifications = computed(() => modules.value.notifications !== false)
+const canActivity = computed(() => modules.value.activity !== false)
 
 // Oculta el acceso a integraciones si el usuario no tiene permiso o feature habilitado.
 const canUseIntegrations = computed(() => {

@@ -73,10 +73,10 @@
               </a>
               <ul class="dropdown-menu">
                 <li v-if="canViewMonitor"><Link href="/admin/system-monitor" class="dropdown-item" prefetch="hover">Monitor</Link></li>
-                <li v-if="canViewQueues"><Link href="/admin/queues" class="dropdown-item" prefetch="hover">Colas</Link></li>
-                <li v-if="canViewActivity"><Link href="/admin/activity" class="dropdown-item" prefetch="hover">Actividad</Link></li>
-                <li v-if="canViewSecurity"><Link href="/admin/security-events" class="dropdown-item" prefetch="hover">Seguridad</Link></li>
-                <li v-if="canViewSystemErrors"><Link href="/admin/system-errors" class="dropdown-item" prefetch="hover">Errores</Link></li>
+                <li v-if="canViewQueues && modules.queues !== false"><Link href="/admin/queues" class="dropdown-item" prefetch="hover">Colas</Link></li>
+                <li v-if="canViewActivity && modules.activity !== false"><Link href="/admin/activity" class="dropdown-item" prefetch="hover">Actividad</Link></li>
+                <li v-if="canViewSecurity && modules['security-events'] !== false"><Link href="/admin/security-events" class="dropdown-item" prefetch="hover">Seguridad</Link></li>
+                <li v-if="canViewSystemErrors && modules['system-errors'] !== false"><Link href="/admin/system-errors" class="dropdown-item" prefetch="hover">Errores</Link></li>
                 <li v-if="canViewFeatureFlags && modules['feature-flags'] !== false"><Link href="/admin/feature-flags" class="dropdown-item" prefetch="hover">Feature Flags</Link></li>
                 <li v-if="canViewAnnouncements && modules.announcements !== false"><Link href="/admin/announcements" class="dropdown-item" prefetch="hover">Anuncios</Link></li>
                 <li v-if="canViewAutomations && modules.automations !== false"><Link href="/admin/automations" class="dropdown-item" prefetch="hover">Automatizaciones</Link></li>
@@ -171,10 +171,10 @@ const showIntegrationsMenu = computed(() =>
 )
 const showSystemMenu = computed(() =>
   canViewMonitor.value ||
-  canViewQueues.value ||
-  canViewActivity.value ||
-  canViewSecurity.value ||
-  canViewSystemErrors.value ||
+  (canViewQueues.value && modules.value.queues !== false) ||
+  (canViewActivity.value && modules.value.activity !== false) ||
+  (canViewSecurity.value && modules.value['security-events'] !== false) ||
+  (canViewSystemErrors.value && modules.value['system-errors'] !== false) ||
   (canViewFeatureFlags.value && modules.value['feature-flags'] !== false) ||
   (canViewAnnouncements.value && modules.value.announcements !== false) ||
   (canViewAutomations.value && modules.value.automations !== false) ||
