@@ -6610,3 +6610,233 @@ Importante:
 - generar solo archivos necesarios
 - no agregar archivos innecesarios
 - mantener implementación simple y extensible
+
+===================================================
+Instrucción 35: monitoreo y métricas del SaaS
+====================================================
+
+
+Implementar sistema básico de monitoreo y métricas internas del SaaS.
+
+Contexto:
+Ya existen:
+- users
+- suscripciones
+- pagos
+- webhooks
+- activity log
+- system errors
+- queues
+- feature flags
+- onboarding
+- emails transaccionales
+
+Cada usuario es único.
+No hay organizaciones ni tenants.
+
+Se necesita monitorear la salud del SaaS y detectar problemas operativos.
+
+Stack:
+Laravel 12 + Inertia + Vue 3 + JavaScript + Bootstrap 5.3.
+
+Reglas:
+- No TypeScript
+- Vue con `<script setup>`
+- Solo Composition API
+- No Options API
+- No librerías externas pesadas si no son necesarias
+- Código simple y listo para producción
+- No refactorizar módulos existentes
+
+Objetivo:
+Permitir monitorear el estado general del SaaS desde el panel admin.
+
+Alcance de esta fase:
+- métricas básicas del sistema
+- estado de colas
+- estado de jobs fallidos
+- estado de webhooks fallidos
+- errores recientes
+- actividad reciente
+- endpoint simple de health check
+- base para monitoreo externo
+
+No incluir todavía:
+- observabilidad distribuida compleja
+- tracing avanzado
+- dashboards externos complejos
+- alertas automáticas avanzadas
+
+Endpoint de salud:
+Crear endpoint simple para monitoreo del servidor.
+
+Ruta:
+
+GET /health
+
+Debe devolver JSON con estado del sistema:
+
+Ejemplo conceptual:
+
+status
+database
+queue
+cache
+timestamp
+
+Debe responder rápidamente.
+
+Uso:
+- load balancers
+- uptime monitoring
+- health checks
+
+Métricas básicas del sistema:
+
+Usuarios
+- total users
+- nuevos últimos 7 días
+
+Suscripciones
+- activas
+- trial
+- canceladas
+
+Pagos
+- pagos hoy
+- pagos fallidos hoy
+- ingresos del mes
+
+Colas
+- jobs pendientes
+- jobs fallidos
+
+Errores
+- errores últimas 24h
+- errores no resueltos
+
+Webhooks
+- deliveries fallidas recientes
+
+Tickets
+- abiertos
+- pendientes
+
+Estas métricas deben mostrarse en dashboard admin o sección de monitoreo.
+
+Ruta admin:
+
+GET /admin/system-monitor
+
+Controlador:
+
+Admin/SystemMonitorController
+
+Métodos:
+
+index()
+
+Vista:
+
+resources/js/Pages/Admin/SystemMonitor/Index.vue
+
+Contenido de la pantalla:
+
+Sección 1
+System Health
+- estado base de datos
+- estado colas
+- estado cache si aplica
+
+Sección 2
+Queues
+- jobs pendientes
+- jobs fallidos
+
+Sección 3
+Errores
+- últimos system_errors
+
+Sección 4
+Webhooks
+- últimas entregas fallidas
+
+Sección 5
+Actividad
+- últimas actividades del sistema
+
+UI admin:
+
+- layout admin
+- Bootstrap 5.3
+- cards simples
+- tablas simples para listas
+- sin gráficos complejos
+
+Integración con módulos existentes:
+
+Reutilizar datos de:
+
+User
+Subscription
+Payment
+SupportTicket
+SystemError
+WebhookDelivery
+FailedJobs
+Activity
+
+No duplicar datos.
+
+Frecuencia de actualización:
+
+No usar polling agresivo.
+Solo recargar al abrir la página o manual refresh.
+
+Seguridad:
+
+- solo admin y superadmin
+- proteger endpoint /admin/system-monitor
+- endpoint /health puede ser público pero no debe exponer datos sensibles
+
+Contenido del endpoint /health:
+
+- estado general
+- no incluir credenciales
+- no incluir datos privados
+
+Ejemplo conceptual:
+
+status: ok
+database: ok
+queue: ok
+cache: ok
+timestamp: ...
+
+Actividad:
+
+Opcional registrar acceso al monitor si ya existe activity log.
+
+Errores:
+
+Si algo falla al consultar métricas:
+- no romper la pantalla
+- mostrar estado desconocido
+
+Comportamiento esperado:
+
+Admin puede abrir panel de monitoreo y ver rápidamente:
+
+- estado del sistema
+- errores recientes
+- problemas de colas
+- problemas de webhooks
+
+Esto ayuda a detectar fallos rápidamente.
+
+Importante:
+
+- generar solo archivos necesarios
+- no agregar dependencias externas
+- mantener implementación simple
+- no duplicar datos ya existentes

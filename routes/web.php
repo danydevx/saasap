@@ -18,6 +18,7 @@ use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\SupportTicketController as AdminSupportTicketController;
 use App\Http\Controllers\Admin\SystemErrorController;
+use App\Http\Controllers\Admin\SystemMonitorController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\UserProfileController;
 use App\Http\Controllers\Admin\WebhookController as AdminWebhookController;
@@ -26,6 +27,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\HealthController;
 use App\Http\Controllers\Member\AccountController;
 use App\Http\Controllers\Member\ApiKeyController as MemberApiKeyController;
 use App\Http\Controllers\Member\BillingController;
@@ -49,6 +51,8 @@ use Inertia\Inertia;
 Route::get('/', function () {
     return redirect('/login');
 });
+
+Route::get('/health', HealthController::class)->name('health');
 
 Route::get('/login', function () {
     return Inertia::render('Auth/Login');
@@ -391,6 +395,10 @@ Route::prefix('admin')->middleware(['auth', 'admin_or_user:1'])->group(function 
     Route::delete('/failed-jobs/flush', [QueueController::class, 'flush'])
         ->middleware('permission_or_user:queues.flush-failed,1')
         ->name('admin.queues.flush');
+
+    Route::get('/system-monitor', [SystemMonitorController::class, 'index'])
+        ->middleware('permission_or_user:reports.view,1')
+        ->name('admin.system-monitor.index');
 
     Route::get('/feature-flags', [FeatureFlagController::class, 'index'])
         ->middleware('permission_or_user:feature-flags.view,1')
