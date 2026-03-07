@@ -18,8 +18,11 @@ class IntegrationController extends Controller
     {
         $user = $request->user();
 
-        $canUseApi = $features->enabled($user, 'can_use_api', false);
-        $canUseWebhooks = $features->enabled($user, 'can_use_webhooks', false);
+        // Soporta las llaves de features nuevas y las existentes para no romper planes actuales.
+        $canUseApi = $features->enabled($user, 'features.api_enabled', false)
+            || $features->enabled($user, 'can_use_api', false);
+        $canUseWebhooks = $features->enabled($user, 'features.webhooks_enabled', false)
+            || $features->enabled($user, 'can_use_webhooks', false);
 
         // Obtiene las API keys visibles para el usuario y solo si el feature esta habilitado.
         $apiKeys = $canUseApi
@@ -125,6 +128,31 @@ class IntegrationController extends Controller
             ],
             'recentDeliveries' => $recentDeliveries,
             'recentErrors' => $recentErrors,
+        ]);
+    }
+
+    public function apiDocumentation(Request $request, FeatureService $features)
+    {
+        $user = $request->user();
+
+        // Expone informacion basica para documentacion sin exponer secretos.
+        return response()->json([
+            'api_base' => (string) config('app.url'),
+            'auth' => [
+                'header' => 'Authorization: Bearer {API_KEY}',
+                'example' => 'curl '.config('app.url').'/api/me -H "Authorization: Bearer YOUR_API_KEY"',
+            ],
+            'webhook' => [
+                'signature_header' => 'X-Signature',
+                'signature_note' => 'Firma HMAC SHA256 usando el secret del webhook.',
+                'events' => WebhookService::EVENTS,
+            ],
+            'features' => [
+                'api_enabled' => $features->enabled($user, 'features.api_enabled', false)
+                    || $features->enabled($user, 'can_use_api', false),
+                'webhooks_enabled' => $features->enabled($user, 'features.webhooks_enabled', false)
+                    || $features->enabled($user, 'can_use_webhooks', false),
+            ],
         ]);
     }
 }

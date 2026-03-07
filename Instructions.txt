@@ -8636,3 +8636,321 @@ Y en paralelo después:
 42 consentimiento legal
 
 46 plantillas reutilizables
+
+=======================================================
+Instrucción 46: motor de plantillas y variables reutilizables (explicaciones en español)
+=======================================================
+
+Implementar un motor simple de plantillas reutilizables para textos del sistema (emails, notificaciones, anuncios y mensajes).
+
+IMPORTANTE PARA EL AGENTE:
+- Todos los comentarios del código deben estar en español.
+- Las explicaciones dentro del código deben estar en español.
+- Los nombres de clases, métodos y variables pueden mantenerse en inglés si siguen la convención del proyecto.
+- No generar documentación en inglés.
+- Los comentarios deben explicar claramente qué hace cada parte del sistema.
+
+Contexto:
+El SaaS ya tiene:
+- emails transaccionales
+- notificaciones internas
+- anuncios del sistema
+- automatizaciones
+- onboarding
+
+Actualmente muchos textos pueden terminar hardcodeados en diferentes partes del sistema.
+
+Se necesita un sistema centralizado de plantillas para reutilizar textos dinámicos con variables.
+
+Stack:
+Laravel 12 + Inertia + Vue 3 + JavaScript + Bootstrap 5.3.
+
+Reglas:
+- No TypeScript
+- Vue con `<script setup>`
+- Solo Composition API
+- No Options API
+- No librerías externas innecesarias
+- Código simple y listo para producción
+- Comentarios explicativos en español
+- No refactorizar módulos no relacionados
+
+Objetivo:
+Centralizar textos dinámicos del sistema y permitir reemplazar variables automáticamente.
+
+Ejemplo de problema actual:
+En varios lugares del código puede existir texto como:
+
+"Hola Juan, tu suscripción al plan Pro fue activada."
+
+Este tipo de mensajes deberían generarse mediante plantillas.
+
+Ejemplo de plantilla:
+
+"Hola {{user_name}}, tu suscripción al plan {{plan_name}} fue activada."
+
+El motor debe reemplazar las variables automáticamente.
+
+Alcance de esta fase:
+- almacenar plantillas en base de datos
+- renderizar plantillas con variables
+- permitir uso en emails
+- permitir uso en notificaciones
+- permitir uso en anuncios
+- permitir uso en automatizaciones
+- CRUD admin de plantillas
+
+No incluir todavía:
+- editor visual complejo
+- versionado avanzado de plantillas
+- motor de plantillas completo tipo Blade
+- internacionalización compleja
+- plantillas HTML complejas
+
+Entidad principal:
+Crear tabla `message_templates`.
+
+Campos mínimos sugeridos:
+
+- id
+- key unique
+- name
+- description nullable
+- subject nullable
+- content text
+- is_active boolean default true
+- created_at
+- updated_at
+
+Modelo:
+- MessageTemplate
+
+Relaciones:
+No requiere relaciones complejas en esta fase.
+
+Campo `key`:
+Debe identificar la plantilla.
+
+Ejemplos:
+
+user_welcome
+password_changed
+payment_failed
+subscription_activated
+ticket_reply
+trial_ending
+
+Campo `subject`:
+Usado cuando la plantilla sea para email.
+
+Campo `content`:
+Texto con variables dinámicas.
+
+Ejemplo:
+
+Hola {{user_name}}
+
+Tu suscripción al plan {{plan_name}} fue activada el {{date}}.
+
+Gracias por usar {{app_name}}.
+
+Variables soportadas:
+
+Las variables deben usar formato:
+
+{{variable_name}}
+
+Ejemplos de variables:
+
+{{user_name}}
+{{user_email}}
+{{plan_name}}
+{{date}}
+{{ticket_id}}
+{{app_name}}
+{{support_email}}
+
+Motor de renderizado:
+Crear servicio central para renderizar plantillas.
+
+Nombre sugerido:
+
+TemplateRenderService
+
+Método principal conceptual:
+
+render(template_key, variables)
+
+Ejemplo de uso:
+
+TemplateRenderService::render(
+  'payment_failed',
+  {
+    user_name: 'Juan',
+    plan_name: 'Pro'
+  }
+)
+
+Resultado esperado:
+
+"Hola Juan, tu pago del plan Pro falló."
+
+Reglas del motor:
+
+1. buscar plantilla por key
+2. verificar que esté activa
+3. reemplazar variables
+4. devolver texto renderizado
+
+Si una variable no existe:
+- reemplazar por string vacío
+- o mantener la variable visible según decisión del diseño
+
+Preferencia:
+reemplazar por string vacío para evitar mostrar placeholders al usuario.
+
+Admin:
+Crear módulo admin para gestionar plantillas.
+
+Permisos sugeridos:
+
+- templates.view
+- templates.create
+- templates.update
+- templates.delete
+
+Rutas admin:
+
+GET /admin/message-templates
+GET /admin/message-templates/create
+POST /admin/message-templates
+GET /admin/message-templates/{template}/edit
+PUT /admin/message-templates/{template}
+DELETE /admin/message-templates/{template}
+
+Controlador:
+
+Admin/MessageTemplateController
+
+Métodos:
+
+- index()
+- create()
+- store()
+- edit()
+- update()
+- destroy()
+
+Vistas:
+
+resources/js/Pages/Admin/MessageTemplates/Index.vue
+resources/js/Pages/Admin/MessageTemplates/Create.vue
+resources/js/Pages/Admin/MessageTemplates/Edit.vue
+
+Campos admin:
+
+- key
+- name
+- description
+- subject
+- content
+- is_active
+
+Validaciones backend:
+
+- key required|string|max:150|unique
+- name required|string|max:200
+- description nullable|string|max:500
+- subject nullable|string|max:200
+- content required|string
+- is_active boolean
+
+UI admin:
+
+- usar layout admin
+- usar Bootstrap 5.3
+- editor textarea simple para content
+- mostrar ejemplos de variables permitidas
+- permitir copiar variables
+
+Integración con emails:
+
+Antes de enviar email:
+
+1. obtener plantilla
+2. renderizar subject
+3. renderizar content
+4. enviar email
+
+Ejemplo:
+
+subject = TemplateRenderService::render('payment_failed_subject', variables)
+
+content = TemplateRenderService::render('payment_failed', variables)
+
+Integración con notificaciones:
+
+Cuando se genere notificación:
+
+message = TemplateRenderService::render(template_key, variables)
+
+Integración con automatizaciones:
+
+AutomationService puede usar plantillas para:
+
+- emails
+- mensajes internos
+- alertas admin
+
+Seeders iniciales:
+
+Crear plantillas base:
+
+user_welcome
+password_changed
+payment_failed
+subscription_activated
+trial_ending
+ticket_reply
+
+Estas pueden insertarse automáticamente al instalar el sistema.
+
+Activity log:
+
+Registrar:
+
+- plantilla creada
+- plantilla actualizada
+- plantilla eliminada
+
+System errors:
+
+Registrar fallos de renderizado solo si es error real.
+No romper el flujo principal.
+
+Seguridad:
+
+- solo admin puede editar plantillas
+- validar variables antes de usar
+- no permitir ejecución de código dentro de plantillas
+- solo reemplazo simple de texto
+
+Comportamiento esperado:
+
+Cuando el sistema necesite generar un mensaje dinámico:
+
+1. busca plantilla
+2. reemplaza variables
+3. devuelve texto final
+4. el texto se usa en email, notificación o anuncio
+
+Esto permite modificar textos sin tocar código.
+
+Importante:
+
+- el agente debe escribir comentarios en español
+- las explicaciones dentro del código deben estar en español
+- no agregar librerías externas
+- mantener implementación simple
+- generar solo archivos necesarios
+- mantener arquitectura extensible

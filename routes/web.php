@@ -10,6 +10,8 @@ use App\Http\Controllers\Admin\FeatureFlagController;
 use App\Http\Controllers\Admin\HelpArticleController;
 use App\Http\Controllers\Admin\InvitationController;
 use App\Http\Controllers\Admin\InvoiceController as AdminInvoiceController;
+use App\Http\Controllers\Admin\LegalDocumentController;
+use App\Http\Controllers\Admin\MessageTemplateController;
 use App\Http\Controllers\Admin\PaymentController;
 use App\Http\Controllers\Admin\PermissionController;
 use App\Http\Controllers\Admin\PlanController;
@@ -182,6 +184,9 @@ Route::get('/member/plan-selection', [PlanSelectionController::class, 'show'])
 Route::get('/member/integrations', [IntegrationController::class, 'index'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.integrations.index');
+Route::get('/member/integrations/docs', [IntegrationController::class, 'apiDocumentation'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.integrations.docs');
 Route::put('/member/plan-selection/clear', [PlanSelectionController::class, 'clear'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.plan-selection.clear');
