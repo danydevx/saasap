@@ -126,6 +126,30 @@ class AppServiceProvider extends ServiceProvider
                 return $this->throttleResponse($request, 'Has excedido el numero de solicitudes permitidas.', null, true);
             });
         });
+
+        RateLimiter::for('api-key', function (Request $request) {
+            $keyId = $request->attributes->get('api_key_id');
+            $identifier = $keyId ? 'key|'.$keyId : 'ip|'.$request->ip();
+
+            return Limit::perMinute(60)->by($identifier)->response(function () {
+                return response()->json([
+                    'message' => 'Demasiadas solicitudes. Intente de nuevo en unos minutos.',
+                ], 429);
+            });
+        });
+
+        RateLimiter::for('api-keys-create', function (Request $request) {
+            $userId = $request->user()?->id;
+            $key = $userId ? 'user|'.$userId : $request->ip();
+
+            return Limit::perMinutes(10, 5)->by($key)->response(function () use ($request) {
+                return $this->throttleResponse(
+                    $request,
+                    'Has excedido el numero de solicitudes permitidas.',
+                    'name'
+                );
+            });
+        });
     }
 
     private function throttleResponse(Request $request, string $message, ?string $field = null, bool $useFlash = false)

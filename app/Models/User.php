@@ -67,6 +67,11 @@ class User extends Authenticatable implements MustVerifyEmailContract
         return $this->hasMany(Activity::class);
     }
 
+    public function apiKeys(): HasMany
+    {
+        return $this->hasMany(ApiKey::class);
+    }
+
     public function currentSubscription()
     {
         return $this->hasOne(Subscription::class)->latestOfMany();

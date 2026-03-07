@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\ActivityController as AdminActivityController;
+use App\Http\Controllers\Admin\ApiKeyController as AdminApiKeyController;
 use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\ExportController;
@@ -22,6 +23,7 @@ use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Member\AccountController;
+use App\Http\Controllers\Member\ApiKeyController as MemberApiKeyController;
 use App\Http\Controllers\Member\BillingController;
 use App\Http\Controllers\Member\CheckoutController;
 use App\Http\Controllers\Member\DashboardController;
@@ -203,6 +205,19 @@ Route::post('/member/support/{ticket}/reply', [MemberSupportTicketController::cl
     ->middleware(['auth', 'verified', 'active', 'role:member', 'throttle:ticket-reply'])
     ->name('member.support.reply');
 
+Route::get('/member/api-keys', [MemberApiKeyController::class, 'index'])
+    ->middleware(['auth', 'verified', 'active', 'role:member', 'permission:api-keys.manage'])
+    ->name('member.api-keys.index');
+Route::post('/member/api-keys', [MemberApiKeyController::class, 'store'])
+    ->middleware(['auth', 'verified', 'active', 'role:member', 'permission:api-keys.manage', 'throttle:api-keys-create'])
+    ->name('member.api-keys.store');
+Route::put('/member/api-keys/{apiKey}', [MemberApiKeyController::class, 'update'])
+    ->middleware(['auth', 'verified', 'active', 'role:member', 'permission:api-keys.manage'])
+    ->name('member.api-keys.update');
+Route::delete('/member/api-keys/{apiKey}', [MemberApiKeyController::class, 'destroy'])
+    ->middleware(['auth', 'verified', 'active', 'role:member', 'permission:api-keys.manage'])
+    ->name('member.api-keys.destroy');
+
 Route::get('/member/help', [MemberHelpArticleController::class, 'index'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.help.index');
@@ -307,6 +322,16 @@ Route::prefix('admin')->middleware(['auth', 'admin_or_user:1'])->group(function 
     Route::put('/system-errors/{error}/resolve', [SystemErrorController::class, 'resolve'])
         ->middleware('permission_or_user:system-errors.update,1')
         ->name('admin.system-errors.resolve');
+
+    Route::get('/api-keys', [AdminApiKeyController::class, 'index'])
+        ->middleware('permission_or_user:api-keys.view,1')
+        ->name('admin.api-keys.index');
+    Route::get('/api-keys/{apiKey}', [AdminApiKeyController::class, 'show'])
+        ->middleware('permission_or_user:api-keys.view,1')
+        ->name('admin.api-keys.show');
+    Route::put('/api-keys/{apiKey}/revoke', [AdminApiKeyController::class, 'revoke'])
+        ->middleware('permission_or_user:api-keys.revoke,1')
+        ->name('admin.api-keys.revoke');
 
     Route::get('/plans', [PlanController::class, 'index'])
         ->middleware('permission_or_user:plans.view,1')

@@ -66,6 +66,10 @@ class RolesAndPermissionsSeeder extends Seeder
             'exports.download',
             'system-errors.view',
             'system-errors.update',
+            'api-keys.manage',
+            'api-keys.view',
+            'api-keys.update',
+            'api-keys.revoke',
         ];
 
         foreach ($permissions as $permission) {
@@ -125,10 +129,15 @@ class RolesAndPermissionsSeeder extends Seeder
             'exports.download',
             'system-errors.view',
             'system-errors.update',
+            'api-keys.view',
+            'api-keys.update',
+            'api-keys.revoke',
         ]);
 
         $user->givePermissionTo([]);
         $normal->givePermissionTo([]);
-        $member->givePermissionTo([]);
+        $member->givePermissionTo([
+            'api-keys.manage',
+        ]);
     }
 }

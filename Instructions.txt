@@ -5377,179 +5377,11 @@ Importante:
 - mantener implementación simple y extensible
 
 
-Instrucción 28: rate limiting y protección anti abuso
-Implementar sistema base de protección anti abuso y rate limiting para el SaaS.
-
-Contexto:
-Ya existen auth, registro, verificación email, reset password, dashboards, planes, suscripciones, pagos, tickets, activity log, exportaciones y system errors.
-Cada usuario es único.
-No hay organizaciones ni tenants.
-Se necesita proteger rutas sensibles contra abuso, bots, fuerza bruta y spam.
-No romper módulos actuales.
-
-Stack:
-Laravel 12 + Inertia + Vue 3 + JavaScript + Bootstrap 5.3.
-
-Reglas:
-- No TypeScript
-- Vue con `<script setup>`
-- Solo Composition API
-- No Options API
-- No API separada fuera del flujo web actual
-- No librerías nuevas innecesarias
-- No refactorizar módulos no relacionados
-- Reutilizar estructura actual del proyecto
-- Código simple y listo para producción
-
-Objetivo:
-Aplicar límites de intento y controles anti abuso en puntos sensibles del sistema.
-
-Alcance de esta fase:
-- rate limiting en login
-- rate limiting en registro
-- rate limiting en forgot password
-- rate limiting en verificación de código de reset
-- rate limiting en tickets/contacto si aplica
-- protección básica contra spam y abuso
-- mensajes claros al usuario
-- registro opcional de eventos de abuso
-
-No incluir todavía:
-- WAF avanzado
-- bloqueo geográfico
-- detección de fraude compleja
-- listas negras avanzadas
-- CAPTCHA en todos los puntos automáticamente si no hace falta
-
-Puntos críticos a proteger:
-1. login
-2. registro
-3. forgot password
-4. verificación de código de reset
-5. reenvío de verificación email
-6. creación de tickets
-7. endpoints sensibles de billing si aplica
-8. webhooks no por rate limit tradicional, sino por firma y validación correcta
-
-Backend:
-Usar rate limiting nativo de Laravel donde encaje mejor.
-
-Objetivo:
-- definir límites por acción
-- identificar por IP y/o email según el caso
-- responder con errores claros
-- no romper UX legítima
-
-Sugerencias de límites iniciales:
-
-Login:
-- limitar por email + IP
-- ejemplo: 5 intentos por 1 minuto o configuración equivalente
-
-Registro:
-- limitar por IP
-- ejemplo: 3 a 5 intentos por 10 minutos
-
-Forgot password:
-- limitar por email + IP
-- ejemplo: 3 intentos por 15 minutos
-
-Verificación de código reset:
-- limitar por token/IP o email/IP
-- ejemplo: 5 intentos por 10 minutos
-
-Reenvío de verificación:
-- limitar por usuario o email
-- ejemplo: 3 intentos por 15 minutos
-
-Tickets:
-- limitar por usuario autenticado
-- ejemplo: 5 tickets por hora
-- respuestas de ticket también pueden limitarse si aplica
-
-Importante:
-- ajustar números a algo razonable para no afectar usuarios legítimos
-- centralizar configuración si es posible
-
-Implementación:
-Definir limitadores claros para cada acción sensible.
-Aplicarlos en rutas/controladores correspondientes.
-No dejar lógica dispersa.
-
-Identificación recomendada:
-- login: email + IP
-- forgot/reset: email + IP
-- registro: IP
-- ticket create/reply: user_id autenticado
-- acciones member sensibles: user_id
-- acciones públicas: IP
-
-Mensajes esperados:
-- "Demasiados intentos. Intente de nuevo en unos minutos."
-- "Has excedido el número de solicitudes permitidas."
-- mensajes claros pero sin revelar demasiada información sensible
-
-Frontend / Inertia:
-- mostrar error general claro en formulario cuando aplique rate limit
-- no romper el formulario
-- mantener valores útiles si es razonable
-- deshabilitar dobles envíos mientras procesa
-
-Integración con honeypot/captcha:
-- respetar lo ya implementado en registro
-- no duplicar lógica innecesaria
-- si ya existe captcha en registro, mantenerlo
-- el rate limit complementa, no reemplaza, captcha/honeypot
-
-Registro de actividad:
-Si ya existe activity log:
-- opcionalmente registrar eventos de abuso relevantes, por ejemplo:
-  - demasiados intentos de login
-  - demasiados intentos de reset
-- no registrar ruido excesivo si va a saturar logs
-
-Registro de errores:
-Si ya existe system errors:
-- no registrar cada rate limit como error del sistema
-- solo si hay fallas técnicas inesperadas
-
-Admin:
-Opcional en esta fase:
-- exponer configuración en settings después
-- por ahora dejar valores fijos o centralizados en código/config
-
-Seguridad:
-- no revelar si el email existe al aplicar límites en auth pública
-- no permitir bypass desde frontend
-- validar siempre en backend
-- no usar solo controles visuales
-- proteger especialmente rutas públicas
-
-Testing esperado:
-- login bloquea después de demasiados intentos
-- registro bloquea abuso por IP
-- forgot password no permite spam
-- verificación de código de reset bloquea fuerza bruta
-- usuarios legítimos pueden volver a intentar tras el tiempo definido
-
-Integración:
-- revisar rutas y controladores actuales de:
-  - login
-  - register
-  - forgot password
-  - reset password
-  - email verification resend
-  - support tickets
-- adaptarse a la estructura actual
-- cambios mínimos necesarios
-
-Importante:
-- generar solo archivos necesarios
-- no agregar archivos innecesarios
-- mantener implementación simple y extensible
-- no romper auth ni soporte actuales
-
+==========================================================
 Instrucción 27: sistema de logs de errores del SaaS
+=============================================================
+
+
 Implementar módulo base de registro y consulta de errores del sistema para el SaaS.
 
 Contexto:
@@ -5781,7 +5613,9 @@ Importante:
 - no agregar archivos innecesarios
 - mantener implementación simple y extensible
 
+=====================================================
 Instrucción 28: rate limiting y protección anti abuso
+=====================================================
 Implementar sistema base de protección anti abuso y rate limiting para el SaaS.
 
 Contexto:
@@ -5952,3 +5786,289 @@ Importante:
 - no agregar archivos innecesarios
 - mantener implementación simple y extensible
 - no romper auth ni soporte actuales
+ 
+
+================================================================
+ Instrucción 29: sistema de API keys para integraciones
+=================================================================
+
+Implementar sistema base de API keys para integraciones del SaaS.
+
+Contexto:
+Ya existen auth, roles, member dashboard, suscripciones, pagos, tickets, activity log, exports, system errors y rate limiting.
+Cada usuario es único.
+No hay organizaciones ni tenants.
+Se necesita permitir integraciones externas seguras mediante API keys por usuario.
+No romper módulos actuales.
+
+Stack:
+Laravel 12 + Inertia + Vue 3 + JavaScript + Bootstrap 5.3.
+
+Reglas:
+- No TypeScript
+- Vue con `<script setup>`
+- Solo Composition API
+- No Options API
+- No librerías nuevas innecesarias
+- No refactorizar módulos no relacionados
+- Reutilizar estructura visual actual
+- Código simple y listo para producción
+- Mantener separación clara entre panel web y endpoints de integración
+
+Objetivo:
+Permitir que usuarios autorizados creen y administren API keys para consumir endpoints de integración del SaaS de forma segura.
+
+Alcance de esta fase:
+- crear API keys por usuario
+- listar API keys del usuario
+- mostrar solo una vez el valor secreto completo al momento de creación
+- activar/desactivar o revocar API keys
+- registrar último uso
+- restringir acceso a endpoints protegidos por API key
+- dejar base preparada para scopes/permisos futuros
+
+No incluir todavía:
+- OAuth
+- JWT complejo
+- scopes avanzados por recurso si no hacen falta
+- rotación automática
+- firma HMAC avanzada
+- usage billing por API
+- webhooks salientes en esta fase
+
+Concepto:
+Cada API key pertenece a un usuario del sistema.
+Debe poder usarse para autenticar llamadas externas al backend.
+No debe reutilizarse la sesión web de Inertia para esto.
+
+Entidad:
+Crear tabla `api_keys` o equivalente.
+
+Campos mínimos sugeridos:
+- id
+- user_id
+- name
+- key_prefix nullable string
+- key_hash string
+- last_used_at nullable timestamp
+- last_used_ip nullable string
+- is_active boolean default true
+- expires_at nullable timestamp
+- revoked_at nullable timestamp
+- metadata json nullable
+- created_at
+- updated_at
+
+Modelo:
+- ApiKey
+
+Relaciones:
+- User hasMany ApiKey
+- ApiKey belongsTo User
+
+Importante:
+- nunca guardar la API key completa en texto plano
+- guardar solo hash seguro
+- mostrar la key completa solo una vez al crearla
+- guardar `key_prefix` para identificarla visualmente después
+
+Formato recomendado:
+- generar key segura y larga
+- ejemplo conceptual:
+  - prefijo identificable + token aleatorio largo
+- almacenar:
+  - valor completo solo para mostrar una vez al usuario
+  - hash en base de datos
+  - prefix para listado visual
+
+Acceso:
+Definir si todos los members pueden crear API keys o solo ciertos usuarios/planes.
+
+Preferencia:
+- permitir solo a usuarios `member` activos y verificados
+- opcionalmente validar que el plan permita API
+- si ya existe sistema de límites/plan features, integrarlo
+
+Permisos sugeridos:
+Para member:
+- api-keys.manage
+
+Para admin:
+- api-keys.view
+- api-keys.update
+- api-keys.revoke
+
+Rutas member:
+- GET /member/api-keys
+- POST /member/api-keys
+- PUT /member/api-keys/{apiKey}
+- DELETE /member/api-keys/{apiKey}
+
+Opcional:
+- no crear vista create/edit separadas si puede resolverse en una sola pantalla
+- preferencia: una sola pantalla Index con modal o formulario simple
+
+Controlador member:
+- Member/ApiKeyController
+Métodos:
+  - index()
+  - store()
+  - update()
+  - destroy()
+
+Vista:
+- resources/js/Pages/Member/ApiKeys/Index.vue
+
+Comportamiento member:
+- listar sus API keys
+- crear nueva key indicando solo nombre descriptivo
+- al crear:
+  - generar key segura
+  - guardar hash
+  - devolver key completa solo una vez
+- permitir activar/desactivar si encaja
+- permitir revocar
+- mostrar:
+  - name
+  - prefix
+  - estado
+  - fecha creación
+  - último uso
+  - expiración si existe
+
+Validaciones backend:
+- name required|string|max:150
+- is_active boolean
+- expires_at nullable|date|after:now
+
+Reglas:
+- el usuario nunca debe volver a ver la key secreta completa después de crearla
+- si la pierde, debe generar una nueva
+- revocar debe invalidarla definitivamente
+- si está inactiva o revocada, no debe autenticar
+
+UI member:
+- usar layout member
+- usar Bootstrap 5.3
+- cards o tabla simple
+- formulario simple para crear key
+- modal o bloque visible con advertencia:
+  - "Copia esta API key ahora. No volverá a mostrarse."
+- botón copiar opcional si encaja fácil
+- confirmación para revocar
+
+Admin:
+Opcionalmente permitir al admin consultar API keys de usuarios para soporte.
+No mostrar nunca el secreto completo.
+Solo metadatos y estado.
+
+Rutas admin sugeridas:
+- GET /admin/api-keys
+- GET /admin/api-keys/{apiKey}
+- PUT /admin/api-keys/{apiKey}/revoke
+
+Controlador admin:
+- Admin/ApiKeyController
+Métodos:
+  - index()
+  - show()
+  - revoke()
+
+Vistas admin:
+- resources/js/Pages/Admin/ApiKeys/Index.vue
+- resources/js/Pages/Admin/ApiKeys/Show.vue
+
+Autenticación por API key:
+Crear middleware o guard simple para autenticar endpoints usando API key.
+
+Flujo esperado:
+- cliente externo envía API key en header
+- backend busca por hash
+- valida:
+  - existe
+  - activa
+  - no revocada
+  - no expirada
+  - usuario activo
+- si es válida:
+  - autentica el contexto
+  - actualiza `last_used_at` y `last_used_ip`
+- si no es válida:
+  - responder 401 o 403 según corresponda
+
+Header sugerido:
+- Authorization: Bearer {api_key}
+o
+- X-API-Key: {api_key}
+
+Preferencia:
+- usar Bearer si encaja con la arquitectura
+- mantenerlo simple y consistente
+
+Endpoints protegidos:
+No exponer todo el sistema vía API en esta fase.
+Solo preparar base para endpoints futuros.
+
+Crear grupo de rutas API internas o web protegidas para integraciones futuras.
+Debe quedar lista la autenticación, aunque haya pocos endpoints iniciales.
+
+Ejemplo de endpoint inicial opcional:
+- GET /api/me
+retorna datos básicos del usuario autenticado por API key
+
+Esto sirve para probar que el sistema funciona.
+
+Rate limiting:
+Aplicar rate limiting también a endpoints por API key.
+Identificar por:
+- api key id
+o
+- user_id + ip
+No dejar endpoints de integración sin control.
+
+Actividad:
+Si ya existe activity log:
+- registrar:
+  - api key creada
+  - api key revocada
+  - api key usada por primera vez si aplica
+  - intentos fallidos graves opcionales
+
+System errors:
+Si ya existe módulo de errores:
+- registrar errores técnicos de autenticación API solo cuando haga sentido
+- no llenar logs con ruido innecesario
+
+Seguridad:
+- hash obligatorio para keys
+- nunca guardar secreto en texto plano
+- mostrar secreto completo una sola vez
+- revocación real
+- validar expiración
+- validar usuario activo
+- no aceptar keys inactivas
+- no exponer key completa en logs, responses ni vistas admin
+- proteger endpoints en backend, no en frontend
+
+Integración con planes/límites:
+Si ya existe sistema de límites por plan:
+- permitir feature tipo:
+  - can_use_api
+  - max_api_keys
+- validar al crear nuevas keys
+- si no existe aún esta regla, dejar base preparada
+
+Mensajes esperados:
+- "API key creada correctamente. Copie la clave ahora, no volverá a mostrarse."
+- "API key actualizada correctamente."
+- "API key revocada correctamente."
+- "No tiene permiso para usar integraciones API."
+- "Has alcanzado el límite de API keys para tu plan."
+
+Importante:
+- revisar si ya existe alguna autenticación API parcial
+- si existe, adaptarse
+- si no existe, crear solución mínima reusable
+- generar solo archivos necesarios
+- no agregar archivos innecesarios
+- mantener implementación simple y extensible
