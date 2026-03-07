@@ -102,9 +102,7 @@ class SupportTicketController extends Controller
 
     public function show(Request $request, SupportTicket $ticket)
     {
-        if ($ticket->user_id !== $request->user()->id) {
-            abort(403);
-        }
+        $this->authorize('view', $ticket);
 
         $ticket->load(['messages.user:id,name,email']);
 
@@ -138,9 +136,7 @@ class SupportTicketController extends Controller
         if (! $features->enabled($request->user(), 'module_support', true)) {
             return back()->withErrors(['message' => 'El modulo de soporte no esta habilitado.']);
         }
-        if ($ticket->user_id !== $request->user()->id) {
-            abort(403);
-        }
+        $this->authorize('reply', $ticket);
 
         if ($ticket->status === 'closed') {
             return back()->with('error', 'El ticket esta cerrado.');

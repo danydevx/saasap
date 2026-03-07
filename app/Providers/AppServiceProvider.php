@@ -2,8 +2,23 @@
 
 namespace App\Providers;
 
+use App\Models\ApiKey;
+use App\Models\MediaFile;
+use App\Models\Payment;
+use App\Models\Subscription;
+use App\Models\SupportTicket;
+use App\Models\User;
+use App\Models\WebhookEndpoint;
+use App\Policies\ApiKeyPolicy;
+use App\Policies\MediaFilePolicy;
+use App\Policies\PaymentPolicy;
+use App\Policies\SubscriptionPolicy;
+use App\Policies\SupportTicketPolicy;
+use App\Policies\UserPolicy;
+use App\Policies\WebhookEndpointPolicy;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
@@ -22,6 +37,20 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Permite al usuario ID 1 pasar todas las validaciones de autorizacion.
+        Gate::before(function ($user) {
+            return (int) $user->id === 1 ? true : null;
+        });
+
+        // Registra policies para un control de acceso por recurso.
+        Gate::policy(User::class, UserPolicy::class);
+        Gate::policy(ApiKey::class, ApiKeyPolicy::class);
+        Gate::policy(WebhookEndpoint::class, WebhookEndpointPolicy::class);
+        Gate::policy(SupportTicket::class, SupportTicketPolicy::class);
+        Gate::policy(MediaFile::class, MediaFilePolicy::class);
+        Gate::policy(Payment::class, PaymentPolicy::class);
+        Gate::policy(Subscription::class, SubscriptionPolicy::class);
+
         RateLimiter::for('login', function (Request $request) {
             $email = mb_strtolower((string) $request->input('email', ''));
             $key = $email !== '' ? $email.'|'.$request->ip() : $request->ip();

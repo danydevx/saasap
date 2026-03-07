@@ -10,7 +10,7 @@
           <Link href="/member/invoices" class="btn btn-outline-secondary btn-sm">Comprobantes</Link>
           <Link v-if="canSupport" href="/member/support" class="btn btn-outline-secondary btn-sm">Soporte</Link>
           <Link href="/member/help" class="btn btn-outline-secondary btn-sm">Ayuda</Link>
-          <Link href="/member/integrations" class="btn btn-outline-secondary btn-sm">Integraciones</Link>
+          <Link v-if="canUseIntegrations" href="/member/integrations" class="btn btn-outline-secondary btn-sm">Integraciones</Link>
           <Link href="/member/preferences" class="btn btn-outline-secondary btn-sm">Preferencias</Link>
           <Link href="/member/notification-preferences" class="btn btn-outline-secondary btn-sm">Notif. preferencias</Link>
           <Link v-if="canUseApi" href="/member/api-keys" class="btn btn-outline-secondary btn-sm">API Keys</Link>
@@ -94,11 +94,22 @@ import { Link, router, usePage } from '@inertiajs/vue3'
 const page = usePage()
 const unreadCount = computed(() => page.props.notificationUnreadCount || 0)
 const features = computed(() => page.props.features || {})
+const permissions = computed(() => page.props.auth?.permissions || [])
 const announcements = computed(() => page.props.systemAnnouncements || [])
 
 const canUseApi = computed(() => features.value.can_use_api !== false)
 const canUseWebhooks = computed(() => features.value.can_use_webhooks !== false)
 const canSupport = computed(() => features.value.module_support !== false)
+
+// Oculta el acceso a integraciones si el usuario no tiene permiso o feature habilitado.
+const canUseIntegrations = computed(() => {
+  const apiEnabled = (features.value['features.api_enabled'] ?? features.value.can_use_api) !== false
+  const webhooksEnabled = (features.value['features.webhooks_enabled'] ?? features.value.can_use_webhooks) !== false
+  const hasApiPermission = permissions.value.includes('api-keys.manage')
+  const hasWebhookPermission = permissions.value.includes('webhooks.manage')
+
+  return (apiEnabled && hasApiPermission) || (webhooksEnabled && hasWebhookPermission)
+})
 
 const dismiss = (id) => {
   router.put(`/member/announcements/${id}/dismiss`, {}, { preserveScroll: true })

@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\User;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -13,6 +14,7 @@ class RolesAndPermissionsSeeder extends Seeder
     {
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
+        // Convencion: modulo.accion para mantener permisos consistentes.
         $permissions = [
             'users.view',
             'users.create',
@@ -195,5 +197,11 @@ class RolesAndPermissionsSeeder extends Seeder
             'api-keys.manage',
             'webhooks.manage',
         ]);
+
+        // Garantiza que el usuario ID 1 tenga rol super-admin para recuperar acceso total.
+        $rootUser = User::query()->find(1);
+        if ($rootUser) {
+            $rootUser->assignRole($superAdmin);
+        }
     }
 }

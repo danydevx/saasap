@@ -7,22 +7,20 @@ use App\Models\ApiKey;
 use App\Models\SystemError;
 use App\Models\WebhookDelivery;
 use App\Models\WebhookEndpoint;
-use App\Services\FeatureService;
+use App\Services\AccessService;
 use App\Services\WebhookService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class IntegrationController extends Controller
 {
-    public function index(Request $request, FeatureService $features)
+    public function index(Request $request, AccessService $access)
     {
         $user = $request->user();
 
-        // Soporta las llaves de features nuevas y las existentes para no romper planes actuales.
-        $canUseApi = $features->enabled($user, 'features.api_enabled', false)
-            || $features->enabled($user, 'can_use_api', false);
-        $canUseWebhooks = $features->enabled($user, 'features.webhooks_enabled', false)
-            || $features->enabled($user, 'can_use_webhooks', false);
+        // Usa el helper central para validar acceso a integraciones.
+        $canUseApi = $access->canUseApi($user);
+        $canUseWebhooks = $access->canUseWebhooks($user);
 
         // Obtiene las API keys visibles para el usuario y solo si el feature esta habilitado.
         $apiKeys = $canUseApi
@@ -131,7 +129,7 @@ class IntegrationController extends Controller
         ]);
     }
 
-    public function apiDocumentation(Request $request, FeatureService $features)
+    public function apiDocumentation(Request $request, AccessService $access)
     {
         $user = $request->user();
 
@@ -148,10 +146,8 @@ class IntegrationController extends Controller
                 'events' => WebhookService::EVENTS,
             ],
             'features' => [
-                'api_enabled' => $features->enabled($user, 'features.api_enabled', false)
-                    || $features->enabled($user, 'can_use_api', false),
-                'webhooks_enabled' => $features->enabled($user, 'features.webhooks_enabled', false)
-                    || $features->enabled($user, 'can_use_webhooks', false),
+                'api_enabled' => $access->canUseApi($user),
+                'webhooks_enabled' => $access->canUseWebhooks($user),
             ],
         ]);
     }

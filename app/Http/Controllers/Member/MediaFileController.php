@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Member;
 
 use App\Http\Controllers\Controller;
 use App\Models\MediaFile;
+use App\Services\AccessService;
 use App\Services\ActivityService;
-use App\Services\FeatureService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
@@ -48,9 +48,9 @@ class MediaFileController extends Controller
         ]);
     }
 
-    public function store(Request $request, FeatureService $features, ActivityService $activity)
+    public function store(Request $request, AccessService $access, ActivityService $activity)
     {
-        if (! $features->enabled($request->user(), 'can_upload_files', true)) {
+        if (! $access->canUploadFiles($request->user())) {
             return back()->withErrors(['file' => 'No tienes permitido subir archivos.']);
         }
 
@@ -91,9 +91,7 @@ class MediaFileController extends Controller
 
     public function show(Request $request, MediaFile $file)
     {
-        if ($file->user_id !== $request->user()->id) {
-            abort(403);
-        }
+        $this->authorize('view', $file);
 
         return Inertia::render('Member/Files/Show', [
             'file' => [
@@ -110,9 +108,7 @@ class MediaFileController extends Controller
 
     public function download(Request $request, MediaFile $file, ActivityService $activity)
     {
-        if ($file->user_id !== $request->user()->id) {
-            abort(403);
-        }
+        $this->authorize('download', $file);
 
         if (! Storage::disk($file->disk)->exists($file->path)) {
             return back()->with('error', 'El archivo no está disponible.');
@@ -131,9 +127,7 @@ class MediaFileController extends Controller
 
     public function destroy(Request $request, MediaFile $file, ActivityService $activity)
     {
-        if ($file->user_id !== $request->user()->id) {
-            abort(403);
-        }
+        $this->authorize('delete', $file);
 
         if (Storage::disk($file->disk)->exists($file->path)) {
             Storage::disk($file->disk)->delete($file->path);
