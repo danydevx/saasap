@@ -4,10 +4,10 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Jobs\SendVerificationEmailJob;
-use App\Models\Setting;
 use App\Models\User;
 use App\Models\UserProfile;
 use App\Services\ActivityService;
+use App\Services\SettingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -94,7 +94,12 @@ class RegisterController extends Controller
 
     private function allowRegistration(): bool
     {
-        $value = Setting::query()->where('key', 'system.allow_registration')->value('value');
+        $settings = app(SettingService::class);
+        $value = $settings->get('auth.allow_registration');
+        if ($value === null || $value === '') {
+            $value = $settings->get('system.allow_registration');
+        }
+
         if ($value === null) {
             return true;
         }
@@ -104,7 +109,12 @@ class RegisterController extends Controller
 
     private function requireUserApproval(): bool
     {
-        $value = Setting::query()->where('key', 'system.require_user_approval')->value('value');
+        $settings = app(SettingService::class);
+        $value = $settings->get('auth.require_admin_approval');
+        if ($value === null || $value === '') {
+            $value = $settings->get('system.require_user_approval');
+        }
+
         if ($value === null) {
             return false;
         }
