@@ -4,13 +4,18 @@ use App\Http\Middleware\EnsureAdminOrUser;
 use App\Http\Middleware\EnsurePermissionOrUser;
 use App\Http\Middleware\EnsureUserActive;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Services\SystemErrorService;
 use Illuminate\Auth\Middleware\EnsureEmailIsVerified;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Spatie\Permission\Middleware\PermissionMiddleware;
 use Spatie\Permission\Middleware\RoleMiddleware;
 use Spatie\Permission\Middleware\RoleOrPermissionMiddleware;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
+use Throwable;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -38,5 +43,18 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        $exceptions->reportable(function (Throwable $exception) {
+            if ($exception instanceof ValidationException) {
+                return;
+            }
+
+            if ($exception instanceof HttpExceptionInterface && $exception->getStatusCode() < 500) {
+                return;
+            }
+
+            $request = app()->has(Request::class) ? app(Request::class) : null;
+            $type = 'exception';
+
+            app(SystemErrorService::class)->logException($exception, $request, $type);
+        });
     })->create();

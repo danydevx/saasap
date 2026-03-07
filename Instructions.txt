@@ -5375,3 +5375,580 @@ Importante:
 - implementar primero CSV
 - dejar base lista para agregar Excel después
 - mantener implementación simple y extensible
+
+
+Instrucción 28: rate limiting y protección anti abuso
+Implementar sistema base de protección anti abuso y rate limiting para el SaaS.
+
+Contexto:
+Ya existen auth, registro, verificación email, reset password, dashboards, planes, suscripciones, pagos, tickets, activity log, exportaciones y system errors.
+Cada usuario es único.
+No hay organizaciones ni tenants.
+Se necesita proteger rutas sensibles contra abuso, bots, fuerza bruta y spam.
+No romper módulos actuales.
+
+Stack:
+Laravel 12 + Inertia + Vue 3 + JavaScript + Bootstrap 5.3.
+
+Reglas:
+- No TypeScript
+- Vue con `<script setup>`
+- Solo Composition API
+- No Options API
+- No API separada fuera del flujo web actual
+- No librerías nuevas innecesarias
+- No refactorizar módulos no relacionados
+- Reutilizar estructura actual del proyecto
+- Código simple y listo para producción
+
+Objetivo:
+Aplicar límites de intento y controles anti abuso en puntos sensibles del sistema.
+
+Alcance de esta fase:
+- rate limiting en login
+- rate limiting en registro
+- rate limiting en forgot password
+- rate limiting en verificación de código de reset
+- rate limiting en tickets/contacto si aplica
+- protección básica contra spam y abuso
+- mensajes claros al usuario
+- registro opcional de eventos de abuso
+
+No incluir todavía:
+- WAF avanzado
+- bloqueo geográfico
+- detección de fraude compleja
+- listas negras avanzadas
+- CAPTCHA en todos los puntos automáticamente si no hace falta
+
+Puntos críticos a proteger:
+1. login
+2. registro
+3. forgot password
+4. verificación de código de reset
+5. reenvío de verificación email
+6. creación de tickets
+7. endpoints sensibles de billing si aplica
+8. webhooks no por rate limit tradicional, sino por firma y validación correcta
+
+Backend:
+Usar rate limiting nativo de Laravel donde encaje mejor.
+
+Objetivo:
+- definir límites por acción
+- identificar por IP y/o email según el caso
+- responder con errores claros
+- no romper UX legítima
+
+Sugerencias de límites iniciales:
+
+Login:
+- limitar por email + IP
+- ejemplo: 5 intentos por 1 minuto o configuración equivalente
+
+Registro:
+- limitar por IP
+- ejemplo: 3 a 5 intentos por 10 minutos
+
+Forgot password:
+- limitar por email + IP
+- ejemplo: 3 intentos por 15 minutos
+
+Verificación de código reset:
+- limitar por token/IP o email/IP
+- ejemplo: 5 intentos por 10 minutos
+
+Reenvío de verificación:
+- limitar por usuario o email
+- ejemplo: 3 intentos por 15 minutos
+
+Tickets:
+- limitar por usuario autenticado
+- ejemplo: 5 tickets por hora
+- respuestas de ticket también pueden limitarse si aplica
+
+Importante:
+- ajustar números a algo razonable para no afectar usuarios legítimos
+- centralizar configuración si es posible
+
+Implementación:
+Definir limitadores claros para cada acción sensible.
+Aplicarlos en rutas/controladores correspondientes.
+No dejar lógica dispersa.
+
+Identificación recomendada:
+- login: email + IP
+- forgot/reset: email + IP
+- registro: IP
+- ticket create/reply: user_id autenticado
+- acciones member sensibles: user_id
+- acciones públicas: IP
+
+Mensajes esperados:
+- "Demasiados intentos. Intente de nuevo en unos minutos."
+- "Has excedido el número de solicitudes permitidas."
+- mensajes claros pero sin revelar demasiada información sensible
+
+Frontend / Inertia:
+- mostrar error general claro en formulario cuando aplique rate limit
+- no romper el formulario
+- mantener valores útiles si es razonable
+- deshabilitar dobles envíos mientras procesa
+
+Integración con honeypot/captcha:
+- respetar lo ya implementado en registro
+- no duplicar lógica innecesaria
+- si ya existe captcha en registro, mantenerlo
+- el rate limit complementa, no reemplaza, captcha/honeypot
+
+Registro de actividad:
+Si ya existe activity log:
+- opcionalmente registrar eventos de abuso relevantes, por ejemplo:
+  - demasiados intentos de login
+  - demasiados intentos de reset
+- no registrar ruido excesivo si va a saturar logs
+
+Registro de errores:
+Si ya existe system errors:
+- no registrar cada rate limit como error del sistema
+- solo si hay fallas técnicas inesperadas
+
+Admin:
+Opcional en esta fase:
+- exponer configuración en settings después
+- por ahora dejar valores fijos o centralizados en código/config
+
+Seguridad:
+- no revelar si el email existe al aplicar límites en auth pública
+- no permitir bypass desde frontend
+- validar siempre en backend
+- no usar solo controles visuales
+- proteger especialmente rutas públicas
+
+Testing esperado:
+- login bloquea después de demasiados intentos
+- registro bloquea abuso por IP
+- forgot password no permite spam
+- verificación de código de reset bloquea fuerza bruta
+- usuarios legítimos pueden volver a intentar tras el tiempo definido
+
+Integración:
+- revisar rutas y controladores actuales de:
+  - login
+  - register
+  - forgot password
+  - reset password
+  - email verification resend
+  - support tickets
+- adaptarse a la estructura actual
+- cambios mínimos necesarios
+
+Importante:
+- generar solo archivos necesarios
+- no agregar archivos innecesarios
+- mantener implementación simple y extensible
+- no romper auth ni soporte actuales
+
+Instrucción 27: sistema de logs de errores del SaaS
+Implementar módulo base de registro y consulta de errores del sistema para el SaaS.
+
+Contexto:
+Ya existen users, suscripciones, pagos, tickets, reportes, activity log y exportaciones.
+Cada usuario es único.
+No hay organizaciones ni tenants.
+Se necesita registrar errores importantes del sistema para monitoreo, soporte y debugging administrativo.
+No romper módulos actuales.
+
+Stack:
+Laravel 12 + Inertia + Vue 3 + JavaScript + Bootstrap 5.3.
+
+Reglas:
+- No TypeScript
+- Vue con `<script setup>`
+- Solo Composition API
+- No Options API
+- No API separada fuera del flujo web actual
+- No librerías nuevas innecesarias salvo que ya exista una solución en el proyecto
+- No refactorizar módulos no relacionados
+- Reutilizar estructura visual actual
+- Código simple y listo para producción
+
+Objetivo:
+Registrar errores relevantes del sistema y permitir que admin/superadmin los consulte desde el panel.
+
+Alcance de esta fase:
+- guardar errores del sistema en base de datos o integrarlos desde logs si ya existe patrón
+- listar errores desde admin
+- ver detalle de error
+- filtrar por tipo, fecha y estado
+- marcar error como revisado si aplica
+- mantener trazabilidad básica de errores reales
+
+No incluir todavía:
+- observabilidad avanzada
+- integración con Sentry u otros servicios externos si aún no está definido
+- alertas en tiempo real
+- stack traces extremadamente complejos en UI pública
+- correlación distribuida
+- dashboards técnicos avanzados
+
+Entidad:
+Crear tabla `system_errors` o equivalente si no existe una solución actual.
+
+Campos mínimos sugeridos:
+- id
+- user_id nullable
+- type string
+- message text
+- file nullable string
+- line nullable integer
+- url nullable string
+- method nullable string
+- ip_address nullable string
+- user_agent nullable text
+- exception_class nullable string
+- trace text nullable
+- context json nullable
+- is_resolved boolean default false
+- resolved_at nullable timestamp
+- created_at
+- updated_at
+
+Modelo:
+- SystemError
+
+Relaciones:
+- SystemError belongsTo User nullable
+
+Concepto:
+- `user_id` = usuario autenticado al momento del error si existe
+- `type` = categoría del error
+- `context` = datos extra útiles no sensibles
+- `trace` = stack trace resumido o completo según convenga
+- `is_resolved` = control administrativo de revisión
+
+Tipos sugeridos:
+- exception
+- validation
+- payment
+- webhook
+- mail
+- job
+- integration
+- system
+
+Permisos sugeridos:
+- system-errors.view
+- system-errors.update
+
+Acceso:
+- solo `superadmin` y `admin`
+- `member` no entra a este módulo
+
+Captura de errores:
+Implementar captura centralizada desde backend.
+
+Opciones válidas:
+1. integrar en manejo global de excepciones del proyecto
+2. registrar manualmente errores críticos en puntos clave
+3. combinar ambas con una solución mínima
+
+Preferencia:
+- usar manejo global de excepciones para errores reales
+- además registrar manualmente errores importantes de integraciones críticas:
+  - Stripe
+  - webhooks
+  - mail
+  - exportaciones
+  - soporte si falla algo importante
+
+Importante:
+- evitar guardar datos sensibles
+- no registrar passwords, tokens secretos, webhook secrets, claves API ni datos delicados
+- sanitizar context si hace falta
+
+Admin:
+Crear módulo admin de consulta de errores.
+
+Rutas:
+- GET /admin/system-errors
+- GET /admin/system-errors/{error}
+- PUT /admin/system-errors/{error}/resolve
+
+Controlador:
+- Admin/SystemErrorController
+Métodos:
+  - index()
+  - show()
+  - resolve()
+
+Vistas:
+- resources/js/Pages/Admin/SystemErrors/Index.vue
+- resources/js/Pages/Admin/SystemErrors/Show.vue
+
+Listado admin:
+- paginación por servidor
+- mostrar:
+  - fecha
+  - tipo
+  - mensaje corto
+  - usuario si existe
+  - url si existe
+  - estado resuelto/no resuelto
+
+Filtros sugeridos:
+- type
+- is_resolved
+- date_from
+- date_to
+- q por mensaje o clase de excepción
+
+Detalle admin:
+Mostrar:
+- tipo
+- mensaje completo
+- clase de excepción
+- archivo y línea si existen
+- usuario relacionado si existe
+- url y método
+- IP
+- fecha
+- contexto resumido
+- trace en bloque legible
+- botón marcar como resuelto
+
+UI admin:
+- usar layout admin
+- usar PageTitle
+- usar Breadcrumb
+- usar Searchbar si ya existe
+- tabla simple en index
+- cards o bloques en detalle
+- Bootstrap 5.3
+- no crear interfaz compleja
+
+Validaciones backend:
+Para filtro:
+- type nullable|string|max:50
+- is_resolved nullable|boolean
+- date_from nullable|date
+- date_to nullable|date|after_or_equal:date_from
+- q nullable|string|max:255
+
+Para resolver:
+- marcar is_resolved true
+- resolved_at now()
+
+Integración:
+Registrar errores en puntos sensibles si ya existen:
+- checkout Stripe
+- webhooks Stripe
+- correos de verificación/reset
+- exportaciones
+- tickets de soporte
+- jobs si ya existen
+- excepciones globales del sistema
+
+Comportamiento esperado:
+- cuando ocurre un error importante, se registra
+- admin puede consultar listado
+- admin puede abrir detalle
+- admin puede marcar como resuelto
+- la app no debe romperse por intentar guardar el error
+
+Seguridad:
+- solo admin/superadmin
+- no exponer datos sensibles
+- no mostrar trazas al usuario final
+- proteger acceso en backend
+- si el guardado del error falla, no debe causar error secundario crítico
+
+Actividad:
+Si ya existe activity log:
+- registrar cuando un admin marca error como resuelto
+
+Notificaciones:
+Opcional en esta fase:
+- crear notificación interna para admins cuando ocurra un error crítico
+solo si encaja fácilmente
+si no, dejarlo para una fase posterior
+
+Importante:
+- revisar si el proyecto ya tiene manejo de errores personalizado
+- si existe, adaptarse
+- si no existe, crear solución mínima reusable
+- generar solo archivos necesarios
+- no agregar archivos innecesarios
+- mantener implementación simple y extensible
+
+Instrucción 28: rate limiting y protección anti abuso
+Implementar sistema base de protección anti abuso y rate limiting para el SaaS.
+
+Contexto:
+Ya existen auth, registro, verificación email, reset password, dashboards, planes, suscripciones, pagos, tickets, activity log, exportaciones y system errors.
+Cada usuario es único.
+No hay organizaciones ni tenants.
+Se necesita proteger rutas sensibles contra abuso, bots, fuerza bruta y spam.
+No romper módulos actuales.
+
+Stack:
+Laravel 12 + Inertia + Vue 3 + JavaScript + Bootstrap 5.3.
+
+Reglas:
+- No TypeScript
+- Vue con `<script setup>`
+- Solo Composition API
+- No Options API
+- No API separada fuera del flujo web actual
+- No librerías nuevas innecesarias
+- No refactorizar módulos no relacionados
+- Reutilizar estructura actual del proyecto
+- Código simple y listo para producción
+
+Objetivo:
+Aplicar límites de intento y controles anti abuso en puntos sensibles del sistema.
+
+Alcance de esta fase:
+- rate limiting en login
+- rate limiting en registro
+- rate limiting en forgot password
+- rate limiting en verificación de código de reset
+- rate limiting en tickets/contacto si aplica
+- protección básica contra spam y abuso
+- mensajes claros al usuario
+- registro opcional de eventos de abuso
+
+No incluir todavía:
+- WAF avanzado
+- bloqueo geográfico
+- detección de fraude compleja
+- listas negras avanzadas
+- CAPTCHA en todos los puntos automáticamente si no hace falta
+
+Puntos críticos a proteger:
+1. login
+2. registro
+3. forgot password
+4. verificación de código de reset
+5. reenvío de verificación email
+6. creación de tickets
+7. endpoints sensibles de billing si aplica
+8. webhooks no por rate limit tradicional, sino por firma y validación correcta
+
+Backend:
+Usar rate limiting nativo de Laravel donde encaje mejor.
+
+Objetivo:
+- definir límites por acción
+- identificar por IP y/o email según el caso
+- responder con errores claros
+- no romper UX legítima
+
+Sugerencias de límites iniciales:
+
+Login:
+- limitar por email + IP
+- ejemplo: 5 intentos por 1 minuto o configuración equivalente
+
+Registro:
+- limitar por IP
+- ejemplo: 3 a 5 intentos por 10 minutos
+
+Forgot password:
+- limitar por email + IP
+- ejemplo: 3 intentos por 15 minutos
+
+Verificación de código reset:
+- limitar por token/IP o email/IP
+- ejemplo: 5 intentos por 10 minutos
+
+Reenvío de verificación:
+- limitar por usuario o email
+- ejemplo: 3 intentos por 15 minutos
+
+Tickets:
+- limitar por usuario autenticado
+- ejemplo: 5 tickets por hora
+- respuestas de ticket también pueden limitarse si aplica
+
+Importante:
+- ajustar números a algo razonable para no afectar usuarios legítimos
+- centralizar configuración si es posible
+
+Implementación:
+Definir limitadores claros para cada acción sensible.
+Aplicarlos en rutas/controladores correspondientes.
+No dejar lógica dispersa.
+
+Identificación recomendada:
+- login: email + IP
+- forgot/reset: email + IP
+- registro: IP
+- ticket create/reply: user_id autenticado
+- acciones member sensibles: user_id
+- acciones públicas: IP
+
+Mensajes esperados:
+- "Demasiados intentos. Intente de nuevo en unos minutos."
+- "Has excedido el número de solicitudes permitidas."
+- mensajes claros pero sin revelar demasiada información sensible
+
+Frontend / Inertia:
+- mostrar error general claro en formulario cuando aplique rate limit
+- no romper el formulario
+- mantener valores útiles si es razonable
+- deshabilitar dobles envíos mientras procesa
+
+Integración con honeypot/captcha:
+- respetar lo ya implementado en registro
+- no duplicar lógica innecesaria
+- si ya existe captcha en registro, mantenerlo
+- el rate limit complementa, no reemplaza, captcha/honeypot
+
+Registro de actividad:
+Si ya existe activity log:
+- opcionalmente registrar eventos de abuso relevantes, por ejemplo:
+  - demasiados intentos de login
+  - demasiados intentos de reset
+- no registrar ruido excesivo si va a saturar logs
+
+Registro de errores:
+Si ya existe system errors:
+- no registrar cada rate limit como error del sistema
+- solo si hay fallas técnicas inesperadas
+
+Admin:
+Opcional en esta fase:
+- exponer configuración en settings después
+- por ahora dejar valores fijos o centralizados en código/config
+
+Seguridad:
+- no revelar si el email existe al aplicar límites en auth pública
+- no permitir bypass desde frontend
+- validar siempre en backend
+- no usar solo controles visuales
+- proteger especialmente rutas públicas
+
+Testing esperado:
+- login bloquea después de demasiados intentos
+- registro bloquea abuso por IP
+- forgot password no permite spam
+- verificación de código de reset bloquea fuerza bruta
+- usuarios legítimos pueden volver a intentar tras el tiempo definido
+
+Integración:
+- revisar rutas y controladores actuales de:
+  - login
+  - register
+  - forgot password
+  - reset password
+  - email verification resend
+  - support tickets
+- adaptarse a la estructura actual
+- cambios mínimos necesarios
+
+Importante:
+- generar solo archivos necesarios
+- no agregar archivos innecesarios
+- mantener implementación simple y extensible
+- no romper auth ni soporte actuales

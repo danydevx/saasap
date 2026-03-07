@@ -9,6 +9,7 @@ use App\Models\StripeWebhookEvent;
 use App\Models\Subscription;
 use App\Models\User;
 use App\Services\ActivityService;
+use App\Services\SystemErrorService;
 use App\Services\UserNotificationService;
 use Illuminate\Http\Request;
 use Stripe\Webhook;
@@ -16,7 +17,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 class StripeWebhookController extends Controller
 {
-    public function handle(Request $request, ActivityService $activity, UserNotificationService $notifications)
+    public function handle(Request $request, ActivityService $activity, UserNotificationService $notifications, SystemErrorService $errors)
     {
         $payload = $request->getContent();
         $signature = $request->header('Stripe-Signature');
@@ -55,6 +56,11 @@ class StripeWebhookController extends Controller
 
             return response('ok', Response::HTTP_OK);
         } catch (\Throwable $e) {
+            $errors->logException($e, $request, 'webhook', [
+                'provider' => 'stripe',
+                'event_id' => $event->id ?? null,
+                'event_type' => $event->type ?? null,
+            ]);
             $record->update([
                 'status' => 'failed',
             ]);

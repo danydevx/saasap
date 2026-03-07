@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\SupportTicketController as AdminSupportTicketController;
+use App\Http\Controllers\Admin\SystemErrorController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\UserProfileController;
 use App\Http\Controllers\Auth\EmailVerificationController;
@@ -59,30 +60,30 @@ Route::get('/register', [RegisterController::class, 'showRegister'])
     ->name('register');
 
 Route::post('/login', [LoginController::class, 'store'])
-    ->middleware('guest')
+    ->middleware(['guest', 'throttle:login'])
     ->name('login.store');
 
 Route::post('/register', [RegisterController::class, 'register'])
-    ->middleware('guest')
+    ->middleware(['guest', 'throttle:register'])
     ->name('register.store');
 
 Route::get('/forgot-password', [PasswordResetController::class, 'showForgotPassword'])
     ->middleware('guest')
     ->name('password.request');
 Route::post('/forgot-password', [PasswordResetController::class, 'sendResetLink'])
-    ->middleware(['guest', 'throttle:6,1'])
+    ->middleware(['guest', 'throttle:password-email'])
     ->name('password.email');
 Route::get('/reset-password/{token}', [PasswordResetController::class, 'showVerifyCode'])
     ->middleware('guest')
     ->name('password.verify');
 Route::post('/reset-password/{token}/verify-code', [PasswordResetController::class, 'verifyCode'])
-    ->middleware(['guest', 'throttle:6,1'])
+    ->middleware(['guest', 'throttle:password-verify'])
     ->name('password.verify-code');
 Route::get('/reset-password/{token}/new-password', [PasswordResetController::class, 'showResetPasswordForm'])
     ->middleware('guest')
     ->name('password.reset');
 Route::post('/reset-password/{token}', [PasswordResetController::class, 'resetPassword'])
-    ->middleware(['guest', 'throttle:6,1'])
+    ->middleware(['guest', 'throttle:password-reset'])
     ->name('password.update');
 
 Route::get('/email/verify', [EmailVerificationController::class, 'notice'])
@@ -90,11 +91,11 @@ Route::get('/email/verify', [EmailVerificationController::class, 'notice'])
     ->name('verification.notice');
 
 Route::get('/email/verify/{id}/{hash}', [EmailVerificationController::class, 'verify'])
-    ->middleware(['auth', 'signed', 'throttle:6,1'])
+    ->middleware(['auth', 'signed', 'throttle:email-verify'])
     ->name('verification.verify');
 
 Route::post('/email/verification-notification', [EmailVerificationController::class, 'resend'])
-    ->middleware(['auth', 'throttle:6,1'])
+    ->middleware(['auth', 'throttle:verification-resend'])
     ->name('verification.send');
 
 Route::post('/logout', [LogoutController::class, 'destroy'])
@@ -114,14 +115,14 @@ Route::get('/member/account', [AccountController::class, 'show'])
     ->name('member.account.show');
 
 Route::post('/member/billing/portal', [BillingController::class, 'portal'])
-    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->middleware(['auth', 'verified', 'active', 'role:member', 'throttle:billing-portal'])
     ->name('member.billing.portal');
 
 Route::post('/member/checkout/{plan}', [CheckoutController::class, 'create'])
-    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->middleware(['auth', 'verified', 'active', 'role:member', 'throttle:checkout-create'])
     ->name('member.checkout.create');
 Route::post('/member/checkout/coupon/validate', [CheckoutController::class, 'validateCoupon'])
-    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->middleware(['auth', 'verified', 'active', 'role:member', 'throttle:checkout-coupon'])
     ->name('member.checkout.coupon.validate');
 Route::put('/member/checkout/coupon/clear', [CheckoutController::class, 'clearCoupon'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
@@ -193,13 +194,13 @@ Route::get('/member/support/create', [MemberSupportTicketController::class, 'cre
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.support.create');
 Route::post('/member/support', [MemberSupportTicketController::class, 'store'])
-    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->middleware(['auth', 'verified', 'active', 'role:member', 'throttle:ticket-create'])
     ->name('member.support.store');
 Route::get('/member/support/{ticket}', [MemberSupportTicketController::class, 'show'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.support.show');
 Route::post('/member/support/{ticket}/reply', [MemberSupportTicketController::class, 'reply'])
-    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->middleware(['auth', 'verified', 'active', 'role:member', 'throttle:ticket-reply'])
     ->name('member.support.reply');
 
 Route::get('/member/help', [MemberHelpArticleController::class, 'index'])
@@ -296,6 +297,16 @@ Route::prefix('admin')->middleware(['auth', 'admin_or_user:1'])->group(function 
     Route::get('/exports/activities', [ExportController::class, 'activities'])
         ->middleware('permission_or_user:exports.download,1')
         ->name('admin.exports.activities');
+
+    Route::get('/system-errors', [SystemErrorController::class, 'index'])
+        ->middleware('permission_or_user:system-errors.view,1')
+        ->name('admin.system-errors.index');
+    Route::get('/system-errors/{error}', [SystemErrorController::class, 'show'])
+        ->middleware('permission_or_user:system-errors.view,1')
+        ->name('admin.system-errors.show');
+    Route::put('/system-errors/{error}/resolve', [SystemErrorController::class, 'resolve'])
+        ->middleware('permission_or_user:system-errors.update,1')
+        ->name('admin.system-errors.resolve');
 
     Route::get('/plans', [PlanController::class, 'index'])
         ->middleware('permission_or_user:plans.view,1')

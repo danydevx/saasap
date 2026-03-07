@@ -10,6 +10,7 @@ use App\Models\Subscription;
 use App\Models\SupportTicket;
 use App\Models\User;
 use App\Services\ActivityService;
+use App\Services\SystemErrorService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Spatie\Permission\Models\Role;
@@ -98,7 +99,7 @@ class ExportController extends Controller
         ]);
     }
 
-    public function users(Request $request, ActivityService $activity)
+    public function users(Request $request, ActivityService $activity, SystemErrorService $errors)
     {
         $query = User::query()->with(['roles:id,name']);
 
@@ -164,25 +165,30 @@ class ExportController extends Controller
         $headers = ['id', 'name', 'email', 'role', 'is_active', 'email_verified', 'created_at'];
         $filename = $this->filename('users');
 
-        return $this->streamCsv($filename, $headers, function ($handle) use ($query) {
-            $query->chunk(500, function ($users) use ($handle) {
-                foreach ($users as $user) {
-                    $role = $user->roles->pluck('name')->first() ?: '';
-                    fputcsv($handle, [
-                        $user->id,
-                        $user->name,
-                        $user->email,
-                        $role,
-                        $user->is_active ? 'true' : 'false',
-                        $user->email_verified_at ? 'true' : 'false',
-                        $user->created_at?->toDateTimeString(),
-                    ]);
-                }
-            });
+        return $this->streamCsv($filename, $headers, function ($handle) use ($query, $errors, $request) {
+            try {
+                $query->chunk(500, function ($users) use ($handle) {
+                    foreach ($users as $user) {
+                        $role = $user->roles->pluck('name')->first() ?: '';
+                        fputcsv($handle, [
+                            $user->id,
+                            $user->name,
+                            $user->email,
+                            $role,
+                            $user->is_active ? 'true' : 'false',
+                            $user->email_verified_at ? 'true' : 'false',
+                            $user->created_at?->toDateTimeString(),
+                        ]);
+                    }
+                });
+            } catch (\Throwable $e) {
+                $errors->logException($e, $request, 'system', ['export' => 'users']);
+                throw $e;
+            }
         });
     }
 
-    public function subscriptions(Request $request, ActivityService $activity)
+    public function subscriptions(Request $request, ActivityService $activity, SystemErrorService $errors)
     {
         $query = Subscription::query()->with(['user:id,name,email', 'plan:id,name']);
 
@@ -230,26 +236,31 @@ class ExportController extends Controller
         ];
         $filename = $this->filename('subscriptions');
 
-        return $this->streamCsv($filename, $headers, function ($handle) use ($query) {
-            $query->chunk(500, function ($subscriptions) use ($handle) {
-                foreach ($subscriptions as $subscription) {
-                    fputcsv($handle, [
-                        $subscription->id,
-                        $subscription->user_id,
-                        $subscription->user?->name ?? '',
-                        $subscription->user?->email ?? '',
-                        $subscription->plan?->name ?? '',
-                        $subscription->status,
-                        $subscription->starts_at?->toDateTimeString(),
-                        $subscription->ends_at?->toDateTimeString(),
-                        $subscription->created_at?->toDateTimeString(),
-                    ]);
-                }
-            });
+        return $this->streamCsv($filename, $headers, function ($handle) use ($query, $errors, $request) {
+            try {
+                $query->chunk(500, function ($subscriptions) use ($handle) {
+                    foreach ($subscriptions as $subscription) {
+                        fputcsv($handle, [
+                            $subscription->id,
+                            $subscription->user_id,
+                            $subscription->user?->name ?? '',
+                            $subscription->user?->email ?? '',
+                            $subscription->plan?->name ?? '',
+                            $subscription->status,
+                            $subscription->starts_at?->toDateTimeString(),
+                            $subscription->ends_at?->toDateTimeString(),
+                            $subscription->created_at?->toDateTimeString(),
+                        ]);
+                    }
+                });
+            } catch (\Throwable $e) {
+                $errors->logException($e, $request, 'system', ['export' => 'subscriptions']);
+                throw $e;
+            }
         });
     }
 
-    public function payments(Request $request, ActivityService $activity)
+    public function payments(Request $request, ActivityService $activity, SystemErrorService $errors)
     {
         $query = Payment::query()->with(['user:id,name,email', 'plan:id,name']);
 
@@ -304,29 +315,34 @@ class ExportController extends Controller
         ];
         $filename = $this->filename('payments');
 
-        return $this->streamCsv($filename, $headers, function ($handle) use ($query) {
-            $query->chunk(500, function ($payments) use ($handle) {
-                foreach ($payments as $payment) {
-                    $amount = $payment->amount !== null ? number_format((float) $payment->amount, 2, '.', '') : '';
-                    fputcsv($handle, [
-                        $payment->id,
-                        $payment->user_id,
-                        $payment->user?->name ?? '',
-                        $payment->user?->email ?? '',
-                        $amount,
-                        $payment->currency,
-                        $payment->status,
-                        $payment->provider,
-                        $payment->provider_reference,
-                        $payment->paid_at?->toDateTimeString(),
-                        $payment->created_at?->toDateTimeString(),
-                    ]);
-                }
-            });
+        return $this->streamCsv($filename, $headers, function ($handle) use ($query, $errors, $request) {
+            try {
+                $query->chunk(500, function ($payments) use ($handle) {
+                    foreach ($payments as $payment) {
+                        $amount = $payment->amount !== null ? number_format((float) $payment->amount, 2, '.', '') : '';
+                        fputcsv($handle, [
+                            $payment->id,
+                            $payment->user_id,
+                            $payment->user?->name ?? '',
+                            $payment->user?->email ?? '',
+                            $amount,
+                            $payment->currency,
+                            $payment->status,
+                            $payment->provider,
+                            $payment->provider_reference,
+                            $payment->paid_at?->toDateTimeString(),
+                            $payment->created_at?->toDateTimeString(),
+                        ]);
+                    }
+                });
+            } catch (\Throwable $e) {
+                $errors->logException($e, $request, 'system', ['export' => 'payments']);
+                throw $e;
+            }
         });
     }
 
-    public function tickets(Request $request, ActivityService $activity)
+    public function tickets(Request $request, ActivityService $activity, SystemErrorService $errors)
     {
         $query = SupportTicket::query()->with(['user:id,name,email']);
 
@@ -380,27 +396,32 @@ class ExportController extends Controller
         ];
         $filename = $this->filename('tickets');
 
-        return $this->streamCsv($filename, $headers, function ($handle) use ($query) {
-            $query->chunk(500, function ($tickets) use ($handle) {
-                foreach ($tickets as $ticket) {
-                    fputcsv($handle, [
-                        $ticket->id,
-                        $ticket->user_id,
-                        $ticket->user?->name ?? '',
-                        $ticket->user?->email ?? '',
-                        $ticket->subject,
-                        $ticket->status,
-                        $ticket->priority,
-                        $ticket->category,
-                        $ticket->last_reply_at?->toDateTimeString(),
-                        $ticket->created_at?->toDateTimeString(),
-                    ]);
-                }
-            });
+        return $this->streamCsv($filename, $headers, function ($handle) use ($query, $errors, $request) {
+            try {
+                $query->chunk(500, function ($tickets) use ($handle) {
+                    foreach ($tickets as $ticket) {
+                        fputcsv($handle, [
+                            $ticket->id,
+                            $ticket->user_id,
+                            $ticket->user?->name ?? '',
+                            $ticket->user?->email ?? '',
+                            $ticket->subject,
+                            $ticket->status,
+                            $ticket->priority,
+                            $ticket->category,
+                            $ticket->last_reply_at?->toDateTimeString(),
+                            $ticket->created_at?->toDateTimeString(),
+                        ]);
+                    }
+                });
+            } catch (\Throwable $e) {
+                $errors->logException($e, $request, 'system', ['export' => 'tickets']);
+                throw $e;
+            }
         });
     }
 
-    public function activities(Request $request, ActivityService $activity)
+    public function activities(Request $request, ActivityService $activity, SystemErrorService $errors)
     {
         $query = Activity::query()->with(['user:id,name']);
 
@@ -448,22 +469,27 @@ class ExportController extends Controller
         ];
         $filename = $this->filename('activities');
 
-        return $this->streamCsv($filename, $headers, function ($handle) use ($query) {
-            $query->chunk(500, function ($activities) use ($handle) {
-                foreach ($activities as $activity) {
-                    fputcsv($handle, [
-                        $activity->id,
-                        $activity->user_id,
-                        $activity->user?->name ?? '',
-                        $activity->type,
-                        $activity->description,
-                        $activity->subject_type,
-                        $activity->subject_id,
-                        $activity->ip_address,
-                        $activity->created_at?->toDateTimeString(),
-                    ]);
-                }
-            });
+        return $this->streamCsv($filename, $headers, function ($handle) use ($query, $errors, $request) {
+            try {
+                $query->chunk(500, function ($activities) use ($handle) {
+                    foreach ($activities as $activity) {
+                        fputcsv($handle, [
+                            $activity->id,
+                            $activity->user_id,
+                            $activity->user?->name ?? '',
+                            $activity->type,
+                            $activity->description,
+                            $activity->subject_type,
+                            $activity->subject_id,
+                            $activity->ip_address,
+                            $activity->created_at?->toDateTimeString(),
+                        ]);
+                    }
+                });
+            } catch (\Throwable $e) {
+                $errors->logException($e, $request, 'system', ['export' => 'activities']);
+                throw $e;
+            }
         });
     }
 

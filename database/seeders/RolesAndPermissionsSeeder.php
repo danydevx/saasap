@@ -64,6 +64,8 @@ class RolesAndPermissionsSeeder extends Seeder
             'activity.view',
             'exports.view',
             'exports.download',
+            'system-errors.view',
+            'system-errors.update',
         ];
 
         foreach ($permissions as $permission) {
@@ -121,6 +123,8 @@ class RolesAndPermissionsSeeder extends Seeder
             'reports.view',
             'exports.view',
             'exports.download',
+            'system-errors.view',
+            'system-errors.update',
         ]);
 
         $user->givePermissionTo([]);

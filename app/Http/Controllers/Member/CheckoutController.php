@@ -8,6 +8,7 @@ use App\Models\Payment;
 use App\Models\Plan;
 use App\Models\Subscription;
 use App\Services\ActivityService;
+use App\Services\SystemErrorService;
 use App\Services\UserNotificationService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -15,7 +16,7 @@ use Stripe\StripeClient;
 
 class CheckoutController extends Controller
 {
-    public function create(Request $request, Plan $plan, ActivityService $activity, UserNotificationService $notifications)
+    public function create(Request $request, Plan $plan, ActivityService $activity, UserNotificationService $notifications, SystemErrorService $errors)
     {
         $user = $request->user();
 
@@ -102,6 +103,10 @@ class CheckoutController extends Controller
 
             return redirect()->away($session->url);
         } catch (\Throwable $e) {
+            $errors->logException($e, $request, 'payment', [
+                'plan_id' => $plan->id,
+                'user_id' => $user->id,
+            ]);
             $activity->log('checkout_failed', [
                 'user' => $user,
                 'actor' => $user,
@@ -117,7 +122,7 @@ class CheckoutController extends Controller
         }
     }
 
-    public function success(Request $request, ActivityService $activity, UserNotificationService $notifications)
+    public function success(Request $request, ActivityService $activity, UserNotificationService $notifications, SystemErrorService $errors)
     {
         $user = $request->user();
         $sessionId = (string) $request->query('session_id', '');
@@ -284,6 +289,10 @@ class CheckoutController extends Controller
                 ],
             ]);
         } catch (\Throwable $e) {
+            $errors->logException($e, $request, 'payment', [
+                'session_id' => $sessionId,
+                'user_id' => $user->id,
+            ]);
             $activity->log('checkout_failed', [
                 'user' => $user,
                 'actor' => $user,
