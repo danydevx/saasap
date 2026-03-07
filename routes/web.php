@@ -28,6 +28,7 @@ use App\Http\Controllers\Member\OnboardingController;
 use App\Http\Controllers\Member\PasswordController;
 use App\Http\Controllers\Member\PaymentController as MemberPaymentController;
 use App\Http\Controllers\Member\PlanSelectionController;
+use App\Http\Controllers\Member\PreferenceController as MemberPreferenceController;
 use App\Http\Controllers\Member\SupportTicketController as MemberSupportTicketController;
 use App\Http\Controllers\PricingController;
 use App\Http\Controllers\StripeWebhookController;
@@ -200,6 +201,13 @@ Route::get('/member/help', [MemberHelpArticleController::class, 'index'])
 Route::get('/member/help/{slug}', [MemberHelpArticleController::class, 'show'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.help.show');
+
+Route::get('/member/preferences', [MemberPreferenceController::class, 'edit'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.preferences.edit');
+Route::put('/member/preferences', [MemberPreferenceController::class, 'update'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.preferences.update');
 
 Route::get('/profile', [UserProfileController::class, 'edit'])
     ->middleware('auth')

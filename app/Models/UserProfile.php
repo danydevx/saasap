@@ -14,6 +14,11 @@ class UserProfile extends Model
         'facebook',
         'instagram',
         'x',
+        'preferences',
+    ];
+
+    protected $casts = [
+        'preferences' => 'array',
     ];
 
     public function user(): BelongsTo

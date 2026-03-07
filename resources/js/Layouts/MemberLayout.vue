@@ -10,6 +10,7 @@
           <Link href="/member/invoices" class="btn btn-outline-secondary btn-sm">Comprobantes</Link>
           <Link href="/member/support" class="btn btn-outline-secondary btn-sm">Soporte</Link>
           <Link href="/member/help" class="btn btn-outline-secondary btn-sm">Ayuda</Link>
+          <Link href="/member/preferences" class="btn btn-outline-secondary btn-sm">Preferencias</Link>
           <Link href="/member/notifications" class="btn btn-outline-secondary btn-sm">
             Notificaciones
             <span v-if="unreadCount > 0" class="badge text-bg-primary ms-1">
