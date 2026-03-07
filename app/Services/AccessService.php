@@ -14,7 +14,9 @@ class AccessService
         }
 
         // Valida permiso + feature flag para uso de API keys.
-        return $this->hasPermission($user, 'api-keys.manage')
+        return app(ModuleService::class)->isEnabled('api')
+            && app(ModuleService::class)->isEnabled('integrations')
+            && $this->hasPermission($user, 'api-keys.manage')
             && $this->featureEnabled($user, ['features.api_enabled', 'can_use_api'], false);
     }
 
@@ -26,7 +28,9 @@ class AccessService
         }
 
         // Valida permiso + feature flag para uso de webhooks.
-        return $this->hasPermission($user, 'webhooks.manage')
+        return app(ModuleService::class)->isEnabled('webhooks')
+            && app(ModuleService::class)->isEnabled('integrations')
+            && $this->hasPermission($user, 'webhooks.manage')
             && $this->featureEnabled($user, ['features.webhooks_enabled', 'can_use_webhooks'], false);
     }
 
@@ -38,7 +42,8 @@ class AccessService
         }
 
         // Usa el feature flag actual para habilitar subida de archivos.
-        return $this->featureEnabled($user, ['can_upload_files'], true);
+        return app(ModuleService::class)->isEnabled('media')
+            && $this->featureEnabled($user, ['can_upload_files'], true);
     }
 
     public function hasPermission(User $user, string $permission): bool

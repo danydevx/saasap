@@ -15,17 +15,21 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        // Crea un usuario de prueba solo si se solicita explicitamente.
+        if (env('SAAS_SEED_TEST_USER', false)) {
+            User::factory()->create([
+                'name' => 'Test User',
+                'email' => 'test@example.com',
+            ]);
+        }
 
         $this->call([
             RolesAndPermissionsSeeder::class,
-            AutomationSeeder::class,
+            FeatureFlagSeeder::class,
+            SettingSeeder::class,
+            SystemModuleSeeder::class,
             MessageTemplateSeeder::class,
+            AutomationSeeder::class,
         ]);
     }
 }

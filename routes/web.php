@@ -182,10 +182,10 @@ Route::get('/member/plan-selection', [PlanSelectionController::class, 'show'])
     ->name('member.plan-selection.show');
 
 Route::get('/member/integrations', [IntegrationController::class, 'index'])
-    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->middleware(['auth', 'verified', 'active', 'role:member', 'module:integrations'])
     ->name('member.integrations.index');
 Route::get('/member/integrations/docs', [IntegrationController::class, 'apiDocumentation'])
-    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->middleware(['auth', 'verified', 'active', 'role:member', 'module:integrations'])
     ->name('member.integrations.docs');
 Route::put('/member/plan-selection/clear', [PlanSelectionController::class, 'clear'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
@@ -207,30 +207,30 @@ Route::put('/member/onboarding/complete', [OnboardingController::class, 'complet
     ->name('member.onboarding.complete');
 
 Route::get('/member/notifications', [NotificationController::class, 'index'])
-    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->middleware(['auth', 'verified', 'active', 'role:member', 'module:notifications'])
     ->name('member.notifications.index');
 Route::get('/member/notifications/unread-count', [NotificationController::class, 'unreadCount'])
-    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->middleware(['auth', 'verified', 'active', 'role:member', 'module:notifications'])
     ->name('member.notifications.unread-count');
 Route::put('/member/notifications/{notification}/read', [NotificationController::class, 'markAsRead'])
-    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->middleware(['auth', 'verified', 'active', 'role:member', 'module:notifications'])
     ->name('member.notifications.read');
 Route::put('/member/notifications/read-all', [NotificationController::class, 'markAllAsRead'])
-    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->middleware(['auth', 'verified', 'active', 'role:member', 'module:notifications'])
     ->name('member.notifications.read-all');
 
 Route::get('/member/announcements/active', [MemberSystemAnnouncementController::class, 'active'])
-    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->middleware(['auth', 'verified', 'active', 'role:member', 'module:announcements'])
     ->name('member.announcements.active');
 Route::put('/member/announcements/{announcement}/dismiss', [MemberSystemAnnouncementController::class, 'dismiss'])
-    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->middleware(['auth', 'verified', 'active', 'role:member', 'module:announcements'])
     ->name('member.announcements.dismiss');
 
 Route::get('/member/notification-preferences', [NotificationPreferenceController::class, 'edit'])
-    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->middleware(['auth', 'verified', 'active', 'role:member', 'module:notifications'])
     ->name('member.notification-preferences.edit');
 Route::put('/member/notification-preferences', [NotificationPreferenceController::class, 'update'])
-    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->middleware(['auth', 'verified', 'active', 'role:member', 'module:notifications'])
     ->name('member.notification-preferences.update');
 
 Route::get('/member/activity', [MemberActivityController::class, 'index'])
@@ -238,78 +238,78 @@ Route::get('/member/activity', [MemberActivityController::class, 'index'])
     ->name('member.activity.index');
 
 Route::get('/member/payments', [MemberPaymentController::class, 'index'])
-    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->middleware(['auth', 'verified', 'active', 'role:member', 'module:billing'])
     ->name('member.payments.index');
 
 Route::get('/member/invoices', [MemberInvoiceController::class, 'index'])
-    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->middleware(['auth', 'verified', 'active', 'role:member', 'module:billing'])
     ->name('member.invoices.index');
 Route::get('/member/invoices/{invoice}', [MemberInvoiceController::class, 'show'])
-    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->middleware(['auth', 'verified', 'active', 'role:member', 'module:billing'])
     ->name('member.invoices.show');
 Route::get('/member/invoices/{invoice}/download', [MemberInvoiceController::class, 'download'])
-    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->middleware(['auth', 'verified', 'active', 'role:member', 'module:billing'])
     ->name('member.invoices.download');
 
 Route::get('/member/support', [MemberSupportTicketController::class, 'index'])
-    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->middleware(['auth', 'verified', 'active', 'role:member', 'module:support'])
     ->name('member.support.index');
 Route::get('/member/support/create', [MemberSupportTicketController::class, 'create'])
-    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->middleware(['auth', 'verified', 'active', 'role:member', 'module:support'])
     ->name('member.support.create');
 Route::post('/member/support', [MemberSupportTicketController::class, 'store'])
-    ->middleware(['auth', 'verified', 'active', 'role:member', 'throttle:ticket-create'])
+    ->middleware(['auth', 'verified', 'active', 'role:member', 'module:support', 'throttle:ticket-create'])
     ->name('member.support.store');
 Route::get('/member/support/{ticket}', [MemberSupportTicketController::class, 'show'])
-    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->middleware(['auth', 'verified', 'active', 'role:member', 'module:support'])
     ->name('member.support.show');
 Route::post('/member/support/{ticket}/reply', [MemberSupportTicketController::class, 'reply'])
-    ->middleware(['auth', 'verified', 'active', 'role:member', 'throttle:ticket-reply'])
+    ->middleware(['auth', 'verified', 'active', 'role:member', 'module:support', 'throttle:ticket-reply'])
     ->name('member.support.reply');
 
 Route::get('/member/api-keys', [MemberApiKeyController::class, 'index'])
-    ->middleware(['auth', 'verified', 'active', 'role:member', 'permission:api-keys.manage'])
+    ->middleware(['auth', 'verified', 'active', 'role:member', 'permission:api-keys.manage', 'module:api'])
     ->name('member.api-keys.index');
 Route::post('/member/api-keys', [MemberApiKeyController::class, 'store'])
-    ->middleware(['auth', 'verified', 'active', 'role:member', 'permission:api-keys.manage', 'throttle:api-keys-create'])
+    ->middleware(['auth', 'verified', 'active', 'role:member', 'permission:api-keys.manage', 'module:api', 'throttle:api-keys-create'])
     ->name('member.api-keys.store');
 Route::put('/member/api-keys/{apiKey}', [MemberApiKeyController::class, 'update'])
-    ->middleware(['auth', 'verified', 'active', 'role:member', 'permission:api-keys.manage'])
+    ->middleware(['auth', 'verified', 'active', 'role:member', 'permission:api-keys.manage', 'module:api'])
     ->name('member.api-keys.update');
 Route::delete('/member/api-keys/{apiKey}', [MemberApiKeyController::class, 'destroy'])
-    ->middleware(['auth', 'verified', 'active', 'role:member', 'permission:api-keys.manage'])
+    ->middleware(['auth', 'verified', 'active', 'role:member', 'permission:api-keys.manage', 'module:api'])
     ->name('member.api-keys.destroy');
 
 Route::get('/member/webhooks', [MemberWebhookController::class, 'index'])
-    ->middleware(['auth', 'verified', 'active', 'role:member', 'permission:webhooks.manage'])
+    ->middleware(['auth', 'verified', 'active', 'role:member', 'permission:webhooks.manage', 'module:webhooks'])
     ->name('member.webhooks.index');
 Route::post('/member/webhooks', [MemberWebhookController::class, 'store'])
-    ->middleware(['auth', 'verified', 'active', 'role:member', 'permission:webhooks.manage'])
+    ->middleware(['auth', 'verified', 'active', 'role:member', 'permission:webhooks.manage', 'module:webhooks'])
     ->name('member.webhooks.store');
 Route::put('/member/webhooks/{webhook}', [MemberWebhookController::class, 'update'])
-    ->middleware(['auth', 'verified', 'active', 'role:member', 'permission:webhooks.manage'])
+    ->middleware(['auth', 'verified', 'active', 'role:member', 'permission:webhooks.manage', 'module:webhooks'])
     ->name('member.webhooks.update');
 Route::delete('/member/webhooks/{webhook}', [MemberWebhookController::class, 'destroy'])
-    ->middleware(['auth', 'verified', 'active', 'role:member', 'permission:webhooks.manage'])
+    ->middleware(['auth', 'verified', 'active', 'role:member', 'permission:webhooks.manage', 'module:webhooks'])
     ->name('member.webhooks.destroy');
 Route::post('/member/webhooks/{webhook}/test', [MemberWebhookController::class, 'test'])
-    ->middleware(['auth', 'verified', 'active', 'role:member', 'permission:webhooks.manage'])
+    ->middleware(['auth', 'verified', 'active', 'role:member', 'permission:webhooks.manage', 'module:webhooks'])
     ->name('member.webhooks.test');
 Route::post('/member/webhooks/{webhook}/regenerate-secret', [MemberWebhookController::class, 'regenerateSecret'])
-    ->middleware(['auth', 'verified', 'active', 'role:member', 'permission:webhooks.manage'])
+    ->middleware(['auth', 'verified', 'active', 'role:member', 'permission:webhooks.manage', 'module:webhooks'])
     ->name('member.webhooks.regenerate-secret');
 Route::get('/member/webhooks/{webhook}/deliveries', [MemberWebhookController::class, 'deliveries'])
-    ->middleware(['auth', 'verified', 'active', 'role:member', 'permission:webhooks.manage'])
+    ->middleware(['auth', 'verified', 'active', 'role:member', 'permission:webhooks.manage', 'module:webhooks'])
     ->name('member.webhooks.deliveries');
 Route::post('/member/webhooks/deliveries/{delivery}/retry', [MemberWebhookController::class, 'retryDelivery'])
-    ->middleware(['auth', 'verified', 'active', 'role:member', 'permission:webhooks.manage'])
+    ->middleware(['auth', 'verified', 'active', 'role:member', 'permission:webhooks.manage', 'module:webhooks'])
     ->name('member.webhooks.deliveries.retry');
 
 Route::get('/member/help', [MemberHelpArticleController::class, 'index'])
-    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->middleware(['auth', 'verified', 'active', 'role:member', 'module:support'])
     ->name('member.help.index');
 Route::get('/member/help/{slug}', [MemberHelpArticleController::class, 'show'])
-    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->middleware(['auth', 'verified', 'active', 'role:member', 'module:support'])
     ->name('member.help.show');
 
 Route::get('/member/preferences', [MemberPreferenceController::class, 'edit'])
@@ -320,19 +320,19 @@ Route::put('/member/preferences', [MemberPreferenceController::class, 'update'])
     ->name('member.preferences.update');
 
 Route::get('/member/files', [MemberMediaFileController::class, 'index'])
-    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->middleware(['auth', 'verified', 'active', 'role:member', 'module:media'])
     ->name('member.files.index');
 Route::post('/member/files', [MemberMediaFileController::class, 'store'])
-    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->middleware(['auth', 'verified', 'active', 'role:member', 'module:media'])
     ->name('member.files.store');
 Route::get('/member/files/{file}', [MemberMediaFileController::class, 'show'])
-    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->middleware(['auth', 'verified', 'active', 'role:member', 'module:media'])
     ->name('member.files.show');
 Route::get('/member/files/{file}/download', [MemberMediaFileController::class, 'download'])
-    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->middleware(['auth', 'verified', 'active', 'role:member', 'module:media'])
     ->name('member.files.download');
 Route::delete('/member/files/{file}', [MemberMediaFileController::class, 'destroy'])
-    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->middleware(['auth', 'verified', 'active', 'role:member', 'module:media'])
     ->name('member.files.destroy');
 
 Route::get('/member/sessions', [MemberSessionController::class, 'index'])
@@ -416,22 +416,22 @@ Route::prefix('admin')->middleware(['auth', 'admin_or_user:1'])->group(function 
         ->name('admin.invitations.resend');
 
     Route::get('/legal-documents', [LegalDocumentController::class, 'index'])
-        ->middleware('permission_or_user:legal-documents.view,1')
+        ->middleware(['permission_or_user:legal-documents.view,1', 'module:legal'])
         ->name('admin.legal-documents.index');
     Route::get('/legal-documents/create', [LegalDocumentController::class, 'create'])
-        ->middleware('permission_or_user:legal-documents.create,1')
+        ->middleware(['permission_or_user:legal-documents.create,1', 'module:legal'])
         ->name('admin.legal-documents.create');
     Route::post('/legal-documents', [LegalDocumentController::class, 'store'])
-        ->middleware('permission_or_user:legal-documents.create,1')
+        ->middleware(['permission_or_user:legal-documents.create,1', 'module:legal'])
         ->name('admin.legal-documents.store');
     Route::get('/legal-documents/{document}', [LegalDocumentController::class, 'show'])
-        ->middleware('permission_or_user:legal-documents.view,1')
+        ->middleware(['permission_or_user:legal-documents.view,1', 'module:legal'])
         ->name('admin.legal-documents.show');
     Route::get('/legal-documents/{document}/edit', [LegalDocumentController::class, 'edit'])
-        ->middleware('permission_or_user:legal-documents.update,1')
+        ->middleware(['permission_or_user:legal-documents.update,1', 'module:legal'])
         ->name('admin.legal-documents.edit');
     Route::put('/legal-documents/{document}', [LegalDocumentController::class, 'update'])
-        ->middleware('permission_or_user:legal-documents.update,1')
+        ->middleware(['permission_or_user:legal-documents.update,1', 'module:legal'])
         ->name('admin.legal-documents.update');
 
     Route::get('/roles', [RoleController::class, 'index'])->name('admin.roles.index');
@@ -446,22 +446,22 @@ Route::prefix('admin')->middleware(['auth', 'admin_or_user:1'])->group(function 
         ->name('admin.activity.index');
 
     Route::get('/exports', [ExportController::class, 'index'])
-        ->middleware('permission_or_user:exports.view,1')
+        ->middleware(['permission_or_user:exports.view,1', 'module:exports'])
         ->name('admin.exports.index');
     Route::get('/exports/users', [ExportController::class, 'users'])
-        ->middleware('permission_or_user:exports.download,1')
+        ->middleware(['permission_or_user:exports.download,1', 'module:exports'])
         ->name('admin.exports.users');
     Route::get('/exports/subscriptions', [ExportController::class, 'subscriptions'])
-        ->middleware('permission_or_user:exports.download,1')
+        ->middleware(['permission_or_user:exports.download,1', 'module:exports'])
         ->name('admin.exports.subscriptions');
     Route::get('/exports/payments', [ExportController::class, 'payments'])
-        ->middleware('permission_or_user:exports.download,1')
+        ->middleware(['permission_or_user:exports.download,1', 'module:exports'])
         ->name('admin.exports.payments');
     Route::get('/exports/tickets', [ExportController::class, 'tickets'])
-        ->middleware('permission_or_user:exports.download,1')
+        ->middleware(['permission_or_user:exports.download,1', 'module:exports'])
         ->name('admin.exports.tickets');
     Route::get('/exports/activities', [ExportController::class, 'activities'])
-        ->middleware('permission_or_user:exports.download,1')
+        ->middleware(['permission_or_user:exports.download,1', 'module:exports'])
         ->name('admin.exports.activities');
 
     Route::get('/system-errors', [SystemErrorController::class, 'index'])
@@ -475,23 +475,23 @@ Route::prefix('admin')->middleware(['auth', 'admin_or_user:1'])->group(function 
         ->name('admin.system-errors.resolve');
 
     Route::get('/api-keys', [AdminApiKeyController::class, 'index'])
-        ->middleware('permission_or_user:api-keys.view,1')
+        ->middleware(['permission_or_user:api-keys.view,1', 'module:api'])
         ->name('admin.api-keys.index');
     Route::get('/api-keys/{apiKey}', [AdminApiKeyController::class, 'show'])
-        ->middleware('permission_or_user:api-keys.view,1')
+        ->middleware(['permission_or_user:api-keys.view,1', 'module:api'])
         ->name('admin.api-keys.show');
     Route::put('/api-keys/{apiKey}/revoke', [AdminApiKeyController::class, 'revoke'])
-        ->middleware('permission_or_user:api-keys.revoke,1')
+        ->middleware(['permission_or_user:api-keys.revoke,1', 'module:api'])
         ->name('admin.api-keys.revoke');
 
     Route::get('/webhooks', [AdminWebhookController::class, 'index'])
-        ->middleware('permission_or_user:webhooks.view,1')
+        ->middleware(['permission_or_user:webhooks.view,1', 'module:webhooks'])
         ->name('admin.webhooks.index');
     Route::get('/webhooks/{webhook}', [AdminWebhookController::class, 'show'])
-        ->middleware('permission_or_user:webhooks.view,1')
+        ->middleware(['permission_or_user:webhooks.view,1', 'module:webhooks'])
         ->name('admin.webhooks.show');
     Route::get('/webhooks/{webhook}/deliveries', [AdminWebhookController::class, 'deliveries'])
-        ->middleware('permission_or_user:webhooks.view,1')
+        ->middleware(['permission_or_user:webhooks.view,1', 'module:webhooks'])
         ->name('admin.webhooks.deliveries');
 
     Route::get('/queues', [QueueController::class, 'index'])
@@ -525,141 +525,141 @@ Route::prefix('admin')->middleware(['auth', 'admin_or_user:1'])->group(function 
         ->name('admin.security-events.show');
 
     Route::get('/feature-flags', [FeatureFlagController::class, 'index'])
-        ->middleware('permission_or_user:feature-flags.view,1')
+        ->middleware(['permission_or_user:feature-flags.view,1', 'module:feature-flags'])
         ->name('admin.feature-flags.index');
     Route::get('/feature-flags/create', [FeatureFlagController::class, 'create'])
-        ->middleware('permission_or_user:feature-flags.create,1')
+        ->middleware(['permission_or_user:feature-flags.create,1', 'module:feature-flags'])
         ->name('admin.feature-flags.create');
     Route::post('/feature-flags', [FeatureFlagController::class, 'store'])
-        ->middleware('permission_or_user:feature-flags.create,1')
+        ->middleware(['permission_or_user:feature-flags.create,1', 'module:feature-flags'])
         ->name('admin.feature-flags.store');
     Route::get('/feature-flags/{flag}/edit', [FeatureFlagController::class, 'edit'])
-        ->middleware('permission_or_user:feature-flags.update,1')
+        ->middleware(['permission_or_user:feature-flags.update,1', 'module:feature-flags'])
         ->name('admin.feature-flags.edit');
     Route::put('/feature-flags/{flag}', [FeatureFlagController::class, 'update'])
-        ->middleware('permission_or_user:feature-flags.update,1')
+        ->middleware(['permission_or_user:feature-flags.update,1', 'module:feature-flags'])
         ->name('admin.feature-flags.update');
 
     Route::get('/announcements', [AdminSystemAnnouncementController::class, 'index'])
-        ->middleware('permission_or_user:announcements.view,1')
+        ->middleware(['permission_or_user:announcements.view,1', 'module:announcements'])
         ->name('admin.announcements.index');
     Route::get('/announcements/create', [AdminSystemAnnouncementController::class, 'create'])
-        ->middleware('permission_or_user:announcements.create,1')
+        ->middleware(['permission_or_user:announcements.create,1', 'module:announcements'])
         ->name('admin.announcements.create');
     Route::post('/announcements', [AdminSystemAnnouncementController::class, 'store'])
-        ->middleware('permission_or_user:announcements.create,1')
+        ->middleware(['permission_or_user:announcements.create,1', 'module:announcements'])
         ->name('admin.announcements.store');
     Route::get('/announcements/{announcement}/edit', [AdminSystemAnnouncementController::class, 'edit'])
-        ->middleware('permission_or_user:announcements.update,1')
+        ->middleware(['permission_or_user:announcements.update,1', 'module:announcements'])
         ->name('admin.announcements.edit');
     Route::put('/announcements/{announcement}', [AdminSystemAnnouncementController::class, 'update'])
-        ->middleware('permission_or_user:announcements.update,1')
+        ->middleware(['permission_or_user:announcements.update,1', 'module:announcements'])
         ->name('admin.announcements.update');
     Route::delete('/announcements/{announcement}', [AdminSystemAnnouncementController::class, 'destroy'])
-        ->middleware('permission_or_user:announcements.delete,1')
+        ->middleware(['permission_or_user:announcements.delete,1', 'module:announcements'])
         ->name('admin.announcements.destroy');
 
     Route::get('/plans/{plan}/features', [PlanFeatureFlagController::class, 'edit'])
-        ->middleware('permission_or_user:feature-flags.update,1')
+        ->middleware(['permission_or_user:feature-flags.update,1', 'module:feature-flags'])
         ->name('admin.plans.features.edit');
     Route::put('/plans/{plan}/features', [PlanFeatureFlagController::class, 'update'])
-        ->middleware('permission_or_user:feature-flags.update,1')
+        ->middleware(['permission_or_user:feature-flags.update,1', 'module:feature-flags'])
         ->name('admin.plans.features.update');
 
     Route::get('/plans', [PlanController::class, 'index'])
-        ->middleware('permission_or_user:plans.view,1')
+        ->middleware(['permission_or_user:plans.view,1', 'module:billing'])
         ->name('admin.plans.index');
     Route::get('/plans/create', [PlanController::class, 'create'])
-        ->middleware('permission_or_user:plans.create,1')
+        ->middleware(['permission_or_user:plans.create,1', 'module:billing'])
         ->name('admin.plans.create');
     Route::post('/plans', [PlanController::class, 'store'])
-        ->middleware('permission_or_user:plans.create,1')
+        ->middleware(['permission_or_user:plans.create,1', 'module:billing'])
         ->name('admin.plans.store');
     Route::get('/plans/{plan}/edit', [PlanController::class, 'edit'])
-        ->middleware('permission_or_user:plans.update,1')
+        ->middleware(['permission_or_user:plans.update,1', 'module:billing'])
         ->name('admin.plans.edit');
     Route::put('/plans/{plan}', [PlanController::class, 'update'])
-        ->middleware('permission_or_user:plans.update,1')
+        ->middleware(['permission_or_user:plans.update,1', 'module:billing'])
         ->name('admin.plans.update');
     Route::delete('/plans/{plan}', [PlanController::class, 'destroy'])
-        ->middleware('permission_or_user:plans.delete,1')
+        ->middleware(['permission_or_user:plans.delete,1', 'module:billing'])
         ->name('admin.plans.destroy');
 
     Route::get('/payments', [PaymentController::class, 'index'])
-        ->middleware('permission_or_user:payments.view,1')
+        ->middleware(['permission_or_user:payments.view,1', 'module:billing'])
         ->name('admin.payments.index');
     Route::get('/payments/create', [PaymentController::class, 'create'])
-        ->middleware('permission_or_user:payments.create,1')
+        ->middleware(['permission_or_user:payments.create,1', 'module:billing'])
         ->name('admin.payments.create');
     Route::post('/payments', [PaymentController::class, 'store'])
-        ->middleware('permission_or_user:payments.create,1')
+        ->middleware(['permission_or_user:payments.create,1', 'module:billing'])
         ->name('admin.payments.store');
     Route::get('/payments/{payment}/edit', [PaymentController::class, 'edit'])
-        ->middleware('permission_or_user:payments.update,1')
+        ->middleware(['permission_or_user:payments.update,1', 'module:billing'])
         ->name('admin.payments.edit');
     Route::put('/payments/{payment}', [PaymentController::class, 'update'])
-        ->middleware('permission_or_user:payments.update,1')
+        ->middleware(['permission_or_user:payments.update,1', 'module:billing'])
         ->name('admin.payments.update');
 
     Route::get('/coupons', [CouponController::class, 'index'])
-        ->middleware('permission_or_user:coupons.view,1')
+        ->middleware(['permission_or_user:coupons.view,1', 'module:billing'])
         ->name('admin.coupons.index');
     Route::get('/coupons/create', [CouponController::class, 'create'])
-        ->middleware('permission_or_user:coupons.create,1')
+        ->middleware(['permission_or_user:coupons.create,1', 'module:billing'])
         ->name('admin.coupons.create');
     Route::post('/coupons', [CouponController::class, 'store'])
-        ->middleware('permission_or_user:coupons.create,1')
+        ->middleware(['permission_or_user:coupons.create,1', 'module:billing'])
         ->name('admin.coupons.store');
     Route::get('/coupons/{coupon}/edit', [CouponController::class, 'edit'])
-        ->middleware('permission_or_user:coupons.update,1')
+        ->middleware(['permission_or_user:coupons.update,1', 'module:billing'])
         ->name('admin.coupons.edit');
     Route::put('/coupons/{coupon}', [CouponController::class, 'update'])
-        ->middleware('permission_or_user:coupons.update,1')
+        ->middleware(['permission_or_user:coupons.update,1', 'module:billing'])
         ->name('admin.coupons.update');
     Route::delete('/coupons/{coupon}', [CouponController::class, 'destroy'])
-        ->middleware('permission_or_user:coupons.delete,1')
+        ->middleware(['permission_or_user:coupons.delete,1', 'module:billing'])
         ->name('admin.coupons.destroy');
 
     Route::get('/invoices', [AdminInvoiceController::class, 'index'])
-        ->middleware('permission_or_user:invoices.view,1')
+        ->middleware(['permission_or_user:invoices.view,1', 'module:billing'])
         ->name('admin.invoices.index');
     Route::get('/invoices/{invoice}', [AdminInvoiceController::class, 'show'])
-        ->middleware('permission_or_user:invoices.view,1')
+        ->middleware(['permission_or_user:invoices.view,1', 'module:billing'])
         ->name('admin.invoices.show');
     Route::get('/invoices/{invoice}/download', [AdminInvoiceController::class, 'download'])
-        ->middleware('permission_or_user:invoices.download,1')
+        ->middleware(['permission_or_user:invoices.download,1', 'module:billing'])
         ->name('admin.invoices.download');
 
     Route::get('/support', [AdminSupportTicketController::class, 'index'])
-        ->middleware('permission_or_user:support.view,1')
+        ->middleware(['permission_or_user:support.view,1', 'module:support'])
         ->name('admin.support.index');
     Route::get('/support/{ticket}', [AdminSupportTicketController::class, 'show'])
-        ->middleware('permission_or_user:support.view,1')
+        ->middleware(['permission_or_user:support.view,1', 'module:support'])
         ->name('admin.support.show');
     Route::post('/support/{ticket}/reply', [AdminSupportTicketController::class, 'reply'])
-        ->middleware('permission_or_user:support.reply,1')
+        ->middleware(['permission_or_user:support.reply,1', 'module:support'])
         ->name('admin.support.reply');
     Route::put('/support/{ticket}', [AdminSupportTicketController::class, 'update'])
-        ->middleware('permission_or_user:support.update,1')
+        ->middleware(['permission_or_user:support.update,1', 'module:support'])
         ->name('admin.support.update');
 
     Route::get('/help', [HelpArticleController::class, 'index'])
-        ->middleware('permission_or_user:help.view,1')
+        ->middleware(['permission_or_user:help.view,1', 'module:support'])
         ->name('admin.help.index');
     Route::get('/help/create', [HelpArticleController::class, 'create'])
-        ->middleware('permission_or_user:help.create,1')
+        ->middleware(['permission_or_user:help.create,1', 'module:support'])
         ->name('admin.help.create');
     Route::post('/help', [HelpArticleController::class, 'store'])
-        ->middleware('permission_or_user:help.create,1')
+        ->middleware(['permission_or_user:help.create,1', 'module:support'])
         ->name('admin.help.store');
     Route::get('/help/{article}/edit', [HelpArticleController::class, 'edit'])
-        ->middleware('permission_or_user:help.update,1')
+        ->middleware(['permission_or_user:help.update,1', 'module:support'])
         ->name('admin.help.edit');
     Route::put('/help/{article}', [HelpArticleController::class, 'update'])
-        ->middleware('permission_or_user:help.update,1')
+        ->middleware(['permission_or_user:help.update,1', 'module:support'])
         ->name('admin.help.update');
     Route::delete('/help/{article}', [HelpArticleController::class, 'destroy'])
-        ->middleware('permission_or_user:help.delete,1')
+        ->middleware(['permission_or_user:help.delete,1', 'module:support'])
         ->name('admin.help.destroy');
 
     Route::get('/reports', [ReportController::class, 'index'])

@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Console\Commands\CreateSuperAdmin;
+use App\Console\Commands\InstallSaas;
 use App\Models\ApiKey;
 use App\Models\MediaFile;
 use App\Models\Payment;
@@ -37,6 +39,14 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Registra comandos del starter kit cuando se ejecuta en consola.
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                CreateSuperAdmin::class,
+                InstallSaas::class,
+            ]);
+        }
+
         // Permite al usuario ID 1 pasar todas las validaciones de autorizacion.
         Gate::before(function ($user) {
             return (int) $user->id === 1 ? true : null;

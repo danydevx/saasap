@@ -15,6 +15,11 @@ class UserNotificationService
         ?string $url = null,
         ?array $metadata = null
     ): ?UserNotification {
+        // Evita crear notificaciones si el modulo esta desactivado.
+        if (! app(ModuleService::class)->isEnabled('notifications')) {
+            return null;
+        }
+
         $preferences = app(NotificationPreferenceService::class);
         if (! $preferences->allows($user, $type, 'in_app')) {
             return null;

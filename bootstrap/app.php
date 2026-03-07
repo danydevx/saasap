@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\ApiKeyAuth;
 use App\Http\Middleware\CheckMaintenanceMode;
+use App\Http\Middleware\CheckModuleEnabled;
 use App\Http\Middleware\EnsureAdminOrUser;
 use App\Http\Middleware\EnsureLegalDocumentsAccepted;
 use App\Http\Middleware\EnsurePermissionOrUser;
@@ -41,6 +42,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'active' => EnsureUserActive::class,
             'admin_or_user' => EnsureAdminOrUser::class,
             'permission_or_user' => EnsurePermissionOrUser::class,
+            'module' => CheckModuleEnabled::class,
             'verified' => EnsureEmailIsVerified::class,
             'role' => RoleMiddleware::class,
             'permission' => PermissionMiddleware::class,

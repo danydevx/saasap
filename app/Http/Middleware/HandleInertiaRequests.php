@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Services\FeatureService;
+use App\Services\ModuleService;
 use App\Services\SystemAnnouncementService;
 use App\Services\TemplateRenderService;
 use Illuminate\Http\Request;
@@ -62,6 +63,7 @@ class HandleInertiaRequests extends Middleware
                 ? $user->notifications()->where('is_read', false)->count()
                 : 0,
             'features' => $user ? $featureService->allForUser($user) : [],
+            'modules' => app(ModuleService::class)->forFrontend(),
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),

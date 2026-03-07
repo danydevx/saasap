@@ -11,6 +11,11 @@ class SystemAnnouncementService
 {
     public function activeForUser(User $user, bool $markSeen = true): Collection
     {
+        // Evita cargar anuncios si el modulo esta desactivado.
+        if (! app(ModuleService::class)->isEnabled('announcements')) {
+            return collect();
+        }
+
         $audiences = $this->audiencesForUser($user);
 
         $announcements = SystemAnnouncement::query()

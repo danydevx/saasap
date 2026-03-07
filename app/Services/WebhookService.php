@@ -28,6 +28,11 @@ class WebhookService
 
     public function dispatchUserEvent(User $user, string $event, array $data): void
     {
+        // Evita ejecutar webhooks si el modulo esta desactivado.
+        if (! app(ModuleService::class)->isEnabled('webhooks')) {
+            return;
+        }
+
         $endpoints = WebhookEndpoint::query()
             ->where('user_id', $user->id)
             ->where('is_active', true)
@@ -45,6 +50,18 @@ class WebhookService
 
     public function sendTest(WebhookEndpoint $endpoint): WebhookDelivery
     {
+        // Evita enviar pruebas si el modulo esta desactivado.
+        if (! app(ModuleService::class)->isEnabled('webhooks')) {
+            return WebhookDelivery::create([
+                'webhook_endpoint_id' => $endpoint->id,
+                'event' => 'webhook.test',
+                'payload' => [],
+                'attempt_count' => 0,
+                'failed_at' => now(),
+                'error_message' => 'Modulo webhooks desactivado',
+            ]);
+        }
+
         $payload = $this->buildPayload($endpoint->user, 'webhook.test', [
             'message' => 'Evento de prueba',
         ]);
@@ -103,6 +120,11 @@ class WebhookService
 
     public function deliverNow(int $deliveryId): void
     {
+        // Evita procesar entregas si el modulo esta desactivado.
+        if (! app(ModuleService::class)->isEnabled('webhooks')) {
+            return;
+        }
+
         $delivery = WebhookDelivery::query()->with('endpoint')->find($deliveryId);
         if (! $delivery || ! $delivery->endpoint) {
             return;

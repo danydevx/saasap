@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Models\LegalAcceptance;
 use App\Models\LegalDocument;
+use App\Services\ModuleService;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -13,6 +14,11 @@ class EnsureLegalDocumentsAccepted
     public function handle(Request $request, Closure $next): Response
     {
         $user = $request->user();
+
+        // Evita forzar aceptacion si el modulo legal esta desactivado.
+        if (! app(ModuleService::class)->isEnabled('legal')) {
+            return $next($request);
+        }
 
         if (! $user || ! $user->is_active) {
             return $next($request);

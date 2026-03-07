@@ -6,18 +6,18 @@
 
         <div class="ms-auto d-flex align-items-center gap-2">
           <Link href="/member/account" class="btn btn-outline-secondary btn-sm">Cuenta</Link>
-          <Link href="/member/payments" class="btn btn-outline-secondary btn-sm">Pagos</Link>
-          <Link href="/member/invoices" class="btn btn-outline-secondary btn-sm">Comprobantes</Link>
+          <Link v-if="canBilling" href="/member/payments" class="btn btn-outline-secondary btn-sm">Pagos</Link>
+          <Link v-if="canBilling" href="/member/invoices" class="btn btn-outline-secondary btn-sm">Comprobantes</Link>
           <Link v-if="canSupport" href="/member/support" class="btn btn-outline-secondary btn-sm">Soporte</Link>
-          <Link href="/member/help" class="btn btn-outline-secondary btn-sm">Ayuda</Link>
+          <Link v-if="canSupport" href="/member/help" class="btn btn-outline-secondary btn-sm">Ayuda</Link>
           <Link v-if="canUseIntegrations" href="/member/integrations" class="btn btn-outline-secondary btn-sm">Integraciones</Link>
           <Link href="/member/preferences" class="btn btn-outline-secondary btn-sm">Preferencias</Link>
           <Link href="/member/notification-preferences" class="btn btn-outline-secondary btn-sm">Notif. preferencias</Link>
           <Link v-if="canUseApi" href="/member/api-keys" class="btn btn-outline-secondary btn-sm">API Keys</Link>
           <Link v-if="canUseWebhooks" href="/member/webhooks" class="btn btn-outline-secondary btn-sm">Webhooks</Link>
           <Link href="/member/sessions" class="btn btn-outline-secondary btn-sm">Sesiones</Link>
-          <Link href="/member/files" class="btn btn-outline-secondary btn-sm">Archivos</Link>
-          <Link href="/member/notifications" class="btn btn-outline-secondary btn-sm">
+          <Link v-if="canMedia" href="/member/files" class="btn btn-outline-secondary btn-sm">Archivos</Link>
+          <Link v-if="canNotifications" href="/member/notifications" class="btn btn-outline-secondary btn-sm">
             Notificaciones
             <span v-if="unreadCount > 0" class="badge text-bg-primary ms-1">
               {{ unreadCount }}
@@ -95,11 +95,15 @@ const page = usePage()
 const unreadCount = computed(() => page.props.notificationUnreadCount || 0)
 const features = computed(() => page.props.features || {})
 const permissions = computed(() => page.props.auth?.permissions || [])
+const modules = computed(() => page.props.modules || {})
 const announcements = computed(() => page.props.systemAnnouncements || [])
 
-const canUseApi = computed(() => features.value.can_use_api !== false)
-const canUseWebhooks = computed(() => features.value.can_use_webhooks !== false)
-const canSupport = computed(() => features.value.module_support !== false)
+const canBilling = computed(() => modules.value.billing !== false)
+const canUseApi = computed(() => modules.value.api !== false && features.value.can_use_api !== false)
+const canUseWebhooks = computed(() => modules.value.webhooks !== false && features.value.can_use_webhooks !== false)
+const canSupport = computed(() => modules.value.support !== false && features.value.module_support !== false)
+const canMedia = computed(() => modules.value.media !== false)
+const canNotifications = computed(() => modules.value.notifications !== false)
 
 // Oculta el acceso a integraciones si el usuario no tiene permiso o feature habilitado.
 const canUseIntegrations = computed(() => {
@@ -108,7 +112,14 @@ const canUseIntegrations = computed(() => {
   const hasApiPermission = permissions.value.includes('api-keys.manage')
   const hasWebhookPermission = permissions.value.includes('webhooks.manage')
 
-  return (apiEnabled && hasApiPermission) || (webhooksEnabled && hasWebhookPermission)
+  const moduleApi = modules.value.api !== false
+  const moduleWebhooks = modules.value.webhooks !== false
+  const moduleIntegrations = modules.value.integrations !== false
+
+  return (
+    moduleIntegrations &&
+    ((apiEnabled && moduleApi && hasApiPermission) || (webhooksEnabled && moduleWebhooks && hasWebhookPermission))
+  )
 })
 
 const dismiss = (id) => {

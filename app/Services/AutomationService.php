@@ -35,6 +35,12 @@ class AutomationService
             return;
         }
 
+        // Omite automatizaciones si el modulo correspondiente esta desactivado.
+        $moduleKey = $this->moduleForEvent($eventKey);
+        if ($moduleKey && ! app(ModuleService::class)->isEnabled($moduleKey)) {
+            return;
+        }
+
         $automations = Automation::query()
             ->where('event_key', $eventKey)
             ->where('is_active', true)
@@ -67,6 +73,17 @@ class AutomationService
         try {
             $action = $automation->action_key;
             $config = $automation->config ?? [];
+
+            // Omite la ejecucion si el modulo relacionado esta desactivado.
+            $moduleKey = $this->moduleForEvent($eventKey);
+            if ($moduleKey && ! app(ModuleService::class)->isEnabled($moduleKey)) {
+                $this->recordRun($automation, 'skipped', $eventKey, [
+                    'reason' => 'module_disabled',
+                    'module' => $moduleKey,
+                ]);
+
+                return;
+            }
 
             $handled = match ($action) {
                 'send_email' => $this->sendEmail($config, $context),
@@ -260,6 +277,27 @@ class AutomationService
         }
 
         return $sanitized;
+    }
+
+    private function moduleForEvent(string $eventKey): ?string
+    {
+        if (str_starts_with($eventKey, 'billing.')) {
+            return 'billing';
+        }
+        if (str_starts_with($eventKey, 'subscription.')) {
+            return 'billing';
+        }
+        if (str_starts_with($eventKey, 'support.')) {
+            return 'support';
+        }
+        if (str_starts_with($eventKey, 'webhook.')) {
+            return 'webhooks';
+        }
+        if (str_starts_with($eventKey, 'user.')) {
+            return 'users';
+        }
+
+        return null;
     }
 
     private function recordRun(Automation $automation, string $status, string $eventKey, array $metadata = []): void

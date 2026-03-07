@@ -77,11 +77,12 @@
                 <li v-if="canViewActivity"><Link href="/admin/activity" class="dropdown-item" prefetch="hover">Actividad</Link></li>
                 <li v-if="canViewSecurity"><Link href="/admin/security-events" class="dropdown-item" prefetch="hover">Seguridad</Link></li>
                 <li v-if="canViewSystemErrors"><Link href="/admin/system-errors" class="dropdown-item" prefetch="hover">Errores</Link></li>
-                <li v-if="canViewFeatureFlags"><Link href="/admin/feature-flags" class="dropdown-item" prefetch="hover">Feature Flags</Link></li>
-                <li v-if="canViewAnnouncements"><Link href="/admin/announcements" class="dropdown-item" prefetch="hover">Anuncios</Link></li>
-                <li v-if="canViewAutomations"><Link href="/admin/automations" class="dropdown-item" prefetch="hover">Automatizaciones</Link></li>
+                <li v-if="canViewFeatureFlags && modules['feature-flags'] !== false"><Link href="/admin/feature-flags" class="dropdown-item" prefetch="hover">Feature Flags</Link></li>
+                <li v-if="canViewAnnouncements && modules.announcements !== false"><Link href="/admin/announcements" class="dropdown-item" prefetch="hover">Anuncios</Link></li>
+                <li v-if="canViewAutomations && modules.automations !== false"><Link href="/admin/automations" class="dropdown-item" prefetch="hover">Automatizaciones</Link></li>
                 <li v-if="canViewTemplates"><Link href="/admin/message-templates" class="dropdown-item" prefetch="hover">Plantillas</Link></li>
-                <li v-if="canViewLegalDocuments"><Link href="/admin/legal-documents" class="dropdown-item" prefetch="hover">Legales</Link></li>
+                <li v-if="isSuperAdmin && canViewModules"><Link href="/admin/modules" class="dropdown-item" prefetch="hover">Modulos</Link></li>
+                <li v-if="canViewLegalDocuments && modules.legal !== false"><Link href="/admin/legal-documents" class="dropdown-item" prefetch="hover">Legales</Link></li>
                 <li v-if="canViewSettings"><Link href="/admin/settings" class="dropdown-item" prefetch="hover">Settings</Link></li>
               </ul>
             </li>
@@ -130,7 +131,9 @@ import { Link, usePage } from '@inertiajs/vue3'
 
 const page = usePage()
 const permissions = computed(() => page.props.auth?.permissions || [])
+const roles = computed(() => page.props.auth?.roles || [])
 const userId = computed(() => page.props.auth?.user?.id)
+const modules = computed(() => page.props.modules || {})
 const canViewSettings = computed(() => permissions.value.includes('settings.view') || userId.value === 1)
 const canViewPlans = computed(() => permissions.value.includes('plans.view') || userId.value === 1)
 const canViewActivity = computed(() => permissions.value.includes('activity.view') || userId.value === 1)
@@ -153,24 +156,31 @@ const canViewTemplates = computed(() => permissions.value.includes('templates.vi
 const canViewMonitor = computed(() => permissions.value.includes('reports.view') || userId.value === 1)
 const canViewSecurity = computed(() => permissions.value.includes('security-events.view') || userId.value === 1)
 const canViewLegalDocuments = computed(() => permissions.value.includes('legal-documents.view') || userId.value === 1)
+const canViewModules = computed(() => permissions.value.includes('modules.view') || userId.value === 1)
+const isSuperAdmin = computed(() => roles.value.includes('super-admin') || roles.value.includes('superadmin') || userId.value === 1)
 
 const showBillingMenu = computed(() =>
-  canViewPlans.value || canViewCoupons.value || canViewPayments.value || canViewInvoices.value
+  modules.value.billing !== false &&
+  (canViewPlans.value || canViewCoupons.value || canViewPayments.value || canViewInvoices.value)
 )
-const showSupportMenu = computed(() => canViewSupport.value || canViewHelp.value)
-const showDataMenu = computed(() => canViewReports.value || canViewExports.value)
-const showIntegrationsMenu = computed(() => canViewApiKeys.value || canViewWebhooks.value)
+const showSupportMenu = computed(() => modules.value.support !== false && (canViewSupport.value || canViewHelp.value))
+const showDataMenu = computed(() => modules.value.exports !== false && (canViewReports.value || canViewExports.value))
+const showIntegrationsMenu = computed(() =>
+  modules.value.integrations !== false &&
+  ((modules.value.api !== false && canViewApiKeys.value) || (modules.value.webhooks !== false && canViewWebhooks.value))
+)
 const showSystemMenu = computed(() =>
   canViewMonitor.value ||
   canViewQueues.value ||
   canViewActivity.value ||
   canViewSecurity.value ||
   canViewSystemErrors.value ||
-  canViewFeatureFlags.value ||
-  canViewAnnouncements.value ||
-  canViewAutomations.value ||
+  (canViewFeatureFlags.value && modules.value['feature-flags'] !== false) ||
+  (canViewAnnouncements.value && modules.value.announcements !== false) ||
+  (canViewAutomations.value && modules.value.automations !== false) ||
   canViewTemplates.value ||
-  canViewLegalDocuments.value ||
+  (isSuperAdmin.value && canViewModules.value) ||
+  (canViewLegalDocuments.value && modules.value.legal !== false) ||
   canViewSettings.value
 )
 </script>
