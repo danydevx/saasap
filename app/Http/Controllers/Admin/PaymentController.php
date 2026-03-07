@@ -113,7 +113,7 @@ class PaymentController extends Controller
             'request' => $request,
         ]);
 
-        if ($payment->user) {
+        if ($payment->user && in_array($type, ['payment_succeeded', 'payment_failed'], true)) {
             $webhooks->dispatchUserEvent($payment->user, $type === 'payment_succeeded' ? 'payment.succeeded' : 'payment.failed', [
                 'payment_id' => $payment->id,
                 'amount' => $payment->amount,

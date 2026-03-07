@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\SendVerificationEmailJob;
 use App\Models\Plan;
 use App\Models\User;
 use App\Services\ActivityService;
@@ -418,7 +419,7 @@ class UserController extends Controller
             return back()->with('error', 'El usuario ya tiene email verificado.');
         }
 
-        $user->sendEmailVerificationNotification();
+        SendVerificationEmailJob::dispatch($user->id);
 
         $activity->log('user_verification_resent', [
             'user' => $user,

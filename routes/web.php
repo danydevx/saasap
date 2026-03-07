@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\InvoiceController as AdminInvoiceController;
 use App\Http\Controllers\Admin\PaymentController;
 use App\Http\Controllers\Admin\PermissionController;
 use App\Http\Controllers\Admin\PlanController;
+use App\Http\Controllers\Admin\QueueController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\SettingController;
@@ -369,6 +370,25 @@ Route::prefix('admin')->middleware(['auth', 'admin_or_user:1'])->group(function 
     Route::get('/webhooks/{webhook}/deliveries', [AdminWebhookController::class, 'deliveries'])
         ->middleware('permission_or_user:webhooks.view,1')
         ->name('admin.webhooks.deliveries');
+
+    Route::get('/queues', [QueueController::class, 'index'])
+        ->middleware('permission_or_user:queues.view,1')
+        ->name('admin.queues.index');
+    Route::get('/failed-jobs', [QueueController::class, 'failed'])
+        ->middleware('permission_or_user:queues.view,1')
+        ->name('admin.queues.failed');
+    Route::post('/failed-jobs/{id}/retry', [QueueController::class, 'retry'])
+        ->middleware('permission_or_user:queues.retry,1')
+        ->name('admin.queues.retry');
+    Route::delete('/failed-jobs/{id}', [QueueController::class, 'destroy'])
+        ->middleware('permission_or_user:queues.flush-failed,1')
+        ->name('admin.queues.destroy');
+    Route::post('/failed-jobs/retry-all', [QueueController::class, 'retryAll'])
+        ->middleware('permission_or_user:queues.retry,1')
+        ->name('admin.queues.retry-all');
+    Route::delete('/failed-jobs/flush', [QueueController::class, 'flush'])
+        ->middleware('permission_or_user:queues.flush-failed,1')
+        ->name('admin.queues.flush');
 
     Route::get('/plans', [PlanController::class, 'index'])
         ->middleware('permission_or_user:plans.view,1')

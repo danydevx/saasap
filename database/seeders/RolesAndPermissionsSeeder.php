@@ -73,6 +73,9 @@ class RolesAndPermissionsSeeder extends Seeder
             'webhooks.manage',
             'webhooks.view',
             'webhooks.update',
+            'queues.view',
+            'queues.retry',
+            'queues.flush-failed',
         ];
 
         foreach ($permissions as $permission) {
@@ -137,6 +140,9 @@ class RolesAndPermissionsSeeder extends Seeder
             'api-keys.revoke',
             'webhooks.view',
             'webhooks.update',
+            'queues.view',
+            'queues.retry',
+            'queues.flush-failed',
         ]);
 
         $user->givePermissionTo([]);

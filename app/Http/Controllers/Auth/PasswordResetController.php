@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\SendPasswordResetEmailJob;
 use App\Models\PasswordResetRequest;
 use App\Models\User;
-use App\Notifications\PasswordResetCodeNotification;
 use App\Services\ActivityService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -44,7 +44,7 @@ class PasswordResetController extends Controller
                 'expires_at' => now()->addMinutes(30),
             ]);
 
-            $user->notify(new PasswordResetCodeNotification($token, $code));
+            SendPasswordResetEmailJob::dispatch($user->id, $token, $code);
 
             $activity->log('user_password_reset_requested', [
                 'user' => $user,

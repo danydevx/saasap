@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Jobs\DeliverWebhookJob;
 use App\Models\User;
 use App\Models\WebhookDelivery;
 use App\Models\WebhookEndpoint;
@@ -38,7 +39,7 @@ class WebhookService
             }
 
             $payload = $this->buildPayload($user, $event, $data);
-            $this->deliver($endpoint, $event, $payload);
+            $this->enqueueDelivery($endpoint, $event, $payload);
         }
     }
 
@@ -48,7 +49,7 @@ class WebhookService
             'message' => 'Evento de prueba',
         ]);
 
-        return $this->deliver($endpoint, 'webhook.test', $payload);
+        return $this->enqueueDelivery($endpoint, 'webhook.test', $payload);
     }
 
     public function retryDelivery(WebhookDelivery $delivery): WebhookDelivery
@@ -65,7 +66,7 @@ class WebhookService
             'failed_at' => null,
         ]);
 
-        return $this->deliver($endpoint, $delivery->event, $payload, $delivery);
+        return $this->enqueueDelivery($endpoint, $delivery->event, $payload, $delivery);
     }
 
     private function endpointWantsEvent(WebhookEndpoint $endpoint, string $event): bool
@@ -86,7 +87,7 @@ class WebhookService
         ];
     }
 
-    private function deliver(WebhookEndpoint $endpoint, string $event, array $payload, ?WebhookDelivery $delivery = null): WebhookDelivery
+    public function enqueueDelivery(WebhookEndpoint $endpoint, string $event, array $payload, ?WebhookDelivery $delivery = null): WebhookDelivery
     {
         $delivery = $delivery ?: WebhookDelivery::create([
             'webhook_endpoint_id' => $endpoint->id,
@@ -95,6 +96,29 @@ class WebhookService
             'attempt_count' => 1,
         ]);
 
+        DeliverWebhookJob::dispatch($delivery->id);
+
+        return $delivery;
+    }
+
+    public function deliverNow(int $deliveryId): void
+    {
+        $delivery = WebhookDelivery::query()->with('endpoint')->find($deliveryId);
+        if (! $delivery || ! $delivery->endpoint) {
+            return;
+        }
+
+        $endpoint = $delivery->endpoint;
+        if (! $endpoint->is_active) {
+            $delivery->update([
+                'failed_at' => now(),
+                'error_message' => 'Webhook inactivo',
+            ]);
+
+            return;
+        }
+
+        $payload = $delivery->payload ?? [];
         $timestamp = now()->timestamp;
         $signature = $this->signature($endpoint->secret, $payload, $timestamp);
 
@@ -102,7 +126,7 @@ class WebhookService
             $response = Http::timeout(10)
                 ->acceptJson()
                 ->withHeaders([
-                    'X-Webhook-Event' => $event,
+                    'X-Webhook-Event' => $delivery->event,
                     'X-Webhook-Timestamp' => (string) $timestamp,
                     'X-Webhook-Signature' => $signature,
                 ])
@@ -141,8 +165,6 @@ class WebhookService
                 'failure_count' => $endpoint->failure_count + 1,
             ]);
         }
-
-        return $delivery;
     }
 
     private function signature(string $secret, array $payload, int $timestamp): string

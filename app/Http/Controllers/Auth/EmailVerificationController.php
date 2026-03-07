@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\SendVerificationEmailJob;
 use App\Services\ActivityService;
 use App\Services\UserNotificationService;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
@@ -77,7 +78,7 @@ class EmailVerificationController extends Controller
             return redirect('/member');
         }
 
-        $request->user()->sendEmailVerificationNotification();
+        SendVerificationEmailJob::dispatch($request->user()->id);
 
         return back()->with('success', 'Enviamos un nuevo correo de verificacion.');
     }
