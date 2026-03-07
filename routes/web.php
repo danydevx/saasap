@@ -3,11 +3,13 @@
 use App\Http\Controllers\Admin\ActivityController as AdminActivityController;
 use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\ExportController;
 use App\Http\Controllers\Admin\HelpArticleController;
 use App\Http\Controllers\Admin\InvoiceController as AdminInvoiceController;
 use App\Http\Controllers\Admin\PaymentController;
 use App\Http\Controllers\Admin\PermissionController;
 use App\Http\Controllers\Admin\PlanController;
+use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\SupportTicketController as AdminSupportTicketController;
@@ -275,6 +277,25 @@ Route::prefix('admin')->middleware(['auth', 'admin_or_user:1'])->group(function 
     Route::get('/activity', [AdminActivityController::class, 'index'])
         ->middleware('permission_or_user:activity.view,1')
         ->name('admin.activity.index');
+
+    Route::get('/exports', [ExportController::class, 'index'])
+        ->middleware('permission_or_user:exports.view,1')
+        ->name('admin.exports.index');
+    Route::get('/exports/users', [ExportController::class, 'users'])
+        ->middleware('permission_or_user:exports.download,1')
+        ->name('admin.exports.users');
+    Route::get('/exports/subscriptions', [ExportController::class, 'subscriptions'])
+        ->middleware('permission_or_user:exports.download,1')
+        ->name('admin.exports.subscriptions');
+    Route::get('/exports/payments', [ExportController::class, 'payments'])
+        ->middleware('permission_or_user:exports.download,1')
+        ->name('admin.exports.payments');
+    Route::get('/exports/tickets', [ExportController::class, 'tickets'])
+        ->middleware('permission_or_user:exports.download,1')
+        ->name('admin.exports.tickets');
+    Route::get('/exports/activities', [ExportController::class, 'activities'])
+        ->middleware('permission_or_user:exports.download,1')
+        ->name('admin.exports.activities');
 
     Route::get('/plans', [PlanController::class, 'index'])
         ->middleware('permission_or_user:plans.view,1')

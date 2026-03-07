@@ -5097,3 +5097,281 @@ Importante:
 - no agregar dependencias externas
 - mantener implementación simple
 - permitir extender tipos de actividad fácilmente
+
+=================================================================
+Instrucción 26: exportación de datos administrativos (CSV / Excel)
+=================================================================
+
+
+Implementar módulo base de exportación de datos administrativos para el SaaS.
+
+Contexto:
+Ya existen users, roles, suscripciones, pagos, tickets, reportes y activity log.
+Cada usuario es único.
+No hay organizaciones ni tenants.
+Se necesita que admin/superadmin puedan exportar información clave del sistema para análisis externo o respaldo operativo.
+No romper módulos actuales.
+
+Stack:
+Laravel 12 + Inertia + Vue 3 + JavaScript + Bootstrap 5.3.
+
+Reglas:
+- No TypeScript
+- Vue con `<script setup>`
+- Solo Composition API
+- No Options API
+- No API separada fuera del flujo web actual
+- No librerías nuevas innecesarias salvo la estrictamente necesaria para exportar archivos si el proyecto aún no tiene una solución
+- No refactorizar módulos no relacionados
+- Reutilizar estructura visual actual
+- Código simple y listo para producción
+
+Objetivo:
+Permitir exportar datos administrativos del sistema en formatos simples, comenzando por CSV y dejando la base lista para Excel después.
+
+Alcance de esta fase:
+- exportación de usuarios
+- exportación de suscripciones
+- exportación de pagos
+- exportación de tickets
+- exportación de activity logs
+- respetar filtros activos cuando aplique
+- descargas generadas desde backend
+- mantenerlo simple y reutilizable
+
+No incluir todavía:
+- exportaciones masivas asíncronas complejas
+- programar exportaciones automáticas
+- exportación PDF
+- compresión zip
+- plantillas avanzadas
+- columnas configurables por usuario final
+
+Permisos sugeridos:
+- exports.view
+- exports.download
+
+Acceso:
+- solo `superadmin` y `admin`
+- `member` no entra a exportaciones administrativas
+
+Formatos:
+Primera fase:
+- CSV obligatorio
+- Excel opcional solo si ya existe solución clara en el proyecto
+
+Preferencia:
+- implementar primero CSV
+- dejar arquitectura preparada para agregar Excel después
+
+Módulos exportables iniciales:
+- users
+- subscriptions
+- payments
+- support_tickets
+- activities
+
+Rutas sugeridas:
+- GET /admin/exports
+- GET /admin/exports/users
+- GET /admin/exports/subscriptions
+- GET /admin/exports/payments
+- GET /admin/exports/tickets
+- GET /admin/exports/activities
+
+Opcional:
+- usar una sola ruta dinámica por tipo si encaja mejor con la arquitectura actual
+- pero mantener validación fuerte del tipo permitido
+
+Controlador:
+- Admin/ExportController
+
+Métodos mínimos sugeridos:
+- index()
+- users()
+- subscriptions()
+- payments()
+- tickets()
+- activities()
+
+Vista:
+- resources/js/Pages/Admin/Exports/Index.vue
+
+Objetivo de la vista:
+- mostrar opciones de exportación
+- mostrar filtros básicos
+- permitir descargar archivos directamente
+- no crear una interfaz compleja
+
+Filtros:
+Cada exportación debe aceptar, cuando aplique, filtros simples desde query string.
+
+Filtros sugeridos por módulo:
+
+Users:
+- q
+- role
+- is_active
+- email_verified
+- date_from
+- date_to
+
+Subscriptions:
+- status
+- plan_id
+- date_from
+- date_to
+
+Payments:
+- status
+- provider
+- plan_id
+- date_from
+- date_to
+
+Tickets:
+- status
+- priority
+- category
+- date_from
+- date_to
+
+Activities:
+- user_id
+- type
+- date_from
+- date_to
+
+Reglas:
+- si un filtro ya existe en el listado admin correspondiente, reutilizar la misma lógica si es posible
+- exportar solo el conjunto filtrado
+- no exportar todos los datos ignorando filtros si el usuario venía filtrando
+
+Formato CSV:
+- encabezados claros
+- columnas legibles
+- UTF-8
+- nombres de archivo descriptivos con fecha
+- usar valores humanamente entendibles cuando sea posible
+- no exportar JSON crudo innecesario si puede resumirse
+
+Nombres de archivo sugeridos:
+- users-YYYY-MM-DD.csv
+- subscriptions-YYYY-MM-DD.csv
+- payments-YYYY-MM-DD.csv
+- tickets-YYYY-MM-DD.csv
+- activities-YYYY-MM-DD.csv
+
+Columnas mínimas sugeridas:
+
+Users:
+- id
+- name
+- email
+- role
+- is_active
+- email_verified
+- created_at
+
+Subscriptions:
+- id
+- user_id
+- user_name
+- user_email
+- plan
+- status
+- starts_at
+- ends_at
+- created_at
+
+Payments:
+- id
+- user_id
+- user_name
+- user_email
+- amount
+- currency
+- status
+- provider
+- provider_reference
+- paid_at
+- created_at
+
+Tickets:
+- id
+- user_id
+- user_name
+- user_email
+- subject
+- status
+- priority
+- category
+- last_reply_at
+- created_at
+
+Activities:
+- id
+- user_id
+- user_name
+- type
+- description
+- subject_type
+- subject_id
+- ip_address
+- created_at
+
+Seguridad:
+- validar permisos en backend
+- no permitir exportar tipos no autorizados
+- no exponer columnas sensibles
+- no exportar passwords, tokens, secretos, metadata sensible, códigos de verificación, firmas webhook ni payloads delicados
+- member no puede acceder a estas rutas
+
+UI:
+- usar layout admin
+- usar PageTitle
+- usar Breadcrumb
+- usar cards simples
+- usar botones claros por tipo de exportación
+- permitir indicar filtros antes de descargar
+- mantener estilo visual actual
+- no crear wizard complejo
+
+Backend:
+- generar archivo desde backend y devolver descarga
+- evitar cargar relaciones innecesarias
+- evitar N+1
+- usar chunking o stream si el volumen empieza a crecer, pero sin complicar demasiado en esta fase
+- si el dataset es razonable, implementar de forma simple
+- si ya existe patrón de exportación, reutilizarlo
+
+Integración:
+- revisar filtros ya existentes en módulos admin
+- revisar modelos:
+  - User
+  - Subscription
+  - Payment
+  - SupportTicket
+  - Activity
+- adaptarse a estructura actual
+- no romper listados admin actuales
+
+Actividad:
+Si ya existe módulo de auditoría:
+- registrar cuándo se descargó una exportación
+- guardar:
+  - actor
+  - tipo de exportación
+  - filtros básicos usados si es razonable
+
+Mensajes esperados:
+- "Exportación generada correctamente."
+- "No hay registros para exportar con los filtros seleccionados."
+- "No tienes permiso para descargar esta exportación."
+
+Importante:
+- generar solo archivos necesarios
+- no agregar archivos innecesarios
+- implementar primero CSV
+- dejar base lista para agregar Excel después
+- mantener implementación simple y extensible

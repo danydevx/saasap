@@ -45,6 +45,9 @@
             <li v-if="canViewReports" class="nav-item">
               <Link href="/admin/reports" class="nav-link" prefetch="hover">Reportes</Link>
             </li>
+            <li v-if="canViewExports" class="nav-item">
+              <Link href="/admin/exports" class="nav-link" prefetch="hover">Exportaciones</Link>
+            </li>
             <li v-if="canViewPayments" class="nav-item">
               <Link href="/admin/payments" class="nav-link" prefetch="hover">Pagos</Link>
             </li>
@@ -88,13 +91,16 @@
               <li v-if="canViewReports">
                 <Link href="/admin/reports" class="dropdown-item" prefetch="hover">Reportes</Link>
               </li>
+              <li v-if="canViewExports">
+                <Link href="/admin/exports" class="dropdown-item" prefetch="hover">Exportaciones</Link>
+              </li>
               <li v-if="canViewPayments">
                 <Link href="/admin/payments" class="dropdown-item" prefetch="hover">Pagos</Link>
               </li>
               <li v-if="canViewActivity">
                 <Link href="/admin/activity" class="dropdown-item" prefetch="hover">Actividad</Link>
               </li>
-              <li v-if="canViewSettings || canViewActivity || canViewPayments || canViewCoupons || canViewInvoices || canViewSupport || canViewHelp || canViewReports"><hr class="dropdown-divider" /></li>
+              <li v-if="canViewSettings || canViewActivity || canViewPayments || canViewCoupons || canViewInvoices || canViewSupport || canViewHelp || canViewReports || canViewExports"><hr class="dropdown-divider" /></li>
               <li>
                 <Link href="/logout" method="post" as="button" class="dropdown-item">
                   Salir
@@ -133,4 +139,5 @@ const canViewInvoices = computed(() => permissions.value.includes('invoices.view
 const canViewSupport = computed(() => permissions.value.includes('support.view') || userId.value === 1)
 const canViewHelp = computed(() => permissions.value.includes('help.view') || userId.value === 1)
 const canViewReports = computed(() => permissions.value.includes('reports.view') || userId.value === 1)
+const canViewExports = computed(() => permissions.value.includes('exports.view') || userId.value === 1)
 </script>
