@@ -10,6 +10,7 @@
           <Link href="/member/invoices" class="btn btn-outline-secondary btn-sm">Comprobantes</Link>
           <Link v-if="canSupport" href="/member/support" class="btn btn-outline-secondary btn-sm">Soporte</Link>
           <Link href="/member/help" class="btn btn-outline-secondary btn-sm">Ayuda</Link>
+          <Link href="/member/integrations" class="btn btn-outline-secondary btn-sm">Integraciones</Link>
           <Link href="/member/preferences" class="btn btn-outline-secondary btn-sm">Preferencias</Link>
           <Link href="/member/notification-preferences" class="btn btn-outline-secondary btn-sm">Notif. preferencias</Link>
           <Link v-if="canUseApi" href="/member/api-keys" class="btn btn-outline-secondary btn-sm">API Keys</Link>

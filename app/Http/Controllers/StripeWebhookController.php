@@ -256,6 +256,15 @@ class StripeWebhookController extends Controller
             'invoice_id' => $invoice->id,
         ]);
 
+        app(\App\Services\AutomationService::class)->trigger('billing.payment_failed', [
+            'user_id' => $user->id,
+            'subscription_id' => $localSubscription?->id,
+            'plan_name' => $plan?->name,
+            'amount' => $invoice->amount_due ? $invoice->amount_due / 100 : 0,
+            'currency' => $invoice->currency ?? null,
+            'invoice_id' => $invoice->id,
+        ]);
+
         $webhooks->dispatchUserEvent($user, 'payment.failed', [
             'invoice_id' => $invoice->id,
             'subscription_id' => $localSubscription?->id,
@@ -315,6 +324,15 @@ class StripeWebhookController extends Controller
             'status' => $status,
             'plan_id' => $plan->id,
         ]);
+
+        if ($status === 'canceled') {
+            app(\App\Services\AutomationService::class)->trigger('subscription.canceled', [
+                'user_id' => $user->id,
+                'subscription_id' => $localSubscription?->id,
+                'plan_id' => $plan->id,
+                'plan_name' => $plan->name,
+            ]);
+        }
     }
 
     private function resolveUserFromMetadata($metadata): ?User

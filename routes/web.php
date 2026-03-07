@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\ActivityController as AdminActivityController;
 use App\Http\Controllers\Admin\ApiKeyController as AdminApiKeyController;
+use App\Http\Controllers\Admin\AutomationController;
 use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\ExportController;
@@ -38,6 +39,7 @@ use App\Http\Controllers\Member\BillingController;
 use App\Http\Controllers\Member\CheckoutController;
 use App\Http\Controllers\Member\DashboardController;
 use App\Http\Controllers\Member\HelpArticleController as MemberHelpArticleController;
+use App\Http\Controllers\Member\IntegrationController;
 use App\Http\Controllers\Member\InvoiceController as MemberInvoiceController;
 use App\Http\Controllers\Member\MediaFileController as MemberMediaFileController;
 use App\Http\Controllers\Member\NotificationController;
@@ -176,6 +178,10 @@ Route::get('/member/checkout/cancel', [CheckoutController::class, 'cancel'])
 Route::get('/member/plan-selection', [PlanSelectionController::class, 'show'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.plan-selection.show');
+
+Route::get('/member/integrations', [IntegrationController::class, 'index'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.integrations.index');
 Route::put('/member/plan-selection/clear', [PlanSelectionController::class, 'clear'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.plan-selection.clear');
@@ -654,6 +660,35 @@ Route::prefix('admin')->middleware(['auth', 'admin_or_user:1'])->group(function 
     Route::get('/reports', [ReportController::class, 'index'])
         ->middleware('permission_or_user:reports.view,1')
         ->name('admin.reports.index');
+
+    Route::get('/automations', [AutomationController::class, 'index'])
+        ->middleware('permission_or_user:automations.view,1')
+        ->name('admin.automations.index');
+    Route::get('/automations/{automation}', [AutomationController::class, 'show'])
+        ->middleware('permission_or_user:automations.view,1')
+        ->name('admin.automations.show');
+    Route::put('/automations/{automation}', [AutomationController::class, 'update'])
+        ->middleware('permission_or_user:automations.update,1')
+        ->name('admin.automations.update');
+
+    Route::get('/message-templates', [MessageTemplateController::class, 'index'])
+        ->middleware('permission_or_user:templates.view,1')
+        ->name('admin.message-templates.index');
+    Route::get('/message-templates/create', [MessageTemplateController::class, 'create'])
+        ->middleware('permission_or_user:templates.create,1')
+        ->name('admin.message-templates.create');
+    Route::post('/message-templates', [MessageTemplateController::class, 'store'])
+        ->middleware('permission_or_user:templates.create,1')
+        ->name('admin.message-templates.store');
+    Route::get('/message-templates/{template}/edit', [MessageTemplateController::class, 'edit'])
+        ->middleware('permission_or_user:templates.update,1')
+        ->name('admin.message-templates.edit');
+    Route::put('/message-templates/{template}', [MessageTemplateController::class, 'update'])
+        ->middleware('permission_or_user:templates.update,1')
+        ->name('admin.message-templates.update');
+    Route::delete('/message-templates/{template}', [MessageTemplateController::class, 'destroy'])
+        ->middleware('permission_or_user:templates.delete,1')
+        ->name('admin.message-templates.destroy');
 
 });
 

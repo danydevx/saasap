@@ -79,6 +79,8 @@
                 <li v-if="canViewSystemErrors"><Link href="/admin/system-errors" class="dropdown-item" prefetch="hover">Errores</Link></li>
                 <li v-if="canViewFeatureFlags"><Link href="/admin/feature-flags" class="dropdown-item" prefetch="hover">Feature Flags</Link></li>
                 <li v-if="canViewAnnouncements"><Link href="/admin/announcements" class="dropdown-item" prefetch="hover">Anuncios</Link></li>
+                <li v-if="canViewAutomations"><Link href="/admin/automations" class="dropdown-item" prefetch="hover">Automatizaciones</Link></li>
+                <li v-if="canViewTemplates"><Link href="/admin/message-templates" class="dropdown-item" prefetch="hover">Plantillas</Link></li>
                 <li v-if="canViewLegalDocuments"><Link href="/admin/legal-documents" class="dropdown-item" prefetch="hover">Legales</Link></li>
                 <li v-if="canViewSettings"><Link href="/admin/settings" class="dropdown-item" prefetch="hover">Settings</Link></li>
               </ul>
@@ -146,6 +148,8 @@ const canViewWebhooks = computed(() => permissions.value.includes('webhooks.view
 const canViewQueues = computed(() => permissions.value.includes('queues.view') || userId.value === 1)
 const canViewFeatureFlags = computed(() => permissions.value.includes('feature-flags.view') || userId.value === 1)
 const canViewAnnouncements = computed(() => permissions.value.includes('announcements.view') || userId.value === 1)
+const canViewAutomations = computed(() => permissions.value.includes('automations.view') || userId.value === 1)
+const canViewTemplates = computed(() => permissions.value.includes('templates.view') || userId.value === 1)
 const canViewMonitor = computed(() => permissions.value.includes('reports.view') || userId.value === 1)
 const canViewSecurity = computed(() => permissions.value.includes('security-events.view') || userId.value === 1)
 const canViewLegalDocuments = computed(() => permissions.value.includes('legal-documents.view') || userId.value === 1)
@@ -164,6 +168,8 @@ const showSystemMenu = computed(() =>
   canViewSystemErrors.value ||
   canViewFeatureFlags.value ||
   canViewAnnouncements.value ||
+  canViewAutomations.value ||
+  canViewTemplates.value ||
   canViewLegalDocuments.value ||
   canViewSettings.value
 )

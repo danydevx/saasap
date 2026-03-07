@@ -8302,7 +8302,302 @@ Importante:
 
 
 
+==============================================
+Instrucción 45: sistema de automatizaciones internas
+==================================================
 
+
+Implementar módulo base de automatizaciones internas para el SaaS.
+
+Contexto:
+Ya existen users, suscripciones, pagos, soporte, notificaciones, anuncios del sistema, activity log, jobs y colas.
+Cada usuario es único.
+No hay organizaciones ni tenants.
+Se necesita permitir ejecutar acciones automáticas del sistema cuando ocurren ciertos eventos o condiciones.
+No romper módulos actuales.
+
+Stack:
+Laravel 12 + Inertia + Vue 3 + JavaScript + Bootstrap 5.3 + Jobs/Queues del sistema.
+
+Reglas:
+- No TypeScript
+- Vue con `<script setup>`
+- Solo Composition API
+- No Options API
+- No API separada
+- No librerías nuevas innecesarias
+- No refactorizar módulos no relacionados
+- Reutilizar infraestructura de Jobs/Queues ya existente
+- Código simple y listo para producción
+
+Objetivo:
+Crear una base reutilizable para automatizar acciones internas del SaaS cuando ocurren eventos específicos.
+
+Ejemplos de automatizaciones que el sistema debe poder manejar:
+- enviar recordatorio cuando un pago falla
+- enviar aviso cuando el trial está por terminar
+- crear notificación si un ticket no se responde en X tiempo
+- avisar a admin si un webhook falla varias veces
+- enviar mensaje de onboarding si el usuario no completa su perfil
+- cerrar tickets inactivos automáticamente
+- limpiar datos temporales
+
+Alcance de esta fase:
+- definir tipos de automatización
+- registrar automatizaciones activas
+- ejecutar automatizaciones cuando ocurre un evento
+- ejecutar automatizaciones programadas
+- usar jobs/queues para ejecución
+- logging básico de ejecuciones
+
+No incluir todavía:
+- constructor visual de automatizaciones
+- flujos complejos tipo Zapier
+- condiciones anidadas avanzadas
+- múltiples pasos por automatización
+- automatizaciones por usuario final configurables
+- interfaz visual compleja
+
+Concepto:
+Una automatización se define como:
+
+CUANDO ocurre un evento
+ENTONCES ejecutar una acción.
+
+Entidad principal:
+Crear tabla `automations`.
+
+Campos mínimos sugeridos:
+- id
+- name
+- event_key
+- action_key
+- is_active boolean default true
+- config json nullable
+- created_at
+- updated_at
+
+Modelo:
+- Automation
+
+Campos clave:
+
+event_key
+Define el evento que dispara la automatización.
+
+action_key
+Define qué acción ejecutar.
+
+config
+Configuración adicional específica de la automatización.
+
+Eventos iniciales sugeridos:
+
+billing.payment_failed
+billing.trial_ending
+support.ticket_idle
+webhook.failed_many_times
+user.profile_incomplete
+subscription.expired
+subscription.canceled
+
+Acciones iniciales sugeridas:
+
+send_email
+create_notification
+notify_admin
+close_ticket
+trigger_webhook
+log_event
+
+Puedes ampliar eventos y acciones más adelante.
+
+Entidad opcional de historial:
+Crear tabla `automation_runs`.
+
+Campos mínimos sugeridos:
+
+- id
+- automation_id
+- event_key
+- status string
+- executed_at
+- metadata json nullable
+- created_at
+- updated_at
+
+Estados sugeridos:
+
+- success
+- failed
+- skipped
+
+Modelo:
+- AutomationRun
+
+Relaciones:
+
+Automation hasMany AutomationRun
+AutomationRun belongsTo Automation
+
+Servicio central:
+Crear servicio que ejecute automatizaciones cuando ocurra un evento.
+
+Ejemplo conceptual:
+
+AutomationService::trigger(event_key, context)
+
+El servicio debe:
+
+1. buscar automatizaciones activas con ese event_key
+2. evaluar configuración si aplica
+3. ejecutar la acción correspondiente
+4. registrar el resultado en automation_runs
+5. ejecutar acciones pesadas mediante jobs
+
+Eventos que deben disparar automatizaciones:
+
+Billing:
+- pago fallido
+- suscripción cancelada
+- trial por terminar
+
+Support:
+- ticket sin respuesta por X tiempo
+
+User:
+- perfil incompleto después de X días
+
+Webhook:
+- demasiados fallos
+
+Scheduler:
+Para eventos basados en tiempo, usar tareas programadas del sistema.
+
+Ejemplos:
+- revisar trials por terminar
+- revisar tickets inactivos
+- revisar perfiles incompletos
+
+Estas tareas deben disparar AutomationService.
+
+Jobs:
+Las acciones deben ejecutarse mediante jobs cuando impliquen:
+
+- envío de emails
+- llamadas externas
+- cálculos pesados
+
+Usar la infraestructura de queues ya existente.
+
+Admin:
+Permitir a admin ver automatizaciones configuradas.
+
+Permisos sugeridos:
+
+- automations.view
+- automations.update
+
+Rutas admin:
+
+- GET /admin/automations
+- GET /admin/automations/{automation}
+- PUT /admin/automations/{automation}
+
+Controlador:
+
+Admin/AutomationController
+
+Métodos:
+
+- index()
+- show()
+- update()
+
+Vistas:
+
+resources/js/Pages/Admin/Automations/Index.vue
+resources/js/Pages/Admin/Automations/Show.vue
+
+UI admin:
+
+- tabla simple de automatizaciones
+- mostrar:
+  - name
+  - event_key
+  - action_key
+  - is_active
+  - últimas ejecuciones
+- permitir activar/desactivar
+
+Preferencia:
+Automatizaciones base pueden venir precreadas mediante seeders.
+
+Ejemplos:
+
+Trial ending reminder
+Payment failed notification
+Ticket idle reminder
+Webhook failure alert
+
+Configuración:
+
+config JSON puede incluir:
+
+- días antes de trial
+- tiempo de inactividad ticket
+- número de fallos webhook
+
+No crear UI compleja de edición en esta fase.
+Solo permitir toggles básicos.
+
+Logging:
+
+Cada ejecución debe registrar:
+
+automation_id
+evento
+resultado
+metadata
+
+Activity log:
+
+Si ya existe activity log:
+registrar cambios administrativos en automatizaciones.
+
+System errors:
+
+Si una automatización falla, registrar error relevante.
+
+No romper el flujo principal del sistema.
+
+Seguridad:
+
+- solo admin puede modificar automatizaciones
+- validar eventos y acciones permitidas
+- no permitir ejecutar acciones arbitrarias
+- validar config JSON en backend
+
+Comportamiento esperado:
+
+Cuando ocurre un evento relevante:
+
+1. el sistema dispara AutomationService
+2. el servicio encuentra automatizaciones activas
+3. ejecuta las acciones definidas
+4. registra ejecución en automation_runs
+5. usa jobs si la acción es pesada
+
+Esto permite automatizar comportamientos del SaaS sin escribir lógica repetida en múltiples módulos.
+
+Importante:
+
+- revisar si ya existe sistema de eventos internos
+- reutilizar event listeners si existen
+- usar jobs/queues del sistema
+- generar solo archivos necesarios
+- no agregar archivos innecesarios
+- mantener implementación simple y extensible
 
 *******************************************************
 

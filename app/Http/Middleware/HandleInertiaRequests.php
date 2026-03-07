@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Services\FeatureService;
 use App\Services\SystemAnnouncementService;
+use App\Services\TemplateRenderService;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -22,12 +23,21 @@ class HandleInertiaRequests extends Middleware
         $featureService = app(FeatureService::class);
         $announcements = null;
         if ($user) {
+            $templates = app(TemplateRenderService::class);
+            $variables = [
+                'user_name' => (string) ($user->name ?? ''),
+                'user_email' => (string) ($user->email ?? ''),
+                'app_name' => (string) config('app.name'),
+                'support_email' => (string) (config('mail.from.address') ?? ''),
+                'date' => now()->toDateString(),
+            ];
+
             $announcements = app(SystemAnnouncementService::class)
                 ->activeForUser($user)
                 ->map(fn ($announcement) => [
                     'id' => $announcement->id,
-                    'title' => $announcement->title,
-                    'message' => $announcement->message,
+                    'title' => $templates->renderText($announcement->title, $variables),
+                    'message' => $templates->renderText($announcement->message, $variables),
                     'type' => $announcement->type,
                     'priority' => $announcement->priority,
                     'dismissible' => $announcement->dismissible,
