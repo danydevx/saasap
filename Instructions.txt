@@ -6840,3 +6840,505 @@ Importante:
 - no agregar dependencias externas
 - mantener implementación simple
 - no duplicar datos ya existentes
+
+
+
+==================================================
+Instrucción 36: auditoría de seguridad del sistema
+===================================================
+
+Implementar módulo de auditoría de seguridad para registrar eventos sensibles del SaaS.
+
+Contexto:
+Ya existen activity log, system errors, auth, rate limiting y demás base del sistema.
+Cada usuario es único.
+No hay organizaciones ni tenants.
+Se necesita registrar eventos críticos relacionados con seguridad y acceso para auditoría y monitoreo.
+
+Stack:
+Laravel 12 + Inertia + Vue 3 + JavaScript + Bootstrap 5.3.
+
+Reglas:
+- No TypeScript
+- Vue con `<script setup>`
+- Solo Composition API
+- No Options API
+- No librerías externas innecesarias
+- Código simple y listo para producción
+- No refactorizar módulos existentes
+- Reutilizar estructura del proyecto
+
+Objetivo:
+Registrar eventos críticos de seguridad del sistema de forma separada del activity log general.
+
+Alcance de esta fase:
+- registrar eventos de seguridad
+- consultar eventos desde admin
+- filtrar por tipo de evento
+- filtrar por usuario
+- ver detalles de evento
+- registrar IP y user agent
+- mantener trazabilidad básica
+
+No incluir todavía:
+- análisis automático de amenazas
+- alertas automáticas complejas
+- detección de fraude
+- correlación avanzada de eventos
+- bloqueo automático de cuentas
+
+Concepto:
+Un SecurityEvent representa un evento relevante de seguridad.
+
+Ejemplos:
+- login_failed
+- login_success
+- password_changed
+- email_changed
+- api_key_created
+- api_key_revoked
+- webhook_secret_regenerated
+- account_locked
+- rate_limit_triggered
+- suspicious_activity
+
+Entidad:
+Crear tabla `security_events`.
+
+Campos mínimos sugeridos:
+
+- id
+- user_id nullable
+- event_type string
+- description nullable text
+- ip_address nullable string
+- user_agent nullable text
+- metadata json nullable
+- created_at
+
+Modelo:
+- SecurityEvent
+
+Relaciones:
+- SecurityEvent belongsTo User nullable
+
+Tipos de evento sugeridos:
+
+auth:
+- login_success
+- login_failed
+- logout
+
+password:
+- password_changed
+- password_reset_requested
+- password_reset_completed
+
+account:
+- email_changed
+- account_locked
+- account_unlocked
+
+api:
+- api_key_created
+- api_key_revoked
+
+system:
+- rate_limit_triggered
+- suspicious_activity
+
+Puedes ampliar tipos en el futuro.
+
+Registro de eventos:
+Crear servicio central para registrar eventos.
+
+Ejemplo conceptual:
+
+SecurityService::log(
+  event_type,
+  user,
+  description,
+  metadata
+)
+
+Objetivo:
+Evitar registrar eventos directamente en múltiples lugares del código.
+
+Debe poder registrar:
+- usuario
+- ip
+- user agent
+- tipo
+- metadata
+
+Eventos a registrar inicialmente:
+
+Auth:
+- login success
+- login failed
+
+Password:
+- password changed
+- reset password solicitado
+- reset password completado
+
+API:
+- api key creada
+- api key revocada
+
+Rate limit:
+- cuando se bloquea login por intentos
+
+Opcional:
+- actividad sospechosa detectada
+
+Admin:
+Crear módulo admin para consultar eventos.
+
+Ruta:
+
+GET /admin/security-events
+
+Controlador:
+
+Admin/SecurityEventController
+
+Métodos:
+
+- index()
+- show()
+
+Vista:
+
+resources/js/Pages/Admin/SecurityEvents/Index.vue
+resources/js/Pages/Admin/SecurityEvents/Show.vue
+
+Listado admin:
+Mostrar columnas:
+
+- fecha
+- usuario
+- tipo de evento
+- ip
+- descripción
+
+Filtros:
+
+- event_type
+- user_id
+- date_from
+- date_to
+
+Detalle del evento:
+Mostrar:
+
+- tipo
+- usuario
+- ip
+- user agent
+- descripción
+- metadata
+- fecha
+
+UI admin:
+
+- layout admin
+- Bootstrap 5.3
+- tabla simple
+- paginación por servidor
+- filtros simples
+- sin gráficos complejos
+
+Integración con módulos existentes:
+
+Registrar eventos en:
+
+AuthController
+PasswordResetController
+ApiKeyController
+RateLimit logic
+Email change logic
+
+No duplicar eventos que ya existan en activity log si no es necesario.
+
+Diferencia con Activity Log:
+
+Activity Log:
+acciones del usuario en el sistema.
+
+Security Events:
+eventos relacionados con seguridad.
+
+Seguridad:
+
+- solo admin/superadmin pueden ver eventos
+- member no puede consultar esta información
+- no exponer datos sensibles
+- metadata debe sanitizarse si contiene datos delicados
+
+Activity log:
+Opcional registrar acceso admin a este módulo.
+
+System errors:
+Si el registro del evento falla, no debe romper la aplicación.
+
+Comportamiento esperado:
+
+Cuando ocurren eventos críticos:
+
+- login fallido
+- cambio de password
+- creación de API key
+
+Se registra evento de seguridad.
+
+Admin puede consultar:
+
+- actividad sospechosa
+- intentos fallidos
+- cambios importantes
+
+Importante:
+
+- generar solo archivos necesarios
+- no agregar librerías externas
+- mantener implementación simple
+- preparar arquitectura para ampliaciones futuras
+
+=======================================================
+Instrucción 37: sesiones activas del usuario y cierre de sesiones
+=========================================================ç
+
+
+Instrucción 37: sesiones activas del usuario y cierre de sesiones
+Implementar módulo de sesiones activas para usuarios del SaaS.
+
+Contexto:
+Ya existen auth, auditoría de seguridad, activity log y base general del sistema.
+Cada usuario es único.
+No hay organizaciones ni tenants.
+Se necesita permitir que el usuario vea sus sesiones activas y pueda cerrar sesiones para mejorar seguridad.
+No romper módulos actuales.
+
+Stack:
+Laravel 12 + Inertia + Vue 3 + JavaScript + Bootstrap 5.3.
+
+Reglas:
+- No TypeScript
+- Vue con `<script setup>`
+- Solo Composition API
+- No Options API
+- No librerías externas innecesarias
+- Código simple y listo para producción
+- No refactorizar módulos existentes
+- Reutilizar estructura actual del proyecto
+
+Objetivo:
+Permitir que el usuario autenticado vea y gestione sus sesiones activas.
+
+Alcance de esta fase:
+- listar sesiones activas del usuario
+- identificar sesión actual
+- mostrar dispositivo/navegador básico
+- mostrar IP
+- mostrar última actividad
+- cerrar una sesión específica si aplica
+- cerrar otras sesiones
+- registrar eventos de seguridad relacionados
+
+No incluir todavía:
+- geolocalización compleja
+- mapa de sesiones
+- detección avanzada de dispositivo
+- notificaciones push en tiempo real
+- bloqueo automático por riesgo
+
+Concepto:
+Cada login autenticado genera una sesión persistida por el sistema.
+El usuario debe poder ver las sesiones asociadas a su cuenta.
+
+Prerequisito:
+El proyecto debe usar un driver de sesiones que permita consultar sesiones persistidas.
+Si actualmente no está usando un driver persistente compatible, adaptarlo con la solución mínima necesaria.
+
+Preferencia:
+- usar base de datos para sesiones si el proyecto aún no la usa
+- mantener compatibilidad con Laravel
+
+Entidad:
+Usar la tabla de sesiones del sistema si ya existe o crear la estructura mínima compatible con Laravel session database driver.
+
+Campos esperados o equivalentes:
+- id
+- user_id nullable
+- ip_address nullable
+- user_agent nullable
+- payload
+- last_activity
+
+Importante:
+- no crear una tabla paralela innecesaria si Laravel ya puede resolverlo con su tabla de sesiones
+- reutilizar la estructura nativa cuando sea posible
+
+Acceso:
+- solo usuario autenticado
+- solo sus propias sesiones
+- admin no debe ver sesiones de otros usuarios desde el área member
+- si más adelante admin necesita soporte, será otro módulo separado
+
+Rutas member:
+- GET /member/sessions
+- DELETE /member/sessions/{session}
+- DELETE /member/sessions/others
+
+Controlador:
+- Member/SessionController
+
+Métodos:
+- index()
+- destroy()
+- destroyOthers()
+
+Vista:
+- resources/js/Pages/Member/Sessions/Index.vue
+
+Layout:
+- usar layout member
+- no usar layout admin
+
+Listado de sesiones:
+Mostrar por sesión:
+- indicador si es la sesión actual
+- ip_address
+- user_agent resumido
+- última actividad
+- fecha estimada o relativa si ya existe helper
+- estado actual
+
+Opcional visual:
+- etiqueta "Sesión actual"
+- etiqueta "Este dispositivo" si puede inferirse razonablemente
+
+Comportamiento:
+- listar solo sesiones del usuario autenticado
+- ordenar por última actividad descendente
+- permitir cerrar una sesión específica que no sea la actual si aplica
+- permitir cerrar todas las demás sesiones
+- mantener la sesión actual activa al usar "cerrar otras sesiones"
+
+Seguridad:
+- validar que la sesión a cerrar pertenezca al usuario autenticado
+- no permitir cerrar sesiones de otros usuarios
+- al cerrar una sesión:
+  - invalidar realmente la sesión
+  - no solo ocultarla del frontend
+- si se cierra una sesión específica, debe quedar inutilizable
+- si se cierran otras sesiones, solo la sesión actual permanece
+
+Flujo recomendado:
+1. usuario entra a /member/sessions
+2. ve lista de sesiones activas
+3. puede cerrar una sesión individual
+4. puede cerrar todas las demás
+5. sistema actualiza listado y muestra success
+
+UI:
+- usar Bootstrap 5.3
+- cards o tabla simple
+- diseño limpio
+- botón para:
+  - cerrar sesión individual
+  - cerrar otras sesiones
+- usar ConfirmDialog si ya existe en el proyecto
+- usar toast success/error
+- usar paginación solo si realmente hace falta, si no listado simple
+
+Validaciones backend:
+- confirmar propiedad de la sesión antes de borrarla
+- no confiar en ids enviados por frontend sin validar usuario
+- proteger rutas con auth
+
+Evento de seguridad:
+Si ya existe auditoría de seguridad:
+registrar eventos como:
+- session_terminated
+- other_sessions_terminated
+
+Activity log:
+Opcional registrar:
+- usuario cerró otras sesiones
+- usuario cerró una sesión específica
+
+Mensajes esperados:
+- "La sesión fue cerrada correctamente."
+- "Las demás sesiones fueron cerradas correctamente."
+- "No tiene permiso para cerrar esta sesión."
+
+Integración con login/logout:
+- no romper flujo actual de login
+- no romper logout actual
+- logout normal debe seguir funcionando
+- módulo de sesiones es complemento de seguridad, no reemplazo
+
+Integración con seguridad:
+- si ya existe security_events, registrar cambios importantes
+- si ya existe rate limiting o auth audit, mantener consistencia
+
+Importante:
+- revisar primero si el proyecto ya usa tabla de sesiones de Laravel
+- si existe, adaptarse
+- si no existe, crear solución mínima compatible
+- generar solo archivos necesarios
+- no agregar archivos innecesarios
+- mantener implementación simple y extensible
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+*******************************************************
+
+Orden recomendado real del 36 al 50
+
+Yo seguiría así:
+
+36 Auditoría de seguridad
+
+37 Sesiones activas
+
+38 System Settings completos
+
+39 Modo mantenimiento
+
+43 Preferencias avanzadas de notificación
+
+44 Centro de anuncios del sistema
+
+45 Automatizaciones internas
+
+47 Portal de integraciones
+
+48 RBAC avanzado
+
+49 Marketplace interno de módulos
+
+50 Núcleo SaaS reusable
+
+Y en paralelo después:
+
+40 archivos/media
+
+41 invitaciones
+
+42 consentimiento legal
+
+46 plantillas reutilizables

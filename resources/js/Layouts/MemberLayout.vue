@@ -13,6 +13,7 @@
           <Link href="/member/preferences" class="btn btn-outline-secondary btn-sm">Preferencias</Link>
           <Link v-if="canUseApi" href="/member/api-keys" class="btn btn-outline-secondary btn-sm">API Keys</Link>
           <Link v-if="canUseWebhooks" href="/member/webhooks" class="btn btn-outline-secondary btn-sm">Webhooks</Link>
+          <Link href="/member/sessions" class="btn btn-outline-secondary btn-sm">Sesiones</Link>
           <Link href="/member/notifications" class="btn btn-outline-secondary btn-sm">
             Notificaciones
             <span v-if="unreadCount > 0" class="badge text-bg-primary ms-1">

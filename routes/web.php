@@ -42,6 +42,7 @@ use App\Http\Controllers\Member\PasswordController;
 use App\Http\Controllers\Member\PaymentController as MemberPaymentController;
 use App\Http\Controllers\Member\PlanSelectionController;
 use App\Http\Controllers\Member\PreferenceController as MemberPreferenceController;
+use App\Http\Controllers\Member\SessionController as MemberSessionController;
 use App\Http\Controllers\Member\SupportTicketController as MemberSupportTicketController;
 use App\Http\Controllers\Member\WebhookController as MemberWebhookController;
 use App\Http\Controllers\PricingController;
@@ -266,6 +267,16 @@ Route::get('/member/preferences', [MemberPreferenceController::class, 'edit'])
 Route::put('/member/preferences', [MemberPreferenceController::class, 'update'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.preferences.update');
+
+Route::get('/member/sessions', [MemberSessionController::class, 'index'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.sessions.index');
+Route::delete('/member/sessions/others', [MemberSessionController::class, 'destroyOthers'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.sessions.destroy-others');
+Route::delete('/member/sessions/{session}', [MemberSessionController::class, 'destroy'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.sessions.destroy');
 
 Route::get('/profile', [UserProfileController::class, 'edit'])
     ->middleware('auth')

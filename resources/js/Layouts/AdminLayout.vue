@@ -18,65 +18,67 @@
             <li class="nav-item">
               <Link href="/dashboard" class="nav-link" prefetch="hover">Dashboard</Link>
             </li>
-            <li class="nav-item">
-              <Link href="/admin/users" class="nav-link" prefetch="hover">Usuarios</Link>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                Usuarios
+              </a>
+              <ul class="dropdown-menu">
+                <li><Link href="/admin/users" class="dropdown-item" prefetch="hover">Usuarios</Link></li>
+                <li><Link href="/admin/roles" class="dropdown-item" prefetch="hover">Roles</Link></li>
+                <li><Link href="/admin/permissions" class="dropdown-item" prefetch="hover">Permisos</Link></li>
+              </ul>
             </li>
-            <li class="nav-item">
-              <Link href="/admin/roles" class="nav-link" prefetch="hover">Roles</Link>
+            <li v-if="showBillingMenu" class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                Comercial
+              </a>
+              <ul class="dropdown-menu">
+                <li v-if="canViewPlans"><Link href="/admin/plans" class="dropdown-item" prefetch="hover">Planes</Link></li>
+                <li v-if="canViewCoupons"><Link href="/admin/coupons" class="dropdown-item" prefetch="hover">Cupones</Link></li>
+                <li v-if="canViewPayments"><Link href="/admin/payments" class="dropdown-item" prefetch="hover">Pagos</Link></li>
+                <li v-if="canViewInvoices"><Link href="/admin/invoices" class="dropdown-item" prefetch="hover">Comprobantes</Link></li>
+              </ul>
             </li>
-            <li class="nav-item">
-              <Link href="/admin/permissions" class="nav-link" prefetch="hover">Permisos</Link>
+            <li v-if="showSupportMenu" class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                Soporte
+              </a>
+              <ul class="dropdown-menu">
+                <li v-if="canViewSupport"><Link href="/admin/support" class="dropdown-item" prefetch="hover">Tickets</Link></li>
+                <li v-if="canViewHelp"><Link href="/admin/help" class="dropdown-item" prefetch="hover">Ayuda</Link></li>
+              </ul>
             </li>
-            <li v-if="canViewPlans" class="nav-item">
-              <Link href="/admin/plans" class="nav-link" prefetch="hover">Planes</Link>
+            <li v-if="showDataMenu" class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                Datos
+              </a>
+              <ul class="dropdown-menu">
+                <li v-if="canViewReports"><Link href="/admin/reports" class="dropdown-item" prefetch="hover">Reportes</Link></li>
+                <li v-if="canViewExports"><Link href="/admin/exports" class="dropdown-item" prefetch="hover">Exportaciones</Link></li>
+              </ul>
             </li>
-            <li v-if="canViewCoupons" class="nav-item">
-              <Link href="/admin/coupons" class="nav-link" prefetch="hover">Cupones</Link>
+            <li v-if="showIntegrationsMenu" class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                Integraciones
+              </a>
+              <ul class="dropdown-menu">
+                <li v-if="canViewApiKeys"><Link href="/admin/api-keys" class="dropdown-item" prefetch="hover">API Keys</Link></li>
+                <li v-if="canViewWebhooks"><Link href="/admin/webhooks" class="dropdown-item" prefetch="hover">Webhooks</Link></li>
+              </ul>
             </li>
-            <li v-if="canViewInvoices" class="nav-item">
-              <Link href="/admin/invoices" class="nav-link" prefetch="hover">Comprobantes</Link>
-            </li>
-            <li v-if="canViewSupport" class="nav-item">
-              <Link href="/admin/support" class="nav-link" prefetch="hover">Soporte</Link>
-            </li>
-            <li v-if="canViewHelp" class="nav-item">
-              <Link href="/admin/help" class="nav-link" prefetch="hover">Ayuda</Link>
-            </li>
-            <li v-if="canViewReports" class="nav-item">
-              <Link href="/admin/reports" class="nav-link" prefetch="hover">Reportes</Link>
-            </li>
-            <li v-if="canViewExports" class="nav-item">
-              <Link href="/admin/exports" class="nav-link" prefetch="hover">Exportaciones</Link>
-            </li>
-            <li v-if="canViewPayments" class="nav-item">
-              <Link href="/admin/payments" class="nav-link" prefetch="hover">Pagos</Link>
-            </li>
-            <li v-if="canViewSettings" class="nav-item">
-              <Link href="/admin/settings" class="nav-link" prefetch="hover">Settings</Link>
-            </li>
-            <li v-if="canViewActivity" class="nav-item">
-              <Link href="/admin/activity" class="nav-link" prefetch="hover">Actividad</Link>
-            </li>
-            <li v-if="canViewSystemErrors" class="nav-item">
-              <Link href="/admin/system-errors" class="nav-link" prefetch="hover">Errores</Link>
-            </li>
-            <li v-if="canViewApiKeys" class="nav-item">
-              <Link href="/admin/api-keys" class="nav-link" prefetch="hover">API Keys</Link>
-            </li>
-            <li v-if="canViewWebhooks" class="nav-item">
-              <Link href="/admin/webhooks" class="nav-link" prefetch="hover">Webhooks</Link>
-            </li>
-            <li v-if="canViewQueues" class="nav-item">
-              <Link href="/admin/queues" class="nav-link" prefetch="hover">Colas</Link>
-            </li>
-            <li v-if="canViewFeatureFlags" class="nav-item">
-              <Link href="/admin/feature-flags" class="nav-link" prefetch="hover">Feature Flags</Link>
-            </li>
-            <li v-if="canViewMonitor" class="nav-item">
-              <Link href="/admin/system-monitor" class="nav-link" prefetch="hover">Monitor</Link>
-            </li>
-            <li v-if="canViewSecurity" class="nav-item">
-              <Link href="/admin/security-events" class="nav-link" prefetch="hover">Seguridad</Link>
+            <li v-if="showSystemMenu" class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                Sistema
+              </a>
+              <ul class="dropdown-menu">
+                <li v-if="canViewMonitor"><Link href="/admin/system-monitor" class="dropdown-item" prefetch="hover">Monitor</Link></li>
+                <li v-if="canViewQueues"><Link href="/admin/queues" class="dropdown-item" prefetch="hover">Colas</Link></li>
+                <li v-if="canViewActivity"><Link href="/admin/activity" class="dropdown-item" prefetch="hover">Actividad</Link></li>
+                <li v-if="canViewSecurity"><Link href="/admin/security-events" class="dropdown-item" prefetch="hover">Seguridad</Link></li>
+                <li v-if="canViewSystemErrors"><Link href="/admin/system-errors" class="dropdown-item" prefetch="hover">Errores</Link></li>
+                <li v-if="canViewFeatureFlags"><Link href="/admin/feature-flags" class="dropdown-item" prefetch="hover">Feature Flags</Link></li>
+                <li v-if="canViewSettings"><Link href="/admin/settings" class="dropdown-item" prefetch="hover">Settings</Link></li>
+              </ul>
             </li>
           </ul>
 
@@ -93,56 +95,8 @@
               <li>
                 <Link href="/profile" class="dropdown-item" prefetch="hover">Perfil</Link>
               </li>
+              <li v-if="canViewSettings"><Link href="/admin/settings" class="dropdown-item" prefetch="hover">Settings</Link></li>
               <li><hr class="dropdown-divider" /></li>
-              <li v-if="canViewSettings">
-                <Link href="/admin/settings" class="dropdown-item" prefetch="hover">Settings</Link>
-              </li>
-              <li v-if="canViewCoupons">
-                <Link href="/admin/coupons" class="dropdown-item" prefetch="hover">Cupones</Link>
-              </li>
-              <li v-if="canViewInvoices">
-                <Link href="/admin/invoices" class="dropdown-item" prefetch="hover">Comprobantes</Link>
-              </li>
-              <li v-if="canViewSupport">
-                <Link href="/admin/support" class="dropdown-item" prefetch="hover">Soporte</Link>
-              </li>
-              <li v-if="canViewHelp">
-                <Link href="/admin/help" class="dropdown-item" prefetch="hover">Ayuda</Link>
-              </li>
-              <li v-if="canViewReports">
-                <Link href="/admin/reports" class="dropdown-item" prefetch="hover">Reportes</Link>
-              </li>
-              <li v-if="canViewExports">
-                <Link href="/admin/exports" class="dropdown-item" prefetch="hover">Exportaciones</Link>
-              </li>
-              <li v-if="canViewPayments">
-                <Link href="/admin/payments" class="dropdown-item" prefetch="hover">Pagos</Link>
-              </li>
-              <li v-if="canViewActivity">
-                <Link href="/admin/activity" class="dropdown-item" prefetch="hover">Actividad</Link>
-              </li>
-              <li v-if="canViewSystemErrors">
-                <Link href="/admin/system-errors" class="dropdown-item" prefetch="hover">Errores</Link>
-              </li>
-              <li v-if="canViewApiKeys">
-                <Link href="/admin/api-keys" class="dropdown-item" prefetch="hover">API Keys</Link>
-              </li>
-              <li v-if="canViewWebhooks">
-                <Link href="/admin/webhooks" class="dropdown-item" prefetch="hover">Webhooks</Link>
-              </li>
-              <li v-if="canViewQueues">
-                <Link href="/admin/queues" class="dropdown-item" prefetch="hover">Colas</Link>
-              </li>
-              <li v-if="canViewFeatureFlags">
-                <Link href="/admin/feature-flags" class="dropdown-item" prefetch="hover">Feature Flags</Link>
-              </li>
-              <li v-if="canViewMonitor">
-                <Link href="/admin/system-monitor" class="dropdown-item" prefetch="hover">Monitor</Link>
-              </li>
-              <li v-if="canViewSecurity">
-                <Link href="/admin/security-events" class="dropdown-item" prefetch="hover">Seguridad</Link>
-              </li>
-              <li v-if="canViewSettings || canViewActivity || canViewPayments || canViewCoupons || canViewInvoices || canViewSupport || canViewHelp || canViewReports || canViewExports || canViewSystemErrors || canViewApiKeys || canViewWebhooks || canViewQueues || canViewFeatureFlags || canViewMonitor || canViewSecurity"><hr class="dropdown-divider" /></li>
               <li>
                 <Link href="/logout" method="post" as="button" class="dropdown-item">
                   Salir
@@ -189,4 +143,20 @@ const canViewQueues = computed(() => permissions.value.includes('queues.view') |
 const canViewFeatureFlags = computed(() => permissions.value.includes('feature-flags.view') || userId.value === 1)
 const canViewMonitor = computed(() => permissions.value.includes('reports.view') || userId.value === 1)
 const canViewSecurity = computed(() => permissions.value.includes('security-events.view') || userId.value === 1)
+
+const showBillingMenu = computed(() =>
+  canViewPlans.value || canViewCoupons.value || canViewPayments.value || canViewInvoices.value
+)
+const showSupportMenu = computed(() => canViewSupport.value || canViewHelp.value)
+const showDataMenu = computed(() => canViewReports.value || canViewExports.value)
+const showIntegrationsMenu = computed(() => canViewApiKeys.value || canViewWebhooks.value)
+const showSystemMenu = computed(() =>
+  canViewMonitor.value ||
+  canViewQueues.value ||
+  canViewActivity.value ||
+  canViewSecurity.value ||
+  canViewSystemErrors.value ||
+  canViewFeatureFlags.value ||
+  canViewSettings.value
+)
 </script>
