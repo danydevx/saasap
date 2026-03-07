@@ -22,10 +22,10 @@ class PasswordResetCodeNotification extends Notification
         $url = url('/reset-password/'.$this->token);
 
         return (new MailMessage)
-            ->subject('Recuperar password')
-            ->line('Recibimos una solicitud para restablecer tu password.')
+            ->subject('Restablece tu contrasena')
+            ->line('Recibimos una solicitud para restablecer tu contrasena.')
             ->line('Tu codigo de verificacion es: '.$this->code)
-            ->action('Restablecer password', $url)
+            ->action('Restablecer contrasena', $url)
             ->line('Este enlace expirara en 30 minutos.')
             ->line('Si no solicitaste este cambio, ignora este correo.');
     }

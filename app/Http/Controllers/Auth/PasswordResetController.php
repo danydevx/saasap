@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Jobs\SendPasswordResetEmailJob;
 use App\Models\PasswordResetRequest;
 use App\Models\User;
+use App\Notifications\PasswordChangedNotification;
 use App\Services\ActivityService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -138,6 +139,8 @@ class PasswordResetController extends Controller
             'description' => 'Reset password completado',
             'request' => $request,
         ]);
+
+        $reset->user->notify(new PasswordChangedNotification);
 
         return redirect('/login')->with('success', 'Tu password fue actualizada correctamente. Ya puedes iniciar sesion.');
     }

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Member;
 
 use App\Http\Controllers\Controller;
+use App\Notifications\PasswordChangedNotification;
 use App\Services\ActivityService;
 use App\Services\UserNotificationService;
 use App\Services\WebhookService;
@@ -58,6 +59,8 @@ class PasswordController extends Controller
             'Tu password fue actualizada correctamente.',
             '/member/password'
         );
+
+        $user->notify(new PasswordChangedNotification);
 
         return back()->with('success', 'Password actualizada correctamente.');
     }
