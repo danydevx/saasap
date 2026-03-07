@@ -4865,3 +4865,235 @@ Importante:
 - generar solo archivos necesarios
 - no agregar archivos innecesarios
 - mantener implementación simple y extensible
+
+==============================================
+25: activity log / auditoría del sistema
+=============================================
+
+Implementar módulo de registro de actividad (Activity Log) para el SaaS.
+
+Contexto:
+El sistema ya tiene:
+- usuarios
+- roles
+- suscripciones
+- pagos
+- tickets
+- reportes
+- dashboard admin
+
+Se necesita registrar acciones importantes del sistema para auditoría y monitoreo.
+
+Cada usuario es único.
+No hay organizaciones ni tenants.
+No romper módulos actuales.
+
+Stack:
+Laravel 12 + Inertia + Vue 3 + JavaScript + Bootstrap 5.3.
+
+Reglas:
+- No TypeScript
+- Vue con `<script setup>`
+- Solo Composition API
+- No Options API
+- No librerías externas innecesarias
+- Código simple y reutilizable
+- No romper módulos existentes
+
+Objetivo:
+Registrar eventos importantes del sistema para auditoría y seguimiento.
+
+Ejemplos de eventos a registrar:
+- usuario registrado
+- usuario verificado
+- usuario actualizado
+- cambio de rol
+- cambio de plan
+- suscripción creada
+- suscripción cancelada
+- pago exitoso
+- pago fallido
+- ticket creado
+- ticket respondido
+- ticket cerrado
+- preferencias actualizadas
+- login
+- logout
+
+Entidad:
+Crear tabla `activities`.
+
+Campos mínimos sugeridos:
+
+- id
+- user_id nullable
+- type string
+- description nullable
+- subject_type nullable
+- subject_id nullable
+- ip_address nullable
+- user_agent nullable
+- metadata json nullable
+- created_at
+
+Modelo:
+- Activity
+
+Relaciones:
+
+Activity belongsTo User nullable
+
+subject_type + subject_id
+permiten registrar cualquier entidad del sistema:
+
+ejemplos:
+
+User
+Payment
+Subscription
+SupportTicket
+
+Tipos de actividad sugeridos:
+
+- user_registered
+- user_verified
+- user_login
+- user_logout
+- user_updated
+
+- subscription_created
+- subscription_updated
+- subscription_canceled
+
+- payment_succeeded
+- payment_failed
+
+- ticket_created
+- ticket_replied
+- ticket_closed
+
+- preference_updated
+
+Persistencia:
+
+Registrar actividad desde backend cuando ocurra el evento.
+
+Ejemplo conceptual:
+
+Activity::create([
+  user_id
+  type
+  description
+  subject_type
+  subject_id
+  metadata
+])
+
+Importante:
+No registrar actividades desde frontend.
+
+Helper recomendado:
+
+Crear helper o servicio simple:
+
+ActivityService::log(...)
+
+para evitar duplicar código.
+
+Admin area:
+
+Permitir a admin ver actividad del sistema.
+
+Ruta:
+
+GET /admin/activity
+
+Controlador:
+
+Admin/ActivityController
+
+Métodos:
+
+- index()
+
+Vista:
+
+resources/js/Pages/Admin/Activity/Index.vue
+
+Listado admin:
+
+- paginación por servidor
+- mostrar:
+
+  fecha
+  usuario
+  tipo
+  descripción
+  entidad afectada
+  ip opcional
+
+Filtros sugeridos:
+
+- usuario
+- tipo
+- fecha
+
+Member area:
+
+Opcionalmente mostrar actividad del propio usuario.
+
+Ruta:
+
+GET /member/activity
+
+Controlador:
+
+Member/ActivityController
+
+Vista:
+
+resources/js/Pages/Member/Activity/Index.vue
+
+Reglas member:
+
+- solo ver su propia actividad
+- no ver actividad global
+
+UI admin:
+
+- layout admin
+- tabla simple
+- Bootstrap 5.3
+- paginación por servidor
+- búsqueda simple
+
+UI member:
+
+- layout member
+- listado simple
+
+Seguridad:
+
+- validar permisos admin
+- member solo ve su actividad
+- no exponer metadata sensible
+- registrar ip y user agent solo si es necesario
+
+Integración:
+
+Registrar actividad en:
+
+AuthController
+SubscriptionController
+PaymentController
+SupportTicketController
+PreferenceController
+
+También en webhooks de Stripe.
+
+Importante:
+
+- generar solo archivos necesarios
+- no agregar dependencias externas
+- mantener implementación simple
+- permitir extender tipos de actividad fácilmente

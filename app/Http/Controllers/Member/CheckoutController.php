@@ -7,7 +7,7 @@ use App\Models\Coupon;
 use App\Models\Payment;
 use App\Models\Plan;
 use App\Models\Subscription;
-use App\Services\ActivityLogger;
+use App\Services\ActivityService;
 use App\Services\UserNotificationService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -15,7 +15,7 @@ use Stripe\StripeClient;
 
 class CheckoutController extends Controller
 {
-    public function create(Request $request, Plan $plan, ActivityLogger $activity, UserNotificationService $notifications)
+    public function create(Request $request, Plan $plan, ActivityService $activity, UserNotificationService $notifications)
     {
         $user = $request->user();
 
@@ -80,7 +80,7 @@ class CheckoutController extends Controller
             $request->session()->put('stripe_checkout_session_id', $session->id);
             $request->session()->put('selected_plan_id', $plan->id);
 
-            $activity->log('checkout.started', [
+            $activity->log('checkout_started', [
                 'user' => $user,
                 'actor' => $user,
                 'subject' => $plan,
@@ -102,7 +102,7 @@ class CheckoutController extends Controller
 
             return redirect()->away($session->url);
         } catch (\Throwable $e) {
-            $activity->log('checkout.failed', [
+            $activity->log('checkout_failed', [
                 'user' => $user,
                 'actor' => $user,
                 'subject' => $plan,
@@ -117,7 +117,7 @@ class CheckoutController extends Controller
         }
     }
 
-    public function success(Request $request, ActivityLogger $activity, UserNotificationService $notifications)
+    public function success(Request $request, ActivityService $activity, UserNotificationService $notifications)
     {
         $user = $request->user();
         $sessionId = (string) $request->query('session_id', '');
@@ -250,7 +250,7 @@ class CheckoutController extends Controller
 
             $request->session()->forget(['selected_plan_id', 'stripe_checkout_session_id', 'applied_coupon_id']);
 
-            $activity->log('checkout.paid', [
+            $activity->log('checkout_paid', [
                 'user' => $user,
                 'actor' => $user,
                 'subject' => $localSubscription,
@@ -284,7 +284,7 @@ class CheckoutController extends Controller
                 ],
             ]);
         } catch (\Throwable $e) {
-            $activity->log('checkout.failed', [
+            $activity->log('checkout_failed', [
                 'user' => $user,
                 'actor' => $user,
                 'description' => 'Error al confirmar checkout',
@@ -299,11 +299,11 @@ class CheckoutController extends Controller
         }
     }
 
-    public function cancel(Request $request, ActivityLogger $activity, UserNotificationService $notifications)
+    public function cancel(Request $request, ActivityService $activity, UserNotificationService $notifications)
     {
         $user = $request->user();
 
-        $activity->log('checkout.canceled', [
+        $activity->log('checkout_canceled', [
             'user' => $user,
             'actor' => $user,
             'description' => 'Checkout cancelado',

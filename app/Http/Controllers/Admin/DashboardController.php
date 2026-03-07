@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\ActivityLog;
+use App\Models\Activity;
 use App\Models\Payment;
 use App\Models\Plan;
 use App\Models\Subscription;
@@ -76,14 +76,14 @@ class DashboardController extends Controller
                 ] : null,
             ]);
 
-        $recentActivity = ActivityLog::query()
+        $recentActivity = Activity::query()
             ->with(['actor:id,name,email', 'user:id,name,email'])
             ->orderByDesc('created_at')
             ->limit(5)
             ->get()
             ->map(fn ($log) => [
                 'id' => $log->id,
-                'event' => $log->event,
+                'type' => $log->type,
                 'description' => $log->description,
                 'created_at' => $log->created_at?->toDateTimeString(),
                 'actor' => $log->actor ? [

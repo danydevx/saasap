@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\SupportTicket;
 use App\Models\SupportTicketMessage;
-use App\Services\ActivityLogger;
+use App\Services\ActivityService;
 use App\Services\UserNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -108,7 +108,7 @@ class SupportTicketController extends Controller
         ]);
     }
 
-    public function reply(Request $request, SupportTicket $ticket, ActivityLogger $activity, UserNotificationService $notifications)
+    public function reply(Request $request, SupportTicket $ticket, ActivityService $activity, UserNotificationService $notifications)
     {
         $data = $request->validate([
             'message' => ['required', 'string', 'max:5000'],
@@ -126,7 +126,7 @@ class SupportTicketController extends Controller
             'last_reply_at' => now(),
         ]);
 
-        $activity->log('support.ticket_answered', [
+        $activity->log('ticket_replied', [
             'user' => $ticket->user,
             'actor' => $request->user(),
             'subject' => $ticket,
@@ -147,7 +147,7 @@ class SupportTicketController extends Controller
         return back()->with('success', 'Respuesta enviada.');
     }
 
-    public function update(Request $request, SupportTicket $ticket, ActivityLogger $activity)
+    public function update(Request $request, SupportTicket $ticket, ActivityService $activity)
     {
         $data = $request->validate([
             'status' => ['required', Rule::in(['open', 'pending', 'answered', 'closed'])],
@@ -162,7 +162,7 @@ class SupportTicketController extends Controller
             'closed_at' => $data['status'] === 'closed' ? now() : null,
         ]);
 
-        $activity->log('support.ticket_updated', [
+        $activity->log($data['status'] === 'closed' ? 'ticket_closed' : 'ticket_updated', [
             'user' => $ticket->user,
             'actor' => $request->user(),
             'subject' => $ticket,

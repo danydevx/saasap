@@ -3,18 +3,18 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Services\ActivityLogger;
+use App\Services\ActivityService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class LogoutController extends Controller
 {
-    public function destroy(Request $request, ActivityLogger $activity)
+    public function destroy(Request $request, ActivityService $activity)
     {
         $user = $request->user();
 
         if ($user) {
-            $activity->log('user.logout', [
+            $activity->log('user_logout', [
                 'user' => $user,
                 'actor' => $user,
                 'subject' => $user,

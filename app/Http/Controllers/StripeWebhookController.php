@@ -8,7 +8,7 @@ use App\Models\Plan;
 use App\Models\StripeWebhookEvent;
 use App\Models\Subscription;
 use App\Models\User;
-use App\Services\ActivityLogger;
+use App\Services\ActivityService;
 use App\Services\UserNotificationService;
 use Illuminate\Http\Request;
 use Stripe\Webhook;
@@ -16,7 +16,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 class StripeWebhookController extends Controller
 {
-    public function handle(Request $request, ActivityLogger $activity, UserNotificationService $notifications)
+    public function handle(Request $request, ActivityService $activity, UserNotificationService $notifications)
     {
         $payload = $request->getContent();
         $signature = $request->header('Stripe-Signature');
@@ -63,7 +63,7 @@ class StripeWebhookController extends Controller
         }
     }
 
-    private function processEvent($event, ActivityLogger $activity, UserNotificationService $notifications): void
+    private function processEvent($event, ActivityService $activity, UserNotificationService $notifications): void
     {
         switch ($event->type) {
             case 'checkout.session.completed':
@@ -85,7 +85,7 @@ class StripeWebhookController extends Controller
         }
     }
 
-    private function handleCheckoutCompleted($session, ActivityLogger $activity, UserNotificationService $notifications): void
+    private function handleCheckoutCompleted($session, ActivityService $activity, UserNotificationService $notifications): void
     {
         $user = $this->resolveUserFromMetadata($session->metadata ?? null);
         $plan = $this->resolvePlanFromMetadata($session->metadata ?? null);
@@ -122,13 +122,13 @@ class StripeWebhookController extends Controller
             ]);
 
             $this->notify($user, $notifications, 'Pago confirmado', 'Tu pago fue confirmado por Stripe.', '/member/account');
-            $this->logActivity($activity, 'checkout.paid', $user, $localSubscription, [
+            $this->logActivity($activity, 'checkout_paid', $user, $localSubscription, [
                 'stripe_session_id' => $session->id,
             ]);
         }
     }
 
-    private function handleInvoicePaymentSucceeded($invoice, ActivityLogger $activity, UserNotificationService $notifications): void
+    private function handleInvoicePaymentSucceeded($invoice, ActivityService $activity, UserNotificationService $notifications): void
     {
         $user = $this->resolveUserFromInvoice($invoice);
         $plan = $this->resolvePlanFromInvoice($invoice);
@@ -180,12 +180,12 @@ class StripeWebhookController extends Controller
         }
 
         $this->notify($user, $notifications, 'Pago confirmado', 'Tu pago fue confirmado por Stripe.', '/member/payments');
-        $this->logActivity($activity, 'payment.succeeded', $user, $localSubscription, [
+        $this->logActivity($activity, 'payment_succeeded', $user, $localSubscription, [
             'invoice_id' => $invoice->id,
         ]);
     }
 
-    private function handleInvoicePaymentFailed($invoice, ActivityLogger $activity, UserNotificationService $notifications): void
+    private function handleInvoicePaymentFailed($invoice, ActivityService $activity, UserNotificationService $notifications): void
     {
         $user = $this->resolveUserFromInvoice($invoice);
         $plan = $this->resolvePlanFromInvoice($invoice);
@@ -231,12 +231,12 @@ class StripeWebhookController extends Controller
         $this->upsertInvoiceFromStripe($invoice, $user, $payment, $localSubscription, 'pending');
 
         $this->notify($user, $notifications, 'Pago fallido', 'Tu pago no pudo completarse.', '/member/payments');
-        $this->logActivity($activity, 'payment.failed', $user, $localSubscription, [
+        $this->logActivity($activity, 'payment_failed', $user, $localSubscription, [
             'invoice_id' => $invoice->id,
         ]);
     }
 
-    private function handleSubscriptionEvent($subscription, ActivityLogger $activity, UserNotificationService $notifications): void
+    private function handleSubscriptionEvent($subscription, ActivityService $activity, UserNotificationService $notifications): void
     {
         $user = $this->resolveUserFromSubscription($subscription);
         $plan = $this->resolvePlanFromSubscription($subscription);
@@ -263,7 +263,15 @@ class StripeWebhookController extends Controller
         };
 
         $this->notify($user, $notifications, 'Suscripcion actualizada', $message, '/member/account');
-        $this->logActivity($activity, 'subscription.updated', $user, $localSubscription, [
+
+        $type = 'subscription_updated';
+        if ($status === 'canceled') {
+            $type = 'subscription_canceled';
+        } elseif ($localSubscription?->wasRecentlyCreated) {
+            $type = 'subscription_created';
+        }
+
+        $this->logActivity($activity, $type, $user, $localSubscription, [
             'stripe_subscription_id' => $subscription->id,
             'status' => $status,
         ]);
@@ -560,7 +568,7 @@ class StripeWebhookController extends Controller
         $notifications->create($user, 'billing', $title, $message, $url);
     }
 
-    private function logActivity(ActivityLogger $activity, string $event, User $user, $subject = null, array $metadata = []): void
+    private function logActivity(ActivityService $activity, string $event, User $user, $subject = null, array $metadata = []): void
     {
         $activity->log($event, [
             'user' => $user,

@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\PasswordResetRequest;
 use App\Models\User;
 use App\Notifications\PasswordResetCodeNotification;
-use App\Services\ActivityLogger;
+use App\Services\ActivityService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -20,7 +20,7 @@ class PasswordResetController extends Controller
         return Inertia::render('Auth/ForgotPassword');
     }
 
-    public function sendResetLink(Request $request, ActivityLogger $activity)
+    public function sendResetLink(Request $request, ActivityService $activity)
     {
         $data = $request->validate([
             'email' => ['required', 'email', 'max:150'],
@@ -46,7 +46,7 @@ class PasswordResetController extends Controller
 
             $user->notify(new PasswordResetCodeNotification($token, $code));
 
-            $activity->log('user.password_reset_requested', [
+            $activity->log('user_password_reset_requested', [
                 'user' => $user,
                 'actor' => $user,
                 'subject' => $user,
@@ -109,7 +109,7 @@ class PasswordResetController extends Controller
         ]);
     }
 
-    public function resetPassword(Request $request, string $token, ActivityLogger $activity)
+    public function resetPassword(Request $request, string $token, ActivityService $activity)
     {
         $reset = $this->getVerifiedReset($token);
 
@@ -131,7 +131,7 @@ class PasswordResetController extends Controller
             'used_at' => now(),
         ]);
 
-        $activity->log('user.password_reset_completed', [
+        $activity->log('user_password_reset_completed', [
             'user' => $reset->user,
             'actor' => $reset->user,
             'subject' => $reset->user,

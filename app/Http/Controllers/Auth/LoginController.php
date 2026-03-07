@@ -3,14 +3,14 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Services\ActivityLogger;
+use App\Services\ActivityService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 
 class LoginController extends Controller
 {
-    public function store(Request $request, ActivityLogger $activity)
+    public function store(Request $request, ActivityService $activity)
     {
         $credentials = $request->validate([
             'email' => ['required', 'email'],
@@ -39,7 +39,7 @@ class LoginController extends Controller
             return redirect('/login')->with('error', 'Tu cuenta esta inactiva.');
         }
 
-        $activity->log('user.login', [
+        $activity->log('user_login', [
             'user' => $user,
             'actor' => $user,
             'subject' => $user,

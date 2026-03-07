@@ -3,14 +3,14 @@
 namespace App\Http\Controllers\Member;
 
 use App\Http\Controllers\Controller;
-use App\Services\ActivityLogger;
+use App\Services\ActivityService;
 use App\Services\UserNotificationService;
 use Illuminate\Http\Request;
 use Stripe\StripeClient;
 
 class BillingController extends Controller
 {
-    public function portal(Request $request, ActivityLogger $activity, UserNotificationService $notifications)
+    public function portal(Request $request, ActivityService $activity, UserNotificationService $notifications)
     {
         $user = $request->user();
         $subscription = $user->currentSubscription;
@@ -35,7 +35,7 @@ class BillingController extends Controller
                 'return_url' => url('/member/account'),
             ]);
 
-            $activity->log('billing.portal_opened', [
+            $activity->log('billing_portal_opened', [
                 'user' => $user,
                 'actor' => $user,
                 'subject' => $subscription,
@@ -53,7 +53,7 @@ class BillingController extends Controller
 
             return redirect()->away($session->url);
         } catch (\Throwable $e) {
-            $activity->log('billing.portal_failed', [
+            $activity->log('billing_portal_failed', [
                 'user' => $user,
                 'actor' => $user,
                 'subject' => $subscription,

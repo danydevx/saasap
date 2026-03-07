@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Plan;
 use App\Models\User;
-use App\Services\ActivityLogger;
+use App\Services\ActivityService;
 use App\Services\UserNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -119,7 +119,7 @@ class UserController extends Controller
         ]);
     }
 
-    public function store(Request $request, ActivityLogger $activity)
+    public function store(Request $request, ActivityService $activity)
     {
         $rolesTable = config('permission.table_names.roles');
 
@@ -147,7 +147,7 @@ class UserController extends Controller
 
         $user->profile()->create();
 
-        $activity->log('user.created', [
+        $activity->log('user_created', [
             'user' => $user,
             'actor' => $request->user(),
             'subject' => $user,
@@ -211,7 +211,7 @@ class UserController extends Controller
         ]);
     }
 
-    public function update(Request $request, User $user, ActivityLogger $activity, UserNotificationService $notifications)
+    public function update(Request $request, User $user, ActivityService $activity, UserNotificationService $notifications)
     {
         $rolesTable = config('permission.table_names.roles');
 
@@ -262,7 +262,7 @@ class UserController extends Controller
         $currentRoles = $user->roles()->pluck('name')->values()->toArray();
 
         if ($previousRoles !== $currentRoles) {
-            $activity->log('user.role_changed', [
+            $activity->log('user_role_changed', [
                 'user' => $user,
                 'actor' => $request->user(),
                 'subject' => $user,
@@ -300,7 +300,7 @@ class UserController extends Controller
                 $user->subscriptions()->create($payload);
             }
 
-            $activity->log('subscription.updated', [
+            $activity->log('subscription_updated', [
                 'user' => $user,
                 'actor' => $request->user(),
                 'subject' => $user->currentSubscription,
@@ -320,7 +320,7 @@ class UserController extends Controller
         return redirect()->route('admin.users.index');
     }
 
-    public function destroy(User $user, ActivityLogger $activity)
+    public function destroy(User $user, ActivityService $activity)
     {
         if ($user->id === 1) {
             return back()->withErrors([
@@ -330,7 +330,7 @@ class UserController extends Controller
 
         $user->delete();
 
-        $activity->log('user.deleted', [
+        $activity->log('user_deleted', [
             'user' => $user,
             'actor' => request()->user(),
             'subject' => $user,
@@ -341,7 +341,7 @@ class UserController extends Controller
         return redirect()->route('admin.users.index');
     }
 
-    public function activate(User $user, ActivityLogger $activity, UserNotificationService $notifications)
+    public function activate(User $user, ActivityService $activity, UserNotificationService $notifications)
     {
         if ($user->id === 1) {
             return back()->withErrors([
@@ -351,7 +351,7 @@ class UserController extends Controller
 
         $user->update(['is_active' => true]);
 
-        $activity->log('user.activated', [
+        $activity->log('user_activated', [
             'user' => $user,
             'actor' => request()->user(),
             'subject' => $user,
@@ -370,7 +370,7 @@ class UserController extends Controller
         return back()->with('success', 'Usuario activado correctamente.');
     }
 
-    public function deactivate(User $user, ActivityLogger $activity, UserNotificationService $notifications)
+    public function deactivate(User $user, ActivityService $activity, UserNotificationService $notifications)
     {
         if ($user->id === 1) {
             return back()->withErrors([
@@ -380,7 +380,7 @@ class UserController extends Controller
 
         $user->update(['is_active' => false]);
 
-        $activity->log('user.deactivated', [
+        $activity->log('user_deactivated', [
             'user' => $user,
             'actor' => request()->user(),
             'subject' => $user,
@@ -399,7 +399,7 @@ class UserController extends Controller
         return back()->with('success', 'Usuario desactivado correctamente.');
     }
 
-    public function resendVerification(User $user, ActivityLogger $activity)
+    public function resendVerification(User $user, ActivityService $activity)
     {
         if ($user->hasVerifiedEmail()) {
             return back()->with('error', 'El usuario ya tiene email verificado.');
@@ -407,7 +407,7 @@ class UserController extends Controller
 
         $user->sendEmailVerificationNotification();
 
-        $activity->log('user.verification_resent', [
+        $activity->log('user_verification_resent', [
             'user' => $user,
             'actor' => request()->user(),
             'subject' => $user,

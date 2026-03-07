@@ -109,13 +109,13 @@
             <div v-if="activities.length" class="list-group list-group-flush mt-3">
               <div
                 v-for="(activity, index) in activities"
-                :key="`${activity.event}-${activity.created_at}-${index}`"
+                :key="`${activity.type}-${activity.created_at}-${index}`"
                 class="list-group-item px-0"
               >
                 <div class="d-flex flex-wrap align-items-start justify-content-between gap-2">
                   <div>
-                    <div class="fw-semibold">{{ activity.description || activity.event }}</div>
-                    <div v-if="activity.description" class="text-muted small">{{ activity.event }}</div>
+                    <div class="fw-semibold">{{ activity.description || activity.type }}</div>
+                    <div v-if="activity.description" class="text-muted small">{{ activity.type }}</div>
                   </div>
                   <div class="text-muted small">{{ formatActivityDate(activity.created_at) }}</div>
                 </div>

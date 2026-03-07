@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Plan;
-use App\Services\ActivityLogger;
+use App\Services\ActivityService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -49,7 +49,7 @@ class PlanController extends Controller
         return Inertia::render('Admin/Plans/Create');
     }
 
-    public function store(Request $request, ActivityLogger $activity)
+    public function store(Request $request, ActivityService $activity)
     {
         $data = $request->validate([
             'name' => ['required', 'string', 'max:150'],
@@ -81,7 +81,7 @@ class PlanController extends Controller
             'stripe_price_id' => $data['stripe_price_id'] ?? null,
         ]);
 
-        $activity->log('plan.created', [
+        $activity->log('plan_created', [
             'actor' => $request->user(),
             'subject' => $plan,
             'description' => 'Plan creado',
@@ -110,7 +110,7 @@ class PlanController extends Controller
         ]);
     }
 
-    public function update(Request $request, Plan $plan, ActivityLogger $activity)
+    public function update(Request $request, Plan $plan, ActivityService $activity)
     {
         $data = $request->validate([
             'name' => ['required', 'string', 'max:150'],
@@ -142,7 +142,7 @@ class PlanController extends Controller
             'stripe_price_id' => $data['stripe_price_id'] ?? null,
         ]);
 
-        $activity->log('plan.updated', [
+        $activity->log('plan_updated', [
             'actor' => $request->user(),
             'subject' => $plan,
             'description' => 'Plan actualizado',

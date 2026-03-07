@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Services\ActivityLogger;
+use App\Services\ActivityService;
 use App\Services\UserNotificationService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -42,7 +42,7 @@ class UserProfileController extends Controller
         ]);
     }
 
-    public function update(Request $request, ActivityLogger $activity, UserNotificationService $notifications)
+    public function update(Request $request, ActivityService $activity, UserNotificationService $notifications)
     {
         $user = $request->user();
 
@@ -64,7 +64,7 @@ class UserProfileController extends Controller
             'x' => $data['x'] ?? null,
         ]);
 
-        $activity->log('user.profile_updated', [
+        $activity->log('user_updated', [
             'user' => $user,
             'actor' => $user,
             'subject' => $user->profile,

@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Services\ActivityLogger;
+use App\Services\ActivityService;
 use App\Services\UserNotificationService;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\Request;
@@ -21,7 +21,7 @@ class EmailVerificationController extends Controller
         return Inertia::render('Auth/VerifyEmail');
     }
 
-    public function verify(EmailVerificationRequest $request, ActivityLogger $activity, UserNotificationService $notifications)
+    public function verify(EmailVerificationRequest $request, ActivityService $activity, UserNotificationService $notifications)
     {
         $request->fulfill();
 
@@ -47,7 +47,7 @@ class EmailVerificationController extends Controller
             $user->assignRole($memberRole);
         }
 
-        $activity->log('user.email_verified', [
+        $activity->log('user_verified', [
             'user' => $user,
             'actor' => $user,
             'subject' => $user,

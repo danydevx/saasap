@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Member;
 use App\Http\Controllers\Controller;
 use App\Models\SupportTicket;
 use App\Models\SupportTicketMessage;
-use App\Services\ActivityLogger;
+use App\Services\ActivityService;
 use App\Services\UserNotificationService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -40,7 +40,7 @@ class SupportTicketController extends Controller
         return Inertia::render('Member/Support/Create');
     }
 
-    public function store(Request $request, ActivityLogger $activity, UserNotificationService $notifications)
+    public function store(Request $request, ActivityService $activity, UserNotificationService $notifications)
     {
         $data = $request->validate([
             'subject' => ['required', 'string', 'max:150'],
@@ -66,7 +66,7 @@ class SupportTicketController extends Controller
             'message' => $data['message'],
         ]);
 
-        $activity->log('support.ticket_created', [
+        $activity->log('ticket_created', [
             'user' => $request->user(),
             'actor' => $request->user(),
             'subject' => $ticket,
@@ -118,7 +118,7 @@ class SupportTicketController extends Controller
         ]);
     }
 
-    public function reply(Request $request, SupportTicket $ticket, ActivityLogger $activity, UserNotificationService $notifications)
+    public function reply(Request $request, SupportTicket $ticket, ActivityService $activity, UserNotificationService $notifications)
     {
         if ($ticket->user_id !== $request->user()->id) {
             abort(403);
@@ -144,7 +144,7 @@ class SupportTicketController extends Controller
             'last_reply_at' => now(),
         ]);
 
-        $activity->log('support.ticket_replied', [
+        $activity->log('ticket_replied', [
             'user' => $request->user(),
             'actor' => $request->user(),
             'subject' => $ticket,

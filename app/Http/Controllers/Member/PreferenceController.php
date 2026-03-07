@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Member;
 
 use App\Http\Controllers\Controller;
-use App\Services\ActivityLogger;
+use App\Services\ActivityService;
 use App\Services\UserPreferenceService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -17,7 +17,7 @@ class PreferenceController extends Controller
         ]);
     }
 
-    public function update(Request $request, UserPreferenceService $preferences, ActivityLogger $activity)
+    public function update(Request $request, UserPreferenceService $preferences, ActivityService $activity)
     {
         $data = $request->validate([
             'locale' => ['nullable', 'string', 'max:10'],
@@ -43,7 +43,7 @@ class PreferenceController extends Controller
             'preferences' => array_merge($defaults, $current, $data),
         ]);
 
-        $activity->log('user.preferences_updated', [
+        $activity->log('preference_updated', [
             'user' => $user,
             'actor' => $user,
             'subject' => $profile,

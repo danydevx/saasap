@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\Admin\ActivityLogController;
+use App\Http\Controllers\Admin\ActivityController as AdminActivityController;
 use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\HelpArticleController;
@@ -166,6 +166,10 @@ Route::put('/member/notifications/read-all', [NotificationController::class, 'ma
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.notifications.read-all');
 
+Route::get('/member/activity', [MemberActivityController::class, 'index'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.activity.index');
+
 Route::get('/member/payments', [MemberPaymentController::class, 'index'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.payments.index');
@@ -268,7 +272,7 @@ Route::prefix('admin')->middleware(['auth', 'admin_or_user:1'])->group(function 
     Route::put('/roles/{role}', [RoleController::class, 'update'])->name('admin.roles.update');
     Route::delete('/roles/{role}', [RoleController::class, 'destroy'])->name('admin.roles.destroy');
 
-    Route::get('/activity', [ActivityLogController::class, 'index'])
+    Route::get('/activity', [AdminActivityController::class, 'index'])
         ->middleware('permission_or_user:activity.view,1')
         ->name('admin.activity.index');
 

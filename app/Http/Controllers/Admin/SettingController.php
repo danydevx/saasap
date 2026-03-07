@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Setting;
-use App\Services\ActivityLogger;
+use App\Services\ActivityService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -51,7 +51,7 @@ class SettingController extends Controller
         ]);
     }
 
-    public function update(Request $request, ActivityLogger $activity)
+    public function update(Request $request, ActivityService $activity)
     {
         $data = $request->validate([
             'app.name' => ['required', 'string', 'max:150'],
@@ -75,7 +75,7 @@ class SettingController extends Controller
         $this->saveValue('system.require_user_approval', $this->boolToString($data['system']['require_user_approval'] ?? false));
         $this->saveValue('system.default_pagination', (string) $data['system']['default_pagination']);
 
-        $activity->log('settings.updated', [
+        $activity->log('settings_updated', [
             'actor' => $request->user(),
             'description' => 'Settings actualizados',
             'request' => $request,

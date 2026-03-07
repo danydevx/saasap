@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Member;
 
 use App\Http\Controllers\Controller;
-use App\Services\ActivityLogger;
+use App\Services\ActivityService;
 use App\Services\UserNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -17,7 +17,7 @@ class PasswordController extends Controller
         return Inertia::render('Member/Password/Edit');
     }
 
-    public function update(Request $request, ActivityLogger $activity, UserNotificationService $notifications)
+    public function update(Request $request, ActivityService $activity, UserNotificationService $notifications)
     {
         $data = $request->validate([
             'current_password' => ['required', 'string'],
@@ -38,7 +38,7 @@ class PasswordController extends Controller
             'password' => Hash::make($data['password']),
         ]);
 
-        $activity->log('user.password_changed', [
+        $activity->log('user_password_changed', [
             'user' => $user,
             'actor' => $user,
             'subject' => $user,

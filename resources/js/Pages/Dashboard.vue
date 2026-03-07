@@ -115,7 +115,7 @@
               <div v-for="item in recentActivity" :key="item.id" class="list-group-item px-0">
                 <div class="d-flex align-items-start justify-content-between gap-2">
                   <div>
-                    <div class="fw-semibold">{{ item.description || item.event }}</div>
+                    <div class="fw-semibold">{{ item.description || item.type }}</div>
                     <div class="text-muted small">{{ item.actor?.name || 'Sistema' }}</div>
                   </div>
                   <div class="text-muted small">{{ item.created_at }}</div>

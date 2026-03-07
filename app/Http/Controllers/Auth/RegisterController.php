@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Setting;
 use App\Models\User;
 use App\Models\UserProfile;
-use App\Services\ActivityLogger;
+use App\Services\ActivityService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -25,7 +25,7 @@ class RegisterController extends Controller
         return Inertia::render('Auth/Register');
     }
 
-    public function register(Request $request, ActivityLogger $activity)
+    public function register(Request $request, ActivityService $activity)
     {
         if (! $this->allowRegistration()) {
             return back()->withErrors([
@@ -67,7 +67,7 @@ class RegisterController extends Controller
             'name' => $user->name,
         ]);
 
-        $activity->log('user.registered', [
+        $activity->log('user_registered', [
             'user' => $user,
             'actor' => $user,
             'subject' => $user,

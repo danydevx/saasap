@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Member;
 
 use App\Http\Controllers\Controller;
-use App\Models\ActivityLog;
+use App\Models\Activity;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -15,11 +15,11 @@ class DashboardController extends Controller
 
         $limits = $subscription?->plan?->limits ?? [];
 
-        $activities = ActivityLog::query()
+        $activities = Activity::query()
             ->where('user_id', $request->user()->id)
             ->latest()
             ->limit(5)
-            ->get(['event', 'description', 'created_at']);
+            ->get(['type', 'description', 'created_at']);
 
         return Inertia::render('Member/Dashboard', [
             'onboardingCompletedAt' => $request->user()->onboarding_completed_at?->toDateTimeString(),
@@ -31,7 +31,7 @@ class DashboardController extends Controller
             ] : null,
             'limits' => $limits,
             'activities' => $activities->map(fn ($log) => [
-                'event' => $log->event,
+                'type' => $log->type,
                 'description' => $log->description,
                 'created_at' => $log->created_at?->toDateTimeString(),
             ]),

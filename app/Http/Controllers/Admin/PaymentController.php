@@ -7,6 +7,7 @@ use App\Models\Payment;
 use App\Models\Plan;
 use App\Models\Subscription;
 use App\Models\User;
+use App\Services\ActivityService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -91,11 +92,25 @@ class PaymentController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(Request $request, ActivityService $activity)
     {
         $data = $this->validated($request);
 
         $payment = Payment::create($data);
+
+        $type = match ($payment->status) {
+            'paid' => 'payment_succeeded',
+            'failed' => 'payment_failed',
+            default => 'payment_created',
+        };
+
+        $activity->log($type, [
+            'user' => $payment->user,
+            'actor' => $request->user(),
+            'subject' => $payment,
+            'description' => 'Pago creado',
+            'request' => $request,
+        ]);
 
         return redirect()->route('admin.payments.edit', $payment);
     }
@@ -124,11 +139,30 @@ class PaymentController extends Controller
         ]);
     }
 
-    public function update(Request $request, Payment $payment)
+    public function update(Request $request, Payment $payment, ActivityService $activity)
     {
         $data = $this->validated($request, $payment->id);
 
+        $previousStatus = $payment->status;
+
         $payment->update($data);
+
+        $type = 'payment_updated';
+        if ($previousStatus !== $payment->status) {
+            $type = match ($payment->status) {
+                'paid' => 'payment_succeeded',
+                'failed' => 'payment_failed',
+                default => 'payment_updated',
+            };
+        }
+
+        $activity->log($type, [
+            'user' => $payment->user,
+            'actor' => $request->user(),
+            'subject' => $payment,
+            'description' => 'Pago actualizado',
+            'request' => $request,
+        ]);
 
         return redirect()->route('admin.payments.edit', $payment)->with('success', 'Pago actualizado correctamente.');
     }

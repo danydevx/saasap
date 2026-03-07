@@ -17,6 +17,7 @@
               {{ unreadCount }}
             </span>
           </Link>
+          <Link href="/member/activity" class="btn btn-outline-secondary btn-sm">Actividad</Link>
           <div class="dropdown">
             <button
               class="btn btn-outline-secondary btn-sm dropdown-toggle"
