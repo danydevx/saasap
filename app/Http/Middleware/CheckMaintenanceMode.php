@@ -27,7 +27,7 @@ class CheckMaintenanceMode
 
     private function isAllowed(Request $request): bool
     {
-        if ($request->user() && $request->user()->hasAnyRole(['admin', 'superadmin', 'super-admin'])) {
+        if ($request->user() && $request->user()->hasAnyRole(['admin', 'superadmin'])) {
             return true;
         }
 

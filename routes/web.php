@@ -4,7 +4,6 @@ use App\Http\Controllers\Admin\ActivityController as AdminActivityController;
 use App\Http\Controllers\Admin\ApiKeyController as AdminApiKeyController;
 use App\Http\Controllers\Admin\AutomationController;
 use App\Http\Controllers\Admin\CouponController;
-use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\ExportController;
 use App\Http\Controllers\Admin\FeatureFlagController;
 use App\Http\Controllers\Admin\HelpArticleController;
@@ -146,10 +145,6 @@ Route::post('/email/verification-notification', [EmailVerificationController::cl
 Route::post('/logout', [LogoutController::class, 'destroy'])
     ->middleware('auth')
     ->name('logout');
-
-Route::get('/dashboard', [AdminDashboardController::class, 'index'])
-    ->middleware(['auth', 'role:admin|superadmin'])
-    ->name('dashboard');
 
 Route::get('/member', [DashboardController::class, 'index'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])

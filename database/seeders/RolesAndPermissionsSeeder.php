@@ -108,13 +108,12 @@ class RolesAndPermissionsSeeder extends Seeder
             Permission::firstOrCreate(['name' => $permission]);
         }
 
-        $superAdmin = Role::firstOrCreate(['name' => 'super-admin']);
+        $superadmin = Role::firstOrCreate(['name' => 'superadmin']);
         $admin = Role::firstOrCreate(['name' => 'admin']);
-        $user = Role::firstOrCreate(['name' => 'user']);
-        $normal = Role::firstOrCreate(['name' => 'normal']);
         $member = Role::firstOrCreate(['name' => 'member']);
+        $guest = Role::firstOrCreate(['name' => 'guest']);
 
-        $superAdmin->givePermissionTo(Permission::all());
+        $superadmin->givePermissionTo(Permission::all());
 
         $admin->givePermissionTo([
             'users.view',
@@ -195,17 +194,15 @@ class RolesAndPermissionsSeeder extends Seeder
             'modules.update',
         ]);
 
-        $user->givePermissionTo([]);
-        $normal->givePermissionTo([]);
+        $guest->givePermissionTo([]);
         $member->givePermissionTo([
             'api-keys.manage',
             'webhooks.manage',
         ]);
 
-        // Garantiza que el usuario ID 1 tenga rol super-admin para recuperar acceso total.
         $rootUser = User::query()->find(1);
         if ($rootUser) {
-            $rootUser->assignRole($superAdmin);
+            $rootUser->syncRoles([$superadmin]);
         }
     }
 }

@@ -49,7 +49,7 @@ class AccessService
     public function hasPermission(User $user, string $permission): bool
     {
         // Permite a super-admin pasar todas las validaciones de permisos.
-        if ($user->hasAnyRole(['super-admin', 'superadmin'])) {
+        if ($user->hasAnyRole(['superadmin'])) {
             return true;
         }
 

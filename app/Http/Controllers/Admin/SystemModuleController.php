@@ -51,7 +51,7 @@ class SystemModuleController extends Controller
     private function ensureSuperAdmin(Request $request): void
     {
         $user = $request->user();
-        if (! $user || (! $user->hasAnyRole(['super-admin', 'superadmin']) && (int) $user->id !== 1)) {
+        if (! $user || (! $user->hasAnyRole(['superadmin']) && (int) $user->id !== 1)) {
             abort(403);
         }
     }

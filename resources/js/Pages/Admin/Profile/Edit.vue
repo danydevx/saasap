@@ -117,7 +117,7 @@ const form = useForm({
 
 const layout = computed(() => {
   const roles = page.props.auth?.roles || []
-  const isAdmin = roles.includes('admin') || roles.includes('super-admin')
+  const isAdmin = roles.includes('admin') || roles.includes('superadmin')
   return isAdmin ? AdminLayout : MemberLayout
 })
 

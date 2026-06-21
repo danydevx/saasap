@@ -34,7 +34,7 @@ class EmailVerificationController extends Controller
 
         $normalRole = Role::query()
             ->where('id', 10)
-            ->orWhere('name', 'normal')
+            ->orWhere('name', 'guest')
             ->first();
 
         $memberRole = Role::query()

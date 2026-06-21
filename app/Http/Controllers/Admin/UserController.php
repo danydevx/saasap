@@ -246,12 +246,12 @@ class UserController extends Controller
             ]);
         }
 
-        // Restringe la asignacion de roles criticos a super-admin.
+        // Restringe la asignacion de roles criticos a superadmin.
         $rolesToAssign = Role::query()->whereIn('id', $data['roles'] ?? [])->get(['name']);
         $names = $rolesToAssign->pluck('name')->all();
-        if (in_array('super-admin', $names, true) && ! $request->user()->hasRole('super-admin')) {
+        if (in_array('superadmin', $names, true) && ! $request->user()->hasRole('superadmin')) {
             return back()->withErrors([
-                'roles' => 'Solo un super-admin puede asignar ese rol.',
+                'roles' => 'Solo un superadmin puede asignar ese rol.',
             ]);
         }
 

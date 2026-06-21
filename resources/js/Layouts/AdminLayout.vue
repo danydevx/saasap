@@ -157,7 +157,7 @@ const canViewMonitor = computed(() => permissions.value.includes('reports.view')
 const canViewSecurity = computed(() => permissions.value.includes('security-events.view') || userId.value === 1)
 const canViewLegalDocuments = computed(() => permissions.value.includes('legal-documents.view') || userId.value === 1)
 const canViewModules = computed(() => permissions.value.includes('modules.view') || userId.value === 1)
-const isSuperAdmin = computed(() => roles.value.includes('super-admin') || roles.value.includes('superadmin') || userId.value === 1)
+const isSuperAdmin = computed(() => roles.value.includes('superadmin') || userId.value === 1)
 
 const showBillingMenu = computed(() =>
   modules.value.billing !== false &&

@@ -51,7 +51,7 @@ class PricingController extends Controller
             return redirect('/register')->with('success', 'Plan seleccionado. Crea tu cuenta para continuar.');
         }
 
-        if ($user->hasAnyRole(['admin', 'super-admin', 'superadmin'])) {
+        if ($user->hasAnyRole(['admin', 'superadmin'])) {
             return redirect('/pricing')->with('error', 'Este flujo esta disponible solo para miembros.');
         }
 

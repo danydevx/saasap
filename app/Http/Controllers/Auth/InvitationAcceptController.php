@@ -84,7 +84,7 @@ class InvitationAcceptController extends Controller
 
         if ($invitation->role_name) {
             $role = Role::query()->where('name', $invitation->role_name)->first();
-            if ($role && ! in_array($role->name, ['admin', 'superadmin', 'super-admin'], true)) {
+            if ($role && ! in_array($role->name, ['admin', 'superadmin'], true)) {
                 $user->assignRole($role);
             }
         }

@@ -170,7 +170,7 @@ class AutomationService
         $templateKey = Arr::get($config, 'template_key');
 
         $admins = \App\Models\User::query()
-            ->whereHas('roles', fn ($query) => $query->whereIn('name', ['admin', 'superadmin', 'super-admin']))
+            ->whereHas('roles', fn ($query) => $query->whereIn('name', ['admin', 'superadmin']))
             ->get();
 
         foreach ($admins as $admin) {

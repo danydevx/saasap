@@ -85,7 +85,7 @@ class RegisterController extends Controller
 
         $role = Role::query()
             ->where('id', 10)
-            ->orWhere('name', 'normal')
+            ->orWhere('name', 'guest')
             ->first();
 
         if ($role) {
@@ -108,7 +108,7 @@ class RegisterController extends Controller
 
                     if ($invitation->role_name) {
                         $invitedRole = Role::query()->where('name', $invitation->role_name)->first();
-                        if ($invitedRole && ! in_array($invitedRole->name, ['admin', 'superadmin', 'super-admin'], true)) {
+                        if ($invitedRole && ! in_array($invitedRole->name, ['admin', 'superadmin'], true)) {
                             $user->assignRole($invitedRole);
                         }
                     }

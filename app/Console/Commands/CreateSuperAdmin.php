@@ -53,10 +53,10 @@ class CreateSuperAdmin extends Command
             $user->forceFill(['email_verified_at' => now()])->save();
         }
 
-        $role = Role::firstOrCreate(['name' => 'super-admin']);
+        $role = Role::firstOrCreate(['name' => 'superadmin']);
         $user->assignRole($role);
 
-        $this->info('Super-admin listo: '.$user->email);
+        $this->info('Superuser listo: '.$user->email);
 
         return self::SUCCESS;
     }

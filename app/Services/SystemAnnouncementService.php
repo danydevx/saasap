@@ -100,7 +100,7 @@ class SystemAnnouncementService
             $audiences[] = 'members';
         }
 
-        if ($user->hasAnyRole(['admin', 'superadmin', 'super-admin'])) {
+        if ($user->hasAnyRole(['admin', 'superadmin'])) {
             $audiences[] = 'admins';
         }
 

@@ -16,7 +16,7 @@ class EnsureAdminOrUser
             return $next($request);
         }
 
-        if ($user && $user->hasAnyRole(['admin', 'super-admin'])) {
+        if ($user && $user->hasAnyRole(['admin', 'superadmin'])) {
             return $next($request);
         }
 

@@ -99,7 +99,7 @@ const page = usePage()
 const isAuthenticated = computed(() => !!page.props.auth?.user)
 const roles = computed(() => page.props.auth?.roles || [])
 const isMember = computed(() => roles.value.includes('member'))
-const isAdmin = computed(() => roles.value.includes('admin') || roles.value.includes('superadmin') || roles.value.includes('super-admin'))
+const isAdmin = computed(() => roles.value.includes('admin') || roles.value.includes('superadmin'))
 
 const dashboardHref = computed(() => {
   if (isMember.value) return '/member'

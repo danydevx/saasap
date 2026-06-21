@@ -1,4 +1,4 @@
-import '../css/app.css'
+import '../less/app.less'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import 'bootstrap-icons/font/bootstrap-icons.css'
 import 'vue-toast-notification/dist/theme-bootstrap.css'
