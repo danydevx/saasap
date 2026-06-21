@@ -1,10 +1,18 @@
 <template>
   <div class="member-layout">
     <aside class="sidebar bg-dark text-white">
-      <div class="sidebar-header p-3 border-bottom border-secondary">
+      <div class="sidebar-header p-3 border-bottom border-secondary d-flex align-items-center justify-content-between">
         <Link href="/member" class="text-white text-decoration-none fw-semibold">
           Mi SaaS
         </Link>
+        <button
+          class="btn btn-link text-white p-0 d-lg-none"
+          type="button"
+          data-bs-toggle="offcanvas"
+          data-bs-target="#sidebarOffcanvas"
+        >
+          <i class="bi bi-x-lg"></i>
+        </button>
       </div>
 
       <nav class="sidebar-nav py-2">
@@ -100,6 +108,14 @@
 
     <div class="main-wrapper">
       <header class="topbar bg-body border-bottom d-flex align-items-center px-3">
+        <button
+          class="btn btn-outline-secondary me-3 d-lg-none"
+          type="button"
+          data-bs-toggle="offcanvas"
+          data-bs-target="#sidebarOffcanvas"
+        >
+          <i class="bi bi-list"></i>
+        </button>
         <div class="flex-grow-1">
           <slot name="topbar" />
         </div>
@@ -114,7 +130,7 @@
               data-bs-toggle="dropdown"
             >
               <i class="bi bi-person-circle me-1"></i>
-              {{ userName }}
+              <span class="d-none d-sm-inline">{{ userName }}</span>
             </button>
             <ul class="dropdown-menu dropdown-menu-end">
               <li>
@@ -164,6 +180,116 @@
         </div>
         <slot />
       </main>
+    </div>
+
+    <div
+      class="offcanvas offcanvas-start bg-dark text-white d-lg-none"
+      tabindex="-1"
+      id="sidebarOffcanvas"
+      aria-labelledby="sidebarOffcanvasLabel"
+    >
+      <div class="offcanvas-header border-bottom border-secondary">
+        <Link href="/member" class="text-white text-decoration-none fw-semibold">
+          Mi SaaS
+        </Link>
+        <button
+          type="button"
+          class="btn-close btn-close-white text-reset"
+          data-bs-dismiss="offcanvas"
+          aria-label="Close"
+        ></button>
+      </div>
+      <div class="offcanvas-body p-0">
+        <nav class="sidebar-nav py-2">
+          <div class="sidebar-section">
+            <Link href="/member/dashboard" class="sidebar-link" :class="{ active: isActive('/member/dashboard') }">
+              <i class="bi bi-speedometer2"></i>
+              <span>Dashboard</span>
+            </Link>
+            <Link href="/member/account" class="sidebar-link" :class="{ active: isActive('/member/account') }">
+              <i class="bi bi-wallet2"></i>
+              <span>Cuenta</span>
+            </Link>
+          </div>
+
+          <div v-if="canBilling" class="sidebar-section">
+            <div class="sidebar-section-title">Facturación</div>
+            <Link href="/member/payments" class="sidebar-link" :class="{ active: isActive('/member/payments') }">
+              <i class="bi bi-credit-card"></i>
+              <span>Pagos</span>
+            </Link>
+            <Link href="/member/invoices" class="sidebar-link" :class="{ active: isActive('/member/invoices') }">
+              <i class="bi bi-file-earmark-text"></i>
+              <span>Comprobantes</span>
+            </Link>
+          </div>
+
+          <div v-if="canSupport" class="sidebar-section">
+            <div class="sidebar-section-title">Soporte</div>
+            <Link href="/member/support" class="sidebar-link" :class="{ active: isActive('/member/support') }">
+              <i class="bi bi-headset"></i>
+              <span>Tickets</span>
+            </Link>
+            <Link href="/member/help" class="sidebar-link" :class="{ active: isActive('/member/help') }">
+              <i class="bi bi-question-circle"></i>
+              <span>Ayuda</span>
+            </Link>
+          </div>
+
+          <div v-if="canUseIntegrations" class="sidebar-section">
+            <div class="sidebar-section-title">Integraciones</div>
+            <Link href="/member/integrations" class="sidebar-link" :class="{ active: isActive('/member/integrations') }">
+              <i class="bi bi-plug"></i>
+              <span>Integraciones</span>
+            </Link>
+            <Link v-if="canUseApi" href="/member/api-keys" class="sidebar-link" :class="{ active: isActive('/member/api-keys') }">
+              <i class="bi bi-key"></i>
+              <span>API Keys</span>
+            </Link>
+            <Link v-if="canUseWebhooks" href="/member/webhooks" class="sidebar-link" :class="{ active: isActive('/member/webhooks') }">
+              <i class="bi bi-arrow-left-right"></i>
+              <span>Webhooks</span>
+            </Link>
+          </div>
+
+          <div class="sidebar-section">
+            <div class="sidebar-section-title">Cuenta</div>
+            <Link href="/member/profile" class="sidebar-link" :class="{ active: isActive('/member/profile') }">
+              <i class="bi bi-person"></i>
+              <span>Perfil</span>
+            </Link>
+            <Link href="/member/password" class="sidebar-link" :class="{ active: isActive('/member/password') }">
+              <i class="bi bi-lock"></i>
+              <span>Password</span>
+            </Link>
+            <Link href="/member/sessions" class="sidebar-link" :class="{ active: isActive('/member/sessions') }">
+              <i class="bi bi-display"></i>
+              <span>Sesiones</span>
+            </Link>
+            <Link href="/member/preferences" class="sidebar-link" :class="{ active: isActive('/member/preferences') }">
+              <i class="bi bi-gear"></i>
+              <span>Preferencias</span>
+            </Link>
+          </div>
+
+          <div v-if="canNotifications || canActivity || canMedia" class="sidebar-section">
+            <div class="sidebar-section-title">Recursos</div>
+            <Link v-if="canNotifications" href="/member/notifications" class="sidebar-link" :class="{ active: isActive('/member/notifications') }">
+              <i class="bi bi-bell"></i>
+              <span>Notificaciones</span>
+              <span v-if="unreadCount > 0" class="badge bg-primary ms-auto">{{ unreadCount }}</span>
+            </Link>
+            <Link v-if="canActivity" href="/member/activity" class="sidebar-link" :class="{ active: isActive('/member/activity') }">
+              <i class="bi bi-clock-history"></i>
+              <span>Actividad</span>
+            </Link>
+            <Link v-if="canMedia" href="/member/files" class="sidebar-link" :class="{ active: isActive('/member/files') }">
+              <i class="bi bi-folder"></i>
+              <span>Archivos</span>
+            </Link>
+          </div>
+        </nav>
+      </div>
     </div>
   </div>
 </template>
@@ -247,6 +373,12 @@ const alertClass = (type, priority) => {
   overflow-y: auto;
 }
 
+@media (max-width: 991.98px) {
+  .sidebar {
+    display: none;
+  }
+}
+
 .sidebar-header {
   padding: 1rem;
 }
@@ -316,5 +448,13 @@ const alertClass = (type, priority) => {
 .main-content {
   flex: 1;
   overflow-y: auto;
+}
+
+.offcanvas {
+  width: 280px;
+}
+
+.offcanvas .sidebar-link {
+  padding: 0.75rem 1rem;
 }
 </style>

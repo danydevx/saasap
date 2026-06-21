@@ -58,7 +58,7 @@ class UserProfileController extends Controller
     {
         $user = $request->user();
 
-        $data = $request->validate([
+        $rules = [
             'name' => ['nullable', 'string', 'max:150'],
             'phone' => ['nullable', 'string', 'max:50'],
             'whatsapp' => ['nullable', 'string', 'max:20'],
@@ -68,8 +68,15 @@ class UserProfileController extends Controller
             'x' => ['nullable', 'url', 'max:255'],
             'personal_email' => ['nullable', 'email', 'max:150'],
             'country' => ['nullable', 'string', 'max:5'],
-            'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:2048'],
-        ]);
+        ];
+
+        if ($request->hasFile('avatar')) {
+            $rules['avatar'] = ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:2048'];
+        } elseif ($request->filled('avatar') && is_string($request->avatar)) {
+            $rules['avatar'] = ['nullable', 'string', 'max:500'];
+        }
+
+        $data = $request->validate($rules);
 
         $profileData = [
             'name' => $data['name'] ?? null,
@@ -86,6 +93,8 @@ class UserProfileController extends Controller
         if ($request->hasFile('avatar')) {
             $avatarPath = $request->file('avatar')->store('avatars', 'public');
             $profileData['avatar'] = $avatarPath;
+        } elseif ($request->filled('avatar_delete')) {
+            $profileData['avatar'] = null;
         }
 
         $user->profile()->updateOrCreate([

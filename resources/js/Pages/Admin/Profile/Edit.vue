@@ -254,14 +254,25 @@ const handleAvatarChange = (e) => {
   }
 }
 
+const avatarDeleted = ref(false)
+
 const removeAvatar = () => {
   form.avatar = ''
+  avatarDeleted.value = true
   avatarPreview.value = null
 }
 
 const submit = () => {
+  const data = { ...form.data() }
+  if (avatarDeleted.value) {
+    data.avatar_delete = true
+  }
+  if (typeof data.avatar === 'string' && data.avatar !== '') {
+    delete data.avatar
+  }
   form.post('/admin/profile', {
     preserveScroll: true,
+    data: data,
   })
 }
 </script>
