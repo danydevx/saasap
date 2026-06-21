@@ -356,6 +356,10 @@ Route::put('/admin/profile', [UserProfileController::class, 'update'])
     ->middleware('auth')
     ->name('admin.profile.update');
 
+Route::get('/admin/dashboard', [App\Http\Controllers\Admin\DashboardController::class, 'index'])
+    ->middleware(['auth', 'admin_or_user:1'])
+    ->name('admin.dashboard');
+
 Route::prefix('admin')->middleware(['auth', 'admin_or_user:1'])->group(function () {
 
     Route::get('/settings', [SettingController::class, 'index'])

@@ -54,7 +54,7 @@ class LoginController extends Controller
         $security->log('login_success', $user, $request, 'Login exitoso');
 
         if ($user->hasAnyRole(['admin', 'superadmin'])) {
-            return redirect()->intended('/admin/users');
+            return redirect()->intended('/admin/dashboard');
         }
 
         if ($user->hasRole('member')) {

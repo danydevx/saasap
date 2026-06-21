@@ -16,7 +16,7 @@
         <div id="mainNav" class="collapse navbar-collapse">
           <ul class="navbar-nav me-auto mb-2 mb-lg-0">
             <li class="nav-item">
-              <Link href="/dashboard" class="nav-link" prefetch="hover">Dashboard</Link>
+              <Link href="/admin/dashboard" class="nav-link" prefetch="hover">Dashboard</Link>
             </li>
             <li class="nav-item dropdown">
               <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">

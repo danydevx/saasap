@@ -1,37 +1,120 @@
 <template>
-  <div>
-    <nav class="navbar navbar-expand-lg bg-body-tertiary border-bottom">
-      <div class="container-fluid">
-        <Link href="/member" class="navbar-brand">Mi SaaS</Link>
+  <div class="member-layout">
+    <aside class="sidebar bg-dark text-white">
+      <div class="sidebar-header p-3 border-bottom border-secondary">
+        <Link href="/member" class="text-white text-decoration-none fw-semibold">
+          Mi SaaS
+        </Link>
+      </div>
 
-        <div class="ms-auto d-flex align-items-center gap-2">
-          <Link href="/member/account" class="btn btn-outline-secondary btn-sm">Cuenta</Link>
-          <Link v-if="canBilling" href="/member/payments" class="btn btn-outline-secondary btn-sm">Pagos</Link>
-          <Link v-if="canBilling" href="/member/invoices" class="btn btn-outline-secondary btn-sm">Comprobantes</Link>
-          <Link v-if="canSupport" href="/member/support" class="btn btn-outline-secondary btn-sm">Soporte</Link>
-          <Link v-if="canSupport" href="/member/help" class="btn btn-outline-secondary btn-sm">Ayuda</Link>
-          <Link v-if="canUseIntegrations" href="/member/integrations" class="btn btn-outline-secondary btn-sm">Integraciones</Link>
-          <Link href="/member/preferences" class="btn btn-outline-secondary btn-sm">Preferencias</Link>
-          <Link href="/member/notification-preferences" class="btn btn-outline-secondary btn-sm">Notif. preferencias</Link>
-          <Link v-if="canUseApi" href="/member/api-keys" class="btn btn-outline-secondary btn-sm">API Keys</Link>
-          <Link v-if="canUseWebhooks" href="/member/webhooks" class="btn btn-outline-secondary btn-sm">Webhooks</Link>
-          <Link href="/member/sessions" class="btn btn-outline-secondary btn-sm">Sesiones</Link>
-          <Link v-if="canMedia" href="/member/files" class="btn btn-outline-secondary btn-sm">Archivos</Link>
-          <Link v-if="canNotifications" href="/member/notifications" class="btn btn-outline-secondary btn-sm">
-            Notificaciones
-            <span v-if="unreadCount > 0" class="badge text-bg-primary ms-1">
-              {{ unreadCount }}
-            </span>
+      <nav class="sidebar-nav py-2">
+        <div class="sidebar-section">
+          <Link href="/member/dashboard" class="sidebar-link" :class="{ active: isActive('/member/dashboard') }">
+            <i class="bi bi-speedometer2"></i>
+            <span>Dashboard</span>
           </Link>
-          <Link v-if="canActivity" href="/member/activity" class="btn btn-outline-secondary btn-sm">Actividad</Link>
+          <Link href="/member/account" class="sidebar-link" :class="{ active: isActive('/member/account') }">
+            <i class="bi bi-wallet2"></i>
+            <span>Cuenta</span>
+          </Link>
+        </div>
+
+        <div v-if="canBilling" class="sidebar-section">
+          <div class="sidebar-section-title">Facturación</div>
+          <Link href="/member/payments" class="sidebar-link" :class="{ active: isActive('/member/payments') }">
+            <i class="bi bi-credit-card"></i>
+            <span>Pagos</span>
+          </Link>
+          <Link href="/member/invoices" class="sidebar-link" :class="{ active: isActive('/member/invoices') }">
+            <i class="bi bi-file-earmark-text"></i>
+            <span>Comprobantes</span>
+          </Link>
+        </div>
+
+        <div v-if="canSupport" class="sidebar-section">
+          <div class="sidebar-section-title">Soporte</div>
+          <Link href="/member/support" class="sidebar-link" :class="{ active: isActive('/member/support') }">
+            <i class="bi bi-headset"></i>
+            <span>Tickets</span>
+          </Link>
+          <Link href="/member/help" class="sidebar-link" :class="{ active: isActive('/member/help') }">
+            <i class="bi bi-question-circle"></i>
+            <span>Ayuda</span>
+          </Link>
+        </div>
+
+        <div v-if="canUseIntegrations" class="sidebar-section">
+          <div class="sidebar-section-title">Integraciones</div>
+          <Link href="/member/integrations" class="sidebar-link" :class="{ active: isActive('/member/integrations') }">
+            <i class="bi bi-plug"></i>
+            <span>Integraciones</span>
+          </Link>
+          <Link v-if="canUseApi" href="/member/api-keys" class="sidebar-link" :class="{ active: isActive('/member/api-keys') }">
+            <i class="bi bi-key"></i>
+            <span>API Keys</span>
+          </Link>
+          <Link v-if="canUseWebhooks" href="/member/webhooks" class="sidebar-link" :class="{ active: isActive('/member/webhooks') }">
+            <i class="bi bi-arrow-left-right"></i>
+            <span>Webhooks</span>
+          </Link>
+        </div>
+
+        <div class="sidebar-section">
+          <div class="sidebar-section-title">Cuenta</div>
+          <Link href="/member/profile" class="sidebar-link" :class="{ active: isActive('/member/profile') }">
+            <i class="bi bi-person"></i>
+            <span>Perfil</span>
+          </Link>
+          <Link href="/member/password" class="sidebar-link" :class="{ active: isActive('/member/password') }">
+            <i class="bi bi-lock"></i>
+            <span>Password</span>
+          </Link>
+          <Link href="/member/sessions" class="sidebar-link" :class="{ active: isActive('/member/sessions') }">
+            <i class="bi bi-display"></i>
+            <span>Sesiones</span>
+          </Link>
+          <Link href="/member/preferences" class="sidebar-link" :class="{ active: isActive('/member/preferences') }">
+            <i class="bi bi-gear"></i>
+            <span>Preferencias</span>
+          </Link>
+        </div>
+
+        <div v-if="canNotifications || canActivity || canMedia" class="sidebar-section">
+          <div class="sidebar-section-title">Recursos</div>
+          <Link v-if="canNotifications" href="/member/notifications" class="sidebar-link" :class="{ active: isActive('/member/notifications') }">
+            <i class="bi bi-bell"></i>
+            <span>Notificaciones</span>
+            <span v-if="unreadCount > 0" class="badge bg-primary ms-auto">{{ unreadCount }}</span>
+          </Link>
+          <Link v-if="canActivity" href="/member/activity" class="sidebar-link" :class="{ active: isActive('/member/activity') }">
+            <i class="bi bi-clock-history"></i>
+            <span>Actividad</span>
+          </Link>
+          <Link v-if="canMedia" href="/member/files" class="sidebar-link" :class="{ active: isActive('/member/files') }">
+            <i class="bi bi-folder"></i>
+            <span>Archivos</span>
+          </Link>
+        </div>
+      </nav>
+    </aside>
+
+    <div class="main-wrapper">
+      <header class="topbar bg-body border-bottom d-flex align-items-center px-3">
+        <div class="flex-grow-1">
+          <slot name="topbar" />
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <Link v-if="canNotifications" href="/member/notification-preferences" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-gear"></i>
+          </Link>
           <div class="dropdown">
             <button
               class="btn btn-outline-secondary btn-sm dropdown-toggle"
               type="button"
               data-bs-toggle="dropdown"
-              aria-expanded="false"
             >
-              <i class="bi bi-person"></i>
+              <i class="bi bi-person-circle me-1"></i>
+              {{ userName }}
             </button>
             <ul class="dropdown-menu dropdown-menu-end">
               <li>
@@ -49,16 +132,14 @@
             </ul>
           </div>
         </div>
-      </div>
-    </nav>
+      </header>
 
-    <main class="py-4">
-      <div class="container">
-        <div v-if="announcements.length" class="mb-3">
+      <main class="main-content p-4">
+        <div v-if="announcements.length" class="mb-4">
           <div
             v-for="announcement in announcements"
             :key="announcement.id"
-            class="alert d-flex align-items-start gap-3"
+            class="alert d-flex align-items-start gap-3 mb-2"
             :class="alertClass(announcement.type, announcement.priority)"
           >
             <div class="flex-grow-1">
@@ -82,8 +163,8 @@
           </div>
         </div>
         <slot />
-      </div>
-    </main>
+      </main>
+    </div>
   </div>
 </template>
 
@@ -92,6 +173,7 @@ import { computed } from 'vue'
 import { Link, router, usePage } from '@inertiajs/vue3'
 
 const page = usePage()
+const userName = computed(() => page.props.auth?.user?.name || 'Usuario')
 const unreadCount = computed(() => page.props.notificationUnreadCount || 0)
 const features = computed(() => page.props.features || {})
 const permissions = computed(() => page.props.auth?.permissions || [])
@@ -106,7 +188,6 @@ const canMedia = computed(() => modules.value.media !== false)
 const canNotifications = computed(() => modules.value.notifications !== false)
 const canActivity = computed(() => modules.value.activity !== false)
 
-// Oculta el acceso a integraciones si el usuario no tiene permiso o feature habilitado.
 const canUseIntegrations = computed(() => {
   const apiEnabled = (features.value['features.api_enabled'] ?? features.value.can_use_api) !== false
   const webhooksEnabled = (features.value['features.webhooks_enabled'] ?? features.value.can_use_webhooks) !== false
@@ -122,6 +203,10 @@ const canUseIntegrations = computed(() => {
     ((apiEnabled && moduleApi && hasApiPermission) || (webhooksEnabled && moduleWebhooks && hasWebhookPermission))
   )
 })
+
+const isActive = (url) => {
+  return window.location.pathname.startsWith(url)
+}
 
 const dismiss = (id) => {
   router.put(`/member/announcements/${id}/dismiss`, {}, { preserveScroll: true })
@@ -144,3 +229,89 @@ const alertClass = (type, priority) => {
   return base
 }
 </script>
+
+<style scoped>
+.member-layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+.sidebar {
+  width: 240px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.sidebar-header {
+  padding: 1rem;
+}
+
+.sidebar-nav {
+  flex: 1;
+  padding: 0.5rem 0;
+}
+
+.sidebar-section {
+  padding: 0.5rem 0;
+}
+
+.sidebar-section-title {
+  padding: 0.5rem 1rem;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.5);
+  letter-spacing: 0.05em;
+}
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.625rem 1rem;
+  color: rgba(255, 255, 255, 0.8);
+  text-decoration: none;
+  transition: all 0.15s ease;
+  font-size: 0.9rem;
+}
+
+.sidebar-link:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.sidebar-link.active {
+  background-color: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  border-left: 3px solid #fff;
+}
+
+.sidebar-link i {
+  font-size: 1.1rem;
+  width: 20px;
+  text-align: center;
+}
+
+.sidebar-link .badge {
+  font-size: 0.7rem;
+  padding: 0.2rem 0.5rem;
+}
+
+.main-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.topbar {
+  height: 56px;
+  flex-shrink: 0;
+}
+
+.main-content {
+  flex: 1;
+  overflow-y: auto;
+}
+</style>
