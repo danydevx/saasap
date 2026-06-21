@@ -1,14 +1,13 @@
 import '../less/app.less'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import 'bootstrap-icons/font/bootstrap-icons.css'
-import 'vue-toast-notification/dist/theme-bootstrap.css'
 import 'bootstrap'
 
 import { createApp, h } from 'vue'
 import { createInertiaApp, Link, Head } from '@inertiajs/vue3'
-import Notifications from '@kyvg/vue3-notification'
 import { createPinia } from 'pinia'
-import ToastPlugin from 'vue-toast-notification'
+import Toastify from 'vue3-toastify'
+import 'vue3-toastify/dist/index.css'
 
 createInertiaApp({
     resolve: async (name) => {
@@ -22,8 +21,11 @@ createInertiaApp({
         createApp({ render: () => h(App, props) })
             .use(plugin)
             .use(pinia)
-            .use(Notifications)
-            .use(ToastPlugin)
+            .use(Toastify, {
+                position: 'top-right',
+                duration: 4000,
+                theme: 'colored',
+            })
             .component('Link', Link)
             .component('Head', Head)
             .mount(el)

@@ -127,7 +127,7 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { Head, Link, router, usePage } from '@inertiajs/vue3'
-import { useNotification } from '@kyvg/vue3-notification'
+import { toast } from 'vue3-toastify'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import CreateModal from './CreateModal.vue'
 import PageHeader from '@/Components/Admin/PageHeader.vue'
@@ -149,7 +149,6 @@ const page = usePage()
 const search = ref(props.filters.search ?? '')
 const confirmOpen = ref(false)
 const pendingRole = ref(null)
-const { notify } = useNotification()
 
 const breadcrumbs = [
   { label: 'Roles' },
@@ -228,10 +227,7 @@ const confirmDelete = () => {
     preserveScroll: true,
     onSuccess: (page) => {
       if (page?.props?.errors?.delete) return
-      notify({
-        type: 'success',
-        text: 'Rol eliminado correctamente.',
-      })
+      toast.success('Rol eliminado correctamente.')
     },
     onFinish: () => {
       pendingRole.value = null

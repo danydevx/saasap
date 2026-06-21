@@ -1,20 +1,18 @@
-import { useToast } from 'vue-toast-notification'
+import { toast } from 'vue3-toastify'
 
 export function useAppToast() {
-    const toast = useToast()
-
     return {
-        success(message) {
-            toast.success(message)
+        success(message, options = {}) {
+            toast.success(message, { ...options })
         },
-        error(message) {
-            toast.error(message)
+        error(message, options = {}) {
+            toast.error(message, { ...options })
         },
-        info(message) {
-            toast.info(message)
+        info(message, options = {}) {
+            toast.info(message, { ...options })
         },
-        warning(message) {
-            toast.warning(message)
+        warning(message, options = {}) {
+            toast.warning(message, { ...options })
         },
     }
 }

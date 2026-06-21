@@ -475,9 +475,7 @@
 </template>
 
 <script setup>
-import { computed, watch } from 'vue'
-import { Head, useForm, usePage } from '@inertiajs/vue3'
-import { useNotification } from '@kyvg/vue3-notification'
+import { useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import PageHeader from '@/Components/Admin/PageHeader.vue'
 import FieldText from '@/Components/Fields/FieldText.vue'
@@ -498,9 +496,6 @@ const props = defineProps({
     default: () => [],
   },
 })
-
-const { notify } = useNotification()
-const page = usePage()
 
 const breadcrumbs = [
   { label: 'Settings' },
@@ -572,19 +567,6 @@ const form = useForm({
 })
 
 const planOptions = computed(() => [{ value: '', label: 'Sin plan' }, ...props.plans])
-
-const flashSuccess = computed(() => page.props.flash?.success)
-const flashError = computed(() => page.props.flash?.error)
-
-watch(flashSuccess, (value) => {
-  if (!value) return
-  notify({ type: 'success', text: value })
-})
-
-watch(flashError, (value) => {
-  if (!value) return
-  notify({ type: 'error', text: value })
-})
 
 const submit = () => {
   form.put('/admin/settings', {

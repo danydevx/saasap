@@ -120,16 +120,16 @@
       </div>
     </main>
 
-    <notifications position="top right" />
-
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { Link, usePage } from '@inertiajs/vue3'
+import { useFlashToast } from '@/Composables/useFlashToast'
 
 const page = usePage()
+useFlashToast()
 const permissions = computed(() => page.props.auth?.permissions || [])
 const roles = computed(() => page.props.auth?.roles || [])
 const userId = computed(() => page.props.auth?.user?.id)

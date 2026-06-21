@@ -85,9 +85,7 @@
 </template>
 
 <script setup>
-import { computed, watch } from 'vue'
-import { Head, useForm, usePage } from '@inertiajs/vue3'
-import { useNotification } from '@kyvg/vue3-notification'
+import { useForm } from '@inertiajs/vue3'
 import MemberLayout from '@/Layouts/MemberLayout.vue'
 import PageHeader from '@/Components/Admin/PageHeader.vue'
 import FieldText from '@/Components/Fields/FieldText.vue'
@@ -99,9 +97,6 @@ const props = defineProps({
   },
 })
 
-const { notify } = useNotification()
-const page = usePage()
-
 const breadcrumbs = [
   { label: 'Perfil' },
 ]
@@ -112,19 +107,6 @@ const form = useForm({
   facebook: props.profile.facebook || '',
   instagram: props.profile.instagram || '',
   x: props.profile.x || '',
-})
-
-const flashSuccess = computed(() => page.props.flash?.success)
-const flashError = computed(() => page.props.flash?.error)
-
-watch(flashSuccess, (value) => {
-  if (!value) return
-  notify({ type: 'success', text: value })
-})
-
-watch(flashError, (value) => {
-  if (!value) return
-  notify({ type: 'error', text: value })
 })
 
 const submit = () => {

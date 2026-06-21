@@ -171,6 +171,9 @@
 <script setup>
 import { computed } from 'vue'
 import { Link, router, usePage } from '@inertiajs/vue3'
+import { useFlashToast } from '@/Composables/useFlashToast'
+
+useFlashToast()
 
 const page = usePage()
 const userName = computed(() => page.props.auth?.user?.name || 'Usuario')

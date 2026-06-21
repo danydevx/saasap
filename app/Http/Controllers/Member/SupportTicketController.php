@@ -9,11 +9,13 @@ use App\Services\ActivityService;
 use App\Services\FeatureService;
 use App\Services\UserNotificationService;
 use App\Services\WebhookService;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class SupportTicketController extends Controller
 {
+    use AuthorizesRequests;
     public function index(Request $request)
     {
         $tickets = SupportTicket::query()

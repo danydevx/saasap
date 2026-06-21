@@ -87,7 +87,7 @@
 <script setup>
 import { computed, watch } from 'vue'
 import { Head, useForm, usePage } from '@inertiajs/vue3'
-import { useNotification } from '@kyvg/vue3-notification'
+import { toast } from 'vue3-toastify'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import MemberLayout from '@/Layouts/MemberLayout.vue'
 import PageHeader from '@/Components/Admin/PageHeader.vue'
@@ -100,7 +100,6 @@ const props = defineProps({
   },
 })
 
-const { notify } = useNotification()
 const page = usePage()
 
 const breadcrumbs = [
@@ -119,19 +118,6 @@ const layout = computed(() => {
   const roles = page.props.auth?.roles || []
   const isAdmin = roles.includes('admin') || roles.includes('superadmin')
   return isAdmin ? AdminLayout : MemberLayout
-})
-
-const flashSuccess = computed(() => page.props.flash?.success)
-const flashError = computed(() => page.props.flash?.error)
-
-watch(flashSuccess, (value) => {
-  if (!value) return
-  notify({ type: 'success', text: value })
-})
-
-watch(flashError, (value) => {
-  if (!value) return
-  notify({ type: 'error', text: value })
 })
 
 const submit = () => {

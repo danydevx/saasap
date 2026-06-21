@@ -150,7 +150,7 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
 import { Head, Link, router, usePage } from '@inertiajs/vue3'
-import { useNotification } from '@kyvg/vue3-notification'
+import { toast } from 'vue3-toastify'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import CreateModal from './CreateModal.vue'
 import PageHeader from '@/Components/Admin/PageHeader.vue'
@@ -173,7 +173,6 @@ const page = usePage()
 const search = ref(props.filters.search ?? '')
 const confirmOpen = ref(false)
 const pendingPermission = ref(null)
-const { notify } = useNotification()
 const rows = ref([...props.permissions.data])
 
 const breadcrumbs = [
@@ -267,10 +266,7 @@ const confirmDelete = () => {
     preserveScroll: true,
     onSuccess: (page) => {
       if (page?.props?.errors?.delete) return
-      notify({
-        type: 'success',
-        text: 'Permiso eliminado correctamente.',
-      })
+      toast.success('Permiso eliminado correctamente.')
     },
     onFinish: () => {
       pendingPermission.value = null

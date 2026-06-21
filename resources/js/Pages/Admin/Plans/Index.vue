@@ -103,7 +103,7 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { Head, Link, router, usePage } from '@inertiajs/vue3'
-import { useNotification } from '@kyvg/vue3-notification'
+import { toast } from 'vue3-toastify'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import PageHeader from '@/Components/Admin/PageHeader.vue'
 import Pagination from '@/Components/Admin/Pagination.vue'
@@ -121,7 +121,6 @@ const props = defineProps({
 })
 
 const page = usePage()
-const { notify } = useNotification()
 const search = ref(props.filters.search ?? '')
 const confirmOpen = ref(false)
 const pendingPlan = ref(null)
@@ -164,7 +163,7 @@ const confirmDelete = () => {
   router.delete(`/admin/plans/${pendingPlan.value.id}`, {
     preserveScroll: true,
     onSuccess: () => {
-      notify({ type: 'success', text: 'Plan eliminado correctamente.' })
+      toast.success('Plan eliminado correctamente.')
     },
     onFinish: () => {
       pendingPlan.value = null

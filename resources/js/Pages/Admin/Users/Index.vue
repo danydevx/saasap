@@ -168,7 +168,7 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { Head, Link, router } from '@inertiajs/vue3'
-import { useNotification } from '@kyvg/vue3-notification'
+import { toast } from 'vue3-toastify'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import PageHeader from '@/Components/Admin/PageHeader.vue'
 import ConfirmDialog from '@/Components/Admin/ConfirmDialog.vue'
@@ -189,7 +189,6 @@ const props = defineProps({
   },
 })
 
-const { notify } = useNotification()
 const confirmOpen = ref(false)
 const pendingUser = ref(null)
 const pendingAction = ref('delete')
@@ -271,10 +270,7 @@ const confirmAction = () => {
     router.delete(`/admin/users/${pendingUser.value.id}`, {
       preserveScroll: true,
       onSuccess: () => {
-        notify({
-          type: 'success',
-          text: 'Usuario eliminado correctamente.',
-        })
+        toast.success('Usuario eliminado correctamente.')
       },
       onFinish: () => {
         pendingUser.value = null
@@ -290,12 +286,11 @@ const confirmAction = () => {
   router.put(endpoint, {}, {
     preserveScroll: true,
     onSuccess: () => {
-      notify({
-        type: 'success',
-        text: pendingAction.value === 'deactivate'
+      toast.success(
+        pendingAction.value === 'deactivate'
           ? 'Usuario desactivado correctamente.'
-          : 'Usuario activado correctamente.',
-      })
+          : 'Usuario activado correctamente.'
+      )
     },
     onFinish: () => {
       pendingUser.value = null
@@ -307,10 +302,7 @@ const resendVerification = (user) => {
   router.post(`/admin/users/${user.id}/resend-verification`, {}, {
     preserveScroll: true,
     onSuccess: () => {
-      notify({
-        type: 'success',
-        text: 'Correo de verificacion enviado.',
-      })
+      toast.success('Correo de verificacion enviado.')
     },
   })
 }
