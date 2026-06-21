@@ -7,6 +7,7 @@ use App\Services\ActivityService;
 use App\Services\UserNotificationService;
 use App\Services\WebhookService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 class UserProfileController extends Controller
@@ -20,9 +21,14 @@ class UserProfileController extends Controller
             'profile' => [
                 'name' => $profile?->name ?? '',
                 'phone' => $profile?->phone ?? '',
+                'whatsapp' => $profile?->whatsapp ?? '',
+                'whatsapp_country' => $profile?->whatsapp_country ?? '+1',
                 'facebook' => $profile?->facebook ?? '',
                 'instagram' => $profile?->instagram ?? '',
                 'x' => $profile?->x ?? '',
+                'personal_email' => $profile?->personal_email ?? '',
+                'country' => $profile?->country ?? '',
+                'avatar' => $profile?->avatar ?? '',
             ],
         ]);
     }
@@ -36,9 +42,14 @@ class UserProfileController extends Controller
             'profile' => [
                 'name' => $profile?->name ?? '',
                 'phone' => $profile?->phone ?? '',
+                'whatsapp' => $profile?->whatsapp ?? '',
+                'whatsapp_country' => $profile?->whatsapp_country ?? '+1',
                 'facebook' => $profile?->facebook ?? '',
                 'instagram' => $profile?->instagram ?? '',
                 'x' => $profile?->x ?? '',
+                'personal_email' => $profile?->personal_email ?? '',
+                'country' => $profile?->country ?? '',
+                'avatar' => $profile?->avatar ?? '',
             ],
         ]);
     }
@@ -50,20 +61,36 @@ class UserProfileController extends Controller
         $data = $request->validate([
             'name' => ['nullable', 'string', 'max:150'],
             'phone' => ['nullable', 'string', 'max:50'],
+            'whatsapp' => ['nullable', 'string', 'max:20'],
+            'whatsapp_country' => ['nullable', 'string', 'max:5'],
             'facebook' => ['nullable', 'url', 'max:255'],
             'instagram' => ['nullable', 'url', 'max:255'],
             'x' => ['nullable', 'url', 'max:255'],
+            'personal_email' => ['nullable', 'email', 'max:150'],
+            'country' => ['nullable', 'string', 'max:5'],
+            'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:2048'],
         ]);
 
-        $user->profile()->updateOrCreate([
-            'user_id' => $user->id,
-        ], [
+        $profileData = [
             'name' => $data['name'] ?? null,
             'phone' => $data['phone'] ?? null,
+            'whatsapp' => $data['whatsapp'] ?? null,
+            'whatsapp_country' => $data['whatsapp_country'] ?? null,
             'facebook' => $data['facebook'] ?? null,
             'instagram' => $data['instagram'] ?? null,
             'x' => $data['x'] ?? null,
-        ]);
+            'personal_email' => $data['personal_email'] ?? null,
+            'country' => $data['country'] ?? null,
+        ];
+
+        if ($request->hasFile('avatar')) {
+            $avatarPath = $request->file('avatar')->store('avatars', 'public');
+            $profileData['avatar'] = $avatarPath;
+        }
+
+        $user->profile()->updateOrCreate([
+            'user_id' => $user->id,
+        ], $profileData);
 
         $activity->log('user_updated', [
             'user' => $user,

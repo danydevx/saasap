@@ -345,14 +345,14 @@ Route::delete('/member/sessions/{session}', [MemberSessionController::class, 'de
 Route::get('/profile', [UserProfileController::class, 'edit'])
     ->middleware('auth')
     ->name('profile.edit');
-Route::put('/profile', [UserProfileController::class, 'update'])
+Route::post('/profile', [UserProfileController::class, 'update'])
     ->middleware('auth')
     ->name('profile.update');
 
 Route::get('/admin/profile', [UserProfileController::class, 'edit'])
     ->middleware('auth')
     ->name('admin.profile.edit');
-Route::put('/admin/profile', [UserProfileController::class, 'update'])
+Route::post('/admin/profile', [UserProfileController::class, 'update'])
     ->middleware('auth')
     ->name('admin.profile.update');
 

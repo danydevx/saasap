@@ -11,9 +11,14 @@ class UserProfile extends Model
         'user_id',
         'name',
         'phone',
+        'whatsapp',
+        'whatsapp_country',
         'facebook',
         'instagram',
         'x',
+        'personal_email',
+        'country',
+        'avatar',
         'preferences',
     ];
 
