@@ -18,8 +18,10 @@ use App\Policies\SubscriptionPolicy;
 use App\Policies\SupportTicketPolicy;
 use App\Policies\UserPolicy;
 use App\Policies\WebhookEndpointPolicy;
+use Illuminate\Auth\Middleware\RedirectIfAuthenticated;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
@@ -50,6 +52,20 @@ class AppServiceProvider extends ServiceProvider
         // Permite al usuario ID 1 pasar todas las validaciones de autorizacion.
         Gate::before(function ($user) {
             return (int) $user->id === 1 ? true : null;
+        });
+
+        RedirectIfAuthenticated::redirectUsing(function (Request $request) {
+            $user = Auth::user();
+
+            if ($user && $user->hasAnyRole(['admin', 'superadmin'])) {
+                return '/admin/dashboard';
+            }
+
+            if ($user && $user->hasRole('member')) {
+                return '/member';
+            }
+
+            return '/';
         });
 
         // Registra policies para un control de acceso por recurso.
