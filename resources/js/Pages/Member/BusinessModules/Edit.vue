@@ -101,7 +101,9 @@ const hasChanges = computed(() => {
 })
 
 const toggleModule = (index) => {
-  localModules.value[index].is_enabled = !localModules.value[index].is_enabled
+  const module = { ...localModules.value[index] }
+  module.is_enabled = !module.is_enabled
+  localModules.value.splice(index, 1, module)
 }
 
 const saveModules = () => {

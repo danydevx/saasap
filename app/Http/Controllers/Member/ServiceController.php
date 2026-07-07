@@ -52,7 +52,6 @@ class ServiceController extends Controller
 
         $data = $request->validate([
             'name' => ['required', 'string', 'max:150'],
-            'slug' => ['required', 'string', 'max:150'],
             'description' => ['nullable', 'string'],
             'image' => ['nullable', 'string'],
             'duration_minutes' => ['required', 'integer', 'min:1'],
@@ -60,13 +59,13 @@ class ServiceController extends Controller
             'deposit_required' => ['boolean'],
             'deposit_amount' => ['nullable', 'numeric', 'min:0'],
             'allows_online_booking' => ['boolean'],
-            'whatsapp_contact' => ['boolean'],
+            'whatsapp_contact' => ['nullable', 'string', 'max:50'],
             'is_active' => ['boolean'],
             'sort_order' => ['nullable', 'integer', 'min:0'],
         ]);
 
         $data['business_id'] = $business->id;
-        $data['slug'] = \Illuminate\Support\Str::slug($data['slug']);
+        $data['slug'] = \Illuminate\Support\Str::slug($data['name']);
 
         $service = $business->services()->create($data);
 
@@ -118,7 +117,6 @@ class ServiceController extends Controller
 
         $data = $request->validate([
             'name' => ['required', 'string', 'max:150'],
-            'slug' => ['required', 'string', 'max:150'],
             'description' => ['nullable', 'string'],
             'image' => ['nullable', 'string'],
             'duration_minutes' => ['required', 'integer', 'min:1'],
@@ -126,14 +124,14 @@ class ServiceController extends Controller
             'deposit_required' => ['boolean'],
             'deposit_amount' => ['nullable', 'numeric', 'min:0'],
             'allows_online_booking' => ['boolean'],
-            'whatsapp_contact' => ['boolean'],
+            'whatsapp_contact' => ['nullable', 'string', 'max:50'],
             'is_active' => ['boolean'],
             'sort_order' => ['nullable', 'integer', 'min:0'],
             'business_location_id' => ['nullable', 'exists:business_locations,id'],
         ]);
 
-        if (isset($data['slug'])) {
-            $data['slug'] = \Illuminate\Support\Str::slug($data['slug']);
+        if (isset($data['name'])) {
+            $data['slug'] = \Illuminate\Support\Str::slug($data['name']);
         }
 
         $service->update($data);

@@ -1,11 +1,17 @@
 <template>
-  <div>
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <h1>Hero</h1>
-    </div>
+  <MemberLayout>
+    <Head :title="`Hero - ${business.name}`" />
 
-    <div class="card">
-      <div class="card-body">
+    <div class="container-fluid py-4">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h1 class="h4 mb-1">Hero</h1>
+          <p class="text-muted mb-0">{{ business.name }}</p>
+        </div>
+      </div>
+
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
         <form @submit.prevent="submit">
           <div class="row g-4">
             <div class="col-12">
@@ -199,11 +205,13 @@
         </form>
       </div>
     </div>
-  </div>
+    </div>
+  </MemberLayout>
 </template>
 
 <script setup>
-import { useForm } from '@inertiajs/vue3'
+import { Head, useForm } from '@inertiajs/vue3'
+import MemberLayout from '@/Layouts/MemberLayout.vue'
 
 const props = defineProps({
   business: Object,
