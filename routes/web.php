@@ -3,6 +3,25 @@
 use App\Http\Controllers\Admin\ActivityController as AdminActivityController;
 use App\Http\Controllers\Admin\ApiKeyController as AdminApiKeyController;
 use App\Http\Controllers\Admin\AutomationController;
+use App\Http\Controllers\Public\BusinessController as PublicBusinessController;
+use App\Http\Controllers\Public\MenuController;
+use App\Http\Controllers\Admin\BusinessController;
+use App\Http\Controllers\Admin\BusinessModuleController;
+use App\Http\Controllers\Admin\BusinessContentController;
+use App\Http\Controllers\Admin\BusinessLeadsController;
+use App\Http\Controllers\Admin\BusinessContactFormController;
+use App\Http\Controllers\Admin\BusinessAiChatbotController;
+use App\Http\Controllers\Admin\BusinessReviewController;
+use App\Http\Controllers\Admin\BusinessPromotionController;
+use App\Http\Controllers\Admin\SlotController as AdminSlotController;
+use App\Http\Controllers\Admin\MenuCategoryController;
+use App\Http\Controllers\Admin\MenuProductController;
+use App\Http\Controllers\Admin\MenuProductVariantController;
+use App\Http\Controllers\Admin\MenuProductImageController;
+use App\Http\Controllers\Admin\BusinessHeroController;
+use App\Http\Controllers\Admin\BusinessSocialNetworkController;
+use App\Http\Controllers\Admin\BusinessModuleDefinitionController;
+use App\Http\Controllers\Admin\MinisiteThemeController;
 use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\ExportController;
 use App\Http\Controllers\Admin\FeatureFlagController;
@@ -24,6 +43,7 @@ use App\Http\Controllers\Admin\SupportTicketController as AdminSupportTicketCont
 use App\Http\Controllers\Admin\SystemAnnouncementController as AdminSystemAnnouncementController;
 use App\Http\Controllers\Admin\SystemErrorController;
 use App\Http\Controllers\Admin\SystemMonitorController;
+use App\Http\Controllers\Admin\SystemModuleController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\UserProfileController;
 use App\Http\Controllers\Admin\WebhookController as AdminWebhookController;
@@ -44,6 +64,24 @@ use App\Http\Controllers\Member\DashboardController;
 use App\Http\Controllers\Member\HelpArticleController as MemberHelpArticleController;
 use App\Http\Controllers\Member\IntegrationController;
 use App\Http\Controllers\Member\InvoiceController as MemberInvoiceController;
+use App\Http\Controllers\Member\LocationController;
+use App\Http\Controllers\Member\ServiceController;
+use App\Http\Controllers\Member\GalleryController;
+use App\Http\Controllers\Member\HeroController;
+use App\Http\Controllers\Member\SocialNetworkController;
+use App\Http\Controllers\Member\ProductController;
+use App\Http\Controllers\Member\AppointmentController;
+use App\Http\Controllers\Member\SlotController;
+use App\Http\Controllers\Member\LeadController;
+use App\Http\Controllers\Member\ContactFormController;
+use App\Http\Controllers\Member\AiChatbotController;
+use App\Http\Controllers\Member\ReviewController;
+use App\Http\Controllers\Member\PromotionController;
+use App\Http\Controllers\Member\MenuCategoryController as MemberMenuCategoryController;
+use App\Http\Controllers\Member\MenuProductController as MemberMenuProductController;
+use App\Http\Controllers\Member\MenuProductVariantController as MemberMenuProductVariantController;
+use App\Http\Controllers\Member\MenuProductImageController as MemberMenuProductImageController;
+use App\Http\Controllers\Member\MinisiteThemeController as MemberMinisiteThemeController;
 use App\Http\Controllers\Member\MediaFileController as MemberMediaFileController;
 use App\Http\Controllers\Member\NotificationController;
 use App\Http\Controllers\Member\NotificationPreferenceController;
@@ -86,6 +124,18 @@ Route::post('/pricing/select/{plan}', [PricingController::class, 'select'])->nam
 Route::get('/plans', function () {
     return redirect('/pricing');
 })->name('plans');
+
+Route::get('/b/{slug}', [PublicBusinessController::class, 'show'])->name('public.business.show');
+Route::get('/b/{slug}/locations', [PublicBusinessController::class, 'locations'])->name('public.business.locations');
+Route::get('/b/{slug}/services', [PublicBusinessController::class, 'services'])->name('public.business.services');
+Route::get('/b/{slug}/gallery', [PublicBusinessController::class, 'gallery'])->name('public.business.gallery');
+Route::get('/b/{slug}/products', [PublicBusinessController::class, 'products'])->name('public.business.products');
+Route::get('/b/{slug}/book', [PublicBusinessController::class, 'book'])->name('public.business.book');
+Route::post('/b/{slug}/book', [PublicBusinessController::class, 'storeBooking'])->name('public.business.booking.store');
+Route::get('/b/{slug}/book/success', [PublicBusinessController::class, 'bookingSuccess'])->name('public.business.booking.success');
+Route::get('/b/{slug}/contact', [PublicBusinessController::class, 'contact'])->name('public.business.contact');
+Route::post('/b/{slug}/contact', [PublicBusinessController::class, 'storeContact'])->name('public.business.contact.store');
+Route::get('/b/{slug}/menu', [MenuController::class, 'show'])->name('public.menu.show');
 
 Route::post('/stripe/webhook', [StripeWebhookController::class, 'handle'])->name('stripe.webhook');
 
@@ -149,6 +199,263 @@ Route::post('/logout', [LogoutController::class, 'destroy'])
 Route::get('/member', [DashboardController::class, 'index'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.dashboard');
+
+Route::get('/member/business-modules', [App\Http\Controllers\Member\BusinessModuleController::class, 'index'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.business-modules.index');
+Route::get('/member/businesses/{business}/modules', [App\Http\Controllers\Member\BusinessModuleController::class, 'edit'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.business-modules.edit');
+Route::put('/member/businesses/{business}/modules', [App\Http\Controllers\Member\BusinessModuleController::class, 'update'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.business-modules.update');
+
+Route::get('/member/businesses/{business}/locations', [LocationController::class, 'index'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.locations.index');
+Route::get('/member/businesses/{business}/locations/create', [LocationController::class, 'create'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.locations.create');
+Route::post('/member/businesses/{business}/locations', [LocationController::class, 'store'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.locations.store');
+Route::get('/member/businesses/{business}/locations/{location}/edit', [LocationController::class, 'edit'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.locations.edit');
+Route::put('/member/businesses/{business}/locations/{location}', [LocationController::class, 'update'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.locations.update');
+Route::delete('/member/businesses/{business}/locations/{location}', [LocationController::class, 'destroy'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.locations.destroy');
+
+Route::get('/member/businesses/{business}/services', [ServiceController::class, 'index'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.services.index');
+Route::get('/member/businesses/{business}/services/create', [ServiceController::class, 'create'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.services.create');
+Route::post('/member/businesses/{business}/services', [ServiceController::class, 'store'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.services.store');
+Route::get('/member/businesses/{business}/services/{service}/edit', [ServiceController::class, 'edit'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.services.edit');
+Route::put('/member/businesses/{business}/services/{service}', [ServiceController::class, 'update'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.services.update');
+Route::delete('/member/businesses/{business}/services/{service}', [ServiceController::class, 'destroy'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.services.destroy');
+
+Route::get('/member/businesses/{business}/hero', [HeroController::class, 'index'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.hero.index');
+Route::post('/member/businesses/{business}/hero', [HeroController::class, 'update'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.hero.update');
+
+Route::get('/member/businesses/{business}/social-networks', [SocialNetworkController::class, 'index'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.social-networks.index');
+Route::post('/member/businesses/{business}/social-networks', [SocialNetworkController::class, 'store'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.social-networks.store');
+Route::post('/member/businesses/{business}/social-networks/{socialNetwork}', [SocialNetworkController::class, 'update'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.social-networks.update');
+Route::delete('/member/businesses/{business}/social-networks/{socialNetwork}', [SocialNetworkController::class, 'destroy'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.social-networks.destroy');
+
+Route::get('/member/businesses/{business}/gallery', [GalleryController::class, 'index'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.gallery.index');
+Route::post('/member/businesses/{business}/gallery', [GalleryController::class, 'store'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.gallery.store');
+Route::put('/member/businesses/{business}/gallery/{image}', [GalleryController::class, 'update'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.gallery.update');
+Route::delete('/member/businesses/{business}/gallery/{image}', [GalleryController::class, 'destroy'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.gallery.destroy');
+
+Route::get('/member/businesses/{business}/products', [ProductController::class, 'index'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.products.index');
+Route::get('/member/businesses/{business}/products/create', [ProductController::class, 'create'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.products.create');
+Route::post('/member/businesses/{business}/products', [ProductController::class, 'store'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.products.store');
+Route::get('/member/businesses/{business}/products/{product}/edit', [ProductController::class, 'edit'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.products.edit');
+Route::put('/member/businesses/{business}/products/{product}', [ProductController::class, 'update'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.products.update');
+Route::delete('/member/businesses/{business}/products/{product}', [ProductController::class, 'destroy'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.products.destroy');
+
+Route::get('/member/businesses/{business}/appointments', [AppointmentController::class, 'index'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.appointments.index');
+Route::get('/member/businesses/{business}/appointments/create', [AppointmentController::class, 'create'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.appointments.create');
+Route::post('/member/businesses/{business}/appointments', [AppointmentController::class, 'store'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.appointments.store');
+Route::get('/member/businesses/{business}/appointments/{appointment}', [AppointmentController::class, 'show'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.appointments.show');
+Route::get('/member/businesses/{business}/appointments/{appointment}/edit', [AppointmentController::class, 'edit'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.appointments.edit');
+Route::put('/member/businesses/{business}/appointments/{appointment}', [AppointmentController::class, 'update'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.appointments.update');
+Route::delete('/member/businesses/{business}/appointments/{appointment}', [AppointmentController::class, 'destroy'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.appointments.destroy');
+Route::post('/member/businesses/{business}/appointments/{appointment}/cancel', [AppointmentController::class, 'cancel'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.appointments.cancel');
+
+Route::get('/member/businesses/{business}/slots', [SlotController::class, 'index'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.slots.index');
+Route::post('/member/businesses/{business}/slots', [SlotController::class, 'store'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.slots.store');
+Route::put('/member/businesses/{business}/slots/{slot}', [SlotController::class, 'update'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.slots.update');
+Route::delete('/member/businesses/{business}/slots/{slot}', [SlotController::class, 'destroy'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.slots.destroy');
+
+Route::get('/member/businesses/{business}/leads', [LeadController::class, 'index'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.leads.index');
+Route::get('/member/businesses/{business}/leads/create', [LeadController::class, 'create'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.leads.create');
+Route::post('/member/businesses/{business}/leads', [LeadController::class, 'store'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.leads.store');
+Route::get('/member/businesses/{business}/leads/{lead}', [LeadController::class, 'show'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.leads.show');
+Route::get('/member/businesses/{business}/leads/{lead}/edit', [LeadController::class, 'edit'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.leads.edit');
+Route::put('/member/businesses/{business}/leads/{lead}', [LeadController::class, 'update'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.leads.update');
+Route::delete('/member/businesses/{business}/leads/{lead}', [LeadController::class, 'destroy'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.leads.destroy');
+
+Route::get('/member/businesses/{business}/contact-form/submissions', [ContactFormController::class, 'submissions'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.business.contact-form.submissions');
+
+Route::get('/member/businesses/{business}/ai-chatbot', [AiChatbotController::class, 'index'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.business.ai-chatbot.index');
+
+Route::get('/member/businesses/{business}/reviews', [ReviewController::class, 'index'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.reviews.index');
+Route::get('/member/businesses/{business}/reviews/create', [ReviewController::class, 'create'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.reviews.create');
+Route::post('/member/businesses/{business}/reviews', [ReviewController::class, 'store'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.reviews.store');
+Route::get('/member/businesses/{business}/reviews/{review}/edit', [ReviewController::class, 'edit'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.reviews.edit');
+Route::put('/member/businesses/{business}/reviews/{review}', [ReviewController::class, 'update'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.reviews.update');
+Route::delete('/member/businesses/{business}/reviews/{review}', [ReviewController::class, 'destroy'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.reviews.destroy');
+
+Route::get('/member/businesses/{business}/promotions', [PromotionController::class, 'index'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.promotions.index');
+Route::get('/member/businesses/{business}/promotions/create', [PromotionController::class, 'create'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.promotions.create');
+Route::post('/member/businesses/{business}/promotions', [PromotionController::class, 'store'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.promotions.store');
+Route::get('/member/businesses/{business}/promotions/{promotion}/edit', [PromotionController::class, 'edit'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.promotions.edit');
+Route::put('/member/businesses/{business}/promotions/{promotion}', [PromotionController::class, 'update'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.promotions.update');
+Route::delete('/member/businesses/{business}/promotions/{promotion}', [PromotionController::class, 'destroy'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.promotions.destroy');
+
+Route::get('/member/businesses/{business}/menu-categories', [MemberMenuCategoryController::class, 'index'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.menu.categories.index');
+Route::post('/member/businesses/{business}/menu-categories', [MemberMenuCategoryController::class, 'store'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.menu.categories.store');
+Route::put('/member/businesses/{business}/menu-categories/{category}', [MemberMenuCategoryController::class, 'update'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.menu.categories.update');
+Route::delete('/member/businesses/{business}/menu-categories/{category}', [MemberMenuCategoryController::class, 'destroy'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.menu.categories.destroy');
+
+Route::get('/member/businesses/{business}/menu-products', [MemberMenuProductController::class, 'index'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.menu.products.index');
+Route::post('/member/businesses/{business}/menu-products', [MemberMenuProductController::class, 'store'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.menu.products.store');
+Route::put('/member/businesses/{business}/menu-products/{product}', [MemberMenuProductController::class, 'update'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.menu.products.update');
+Route::delete('/member/businesses/{business}/menu-products/{product}', [MemberMenuProductController::class, 'destroy'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.menu.products.destroy');
+Route::post('/member/businesses/{business}/menu-products/{product}/variants', [MemberMenuProductVariantController::class, 'store'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.menu.products.variants.store');
+Route::put('/member/businesses/{business}/menu-products/{product}/variants/{variant}', [MemberMenuProductVariantController::class, 'update'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.menu.products.variants.update');
+Route::delete('/member/businesses/{business}/menu-products/{product}/variants/{variant}', [MemberMenuProductVariantController::class, 'destroy'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.menu.products.variants.destroy');
+Route::post('/member/businesses/{business}/menu-products/{product}/images', [MemberMenuProductImageController::class, 'store'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.menu.products.images.store');
+Route::put('/member/businesses/{business}/menu-products/{product}/images/{image}', [MemberMenuProductImageController::class, 'update'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.menu.products.images.update');
+Route::delete('/member/businesses/{business}/menu-products/{product}/images/{image}', [MemberMenuProductImageController::class, 'destroy'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.menu.products.images.destroy');
+
+Route::get('/member/businesses/{business}/minisite-theme', [MinisiteThemeController::class, 'index'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.business.minisite-theme.index');
+Route::put('/member/businesses/{business}/minisite-theme/{theme}', [MinisiteThemeController::class, 'update'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.business.minisite-theme.update');
 
 Route::get('/member/account', [AccountController::class, 'show'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
@@ -361,6 +668,191 @@ Route::get('/admin/dashboard', [App\Http\Controllers\Admin\DashboardController::
     ->name('admin.dashboard');
 
 Route::prefix('admin')->middleware(['auth', 'admin_or_user:1'])->group(function () {
+
+    Route::get('/business-modules', [BusinessModuleController::class, 'index'])
+        ->name('admin.business-modules.index');
+    Route::get('/businesses/{business}/modules', [BusinessModuleController::class, 'edit'])
+        ->name('admin.business-modules.edit');
+    Route::put('/businesses/{business}/modules', [BusinessModuleController::class, 'update'])
+        ->name('admin.business-modules.update');
+
+    Route::get('/businesses', [BusinessController::class, 'index'])
+        ->name('admin.businesses.index');
+    Route::get('/businesses/create', [BusinessController::class, 'create'])
+        ->name('admin.businesses.create');
+    Route::post('/businesses', [BusinessController::class, 'store'])
+        ->name('admin.businesses.store');
+    Route::get('/businesses/{business}/edit', [BusinessController::class, 'edit'])
+        ->name('admin.businesses.edit');
+    Route::put('/businesses/{business}', [BusinessController::class, 'update'])
+        ->name('admin.businesses.update');
+    Route::delete('/businesses/{business}', [BusinessController::class, 'destroy'])
+        ->name('admin.businesses.destroy');
+
+    Route::get('/businesses/{business}/hero', [BusinessHeroController::class, 'index'])
+        ->name('admin.business.hero.index');
+    Route::post('/businesses/{business}/hero', [BusinessHeroController::class, 'update'])
+        ->name('admin.business.hero.update');
+
+    Route::get('/businesses/{business}/social-networks', [BusinessSocialNetworkController::class, 'index'])
+        ->name('admin.business.social-networks.index');
+    Route::post('/businesses/{business}/social-networks', [BusinessSocialNetworkController::class, 'store'])
+        ->name('admin.business.social-networks.store');
+    Route::post('/businesses/{business}/social-networks/{socialNetwork}', [BusinessSocialNetworkController::class, 'update'])
+        ->name('admin.business.social-networks.update');
+    Route::delete('/businesses/{business}/social-networks/{socialNetwork}', [BusinessSocialNetworkController::class, 'destroy'])
+        ->name('admin.business.social-networks.destroy');
+
+    Route::get('/businesses/{business}/locations', [BusinessContentController::class, 'locationsIndex'])
+        ->name('admin.business.locations.index');
+    Route::get('/businesses/{business}/locations/create', [BusinessContentController::class, 'locationsCreate'])
+        ->name('admin.business.locations.create');
+    Route::post('/businesses/{business}/locations', [BusinessContentController::class, 'locationsStore'])
+        ->name('admin.business.locations.store');
+    Route::get('/businesses/{business}/locations/{location}/edit', [BusinessContentController::class, 'locationsEdit'])
+        ->name('admin.business.locations.edit');
+    Route::put('/businesses/{business}/locations/{location}', [BusinessContentController::class, 'locationsUpdate'])
+        ->name('admin.business.locations.update');
+    Route::delete('/businesses/{business}/locations/{location}', [BusinessContentController::class, 'locationsDestroy'])
+        ->name('admin.business.locations.destroy');
+
+    Route::get('/businesses/{business}/services', [BusinessContentController::class, 'servicesIndex'])
+        ->name('admin.business.services.index');
+    Route::get('/businesses/{business}/services/create', [BusinessContentController::class, 'servicesCreate'])
+        ->name('admin.business.services.create');
+    Route::post('/businesses/{business}/services', [BusinessContentController::class, 'servicesStore'])
+        ->name('admin.business.services.store');
+    Route::get('/businesses/{business}/services/{service}/edit', [BusinessContentController::class, 'servicesEdit'])
+        ->name('admin.business.services.edit');
+    Route::put('/businesses/{business}/services/{service}', [BusinessContentController::class, 'servicesUpdate'])
+        ->name('admin.business.services.update');
+    Route::delete('/businesses/{business}/services/{service}', [BusinessContentController::class, 'servicesDestroy'])
+        ->name('admin.business.services.destroy');
+
+    Route::get('/businesses/{business}/products', [BusinessContentController::class, 'productsIndex'])
+        ->name('admin.business.products.index');
+    Route::get('/businesses/{business}/products/create', [BusinessContentController::class, 'productsCreate'])
+        ->name('admin.business.products.create');
+    Route::post('/businesses/{business}/products', [BusinessContentController::class, 'productsStore'])
+        ->name('admin.business.products.store');
+    Route::get('/businesses/{business}/products/{product}/edit', [BusinessContentController::class, 'productsEdit'])
+        ->name('admin.business.products.edit');
+    Route::put('/businesses/{business}/products/{product}', [BusinessContentController::class, 'productsUpdate'])
+        ->name('admin.business.products.update');
+    Route::delete('/businesses/{business}/products/{product}', [BusinessContentController::class, 'productsDestroy'])
+        ->name('admin.business.products.destroy');
+
+    Route::get('/businesses/{business}/gallery', [BusinessContentController::class, 'galleryIndex'])
+        ->name('admin.business.gallery.index');
+    Route::post('/businesses/{business}/gallery', [BusinessContentController::class, 'galleryStore'])
+        ->name('admin.business.gallery.store');
+    Route::put('/businesses/{business}/gallery/{image}', [BusinessContentController::class, 'galleryUpdate'])
+        ->name('admin.business.gallery.update');
+    Route::delete('/businesses/{business}/gallery/{image}', [BusinessContentController::class, 'galleryDestroy'])
+        ->name('admin.business.gallery.destroy');
+
+    Route::get('/businesses/{business}/appointments', [BusinessContentController::class, 'appointmentsIndex'])
+        ->name('admin.business.appointments.index');
+    Route::get('/businesses/{business}/appointments/create', [BusinessContentController::class, 'appointmentsCreate'])
+        ->name('admin.business.appointments.create');
+    Route::post('/businesses/{business}/appointments', [BusinessContentController::class, 'appointmentsStore'])
+        ->name('admin.business.appointments.store');
+    Route::get('/businesses/{business}/appointments/{appointment}', [BusinessContentController::class, 'appointmentsShow'])
+        ->name('admin.business.appointments.show');
+    Route::get('/businesses/{business}/appointments/{appointment}/edit', [BusinessContentController::class, 'appointmentsEdit'])
+        ->name('admin.business.appointments.edit');
+    Route::put('/businesses/{business}/appointments/{appointment}', [BusinessContentController::class, 'appointmentsUpdate'])
+        ->name('admin.business.appointments.update');
+    Route::delete('/businesses/{business}/appointments/{appointment}', [BusinessContentController::class, 'appointmentsDestroy'])
+        ->name('admin.business.appointments.destroy');
+    Route::post('/businesses/{business}/appointments/{appointment}/cancel', [BusinessContentController::class, 'appointmentsCancel'])
+        ->name('admin.business.appointments.cancel');
+
+    Route::get('/businesses/{business}/slots', [AdminSlotController::class, 'index'])
+        ->name('admin.business.slots.index');
+    Route::post('/businesses/{business}/slots', [AdminSlotController::class, 'store'])
+        ->name('admin.business.slots.store');
+    Route::put('/businesses/{business}/slots/{slot}', [AdminSlotController::class, 'update'])
+        ->name('admin.business.slots.update');
+    Route::delete('/businesses/{business}/slots/{slot}', [AdminSlotController::class, 'destroy'])
+        ->name('admin.business.slots.destroy');
+
+    Route::get('/businesses/{business}/leads', [BusinessLeadsController::class, 'index'])
+        ->name('admin.business.leads.index');
+    Route::get('/businesses/{business}/leads/create', [BusinessLeadsController::class, 'create'])
+        ->name('admin.business.leads.create');
+    Route::post('/businesses/{business}/leads', [BusinessLeadsController::class, 'store'])
+        ->name('admin.business.leads.store');
+    Route::get('/businesses/{business}/leads/{lead}', [BusinessLeadsController::class, 'show'])
+        ->name('admin.business.leads.show');
+    Route::get('/businesses/{business}/leads/{lead}/edit', [BusinessLeadsController::class, 'edit'])
+        ->name('admin.business.leads.edit');
+    Route::put('/businesses/{business}/leads/{lead}', [BusinessLeadsController::class, 'update'])
+        ->name('admin.business.leads.update');
+    Route::delete('/businesses/{business}/leads/{lead}', [BusinessLeadsController::class, 'destroy'])
+        ->name('admin.business.leads.destroy');
+
+    Route::get('/businesses/{business}/contact-form/submissions', [BusinessContactFormController::class, 'submissions'])
+        ->name('admin.business.contact-form.submissions');
+
+    Route::get('/businesses/{business}/ai-chatbot', [BusinessAiChatbotController::class, 'index'])
+        ->name('admin.business.ai-chatbot.index');
+
+    Route::get('/businesses/{business}/reviews', [BusinessReviewController::class, 'index'])
+        ->name('admin.business.reviews.index');
+    Route::get('/businesses/{business}/reviews/create', [BusinessReviewController::class, 'create'])
+        ->name('admin.business.reviews.create');
+    Route::post('/businesses/{business}/reviews', [BusinessReviewController::class, 'store'])
+        ->name('admin.business.reviews.store');
+    Route::get('/businesses/{business}/reviews/{review}/edit', [BusinessReviewController::class, 'edit'])
+        ->name('admin.business.reviews.edit');
+    Route::put('/businesses/{business}/reviews/{review}', [BusinessReviewController::class, 'update'])
+        ->name('admin.business.reviews.update');
+    Route::delete('/businesses/{business}/reviews/{review}', [BusinessReviewController::class, 'destroy'])
+        ->name('admin.business.reviews.destroy');
+
+    Route::get('/businesses/{business}/promotions', [BusinessPromotionController::class, 'index'])
+        ->name('admin.business.promotions.index');
+    Route::get('/businesses/{business}/promotions/create', [BusinessPromotionController::class, 'create'])
+        ->name('admin.business.promotions.create');
+    Route::post('/businesses/{business}/promotions', [BusinessPromotionController::class, 'store'])
+        ->name('admin.business.promotions.store');
+    Route::get('/businesses/{business}/promotions/{promotion}/edit', [BusinessPromotionController::class, 'edit'])
+        ->name('admin.business.promotions.edit');
+    Route::put('/businesses/{business}/promotions/{promotion}', [BusinessPromotionController::class, 'update'])
+        ->name('admin.business.promotions.update');
+    Route::delete('/businesses/{business}/promotions/{promotion}', [BusinessPromotionController::class, 'destroy'])
+        ->name('admin.business.promotions.destroy');
+
+    Route::get('/businesses/{business}/menu-categories', [MenuCategoryController::class, 'index'])
+        ->name('admin.menu.categories.index');
+    Route::post('/businesses/{business}/menu-categories', [MenuCategoryController::class, 'store'])
+        ->name('admin.menu.categories.store');
+    Route::put('/businesses/{business}/menu-categories/{category}', [MenuCategoryController::class, 'update'])
+        ->name('admin.menu.categories.update');
+    Route::delete('/businesses/{business}/menu-categories/{category}', [MenuCategoryController::class, 'destroy'])
+        ->name('admin.menu.categories.destroy');
+
+    Route::get('/businesses/{business}/menu-products', [MenuProductController::class, 'index'])
+        ->name('admin.menu.products.index');
+    Route::post('/businesses/{business}/menu-products', [MenuProductController::class, 'store'])
+        ->name('admin.menu.products.store');
+    Route::put('/businesses/{business}/menu-products/{product}', [MenuProductController::class, 'update'])
+        ->name('admin.menu.products.update');
+    Route::delete('/businesses/{business}/menu-products/{product}', [MenuProductController::class, 'destroy'])
+        ->name('admin.menu.products.destroy');
+    Route::post('/businesses/{business}/menu-products/{product}/variants', [MenuProductVariantController::class, 'store'])
+        ->name('admin.menu.products.variants.store');
+    Route::put('/businesses/{business}/menu-products/{product}/variants/{variant}', [MenuProductVariantController::class, 'update'])
+        ->name('admin.menu.products.variants.update');
+    Route::delete('/businesses/{business}/menu-products/{product}/variants/{variant}', [MenuProductVariantController::class, 'destroy'])
+        ->name('admin.menu.products.variants.destroy');
+    Route::post('/businesses/{business}/menu-products/{product}/images', [MenuProductImageController::class, 'store'])
+        ->name('admin.menu.products.images.store');
+    Route::put('/businesses/{business}/menu-products/{product}/images/{image}', [MenuProductImageController::class, 'update'])
+        ->name('admin.menu.products.images.update');
+    Route::delete('/businesses/{business}/menu-products/{product}/images/{image}', [MenuProductImageController::class, 'destroy'])
+        ->name('admin.menu.products.images.destroy');
 
     Route::get('/settings', [SettingController::class, 'index'])
         ->middleware('permission_or_user:settings.view,1')
@@ -586,6 +1078,25 @@ Route::prefix('admin')->middleware(['auth', 'admin_or_user:1'])->group(function 
         ->middleware(['permission_or_user:plans.delete,1', 'module:billing'])
         ->name('admin.plans.destroy');
 
+    Route::get('/business-module-definitions', [BusinessModuleDefinitionController::class, 'index'])
+        ->middleware(['auth', 'admin_or_user:1'])
+        ->name('admin.business-module-definitions.index');
+    Route::get('/business-module-definitions/create', [BusinessModuleDefinitionController::class, 'create'])
+        ->middleware(['auth', 'admin_or_user:1'])
+        ->name('admin.business-module-definitions.create');
+    Route::post('/business-module-definitions', [BusinessModuleDefinitionController::class, 'store'])
+        ->middleware(['auth', 'admin_or_user:1'])
+        ->name('admin.business-module-definitions.store');
+    Route::get('/business-module-definitions/{definition}/edit', [BusinessModuleDefinitionController::class, 'edit'])
+        ->middleware(['auth', 'admin_or_user:1'])
+        ->name('admin.business-module-definitions.edit');
+    Route::put('/business-module-definitions/{definition}', [BusinessModuleDefinitionController::class, 'update'])
+        ->middleware(['auth', 'admin_or_user:1'])
+        ->name('admin.business-module-definitions.update');
+    Route::delete('/business-module-definitions/{definition}', [BusinessModuleDefinitionController::class, 'destroy'])
+        ->middleware(['auth', 'admin_or_user:1'])
+        ->name('admin.business-module-definitions.destroy');
+
     Route::get('/payments', [PaymentController::class, 'index'])
         ->middleware(['permission_or_user:payments.view,1', 'module:billing'])
         ->name('admin.payments.index');
@@ -695,6 +1206,24 @@ Route::prefix('admin')->middleware(['auth', 'admin_or_user:1'])->group(function 
     Route::delete('/message-templates/{template}', [MessageTemplateController::class, 'destroy'])
         ->middleware('permission_or_user:templates.delete,1')
         ->name('admin.message-templates.destroy');
+
+    Route::get('/modules', [SystemModuleController::class, 'index'])
+        ->name('admin.modules.index');
+    Route::put('/modules/{module}', [SystemModuleController::class, 'update'])
+        ->name('admin.modules.update');
+
+    Route::get('/minisite-themes', [MinisiteThemeController::class, 'index'])
+        ->middleware(['auth', 'admin_or_user:1'])
+        ->name('admin.minisite-themes.index');
+    Route::post('/minisite-themes', [MinisiteThemeController::class, 'store'])
+        ->middleware(['auth', 'admin_or_user:1'])
+        ->name('admin.minisite-themes.store');
+    Route::put('/minisite-themes/{theme}', [MinisiteThemeController::class, 'update'])
+        ->middleware(['auth', 'admin_or_user:1'])
+        ->name('admin.minisite-themes.update');
+    Route::delete('/minisite-themes/{theme}', [MinisiteThemeController::class, 'destroy'])
+        ->middleware(['auth', 'admin_or_user:1'])
+        ->name('admin.minisite-themes.destroy');
 
 });
 

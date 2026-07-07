@@ -1,3 +1,0 @@
-# Authentication
-
-Alias + PIN hasheado.

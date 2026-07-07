@@ -2,7 +2,14 @@
   <div class="d-flex flex-wrap gap-3 align-items-start justify-content-between mb-4">
     <div>
       <h1 class="h4 mb-1">{{ title }}</h1>
-      <Breeadcrumbs :items="breadcrumbs" />
+      <nav v-if="breadcrumbs && breadcrumbs.length" aria-label="breadcrumb">
+        <ol class="breadcrumb mb-0">
+          <li v-for="(crumb, index) in breadcrumbs" :key="index" class="breadcrumb-item" :class="{ active: crumb.active }">
+            <Link v-if="!crumb.active && crumb.href" :href="crumb.href">{{ crumb.label }}</Link>
+            <span v-else>{{ crumb.label }}</span>
+          </li>
+        </ol>
+      </nav>
     </div>
 
     <div v-if="backHref || $slots.actions" class="d-flex gap-2">
@@ -16,7 +23,6 @@
 </template>
 
 <script setup>
-import Breeadcrumbs from '@/Components/Admin/Breeadcrumbs.vue'
 import { Link } from '@inertiajs/vue3'
 
 defineProps({

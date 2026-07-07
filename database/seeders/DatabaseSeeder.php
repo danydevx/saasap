@@ -30,6 +30,8 @@ class DatabaseSeeder extends Seeder
             SystemModuleSeeder::class,
             MessageTemplateSeeder::class,
             AutomationSeeder::class,
+            BusinessModuleDefinitionSeeder::class,
+            PlanBusinessModuleSeeder::class,
         ]);
     }
 }

@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\BusinessModuleDefinition;
 use App\Models\Plan;
+use App\Models\PlanBusinessModule;
 use App\Services\ActivityService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -93,6 +95,29 @@ class PlanController extends Controller
 
     public function edit(Plan $plan)
     {
+        $definitions = BusinessModuleDefinition::where('is_active', true)
+            ->orderBy('sort_order')
+            ->get();
+
+        $planModules = PlanBusinessModule::where('plan_id', $plan->id)
+            ->get()
+            ->keyBy('module_definition_id');
+
+        $modules = $definitions->map(function ($def) use ($planModules) {
+            $planModule = $planModules->get($def->id);
+
+            return [
+                'id' => $def->id,
+                'key' => $def->key,
+                'name' => $def->name,
+                'description' => $def->description,
+                'icon' => $def->icon,
+                'has_settings' => $def->has_settings,
+                'is_enabled' => $planModule?->is_enabled ?? false,
+                'plan_module_id' => $planModule?->id,
+            ];
+        });
+
         return Inertia::render('Admin/Plans/Edit', [
             'plan' => [
                 'id' => $plan->id,
@@ -107,6 +132,7 @@ class PlanController extends Controller
                 'stripe_product_id' => $plan->stripe_product_id,
                 'stripe_price_id' => $plan->stripe_price_id,
             ],
+            'modules' => $modules,
         ]);
     }
 
@@ -127,6 +153,9 @@ class PlanController extends Controller
             'limits.can_use_ai' => ['boolean'],
             'limits.can_export' => ['boolean'],
             'limits.can_upload_files' => ['boolean'],
+            'modules' => ['nullable', 'array'],
+            'modules.*.module_definition_id' => ['required', 'exists:business_module_definitions,id'],
+            'modules.*.is_enabled' => ['required', 'boolean'],
         ]);
 
         $plan->update([
@@ -141,6 +170,20 @@ class PlanController extends Controller
             'stripe_product_id' => $data['stripe_product_id'] ?? null,
             'stripe_price_id' => $data['stripe_price_id'] ?? null,
         ]);
+
+        if (isset($data['modules'])) {
+            foreach ($data['modules'] as $moduleData) {
+                PlanBusinessModule::updateOrCreate(
+                    [
+                        'plan_id' => $plan->id,
+                        'module_definition_id' => $moduleData['module_definition_id'],
+                    ],
+                    [
+                        'is_enabled' => $moduleData['is_enabled'],
+                    ]
+                );
+            }
+        }
 
         $activity->log('plan_updated', [
             'actor' => $request->user(),

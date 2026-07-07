@@ -101,4 +101,14 @@ class User extends Authenticatable implements MustVerifyEmailContract
     {
         return $this->hasOne(Subscription::class)->latestOfMany();
     }
+
+    public function businesses()
+    {
+        return $this->hasMany(\Modules\Businesses\Models\Business::class);
+    }
+
+    public function primaryBusiness()
+    {
+        return $this->hasOne(\Modules\Businesses\Models\Business::class)->latestOfMany();
+    }
 }

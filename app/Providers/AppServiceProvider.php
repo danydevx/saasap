@@ -12,6 +12,16 @@ use App\Models\SupportTicket;
 use App\Models\User;
 use App\Models\WebhookEndpoint;
 use App\Policies\ApiKeyPolicy;
+use App\Policies\BusinessAppointmentPolicy;
+use App\Policies\BusinessGalleryImagePolicy;
+use App\Policies\BusinessHeroPolicy;
+use App\Policies\BusinessLeadPolicy;
+use App\Policies\BusinessLocationPolicy;
+use App\Policies\BusinessModulePolicy;
+use App\Policies\BusinessPolicy;
+use App\Policies\BusinessProductPolicy;
+use App\Policies\BusinessServicePolicy;
+use App\Policies\ContactFormPolicy;
 use App\Policies\MediaFilePolicy;
 use App\Policies\PaymentPolicy;
 use App\Policies\SubscriptionPolicy;
@@ -25,6 +35,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
+use Modules\Businesses\Models\Business;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -41,6 +52,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Route model binding for Business model (in Modules)
+        $this->app->router->bind('business', function ($value) {
+            return Business::findOrFail($value);
+        });
+
         // Registra comandos del starter kit cuando se ejecuta en consola.
         if ($this->app->runningInConsole()) {
             $this->commands([
@@ -76,6 +92,17 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(MediaFile::class, MediaFilePolicy::class);
         Gate::policy(Payment::class, PaymentPolicy::class);
         Gate::policy(Subscription::class, SubscriptionPolicy::class);
+        Gate::policy(Business::class, BusinessPolicy::class);
+        Gate::policy(\Modules\BusinessModules\Models\BusinessModule::class, BusinessModulePolicy::class);
+        Gate::policy(\Modules\Locations\Models\BusinessLocation::class, BusinessLocationPolicy::class);
+        Gate::policy(\Modules\Gallery\Models\BusinessGalleryImage::class, BusinessGalleryImagePolicy::class);
+        Gate::policy(\Modules\Hero\Models\BusinessHero::class, BusinessHeroPolicy::class);
+        Gate::policy(\Modules\Products\Models\BusinessProduct::class, BusinessProductPolicy::class);
+        Gate::policy(\Modules\Services\Models\BusinessService::class, BusinessServicePolicy::class);
+        Gate::policy(\Modules\Leads\Models\BusinessLead::class, BusinessLeadPolicy::class);
+        Gate::policy(\Modules\Appointments\Models\BusinessAppointment::class, BusinessAppointmentPolicy::class);
+        Gate::policy(\Modules\Appointments\Models\BusinessAppointmentSlot::class, BusinessAppointmentSlotPolicy::class);
+        Gate::policy(\Modules\SocialMedia\Models\BusinessSocialNetwork::class, BusinessSocialNetworkPolicy::class);
 
         RateLimiter::for('login', function (Request $request) {
             $email = mb_strtolower((string) $request->input('email', ''));

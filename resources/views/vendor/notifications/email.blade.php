@@ -1,16 +1,12 @@
-@php($brand = app(\App\Services\BrandingService::class)->forEmail())
-
-@component('mail::message')
-@include('emails.partials.header', ['brand' => $brand])
-
+<x-mail::message>
 {{-- Greeting --}}
 @if (! empty($greeting))
 # {{ $greeting }}
 @else
 @if ($level === 'error')
-# Ocurrio un problema
+# @lang('Whoops!')
 @else
-# Hola
+# @lang('Hello!')
 @endif
 @endif
 
@@ -21,9 +17,17 @@
 @endforeach
 
 {{-- Action Button --}}
-@if (! empty($actionText))
-@include('emails.partials.button', ['url' => $actionUrl, 'label' => $actionText, 'brand' => $brand])
-@endif
+@isset($actionText)
+<?php
+    $color = match ($level) {
+        'success', 'error' => $level,
+        default => 'primary',
+    };
+?>
+<x-mail::button :url="$actionUrl" :color="$color">
+{{ $actionText }}
+</x-mail::button>
+@endisset
 
 {{-- Outro Lines --}}
 @foreach ($outroLines as $line)
@@ -31,13 +35,24 @@
 
 @endforeach
 
-{{-- Subcopy --}}
-@if (! empty($actionText))
-@slot('subcopy')
-Si tienes problemas al hacer click en "{{ $actionText }}", copia y pega este enlace en tu navegador:
-<span class="break-all">{{ $actionUrl }}</span>
-@endslot
+{{-- Salutation --}}
+@if (! empty($salutation))
+{{ $salutation }}
+@else
+@lang('Regards,')<br>
+{{ config('app.name') }}
 @endif
 
-@include('emails.partials.footer', ['brand' => $brand])
-@endcomponent
+{{-- Subcopy --}}
+@isset($actionText)
+<x-slot:subcopy>
+@lang(
+    "If you're having trouble clicking the \":actionText\" button, copy and paste the URL below\n".
+    'into your web browser:',
+    [
+        'actionText' => $actionText,
+    ]
+) <span class="break-all">[{{ $displayableActionUrl }}]({{ $actionUrl }})</span>
+</x-slot:subcopy>
+@endisset
+</x-mail::message>

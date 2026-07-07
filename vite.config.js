@@ -19,6 +19,11 @@ export default defineConfig({
         }
     },
     server: {
+         host: 'saas.local',
+            port: 5173,
+            hmr: {
+                host: 'saas.local',
+            },
         watch: {
             ignored: ['**/storage/framework/views/**'],
         },

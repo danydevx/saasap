@@ -1,6 +1,7 @@
 import '../less/app.less'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import 'bootstrap-icons/font/bootstrap-icons.css'
+import 'leaflet/dist/leaflet.css'
 import 'bootstrap'
 
 import { createApp, h } from 'vue'

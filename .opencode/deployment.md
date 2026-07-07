@@ -1,3 +1,0 @@
-# Deployment
-
-Laravel deploy guide.

@@ -27,6 +27,14 @@
           </Link>
         </div>
 
+        <div class="sidebar-section">
+          <div class="sidebar-section-title">Negocios</div>
+          <Link href="/member/business-modules" class="sidebar-link" :class="{ active: isActive('/member/business-modules') }">
+            <i class="bi bi-building"></i>
+            <span>Mis Negocios</span>
+          </Link>
+        </div>
+
         <div v-if="canBilling" class="sidebar-section">
           <div class="sidebar-section-title">Facturación</div>
           <Link href="/member/payments" class="sidebar-link" :class="{ active: isActive('/member/payments') }">
@@ -209,6 +217,14 @@
             <Link href="/member/account" class="sidebar-link" :class="{ active: isActive('/member/account') }">
               <i class="bi bi-wallet2"></i>
               <span>Cuenta</span>
+            </Link>
+          </div>
+
+          <div class="sidebar-section">
+            <div class="sidebar-section-title">Negocios</div>
+            <Link href="/member/business-modules" class="sidebar-link" :class="{ active: isActive('/member/business-modules') }">
+              <i class="bi bi-building"></i>
+              <span>Mis Negocios</span>
             </Link>
           </div>
 
