@@ -9,6 +9,7 @@ use Inertia\Inertia;
 use Modules\Businesses\Models\Business;
 use Modules\Locations\Models\BusinessLocation;
 use Modules\Services\Models\BusinessService;
+use Illuminate\Support\Facades\Storage;
 
 class ServiceController extends Controller
 {
@@ -53,7 +54,7 @@ class ServiceController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:150'],
             'description' => ['nullable', 'string'],
-            'image' => ['nullable', 'string'],
+            'image' => ['nullable', 'file', 'mimes:jpeg,png', 'max:10240'],
             'duration_minutes' => ['required', 'integer', 'min:1'],
             'price' => ['nullable', 'numeric', 'min:0'],
             'deposit_required' => ['boolean'],
@@ -66,6 +67,11 @@ class ServiceController extends Controller
 
         $data['business_id'] = $business->id;
         $data['slug'] = \Illuminate\Support\Str::slug($data['name']);
+
+        if ($request->hasFile('image')) {
+            $path = $request->file('image')->store('services/' . $business->id, ['disk' => 'public']);
+            $data['image'] = Storage::disk('public')->url($path);
+        }
 
         $service = $business->services()->create($data);
 
@@ -118,7 +124,7 @@ class ServiceController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:150'],
             'description' => ['nullable', 'string'],
-            'image' => ['nullable', 'string'],
+            'image' => ['nullable', 'file', 'mimes:jpeg,png', 'max:10240'],
             'duration_minutes' => ['required', 'integer', 'min:1'],
             'price' => ['nullable', 'numeric', 'min:0'],
             'deposit_required' => ['boolean'],
@@ -132,6 +138,13 @@ class ServiceController extends Controller
 
         if (isset($data['name'])) {
             $data['slug'] = \Illuminate\Support\Str::slug($data['name']);
+        }
+
+        if ($request->hasFile('image')) {
+            $path = $request->file('image')->store('services/' . $business->id, ['disk' => 'public']);
+            $data['image'] = Storage::disk('public')->url($path);
+        } else {
+            unset($data['image']);
         }
 
         $service->update($data);

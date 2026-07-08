@@ -48,7 +48,7 @@ class ReviewController extends Controller
         $data = $request->validate([
             'client_name' => ['required', 'string', 'max:150'],
             'company' => ['nullable', 'string', 'max:150'],
-            'comment' => ['required', 'string'],
+            'comment' => ['nullable', 'string'],
             'rating' => ['required', 'integer', 'min:1', 'max:5'],
             'google_link' => ['nullable', 'url', 'max:500'],
             'business_location_id' => ['nullable', 'exists:business_locations,id'],
@@ -101,7 +101,7 @@ class ReviewController extends Controller
         $data = $request->validate([
             'client_name' => ['required', 'string', 'max:150'],
             'company' => ['nullable', 'string', 'max:150'],
-            'comment' => ['required', 'string'],
+            'comment' => ['nullable', 'string'],
             'rating' => ['required', 'integer', 'min:1', 'max:5'],
             'google_link' => ['nullable', 'url', 'max:500'],
             'business_location_id' => ['nullable', 'exists:business_locations,id'],

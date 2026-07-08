@@ -19,6 +19,7 @@ use App\Policies\BusinessLeadPolicy;
 use App\Policies\BusinessLocationPolicy;
 use App\Policies\BusinessModulePolicy;
 use App\Policies\BusinessPolicy;
+use App\Policies\BusinessReviewPolicy;
 use App\Policies\BusinessProductPolicy;
 use App\Policies\BusinessServicePolicy;
 use App\Policies\ContactFormPolicy;
@@ -103,6 +104,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(\Modules\Appointments\Models\BusinessAppointment::class, BusinessAppointmentPolicy::class);
         Gate::policy(\Modules\Appointments\Models\BusinessAppointmentSlot::class, BusinessAppointmentSlotPolicy::class);
         Gate::policy(\Modules\SocialMedia\Models\BusinessSocialNetwork::class, BusinessSocialNetworkPolicy::class);
+        Gate::policy(\Modules\Reviews\Models\BusinessReview::class, BusinessReviewPolicy::class);
 
         RateLimiter::for('login', function (Request $request) {
             $email = mb_strtolower((string) $request->input('email', ''));

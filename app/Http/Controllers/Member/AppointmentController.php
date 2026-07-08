@@ -24,12 +24,24 @@ class AppointmentController extends Controller
             ->orderByDesc('start_time')
             ->paginate(20);
 
+        $services = $business->services()
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get(['id', 'name', 'duration_minutes', 'price']);
+
+        $locations = $business->locations()
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get(['id', 'name', 'address_line_1']);
+
         return Inertia::render('Member/Appointments/Index', [
             'business' => [
                 'id' => $business->id,
                 'name' => $business->name,
             ],
             'appointments' => $appointments,
+            'services' => $services,
+            'locations' => $locations,
         ]);
     }
 
@@ -66,7 +78,7 @@ class AppointmentController extends Controller
             'customer_email' => ['required', 'email', 'max:150'],
             'customer_phone' => ['nullable', 'string', 'max:50'],
             'business_service_id' => ['required', 'exists:business_services,id'],
-            'business_location_id' => ['required', 'exists:business_locations,id'],
+            'business_location_id' => ['nullable', 'exists:business_locations,id'],
             'appointment_date' => ['required', 'date', 'after_or_equal:today'],
             'start_time' => ['required', 'date_format:H:i'],
             'notes' => ['nullable', 'string'],
@@ -77,7 +89,7 @@ class AppointmentController extends Controller
 
         $appointment = $business->appointments()->create([
             'business_id' => $business->id,
-            'business_location_id' => $data['business_location_id'],
+            'business_location_id' => $data['business_location_id'] ?? null,
             'business_service_id' => $data['business_service_id'],
             'customer_name' => $data['customer_name'],
             'customer_email' => $data['customer_email'],
@@ -182,7 +194,7 @@ class AppointmentController extends Controller
             'customer_email' => ['required', 'email', 'max:150'],
             'customer_phone' => ['nullable', 'string', 'max:50'],
             'business_service_id' => ['required', 'exists:business_services,id'],
-            'business_location_id' => ['required', 'exists:business_locations,id'],
+            'business_location_id' => ['nullable', 'exists:business_locations,id'],
             'appointment_date' => ['required', 'date'],
             'start_time' => ['required', 'date_format:H:i'],
             'status' => ['required', 'string', 'in:pending,confirmed,cancelled,completed,no_show'],
@@ -197,7 +209,7 @@ class AppointmentController extends Controller
             'customer_email' => $data['customer_email'],
             'customer_phone' => $data['customer_phone'] ?? null,
             'business_service_id' => $data['business_service_id'],
-            'business_location_id' => $data['business_location_id'],
+            'business_location_id' => $data['business_location_id'] ?? null,
             'appointment_date' => $data['appointment_date'],
             'start_time' => $data['start_time'],
             'end_time' => $endTime,

@@ -66,14 +66,13 @@
             </div>
 
             <div class="col-md-6">
-              <label for="business_location_id" class="form-label">Ubicacion *</label>
+              <label for="business_location_id" class="form-label">Ubicacion</label>
               <select
                 id="business_location_id"
                 class="form-select"
                 v-model="form.business_location_id"
-                required
               >
-                <option :value="null" disabled>Seleccionar ubicacion</option>
+                <option :value="null">Sin ubicacion</option>
                 <option v-for="loc in locations" :key="loc.id" :value="loc.id">
                   {{ loc.name }}
                 </option>

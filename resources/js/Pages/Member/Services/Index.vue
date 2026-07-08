@@ -87,13 +87,22 @@
                     </div>
                   </div>
 
-                  <div class="col-12">
-                    <label class="form-label">Descripción</label>
-                    <textarea v-model="form.description" class="form-control" rows="3"></textarea>
-                  </div>
+                <div class="col-12">
+                  <label class="form-label">Descripción</label>
+                  <textarea v-model="form.description" class="form-control" rows="3"></textarea>
+                </div>
 
-                  <div class="col-md-4">
-                    <label class="form-label">Duración (minutos)</label>
+                <div class="col-md-4">
+                  <label class="form-label">Imagen del servicio</label>
+                  <input ref="imageInput" type="file" class="form-control" accept="image/jpeg,image/png" @change="handleImageChange">
+                  <small class="text-muted d-block">JPG o PNG, max 10MB</small>
+                  <div v-if="imagePreview" class="mt-2">
+                    <img :src="imagePreview" class="img-thumbnail" style="max-height: 150px;">
+                  </div>
+                </div>
+
+                <div class="col-md-4">
+                  <label class="form-label">Duración (minutos)</label>
                     <input v-model.number="form.duration_minutes" type="number" min="1" max="1440" class="form-control" required>
                   </div>
 
@@ -158,6 +167,8 @@ const servicesList = computed(() => {
   return []
 })
 const modalElement = ref(null)
+const imageInput = ref(null)
+const imagePreview = ref(null)
 let serviceModal = null
 let editingService = ref(null)
 let sending = false
@@ -165,6 +176,7 @@ let sending = false
 const form = useForm({
   name: '',
   description: '',
+  image: null,
   duration_minutes: 30,
   price: null,
   deposit_required: false,
@@ -175,12 +187,40 @@ const form = useForm({
   sort_order: 0,
 })
 
+const handleImageChange = (e) => {
+  const file = e.target.files[0]
+  if (!file) return
+
+  const maxSize = 10 * 1024 * 1024
+  if (file.size > maxSize) {
+    alert('El archivo supera el tamaño máximo de 10MB.')
+    return
+  }
+
+  const allowedTypes = ['image/jpeg', 'image/png']
+  if (!allowedTypes.includes(file.type)) {
+    alert('Solo se permiten imágenes JPG o PNG.')
+    return
+  }
+
+  form.image = file
+
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    imagePreview.value = e.target.result
+  }
+  reader.readAsDataURL(file)
+}
+
 const openCreateModal = () => {
   editingService.value = null
+  imagePreview.value = null
+  if (imageInput.value) imageInput.value.value = ''
   form.reset()
   form.duration_minutes = 30
   form.allows_online_booking = true
   form.is_active = true
+  form.image = null
   nextTick(() => {
     serviceModal.show()
   })
@@ -188,8 +228,11 @@ const openCreateModal = () => {
 
 const openEditModal = (service) => {
   editingService.value = service
+  imagePreview.value = service.image || null
+  if (imageInput.value) imageInput.value.value = ''
   form.name = service.name
   form.description = service.description || ''
+  form.image = null
   form.duration_minutes = service.duration_minutes
   form.price = service.price
   form.deposit_required = service.deposit_required
@@ -206,20 +249,34 @@ const openEditModal = (service) => {
 const submitService = () => {
   sending = true
   if (editingService.value) {
-    form.transform((data) => ({
-      ...data,
+    router.post(`/member/businesses/${props.business.id}/services/${editingService.value.id}`, {
+      ...form.data(),
       _method: 'PUT',
-    })).post(`/member/businesses/${props.business.id}/services/${editingService.value.id}`, {
+    }, {
+      forceFormData: true,
+      preserveScroll: true,
       onFinish: () => {
         sending = false
         serviceModal.hide()
       },
+      onError: (errors) => {
+        sending = false
+        console.error('Errors:', errors)
+        alert('Error al actualizar: ' + Object.values(errors).join(', '))
+      },
     })
   } else {
     form.post(`/member/businesses/${props.business.id}/services`, {
+      forceFormData: true,
+      preserveScroll: true,
       onFinish: () => {
         sending = false
         serviceModal.hide()
+      },
+      onError: (errors) => {
+        sending = false
+        console.error('Errors:', errors)
+        alert('Error al crear: ' + Object.values(errors).join(', '))
       },
     })
   }

@@ -8,6 +8,7 @@ use Modules\Businesses\Models\Business;
 use Modules\RestaurantMenu\Entities\MenuCategory;
 use Modules\RestaurantMenu\Entities\MenuProduct;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class MenuProductController extends Controller
 {
@@ -55,7 +56,7 @@ class MenuProductController extends Controller
             'category_id' => 'required|exists:menu_categories,id',
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'image' => 'nullable|string',
+            'image' => 'nullable|file|mimes:jpeg,png|max:10240',
             'base_price' => 'nullable|numeric|min:0',
             'show_price' => 'boolean',
             'featured' => 'boolean',
@@ -68,6 +69,11 @@ class MenuProductController extends Controller
 
         $validated['business_id'] = $business->id;
         $validated['slug'] = MenuProduct::generateUniqueSlug($business->id, $validated['title']);
+
+        if ($request->hasFile('image')) {
+            $path = $request->file('image')->store('products/' . $business->id, ['disk' => 'public']);
+            $validated['image'] = Storage::disk('public')->url($path);
+        }
 
         $product = MenuProduct::create($validated);
 
@@ -84,7 +90,7 @@ class MenuProductController extends Controller
             'category_id' => 'required|exists:menu_categories,id',
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'image' => 'nullable|string',
+            'image' => 'nullable|file|mimes:jpeg,png|max:10240',
             'base_price' => 'nullable|numeric|min:0',
             'show_price' => 'boolean',
             'featured' => 'boolean',
@@ -94,6 +100,13 @@ class MenuProductController extends Controller
 
         $category = MenuCategory::find($validated['category_id']);
         abort_unless($category->business_id === $business->id, 403);
+
+        if ($request->hasFile('image')) {
+            $path = $request->file('image')->store('products/' . $business->id, ['disk' => 'public']);
+            $validated['image'] = Storage::disk('public')->url($path);
+        } else {
+            unset($validated['image']);
+        }
 
         $product->update($validated);
 

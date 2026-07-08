@@ -1,11 +1,17 @@
 <template>
-  <div>
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <h1>Categorías del Menú</h1>
-      <button @click="showCreateModal = true" class="btn btn-primary">
-        <i class="bi bi-plus-lg"></i> Nueva Categoría
-      </button>
-    </div>
+  <MemberLayout>
+    <Head title="Categorías del Menú" />
+
+    <div class="container-fluid py-4">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h1 class="h4 mb-1">Categorías del Menú</h1>
+          <p class="text-muted mb-0">{{ business?.name }}</p>
+        </div>
+        <button @click="showCreateModal = true" class="btn btn-primary">
+          <i class="bi bi-plus-lg"></i> Nueva Categoría
+        </button>
+      </div>
 
     <div v-if="$page.props.flash?.success" class="alert alert-success alert-dismissible fade show" role="alert">
       {{ $page.props.flash.success }}
@@ -137,12 +143,14 @@
         </div>
       </div>
     </div>
-  </div>
+    </div>
+  </MemberLayout>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue'
-import { usePage, Link } from '@inertiajs/vue3'
+import { Head, usePage, Link, router } from '@inertiajs/vue3'
+import MemberLayout from '@/Layouts/MemberLayout.vue'
 
 const props = defineProps({
   business: Object,
@@ -178,7 +186,7 @@ const flatCategories = computed(() => {
       }
     })
   }
-  flatten(props.categories)
+  flatten(props.categories || [])
   return flat
 })
 
@@ -219,13 +227,12 @@ const handleImageChange = (e) => {
   reader.readAsDataURL(file)
 }
 
-const deleteCategory = async (category) => {
+const deleteCategory = (category) => {
   if (!confirm(`¿Eliminar la categoría "${category.title}"?`)) return
 
-  await fetch(`/member/businesses/${props.business.id}/menu-categories/${category.id}`, {
-    method: 'DELETE',
-    headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
-  }).then(() => window.location.reload())
+  router.delete(`/member/businesses/${props.business.id}/menu-categories/${category.id}`, {
+    preserveScroll: true,
+  })
 }
 
 const closeModal = () => {
@@ -243,22 +250,25 @@ const closeModal = () => {
   }
 }
 
-const submitForm = async () => {
+const submitForm = () => {
   sending.value = true
 
-  const url = editingCategory.value
-    ? `/member/businesses/${props.business.id}/menu-categories/${editingCategory.value.id}`
-    : `/member/businesses/${props.business.id}/menu-categories`
-
-  const method = editingCategory.value ? 'PUT' : 'POST'
-
-  await fetch(url, {
-    method,
-    headers: {
-      'Content-Type': 'application/json',
-      'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-    },
-    body: JSON.stringify(form.value),
-  }).then(() => window.location.reload())
+  if (editingCategory.value) {
+    router.put(`/member/businesses/${props.business.id}/menu-categories/${editingCategory.value.id}`, form.value, {
+      preserveScroll: true,
+      onFinish: () => {
+        sending.value = false
+        closeModal()
+      },
+    })
+  } else {
+    router.post(`/member/businesses/${props.business.id}/menu-categories`, form.value, {
+      preserveScroll: true,
+      onFinish: () => {
+        sending.value = false
+        closeModal()
+      },
+    })
+  }
 }
 </script>

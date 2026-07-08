@@ -8,10 +8,10 @@
         <p class="text-muted mb-0">Gestiona las citas de tu negocio.</p>
       </div>
       <div>
-        <Link :href="`/member/businesses/${business.id}/appointments/create`" class="btn btn-primary btn-sm">
+        <button @click="openCreateModal" class="btn btn-primary btn-sm">
           <i class="bi bi-plus-lg me-1"></i>
           Nueva Cita
-        </Link>
+        </button>
       </div>
     </div>
 
@@ -85,18 +85,132 @@
         </div>
       </div>
     </div>
+
+    <div ref="modalElement" class="modal fade" tabindex="-1">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Nueva Cita</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <form @submit.prevent="submitAppointment">
+            <div class="modal-body">
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label">Nombre del cliente *</label>
+                  <input v-model="form.customer_name" type="text" class="form-control" required>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Email del cliente *</label>
+                  <input v-model="form.customer_email" type="email" class="form-control" required>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Telefono</label>
+                  <input v-model="form.customer_phone" type="text" class="form-control">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Servicio *</label>
+                  <select v-model="form.business_service_id" class="form-select" required>
+                    <option :value="null" disabled>Seleccionar servicio</option>
+                    <option v-for="svc in services" :key="svc.id" :value="svc.id">
+                      {{ svc.name }} ({{ svc.duration_minutes }} min)
+                    </option>
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Ubicacion</label>
+                  <select v-model="form.business_location_id" class="form-select">
+                    <option :value="null">Sin ubicacion</option>
+                    <option v-for="loc in locations" :key="loc.id" :value="loc.id">
+                      {{ loc.name }}
+                    </option>
+                  </select>
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label">Fecha *</label>
+                  <input v-model="form.appointment_date" type="date" class="form-control" required :min="today">
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label">Hora *</label>
+                  <input v-model="form.start_time" type="time" class="form-control" required>
+                </div>
+                <div class="col-12">
+                  <label class="form-label">Notas</label>
+                  <textarea v-model="form.notes" class="form-control" rows="2" placeholder="Notas adicionales..."></textarea>
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+              <button type="submit" class="btn btn-primary" :disabled="sending">
+                {{ sending ? 'Guardando...' : 'Crear Cita' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
   </MemberLayout>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, nextTick } from 'vue'
 import { Head, Link, router, usePage } from '@inertiajs/vue3'
+import { Modal } from 'bootstrap'
 import MemberLayout from '@/Layouts/MemberLayout.vue'
 import Pagination from '@/Components/Member/Pagination.vue'
 
 const page = usePage()
 const business = computed(() => page.props.business)
 const appointments = computed(() => page.props.appointments || { data: [], links: [] })
+const services = computed(() => page.props.services || [])
+const locations = computed(() => page.props.locations || [])
+
+const modalElement = ref(null)
+let appointmentModal = null
+const sending = ref(false)
+const today = new Date().toISOString().split('T')[0]
+
+const form = ref({
+  customer_name: '',
+  customer_email: '',
+  customer_phone: '',
+  business_service_id: null,
+  business_location_id: null,
+  appointment_date: '',
+  start_time: '',
+  notes: '',
+})
+
+const openCreateModal = () => {
+  form.value = {
+    customer_name: '',
+    customer_email: '',
+    customer_phone: '',
+    business_service_id: null,
+    business_location_id: null,
+    appointment_date: '',
+    start_time: '',
+    notes: '',
+  }
+  nextTick(() => {
+    appointmentModal.show()
+  })
+}
+
+const submitAppointment = () => {
+  sending.value = true
+  router.post(`/member/businesses/${business.value.id}/appointments`, form.value, {
+    preserveScroll: true,
+    onSuccess: () => {
+      sending.value = false
+      appointmentModal.hide()
+    },
+    onError: () => {
+      sending.value = false
+    },
+  })
+}
 
 const formatDate = (date) => {
   return new Date(date).toLocaleDateString('es-AR', {
@@ -133,4 +247,9 @@ const deleteAppointment = (apt) => {
     })
   }
 }
+
+import { onMounted } from 'vue'
+onMounted(() => {
+  appointmentModal = new Modal(modalElement.value)
+})
 </script>

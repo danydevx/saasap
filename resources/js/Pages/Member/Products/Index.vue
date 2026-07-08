@@ -1,19 +1,22 @@
 <template>
-  <div>
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <div>
-        <h1>Productos del Menú</h1>
-        <nav aria-label="breadcrumb">
-          <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a :href="`/member/businesses/${business.id}/menu-categories`">Categorías</a></li>
-            <li v-if="selectedCategoryName" class="breadcrumb-item active">{{ selectedCategoryName }}</li>
-          </ol>
-        </nav>
+  <MemberLayout>
+    <Head :title="business ? `Productos - ${business.name}` : 'Productos'" />
+
+    <div class="container-fluid py-4">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h1 class="h4 mb-1">Productos del Menú</h1>
+          <p class="text-muted mb-0">{{ business?.name }}</p>
+        </div>
+      <div class="d-flex gap-2">
+        <Link :href="`/member/businesses/${business?.id}/menu-categories`" class="btn btn-outline-secondary">
+          <i class="bi bi-folder me-1"></i>Categorías
+        </Link>
+        <button @click="showCreateModal = true" class="btn btn-primary">
+          <i class="bi bi-plus-lg"></i> Nuevo Producto
+        </button>
       </div>
-      <button @click="showCreateModal = true" class="btn btn-primary">
-        <i class="bi bi-plus-lg"></i> Nuevo Producto
-      </button>
-    </div>
+      </div>
 
     <div class="row mb-4">
       <div class="col-md-4">
@@ -22,6 +25,11 @@
           <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.title }}</option>
         </select>
       </div>
+      <div v-if="filterCategory" class="col-md-2">
+        <button type="button" class="btn btn-outline-secondary" @click="clearFilter">
+          <i class="bi bi-x-lg me-1"></i>Limpiar
+        </button>
+      </div>
     </div>
 
     <div v-if="$page.props.flash?.success" class="alert alert-success alert-dismissible fade show" role="alert">
@@ -29,12 +37,12 @@
       <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 
-    <div v-if="products.data.length === 0" class="alert alert-info">
+    <div v-if="productsList.length === 0" class="alert alert-info">
       No hay productos{{ selectedCategoryName ? ' en esta categoría' : '' }}.
     </div>
 
     <div class="row">
-      <div v-for="product in products.data" :key="product.id" class="col-md-4 mb-4">
+      <div v-for="product in productsList" :key="product.id" class="col-md-4 mb-4">
         <div class="card h-100">
           <img v-if="product.image" :src="product.image" class="card-img-top" :alt="product.title" style="height: 150px; object-fit: cover;">
           <div class="card-body">
@@ -124,10 +132,11 @@
                 </div>
                 <div class="col-md-4">
                   <div class="mb-3">
-                    <label class="form-label">URL de imagen</label>
-                    <input v-model="form.image" type="text" class="form-control" placeholder="https://...">
-                    <div v-if="form.image" class="mt-2">
-                      <img :src="form.image" class="img-thumbnail w-100" alt="Preview">
+                    <label class="form-label">Imagen del producto</label>
+                    <input ref="imageInput" type="file" class="form-control" accept="image/jpeg,image/png" @change="handleImageChange">
+                    <small class="text-muted d-block">JPG o PNG, max 10MB</small>
+                    <div v-if="imagePreview" class="mt-2">
+                      <img :src="imagePreview" class="img-thumbnail w-100" alt="Preview">
                     </div>
                   </div>
                 </div>
@@ -164,16 +173,18 @@
                 {{ sending ? 'Guardando...' : 'Guardar' }}
               </button>
             </div>
-          </form>
+            </form>
         </div>
       </div>
     </div>
-  </div>
+    </div>
+  </MemberLayout>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue'
-import { usePage } from '@inertiajs/vue3'
+import { Head, usePage, Link, router } from '@inertiajs/vue3'
+import MemberLayout from '@/Layouts/MemberLayout.vue'
 
 const props = defineProps({
   business: Object,
@@ -186,6 +197,15 @@ const showCreateModal = ref(false)
 const editingProduct = ref(null)
 const sending = ref(false)
 const filterCategory = ref(props.selectedCategory)
+const imageInput = ref(null)
+const imagePreview = ref(null)
+
+const productsList = computed(() => {
+  if (!props.products) return []
+  if (Array.isArray(props.products)) return props.products
+  if (Array.isArray(props.products.data)) return props.products.data
+  return []
+})
 
 const selectedCategoryName = computed(() => {
   if (!filterCategory.value) return null
@@ -198,7 +218,7 @@ const form = ref({
   title: '',
   category_id: '',
   description: '',
-  image: '',
+  image: null,
   base_price: null,
   show_price: true,
   featured: false,
@@ -206,6 +226,31 @@ const form = ref({
   sort_order: 0,
   variants: [],
 })
+
+const handleImageChange = (e) => {
+  const file = e.target.files[0]
+  if (!file) return
+
+  const maxSize = 10 * 1024 * 1024
+  if (file.size > maxSize) {
+    alert('El archivo supera el tamaño máximo de 10MB.')
+    return
+  }
+
+  const allowedTypes = ['image/jpeg', 'image/png']
+  if (!allowedTypes.includes(file.type)) {
+    alert('Solo se permiten imágenes JPG o PNG.')
+    return
+  }
+
+  form.value.image = file
+
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    imagePreview.value = e.target.result
+  }
+  reader.readAsDataURL(file)
+}
 
 const filterProducts = () => {
   let url = `/member/businesses/${props.business.id}/menu-products`
@@ -219,13 +264,19 @@ const filterProducts = () => {
   window.location.href = url
 }
 
+const clearFilter = () => {
+  filterCategory.value = null
+  window.location.href = `/member/businesses/${props.business.id}/menu-products`
+}
+
 const editProduct = (product) => {
   editingProduct.value = product
+  imagePreview.value = product.image || null
   form.value = {
     title: product.title,
     category_id: product.category_id,
     description: product.description || '',
-    image: product.image || '',
+    image: null,
     base_price: product.base_price,
     show_price: product.show_price,
     featured: product.featured,
@@ -240,23 +291,24 @@ const editProduct = (product) => {
   }
 }
 
-const deleteProduct = async (product) => {
+const deleteProduct = (product) => {
   if (!confirm(`¿Eliminar el producto "${product.title}"?`)) return
 
-  await fetch(`/member/businesses/${props.business.id}/menu-products/${product.id}`, {
-    method: 'DELETE',
-    headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
-  }).then(() => window.location.reload())
+  router.delete(`/member/businesses/${props.business.id}/menu-products/${product.id}`, {
+    preserveScroll: true,
+  })
 }
 
 const closeModal = () => {
   showCreateModal.value = false
   editingProduct.value = null
+  imagePreview.value = null
+  if (imageInput.value) imageInput.value.value = ''
   form.value = {
     title: '',
     category_id: '',
     description: '',
-    image: '',
+    image: null,
     base_price: null,
     show_price: true,
     featured: false,
@@ -278,50 +330,40 @@ const removeVariant = (index) => {
   form.value.variants.splice(index, 1)
 }
 
-const submitForm = async () => {
+const submitForm = () => {
   sending.value = true
 
-  const url = editingProduct.value
-    ? `/member/businesses/${props.business.id}/menu-products/${editingProduct.value.id}`
-    : `/member/businesses/${props.business.id}/menu-products`
-
-  const method = editingProduct.value ? 'PUT' : 'POST'
-
-  const response = await fetch(url, {
-    method,
-    headers: {
-      'Content-Type': 'application/json',
-      'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-    },
-    body: JSON.stringify(form.value),
-  })
-
-  const result = await response.json()
-
-  if (editingProduct.value && result.id) {
-    for (const variant of form.value.variants) {
-      if (variant.id) {
-        await fetch(`/member/businesses/${props.business.id}/menu-products/${editingProduct.value.id}/variants/${variant.id}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-          },
-          body: JSON.stringify(variant),
-        })
-      } else {
-        await fetch(`/member/businesses/${props.business.id}/menu-products/${editingProduct.value.id}/variants`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-          },
-          body: JSON.stringify(variant),
-        })
-      }
-    }
+  if (editingProduct.value) {
+    router.post(`/member/businesses/${props.business.id}/menu-products/${editingProduct.value.id}`, {
+      ...form.value,
+      _method: 'PUT',
+    }, {
+      forceFormData: true,
+      preserveScroll: true,
+      onSuccess: () => {
+        closeModal()
+        sending.value = false
+      },
+      onError: (errors) => {
+        sending.value = false
+        console.error('Errors:', errors)
+        alert('Error al actualizar: ' + Object.values(errors).join(', '))
+      },
+    })
+  } else {
+    router.post(`/member/businesses/${props.business.id}/menu-products`, form.value, {
+      forceFormData: true,
+      preserveScroll: true,
+      onSuccess: () => {
+        closeModal()
+        sending.value = false
+      },
+      onError: (errors) => {
+        sending.value = false
+        console.error('Errors:', errors)
+        alert('Error al crear: ' + Object.values(errors).join(', '))
+      },
+    })
   }
-
-  window.location.reload()
 }
 </script>
