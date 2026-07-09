@@ -62,6 +62,12 @@ class MenuProductController extends Controller
             'featured' => 'boolean',
             'active' => 'boolean',
             'sort_order' => 'integer',
+            'variants' => 'nullable|array',
+            'variants.*.title' => 'required_with:variants|string|max:255',
+            'variants.*.price' => 'required_with:variants|numeric|min:0',
+            'variants.*.description' => 'nullable|string',
+            'variants.*.sort_order' => 'nullable|integer',
+            'variants.*.active' => 'nullable|boolean',
         ]);
 
         $category = MenuCategory::find($validated['category_id']);
@@ -75,7 +81,16 @@ class MenuProductController extends Controller
             $validated['image'] = Storage::disk('public')->url($path);
         }
 
+        $variants = $validated['variants'] ?? [];
+        unset($validated['variants']);
+
         $product = MenuProduct::create($validated);
+
+        if (!empty($variants)) {
+            foreach ($variants as $variantData) {
+                $product->variants()->create($variantData);
+            }
+        }
 
         return redirect()->back()->with('success', 'Producto creado exitosamente.');
     }
@@ -96,6 +111,12 @@ class MenuProductController extends Controller
             'featured' => 'boolean',
             'active' => 'boolean',
             'sort_order' => 'integer',
+            'variants' => 'nullable|array',
+            'variants.*.title' => 'required_with:variants|string|max:255',
+            'variants.*.price' => 'required_with:variants|numeric|min:0',
+            'variants.*.description' => 'nullable|string',
+            'variants.*.sort_order' => 'nullable|integer',
+            'variants.*.active' => 'nullable|boolean',
         ]);
 
         $category = MenuCategory::find($validated['category_id']);
@@ -108,7 +129,17 @@ class MenuProductController extends Controller
             unset($validated['image']);
         }
 
+        $variants = $validated['variants'] ?? null;
+        unset($validated['variants']);
+
         $product->update($validated);
+
+        if (is_array($variants)) {
+            $product->variants()->delete();
+            foreach ($variants as $variantData) {
+                $product->variants()->create($variantData);
+            }
+        }
 
         return redirect()->back()->with('success', 'Producto actualizado exitosamente.');
     }

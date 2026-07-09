@@ -3,10 +3,10 @@
 namespace App\Policies;
 
 use App\Models\User;
-use Modules\Leads\Models\BusinessLead;
+use Modules\Promotions\Models\BusinessPromotion;
 use Modules\Businesses\Models\Business;
 
-class BusinessLeadPolicy
+class BusinessPromotionPolicy
 {
     public function viewAny(User $user, Business $business): bool
     {
@@ -14,24 +14,15 @@ class BusinessLeadPolicy
             return true;
         }
 
-        return $user->id === $business->user_id;
-    }
-
-    public function view(User $user, BusinessLead $lead): bool
-    {
-        if ($user->hasAnyRole(['superadmin', 'admin'])) {
-            return true;
+        if (!$business->is_published || !$business->is_active) {
+            return $user->id === $business->user_id;
         }
 
-        return $user->id === $lead->business->user_id;
+        return true;
     }
 
     public function create(User $user, Business $business): bool
     {
-        if ($business->is_published && $business->is_active) {
-            return true;
-        }
-
         if ($user->hasAnyRole(['superadmin', 'admin'])) {
             return true;
         }
@@ -39,21 +30,21 @@ class BusinessLeadPolicy
         return $user->id === $business->user_id;
     }
 
-    public function update(User $user, BusinessLead $lead): bool
+    public function update(User $user, BusinessPromotion $promotion): bool
     {
         if ($user->hasAnyRole(['superadmin', 'admin'])) {
             return true;
         }
 
-        return $user->id === $lead->business->user_id;
+        return $user->id === $promotion->business->user_id;
     }
 
-    public function delete(User $user, BusinessLead $lead): bool
+    public function delete(User $user, BusinessPromotion $promotion): bool
     {
         if ($user->hasAnyRole(['superadmin', 'admin'])) {
             return true;
         }
 
-        return $user->id === $lead->business->user_id;
+        return $user->id === $promotion->business->user_id;
     }
 }

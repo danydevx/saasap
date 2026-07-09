@@ -32,6 +32,7 @@ class DatabaseSeeder extends Seeder
             AutomationSeeder::class,
             BusinessModuleDefinitionSeeder::class,
             PlanBusinessModuleSeeder::class,
+            ContactFormSubmissionSeeder::class,
         ]);
     }
 }

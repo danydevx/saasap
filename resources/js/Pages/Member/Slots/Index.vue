@@ -1,100 +1,79 @@
 <template>
   <MemberLayout>
-    <Head :title="`Slots - ${business.name}`" />
+    <Head :title="`Slots - ${business?.name || ''}`" />
 
     <PageHeader
       title="Turnos de Disponibilidad"
       :breadcrumbs="breadcrumbs"
       :backHref="'/member/business-modules'"
-    />
-
-    <div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
-      <div>
-        <p class="text-muted mb-0">Gestiona los turnos disponibles para reservas online.</p>
-      </div>
-      <div>
+    >
+      <template #actions>
         <button type="button" class="btn btn-primary btn-sm" @click="openCreateModal">
           <i class="bi bi-plus me-1"></i>Nuevo Turno
         </button>
-      </div>
-    </div>
+      </template>
+    </PageHeader>
 
-    <div class="card border-0 shadow-sm">
-      <div class="card-body">
-        <div v-if="$page.props.flash?.success" class="alert alert-success alert-dismissible fade show" role="alert">
-          {{ $page.props.flash.success }}
-          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-        <div v-if="$page.props.flash?.error" class="alert alert-danger alert-dismissible fade show" role="alert">
-          {{ $page.props.flash.error }}
-          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
+    <BaseDataTable
+      ref="dataTableRef"
+      :endpoint="`/member/businesses/${business?.id}/slots`"
+      :columns="columns"
+      :initial-data="dataTable"
+      search-placeholder="Buscar turnos..."
+      empty-title="No hay turnos"
+      empty-text="Crea un turno para permitir reservas online."
+      @updated="onDataTableUpdated"
+    >
+      <template #cell-slot_date="{ row }">
+        <span v-if="row.specific_date">{{ formatDate(row.specific_date) }}</span>
+        <span v-else>{{ dayName(row.day_of_week) }}</span>
+      </template>
 
-        <div v-if="slots.data.length === 0" class="text-center text-muted py-5">
-          No hay turnos de disponibilidad. Crea uno para permitir reservas online.
-        </div>
+      <template #cell-start_time="{ row }">
+        {{ row.start_time }} - {{ row.end_time }}
+      </template>
 
-        <div v-else class="table-responsive">
-          <table class="table table-hover align-middle mb-0">
-            <thead class="table-light">
-              <tr>
-                <th scope="col">Fecha</th>
-                <th scope="col">Hora</th>
-                <th scope="col">Servicio</th>
-                <th scope="col">Ubicacion</th>
-                <th scope="col">Cupos</th>
-                <th scope="col">Estado</th>
-                <th scope="col" class="text-end">Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="slot in slots.data" :key="slot.id">
-                <td>{{ slot.specific_date ? formatDate(slot.specific_date) : dayName(slot.day_of_week) }}</td>
-                <td>{{ slot.start_time }} - {{ slot.end_time }}</td>
-                <td>{{ slot.service?.name || '-' }}</td>
-                <td>{{ slot.location?.name || 'Todas' }}</td>
-                <td>{{ slot.slots_available }}</td>
-                <td>
-                  <span :class="slot.is_available ? 'bg-success' : 'bg-secondary'" class="badge">
-                    {{ slot.is_available ? 'Activo' : 'Inactivo' }}
-                  </span>
-                </td>
-                <td class="text-end">
-                  <button
-                    class="btn btn-sm btn-outline-primary"
-                    @click="openEditModal(slot)"
-                    title="Editar"
-                  >
-                    <i class="bi bi-pencil"></i>
-                  </button>
-                  <button
-                    class="btn btn-sm"
-                    :class="slot.is_available ? 'btn-outline-warning' : 'btn-outline-success'"
-                    @click="toggleSlot(slot)"
-                    :disabled="deleting === slot.id"
-                    title="Cambiar estado"
-                  >
-                    <i :class="slot.is_available ? 'bi bi-x-lg' : 'bi bi-check-lg'"></i>
-                  </button>
-                  <button
-                    class="btn btn-sm btn-outline-danger ms-1"
-                    @click="deleteSlot(slot)"
-                    :disabled="deleting === slot.id"
-                    title="Eliminar"
-                  >
-                    <i class="bi bi-trash"></i>
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+      <template #cell-service="{ row }">
+        {{ row.service?.name || '-' }}
+      </template>
 
-        <div v-if="slots.links" class="d-flex justify-content-center mt-4">
-          <Pagination :links="slots.links" />
+      <template #cell-location="{ row }">
+        {{ row.location?.name || 'Todas' }}
+      </template>
+
+      <template #cell-slots_available="{ row }">
+        {{ row.slots_available }}
+      </template>
+
+      <template #cell-is_available="{ row }">
+        <span :class="row.is_available ? 'badge bg-success' : 'badge bg-secondary'">
+          {{ row.is_available ? 'Activo' : 'Inactivo' }}
+        </span>
+      </template>
+
+      <template #cell-actions="{ row }">
+        <div class="actions">
+          <button class="btn btn-sm btn-outline-primary" @click="openEditModal(row)" title="Editar">
+            <i class="bi bi-pencil"></i>
+          </button>
+          <button
+            class="btn btn-sm"
+            :class="row.is_available ? 'btn-outline-warning' : 'btn-outline-success'"
+            @click="toggleSlot(row)"
+            title="Cambiar estado"
+          >
+            <i :class="row.is_available ? 'bi bi-x-lg' : 'bi bi-check-lg'"></i>
+          </button>
+          <button
+            class="btn btn-sm btn-outline-danger"
+            @click="deleteSlot(row)"
+            title="Eliminar"
+          >
+            <i class="bi bi-trash"></i>
+          </button>
         </div>
-      </div>
-    </div>
+      </template>
+    </BaseDataTable>
 
     <div ref="createModalElement" class="modal fade" tabindex="-1">
       <div class="modal-dialog">
@@ -312,11 +291,11 @@
 
 <script setup>
 import { computed, reactive, ref, onMounted, nextTick } from 'vue'
-import { Head, Link, router, usePage } from '@inertiajs/vue3'
+import { Head, router, usePage } from '@inertiajs/vue3'
 import { Modal } from 'bootstrap'
 import MemberLayout from '@/Layouts/MemberLayout.vue'
 import PageHeader from '@/Components/Admin/PageHeader.vue'
-import Pagination from '@/Components/Admin/Pagination.vue'
+import BaseDataTable from '@/Components/DataTable/BaseDataTable.vue'
 import FieldSelect from '@/Components/Fields/FieldSelect.vue'
 import FieldDate from '@/Components/Fields/FieldDate.vue'
 import FieldTime from '@/Components/Fields/FieldTime.vue'
@@ -325,15 +304,26 @@ import FieldSwitch from '@/Components/Fields/FieldSwitch.vue'
 
 const page = usePage()
 const business = computed(() => page.props.business)
-const slots = computed(() => page.props.slots || { data: [] })
+const dataTable = computed(() => page.props.dataTable)
 const services = computed(() => page.props.services || [])
 const locations = computed(() => page.props.locations || [])
 
 const breadcrumbs = computed(() => [
-  { label: business.value.name, href: '/member/business-modules' },
+  { label: business.value?.name, href: '/member/business-modules' },
   { label: 'Turnos', active: true },
 ])
 
+const columns = [
+  { key: 'slot_date', label: 'Fecha', sortable: true },
+  { key: 'start_time', label: 'Hora', sortable: false },
+  { key: 'service', label: 'Servicio', sortable: false },
+  { key: 'location', label: 'Ubicacion', sortable: false },
+  { key: 'slots_available', label: 'Cupos', sortable: true },
+  { key: 'is_available', label: 'Estado', sortable: true },
+  { key: 'actions', label: 'Acciones', sortable: false },
+]
+
+const dataTableRef = ref(null)
 const createModalElement = ref(null)
 const editModalElement = ref(null)
 let createModal = null
@@ -341,7 +331,6 @@ let editModal = null
 
 const creating = ref(false)
 const saving = ref(false)
-const deleting = ref(null)
 const scheduleType = ref('date')
 const editScheduleType = ref('date')
 const editingSlot = ref(null)
@@ -379,14 +368,8 @@ const formatDate = (date) => {
   return new Date(date).toLocaleDateString('es-AR')
 }
 
-const resetSchedule = () => {
-  form.day_of_week = null
-  form.specific_date = ''
-}
-
-const resetEditSchedule = () => {
-  editForm.day_of_week = null
-  editForm.specific_date = ''
+const onDataTableUpdated = (data) => {
+  // Optional: handle data update
 }
 
 const openCreateModal = () => {
@@ -444,6 +427,9 @@ const createSlot = () => {
     onFinish: () => {
       creating.value = false
       closeCreateModal()
+      if (dataTableRef.value) {
+        dataTableRef.value.reload()
+      }
     },
   })
 }
@@ -461,6 +447,9 @@ const updateSlot = () => {
     onFinish: () => {
       saving.value = false
       closeEditModal()
+      if (dataTableRef.value) {
+        dataTableRef.value.reload()
+      }
     },
   })
 }
@@ -468,16 +457,24 @@ const updateSlot = () => {
 const toggleSlot = (slot) => {
   router.put(`/member/businesses/${business.value.id}/slots/${slot.id}`, {
     is_available: !slot.is_available,
-  }, { preserveScroll: true })
+  }, {
+    preserveScroll: true,
+    onSuccess: () => {
+      if (dataTableRef.value) {
+        dataTableRef.value.reload()
+      }
+    },
+  })
 }
 
 const deleteSlot = (slot) => {
   if (confirm('Eliminar este turno?')) {
-    deleting.value = slot.id
     router.delete(`/member/businesses/${business.value.id}/slots/${slot.id}`, {
       preserveScroll: true,
-      onFinish: () => {
-        deleting.value = null
+      onSuccess: () => {
+        if (dataTableRef.value) {
+          dataTableRef.value.reload()
+        }
       },
     })
   }
@@ -486,5 +483,14 @@ const deleteSlot = (slot) => {
 onMounted(() => {
   createModal = new Modal(createModalElement.value)
   editModal = new Modal(editModalElement.value)
+  createModal._element.addEventListener('hidden.bs.modal', () => {
+    form.business_service_id = ''
+    form.business_location_id = null
+    form.day_of_week = null
+    form.specific_date = ''
+    form.start_time = '09:00'
+    form.end_time = '10:00'
+    form.slots_available = 1
+  })
 })
 </script>

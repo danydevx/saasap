@@ -103,6 +103,7 @@
                 label="Orden"
                 v-model="form.sort_order"
               />
+              <small class="text-muted">Menor numero aparece primero.</small>
             </div>
 
             <div class="col-md-8 d-flex align-items-end">

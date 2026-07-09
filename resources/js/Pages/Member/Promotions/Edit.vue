@@ -103,6 +103,7 @@
                 label="Orden"
                 v-model="form.sort_order"
               />
+              <small class="text-muted">Menor numero aparece primero.</small>
             </div>
 
             <div class="col-md-8 d-flex align-items-end">
@@ -149,7 +150,6 @@ const breadcrumbs = computed(() => [
   { label: 'Promociones', href: `/member/businesses/${business.value.id}/promotions` },
   { label: promotion.value?.name || 'Editar', active: true },
 ])
-const promotion = computed(() => page.props.promotion)
 const locations = computed(() => page.props.locations || [])
 const errors = computed(() => page.props.errors || {})
 const sending = computed(() => false)

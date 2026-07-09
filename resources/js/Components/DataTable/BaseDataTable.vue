@@ -17,23 +17,24 @@
       </div>
     </div>
 
-    <div class="app-datatable__table-wrapper">
-      <table class="app-datatable__table">
+    <div class="app-datatable__table-wrapper" ref="tableWrapperElement">
+      <table class="app-datatable__table" :class="{ 'app-datatable__table--reorderable': reorderable }">
         <thead>
           <tr>
+            <th v-if="reorderable" class="app-datatable__drag-column" style="width: 40px;"></th>
             <th
               v-for="column in columns"
               :key="column.key"
               :class="{
-                sortable: column.sortable !== false,
+                sortable: column.sortable !== false && !reorderable,
                 sorted: sortKey === column.key,
               }"
-              @click="column.sortable !== false && toggleSort(column.key)"
+              @click="!reorderable && column.sortable !== false && toggleSort(column.key)"
               :style="column.width ? { width: column.width } : {}"
             >
               {{ column.label }}
               <i
-                v-if="column.sortable !== false"
+                v-if="column.sortable !== false && !reorderable"
                 class="bi sort-icon"
                 :class="{
                   'bi-chevron-up': sortKey === column.key && sortDirection === 'asc',
@@ -47,7 +48,7 @@
         <tbody>
           <template v-if="loading">
             <tr>
-              <td :colspan="columns.length" class="app-datatable__loading">
+              <td :colspan="totalColumns" class="app-datatable__loading">
                 <div class="spinner"></div>
                 <div>{{ loadingText }}</div>
               </td>
@@ -55,7 +56,7 @@
           </template>
           <template v-else-if="!localData.data || localData.data.length === 0">
             <tr>
-              <td :colspan="columns.length" class="app-datatable__empty">
+              <td :colspan="totalColumns" class="app-datatable__empty">
                 <div class="empty-icon">
                   <i class="bi bi-inbox"></i>
                 </div>
@@ -65,7 +66,14 @@
             </tr>
           </template>
           <template v-else>
-            <tr v-for="(row, index) in localData.data" :key="getRowKey(row, index)">
+            <tr
+              v-for="(row, index) in localData.data"
+              :key="getRowKey(row, index)"
+              :data-id="row.id"
+            >
+              <td v-if="reorderable" class="app-datatable__drag-cell">
+                <i class="bi bi-grip-vertical app-datatable__drag-handle"></i>
+              </td>
               <td
                 v-for="column in columns"
                 :key="column.key"
@@ -90,7 +98,7 @@
       </table>
     </div>
 
-    <div class="app-datatable__footer">
+    <div class="app-datatable__footer" v-if="!reorderable || localData.last_page > 1">
       <div class="app-datatable__info">
         Mostrando {{ from }} a {{ to }} de {{ total }} registros
       </div>
@@ -104,8 +112,9 @@
         </select>
       </div>
 
-      <div class="app-datatable__pagination">
+      <div class="app-datatable__pagination" v-if="localData.last_page > 1">
         <button
+          type="button"
           class="btn btn-sm btn-outline-secondary"
           :disabled="currentPage <= 1"
           @click="goToPage(currentPage - 1)"
@@ -114,6 +123,7 @@
         </button>
 
         <button
+          type="button"
           v-for="page in visiblePages"
           :key="page"
           class="btn btn-sm"
@@ -124,6 +134,7 @@
         </button>
 
         <button
+          type="button"
           class="btn btn-sm btn-outline-secondary"
           :disabled="currentPage >= localData.last_page"
           @click="goToPage(currentPage + 1)"
@@ -136,8 +147,10 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { router } from '@inertiajs/vue3'
+import Sortable from 'sortablejs'
+import { toast } from 'vue3-toastify'
 
 const props = defineProps({
   endpoint: {
@@ -180,9 +193,17 @@ const props = defineProps({
     type: String,
     default: 'id',
   },
+  reorderable: {
+    type: Boolean,
+    default: false,
+  },
+  reorderEndpoint: {
+    type: String,
+    default: '',
+  },
 })
 
-const emit = defineEmits(['updated'])
+const emit = defineEmits(['updated', 'reordered'])
 
 const search = ref('')
 const sortKey = ref('')
@@ -190,6 +211,14 @@ const sortDirection = ref('asc')
 const currentPage = ref(1)
 const perPage = ref(props.initialPerPage)
 const loading = ref(false)
+const savingOrder = ref(false)
+const tableWrapperElement = ref(null)
+let sortableInstance = null
+
+const totalColumns = computed(() => {
+  return props.columns.length + (props.reorderable ? 1 : 0)
+})
+
 const localData = ref(props.initialData || {
   data: [],
   current_page: 1,
@@ -201,12 +230,6 @@ const localData = ref(props.initialData || {
 })
 
 let debounceTimer = null
-
-onMounted(() => {
-  if (!props.initialData) {
-    fetchData()
-  }
-})
 
 const from = computed(() => localData.value.from || 0)
 const to = computed(() => localData.value.to || 0)
@@ -273,6 +296,60 @@ const goToPage = (page) => {
   fetchData()
 }
 
+const initSortable = () => {
+  if (!props.reorderable || !props.reorderEndpoint) return
+
+  const tbody = tableWrapperElement.value?.querySelector('tbody')
+  if (!tbody) return
+
+  if (sortableInstance) {
+    sortableInstance.destroy()
+    sortableInstance = null
+  }
+
+  sortableInstance = Sortable.create(tbody, {
+    handle: '.app-datatable__drag-handle',
+    animation: 200,
+    ghostClass: 'app-datatable__row-ghost',
+    chosenClass: 'app-datatable__row-chosen',
+    dragClass: 'app-datatable__row-drag',
+    onEnd: () => {
+      onDragEnd(tbody)
+    },
+  })
+}
+
+const onDragEnd = (tbody) => {
+  if (!props.reorderable || !props.reorderEndpoint) return
+
+  const rows = tbody.querySelectorAll('tr[data-id]')
+  const ids = Array.from(rows).map(row => Number(row.getAttribute('data-id'))).filter(Boolean)
+
+  if (ids.length === 0) return
+
+  savingOrder.value = true
+
+  router.post(props.reorderEndpoint, {
+    ids,
+    page: currentPage.value,
+    perPage: perPage.value,
+  }, {
+    preserveScroll: true,
+    preserveState: true,
+    onSuccess: () => {
+      emit('reordered', ids)
+      toast.success('Orden actualizado correctamente.')
+    },
+    onError: (errors) => {
+      console.error('Error saving order:', errors)
+      toast.error('Error al actualizar el orden.')
+    },
+    onFinish: () => {
+      savingOrder.value = false
+    },
+  })
+}
+
 const fetchData = async () => {
   loading.value = true
 
@@ -312,11 +389,50 @@ const fetchData = async () => {
   } finally {
     loading.value = false
   }
+
+  await nextTick()
+  if (props.reorderable) {
+    initSortable()
+  }
 }
 
 const reload = () => {
   fetchData()
 }
+
+watch(() => props.initialData, async (newVal) => {
+  if (newVal) {
+    localData.value = newVal
+    await nextTick()
+    if (props.reorderable) {
+      initSortable()
+    }
+  }
+}, { deep: true })
+
+watch(() => props.reorderable, async (val) => {
+  if (val) {
+    await nextTick()
+    initSortable()
+  } else if (sortableInstance) {
+    sortableInstance.destroy()
+    sortableInstance = null
+  }
+})
+
+onMounted(async () => {
+  await nextTick()
+  if (props.reorderable) {
+    initSortable()
+  }
+})
+
+onBeforeUnmount(() => {
+  if (sortableInstance) {
+    sortableInstance.destroy()
+    sortableInstance = null
+  }
+})
 
 defineExpose({
   reload,
@@ -325,5 +441,6 @@ defineExpose({
   sortDirection,
   currentPage,
   perPage,
+  savingOrder,
 })
 </script>

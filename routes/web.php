@@ -248,6 +248,9 @@ Route::put('/member/businesses/{business}/services/{service}', [ServiceControlle
 Route::delete('/member/businesses/{business}/services/{service}', [ServiceController::class, 'destroy'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.businesses.services.destroy');
+Route::post('/member/businesses/{business}/services/reorder', [ServiceController::class, 'reorder'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.services.reorder');
 
 Route::get('/member/businesses/{business}/hero', [HeroController::class, 'index'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
@@ -406,6 +409,9 @@ Route::put('/member/businesses/{business}/promotions/{promotion}', [PromotionCon
 Route::delete('/member/businesses/{business}/promotions/{promotion}', [PromotionController::class, 'destroy'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.businesses.promotions.destroy');
+Route::post('/member/businesses/{business}/promotions/reorder', [PromotionController::class, 'reorder'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.promotions.reorder');
 
 Route::get('/member/businesses/{business}/menu-categories', [MemberMenuCategoryController::class, 'index'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])

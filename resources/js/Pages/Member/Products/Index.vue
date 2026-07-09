@@ -162,15 +162,14 @@
                     />
                   </div>
                 </div>
-                <div class="col-md-4">
-                  <div class="mb-3">
-                    <label class="form-label">Imagen del producto</label>
-                    <input ref="imageInput" type="file" class="form-control" accept="image/jpeg,image/png" @change="handleImageChange">
-                    <small class="text-muted d-block">JPG o PNG, max 10MB</small>
-                    <div v-if="imagePreview" class="mt-2">
-                      <img :src="imagePreview" class="img-thumbnail w-100" alt="Preview">
-                    </div>
-                  </div>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">Imagen del producto</label>
+                <input ref="imageInput" type="file" class="form-control" accept="image/jpeg,image/png" @change="handleImageChange">
+                <small class="text-muted d-block">JPG o PNG, max 10MB</small>
+                <div v-if="imagePreview" class="mt-2">
+                  <img :src="imagePreview" class="img-thumbnail w-100" alt="Preview" style="max-height: 300px; object-fit: contain;">
                 </div>
               </div>
 

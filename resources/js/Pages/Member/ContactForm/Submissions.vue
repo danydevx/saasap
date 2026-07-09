@@ -1,74 +1,86 @@
 <template>
   <MemberLayout>
-    <Head :title="`Contactos - ${business.name}`" />
+    <Head :title="`Contactos - ${business?.name || ''}`" />
 
-    <div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
-      <div>
-        <h1 class="h4 mb-1">{{ business.name }}</h1>
-        <p class="text-muted mb-0">Mensajes recibidos desde el formulario de contacto.</p>
-      </div>
-    </div>
+    <PageHeader
+      title="Contactos del Sitio"
+      :breadcrumbs="breadcrumbs"
+      :backHref="'/member/business-modules'"
+    />
 
-    <div class="card border-0 shadow-sm">
-      <div class="card-body">
-        <div v-if="$page.props.flash?.success" class="alert alert-success alert-dismissible fade show" role="alert">
-          {{ $page.props.flash.success }}
-          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    <BaseDataTable
+      ref="dataTableRef"
+      :endpoint="`/member/businesses/${business?.id}/contact-form/submissions`"
+      :columns="columns"
+      :initial-data="dataTable"
+      search-placeholder="Buscar mensajes..."
+      empty-title="No hay mensajes"
+      empty-text="Los mensajes del formulario de contacto apareceran aqui."
+      @updated="onDataTableUpdated"
+    >
+      <template #cell-name="{ row }">
+        <strong>{{ row.name }}</strong>
+      </template>
+
+      <template #cell-email="{ row }">
+        <a :href="`mailto:${row.email}`">{{ row.email }}</a>
+      </template>
+
+      <template #cell-phone="{ row }">
+        {{ row.phone || '-' }}
+      </template>
+
+      <template #cell-notes="{ row }">
+        <span class="text-muted small">
+          {{ row.notes ? row.notes.substring(0, 50) + '...' : '-' }}
+        </span>
+      </template>
+
+      <template #cell-created_at="{ row }">
+        {{ formatDate(row.created_at) }}
+      </template>
+
+      <template #cell-actions="{ row }">
+        <div class="actions">
+          <Link :href="`/member/businesses/${business?.id}/leads/${row.id}`" class="btn btn-sm btn-outline-primary">
+            <i class="bi bi-eye"></i>
+          </Link>
         </div>
-
-        <div class="table-responsive">
-          <table class="table table-hover align-middle mb-0">
-            <thead class="table-light">
-              <tr>
-                <th scope="col">Nombre</th>
-                <th scope="col">Email</th>
-                <th scope="col">Telefono</th>
-                <th scope="col">Notas</th>
-                <th scope="col">Fecha</th>
-                <th scope="col" class="text-end">Accion</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-if="submissions.data.length === 0">
-                <td colspan="6" class="text-center text-muted py-4">
-                  No hay mensajes del formulario de contacto.
-                </td>
-              </tr>
-              <tr v-for="sub in submissions.data" :key="sub.id">
-                <td class="fw-semibold">{{ sub.name }}</td>
-                <td>{{ sub.email }}</td>
-                <td>{{ sub.phone || '-' }}</td>
-                <td>
-                  <span class="text-muted small">{{ sub.notes ? sub.notes.substring(0, 50) + '...' : '-' }}</span>
-                </td>
-                <td>{{ formatDate(sub.created_at) }}</td>
-                <td class="text-end">
-                  <Link :href="`/member/businesses/${business.id}/leads/${sub.id}`" class="btn btn-sm btn-outline-primary">
-                    Ver
-                  </Link>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div v-if="submissions.links" class="d-flex justify-content-center mt-4">
-          <MemberPagination :links="submissions.links" />
-        </div>
-      </div>
-    </div>
+      </template>
+    </BaseDataTable>
   </MemberLayout>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { Head, Link, usePage } from '@inertiajs/vue3'
 import MemberLayout from '@/Layouts/MemberLayout.vue'
-import MemberPagination from '@/Components/Member/Pagination.vue'
+import PageHeader from '@/Components/Admin/PageHeader.vue'
+import BaseDataTable from '@/Components/DataTable/BaseDataTable.vue'
 
 const page = usePage()
 const business = computed(() => page.props.business)
-const submissions = computed(() => page.props.submissions || { data: [], links: [] })
+const dataTable = computed(() => page.props.dataTable)
+
+const breadcrumbs = computed(() => [
+  { label: business.value?.name, href: '/member/business-modules' },
+  { label: 'Contactos Web', active: true },
+])
+
+const columns = [
+  { key: 'name', label: 'Nombre', sortable: true },
+  { key: 'email', label: 'Email', sortable: false },
+  { key: 'phone', label: 'Telefono', sortable: false },
+  { key: 'notes', label: 'Notas', sortable: false },
+  { key: 'created_at', label: 'Fecha', sortable: true },
+  { key: 'actions', label: 'Acciones', sortable: false },
+]
+
+const dataTableRef = ref(null)
+
+const onDataTableUpdated = (data) => {
+  // Optional: handle data update
+}
 
 const formatDate = (date) => {
   if (!date) return '-'

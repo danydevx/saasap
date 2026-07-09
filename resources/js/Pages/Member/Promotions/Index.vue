@@ -20,6 +20,8 @@
       :endpoint="`/member/businesses/${business?.id}/promotions`"
       :columns="columns"
       :initial-data="dataTable"
+      :reorderable="true"
+      :reorder-endpoint="`/member/businesses/${business?.id}/promotions/reorder`"
       search-placeholder="Buscar promociones..."
       empty-title="No hay promociones"
       empty-text="Comienza creando tu primera promocion."

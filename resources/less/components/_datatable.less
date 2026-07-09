@@ -266,3 +266,52 @@
     transform: rotate(360deg);
   }
 }
+
+  &__table {
+    &--reorderable {
+      tbody tr {
+        cursor: default;
+      }
+    }
+  }
+
+  &__drag-column {
+    width: 40px;
+    background: #f9fafb;
+  }
+
+  &__drag-cell {
+    background: #f9fafb;
+    width: 40px;
+    text-align: center;
+    cursor: grab;
+    user-select: none;
+  }
+
+  &__drag-handle {
+    cursor: grab;
+    color: #9ca3af;
+    font-size: 1.1rem;
+
+    &:hover {
+      color: #6b7280;
+    }
+
+    &:active {
+      cursor: grabbing;
+    }
+  }
+
+  &__row-ghost {
+    opacity: 0.4;
+    background: #f3f4f6;
+  }
+
+  &__row-chosen {
+    background: #f9fafb;
+  }
+
+  &__row-drag {
+    background: #fff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }

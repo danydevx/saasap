@@ -20,6 +20,8 @@
       :columns="columns"
       :initial-data="dataTable"
       :initial-per-page="perPage"
+      :reorderable="true"
+      :reorder-endpoint="`/member/businesses/${business?.id}/services/reorder`"
       search-placeholder="Buscar servicios..."
       empty-title="No hay servicios"
       empty-text="Comienza creando tu primer servicio."
@@ -167,6 +169,16 @@
                     label="Servicio activo"
                     v-model="form.is_active"
                   />
+                </div>
+
+                <div class="col-md-6">
+                  <FieldNumber
+                    id="service-sort-order"
+                    label="Orden"
+                    placeholder="0"
+                    v-model="form.sort_order"
+                  />
+                  <small class="text-muted">Menor numero aparece primero.</small>
                 </div>
               </div>
             </div>

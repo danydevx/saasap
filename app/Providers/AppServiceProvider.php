@@ -20,6 +20,7 @@ use App\Policies\BusinessLeadPolicy;
 use App\Policies\BusinessLocationPolicy;
 use App\Policies\BusinessModulePolicy;
 use App\Policies\BusinessPolicy;
+use App\Policies\BusinessPromotionPolicy;
 use App\Policies\BusinessReviewPolicy;
 use App\Policies\BusinessProductPolicy;
 use App\Policies\BusinessProductCategoryPolicy;
@@ -103,6 +104,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(\Modules\Products\Models\BusinessProduct::class, BusinessProductPolicy::class);
         Gate::policy(\Modules\Products\Models\BusinessProductCategory::class, BusinessProductCategoryPolicy::class);
         Gate::policy(\Modules\Services\Models\BusinessService::class, BusinessServicePolicy::class);
+        Gate::policy(\Modules\Promotions\Models\BusinessPromotion::class, BusinessPromotionPolicy::class);
         Gate::policy(\Modules\Leads\Models\BusinessLead::class, BusinessLeadPolicy::class);
         Gate::policy(\Modules\Appointments\Models\BusinessAppointment::class, BusinessAppointmentPolicy::class);
         Gate::policy(\Modules\Appointments\Models\BusinessAppointmentSlot::class, BusinessAppointmentSlotPolicy::class);

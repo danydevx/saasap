@@ -112,6 +112,17 @@
                 v-model="form.is_active"
               />
             </div>
+
+            <div class="col-12 col-md-4">
+              <FieldNumber
+                id="service-sort-order"
+                label="Orden"
+                placeholder="0"
+                v-model="form.sort_order"
+                :formError="form.errors.sort_order"
+              />
+              <small class="text-muted">Menor numero aparece primero.</small>
+            </div>
           </div>
 
           <div class="col-12 d-flex gap-2 mt-4">
