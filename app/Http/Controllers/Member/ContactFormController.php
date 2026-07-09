@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Modules\Businesses\Models\Business;
+use Modules\Leads\Models\BusinessLead;
 
 class ContactFormController extends Controller
 {
@@ -71,5 +72,44 @@ class ContactFormController extends Controller
             'submissions' => $submissions,
             'dataTable' => $dataTable,
         ]);
+    }
+
+    public function export(Request $request, Business $business)
+    {
+        $this->authorize('viewAny', [BusinessLead::class, $business]);
+
+        $leads = $business->leads()
+            ->where('source', 'website')
+            ->with('location')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="contactos_' . $business->id . '_' . date('Y-m-d') . '.csv"',
+            'Cache-Control' => 'no-store, no-cache',
+        ];
+
+        $handle = fopen('php://temp', 'r+');
+
+        fputcsv($handle, ['Nombre', 'Email', 'Telefono', 'Notas', 'Estado', 'Ubicacion', 'Fecha']);
+
+        foreach ($leads as $lead) {
+            fputcsv($handle, [
+                $lead->name,
+                $lead->email,
+                $lead->phone ?? '',
+                $lead->notes ?? '',
+                $lead->status->label() ?? '',
+                $lead->location?->name ?? '',
+                $lead->created_at->format('Y-m-d H:i:s'),
+            ]);
+        }
+
+        rewind($handle);
+        $content = stream_get_contents($handle);
+        fclose($handle);
+
+        return response($content, 200, $headers);
     }
 }

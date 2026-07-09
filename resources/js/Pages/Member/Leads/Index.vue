@@ -12,6 +12,9 @@
           <i class="bi bi-plus-lg me-1"></i>
           Nuevo Contacto
         </Link>
+        <a :href="`/member/businesses/${business?.id}/leads/export`" class="btn btn-success btn-sm">
+          <i class="bi bi-download me-1"></i>Exportar
+        </a>
       </template>
     </PageHeader>
 

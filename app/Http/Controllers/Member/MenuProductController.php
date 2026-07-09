@@ -62,12 +62,6 @@ class MenuProductController extends Controller
             'featured' => 'boolean',
             'active' => 'boolean',
             'sort_order' => 'integer',
-            'variants' => 'nullable|array',
-            'variants.*.title' => 'required_with:variants|string|max:255',
-            'variants.*.price' => 'required_with:variants|numeric|min:0',
-            'variants.*.description' => 'nullable|string',
-            'variants.*.sort_order' => 'nullable|integer',
-            'variants.*.active' => 'nullable|boolean',
         ]);
 
         $category = MenuCategory::find($validated['category_id']);
@@ -81,14 +75,29 @@ class MenuProductController extends Controller
             $validated['image'] = Storage::disk('public')->url($path);
         }
 
-        $variants = $validated['variants'] ?? [];
-        unset($validated['variants']);
-
         $product = MenuProduct::create($validated);
 
-        if (!empty($variants)) {
-            foreach ($variants as $variantData) {
-                $product->variants()->create($variantData);
+        $variantsData = $request->input('variants', []);
+        $variantFiles = $request->file('variants', []);
+
+        if (!empty($variantsData)) {
+            foreach ($variantsData as $index => $variantData) {
+                $variantImage = null;
+
+                if (isset($variantFiles[$index]) && isset($variantFiles[$index]['image']) && $variantFiles[$index]['image']) {
+                    $file = $variantFiles[$index]['image'];
+                    $path = $file->store('products/' . $business->id . '/variants', ['disk' => 'public']);
+                    $variantImage = Storage::disk('public')->url($path);
+                }
+
+                $product->variants()->create([
+                    'title' => $variantData['title'] ?? '',
+                    'price' => $variantData['price'] ?? 0,
+                    'description' => $variantData['description'] ?? null,
+                    'sort_order' => $variantData['sort_order'] ?? 0,
+                    'active' => $variantData['active'] ?? true,
+                    'image' => $variantImage,
+                ]);
             }
         }
 
@@ -111,12 +120,6 @@ class MenuProductController extends Controller
             'featured' => 'boolean',
             'active' => 'boolean',
             'sort_order' => 'integer',
-            'variants' => 'nullable|array',
-            'variants.*.title' => 'required_with:variants|string|max:255',
-            'variants.*.price' => 'required_with:variants|numeric|min:0',
-            'variants.*.description' => 'nullable|string',
-            'variants.*.sort_order' => 'nullable|integer',
-            'variants.*.active' => 'nullable|boolean',
         ]);
 
         $category = MenuCategory::find($validated['category_id']);
@@ -129,15 +132,31 @@ class MenuProductController extends Controller
             unset($validated['image']);
         }
 
-        $variants = $validated['variants'] ?? null;
-        unset($validated['variants']);
-
         $product->update($validated);
 
-        if (is_array($variants)) {
+        $variantsData = $request->input('variants', []);
+        $variantFiles = $request->file('variants', []);
+
+        if (!empty($variantsData)) {
             $product->variants()->delete();
-            foreach ($variants as $variantData) {
-                $product->variants()->create($variantData);
+
+            foreach ($variantsData as $index => $variantData) {
+                $variantImage = null;
+
+                if (isset($variantFiles[$index]) && isset($variantFiles[$index]['image']) && $variantFiles[$index]['image']) {
+                    $file = $variantFiles[$index]['image'];
+                    $path = $file->store('products/' . $business->id . '/variants', ['disk' => 'public']);
+                    $variantImage = Storage::disk('public')->url($path);
+                }
+
+                $product->variants()->create([
+                    'title' => $variantData['title'] ?? '',
+                    'price' => $variantData['price'] ?? 0,
+                    'description' => $variantData['description'] ?? null,
+                    'sort_order' => $variantData['sort_order'] ?? 0,
+                    'active' => $variantData['active'] ?? true,
+                    'image' => $variantImage,
+                ]);
             }
         }
 
@@ -155,5 +174,56 @@ class MenuProductController extends Controller
         $product->delete();
 
         return redirect()->back()->with('success', 'Producto eliminado exitosamente.');
+    }
+
+    public function edit(Request $request, Business $business, MenuProduct $product)
+    {
+        $user = Auth::user();
+        abort_unless($business->user_id === $user->id, 403);
+        abort_unless($product->business_id === $business->id, 403);
+
+        $categories = MenuCategory::where('business_id', $business->id)
+            ->where('active', true)
+            ->orderBy('sort_order')
+            ->get()
+            ->map(function ($cat) {
+                return [
+                    'id' => $cat->id,
+                    'title' => $cat->nested_title,
+                ];
+            });
+
+        return inertia('Member/Products/Edit', [
+            'business' => $business,
+            'product' => $product->load('variants', 'images'),
+            'categories' => $categories,
+        ]);
+    }
+
+    public function reorder(Request $request, Business $business)
+    {
+        $user = Auth::user();
+        abort_unless($business->user_id === $user->id, 403);
+
+        $data = $request->validate([
+            'ids' => ['required', 'array'],
+            'ids.*' => ['integer', \Illuminate\Validation\Rule::exists('menu_products', 'id')->where('business_id', $business->id)],
+            'page' => ['nullable', 'integer', 'min:1'],
+            'perPage' => ['nullable', 'integer', 'min:1'],
+        ]);
+
+        $page = $data['page'] ?? 1;
+        $perPage = $data['perPage'] ?? count($data['ids']);
+        $start = (($page - 1) * $perPage) + 1;
+
+        \DB::transaction(function () use ($data, $business, $start) {
+            foreach ($data['ids'] as $index => $id) {
+                \Modules\RestaurantMenu\Entities\MenuProduct::where('id', $id)
+                    ->where('business_id', $business->id)
+                    ->update(['sort_order' => $start + $index]);
+            }
+        });
+
+        return back(303);
     }
 }

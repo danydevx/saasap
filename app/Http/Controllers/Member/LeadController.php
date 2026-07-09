@@ -243,4 +243,43 @@ class LeadController extends Controller
         return redirect()->route('member.businesses.leads.index', $business->id)
             ->with('success', 'Contacto eliminado correctamente.');
     }
+
+    public function export(Request $request, Business $business)
+    {
+        $this->authorize('viewAny', [BusinessLead::class, $business]);
+
+        $leads = $business->leads()
+            ->with('location')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="contactos_' . $business->id . '_' . date('Y-m-d') . '.csv"',
+            'Cache-Control' => 'no-store, no-cache',
+        ];
+
+        $handle = fopen('php://temp', 'r+');
+
+        fputcsv($handle, ['Nombre', 'Email', 'Telefono', 'Estado', 'Fuente', 'Notas', 'Ubicacion', 'Fecha']);
+
+        foreach ($leads as $lead) {
+            fputcsv($handle, [
+                $lead->name,
+                $lead->email,
+                $lead->phone ?? '',
+                $lead->status->label() ?? '',
+                $lead->source->label() ?? '',
+                $lead->notes ?? '',
+                $lead->location?->name ?? '',
+                $lead->created_at->format('Y-m-d H:i:s'),
+            ]);
+        }
+
+        rewind($handle);
+        $content = stream_get_contents($handle);
+        fclose($handle);
+
+        return response($content, 200, $headers);
+    }
 }

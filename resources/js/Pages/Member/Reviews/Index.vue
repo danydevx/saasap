@@ -7,6 +7,9 @@
       :breadcrumbs="breadcrumbs"
       :backHref="'/member/business-modules'"
     >
+      <template #description>
+        <p class="text-muted mb-0">Gestiona las resenas de tu negocio. Arrastra para reordenar.</p>
+      </template>
       <template #actions>
         <button @click="openCreateModal" class="btn btn-primary btn-sm">
           <i class="bi bi-plus-lg me-1"></i>
@@ -15,44 +18,42 @@
       </template>
     </PageHeader>
 
-    <BaseDataTable
-      ref="dataTableRef"
-      :endpoint="`/member/businesses/${business?.id}/reviews`"
-      :columns="columns"
-      :initial-data="dataTable"
-      search-placeholder="Buscar resenas..."
+    <SortableCards
+      ref="sortableCardsRef"
+      :items="reviews.data"
+      item-class="col-6 col-md-4 col-lg-3"
+      :reorderable="true"
+      :reorder-endpoint="`/member/businesses/${business?.id}/reviews/reorder`"
+      :loading="loading"
       empty-title="No hay resenas"
       empty-text="Comienza creando tu primera resena."
-      @updated="onDataTableUpdated"
+      toast-message="Orden actualizado"
+      @reordered="onReordered"
     >
-      <template #cell-client_name="{ row }">
-        <strong>{{ row.client_name }}</strong>
-      </template>
-
-      <template #cell-company="{ row }">
-        {{ row.company || '-' }}
-      </template>
-
-      <template #cell-rating="{ row }">
-        <span class="text-warning">
-          <i v-for="n in row.rating" :key="n" class="bi bi-star-fill"></i>
-        </span>
-      </template>
-
-      <template #cell-is_active="{ row }">
-        <span :class="row.is_active ? 'badge bg-success' : 'badge bg-secondary'">
-          {{ row.is_active ? 'Activa' : 'Inactiva' }}
-        </span>
-      </template>
-
-      <template #cell-actions="{ row }">
-        <div class="actions">
-          <button @click="openEditModal(row)" class="btn btn-sm btn-outline-primary">
-            <i class="bi bi-pencil"></i>
-          </button>
+      <template #item="{ item: review }">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <strong>{{ review.client_name }}</strong>
+            <span class="text-warning">
+              <i v-for="n in review.rating" :key="n" class="bi bi-star-fill"></i>
+            </span>
+          </div>
+          <p v-if="review.company" class="text-muted small mb-1">{{ review.company }}</p>
+          <p v-if="review.comment" class="card-text small">{{ review.comment.substring(0, 80) }}{{ review.comment.length > 80 ? '...' : '' }}</p>
+          <span :class="review.is_active ? 'badge bg-success' : 'badge bg-secondary'" class="mb-2">
+            {{ review.is_active ? 'Activa' : 'Inactiva' }}
+          </span>
+          <div class="d-flex gap-2 mt-2">
+            <button @click="openEditModal(review)" class="btn btn-sm btn-outline-primary flex-grow-1">
+              <i class="bi bi-pencil me-1"></i>Editar
+            </button>
+            <button @click="deleteReview(review)" class="btn btn-sm btn-outline-danger">
+              <i class="bi bi-trash"></i>
+            </button>
+          </div>
         </div>
       </template>
-    </BaseDataTable>
+    </SortableCards>
 
     <div ref="modalElement" class="modal fade" tabindex="-1">
       <div class="modal-dialog">
@@ -126,31 +127,24 @@ import { Head, router, usePage } from '@inertiajs/vue3'
 import { Modal } from 'bootstrap'
 import MemberLayout from '@/Layouts/MemberLayout.vue'
 import PageHeader from '@/Components/Admin/PageHeader.vue'
-import BaseDataTable from '@/Components/DataTable/BaseDataTable.vue'
+import SortableCards from '@/Components/DataTable/SortableCards.vue'
 import FieldText from '@/Components/Fields/FieldText.vue'
 import FieldTextarea from '@/Components/Fields/FieldTextarea.vue'
 import FieldSwitch from '@/Components/Fields/FieldSwitch.vue'
 
 const page = usePage()
 const business = computed(() => page.props.business)
-const dataTable = computed(() => page.props.dataTable)
+const reviews = computed(() => page.props.reviews || { data: [] })
 
 const breadcrumbs = computed(() => [
   { label: business.value?.name, href: '/member/business-modules' },
   { label: 'Resenas', active: true },
 ])
 
-const columns = [
-  { key: 'client_name', label: 'Cliente', sortable: true },
-  { key: 'company', label: 'Empresa', sortable: false },
-  { key: 'rating', label: 'Calificacion', sortable: true },
-  { key: 'is_active', label: 'Estado', sortable: true },
-  { key: 'actions', label: 'Acciones', sortable: false },
-]
-
-const dataTableRef = ref(null)
+const sortableCardsRef = ref(null)
 const modalElement = ref(null)
 let reviewModal = null
+const loading = ref(false)
 const sending = ref(false)
 const editingReview = ref(null)
 
@@ -162,8 +156,8 @@ const form = ref({
   is_active: true,
 })
 
-const onDataTableUpdated = (data) => {
-  // Optional: handle data update
+const onReordered = (ids) => {
+  console.log('Reordered:', ids)
 }
 
 const openCreateModal = () => {
@@ -202,9 +196,6 @@ const submitReview = () => {
       onSuccess: () => {
         sending.value = false
         reviewModal.hide()
-        if (dataTableRef.value) {
-          dataTableRef.value.reload()
-        }
       },
       onError: () => {
         sending.value = false
@@ -216,13 +207,18 @@ const submitReview = () => {
       onSuccess: () => {
         sending.value = false
         reviewModal.hide()
-        if (dataTableRef.value) {
-          dataTableRef.value.reload()
-        }
       },
       onError: () => {
         sending.value = false
       },
+    })
+  }
+}
+
+const deleteReview = (review) => {
+  if (confirm(`¿Eliminar la resena de "${review.client_name}"?`)) {
+    router.delete(`/member/businesses/${business.value.id}/reviews/${review.id}`, {
+      preserveScroll: true,
     })
   }
 }

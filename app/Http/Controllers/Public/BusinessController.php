@@ -111,7 +111,7 @@ class BusinessController extends Controller
             $menuCategories = \Modules\RestaurantMenu\Entities\MenuCategory::where('business_id', $business->id)
                 ->whereNull('parent_id')
                 ->where('active', true)
-                ->with(['children' => function ($q) {
+                ->with(['images', 'children.images', 'children' => function ($q) {
                     $q->where('active', true)->orderBy('sort_order');
                 }, 'products' => function ($q) {
                     $q->where('active', true)->orderBy('sort_order');
@@ -122,7 +122,7 @@ class BusinessController extends Controller
                     return [
                         'id' => $cat->id,
                         'title' => $cat->title,
-                        'image' => $cat->image,
+                        'image' => $cat->images->first()?->path,
                         'products' => $cat->products->map(function ($p) {
                             return [
                                 'id' => $p->id,
@@ -135,7 +135,7 @@ class BusinessController extends Controller
                             return [
                                 'id' => $child->id,
                                 'title' => $child->title,
-                                'image' => $child->image,
+                                'image' => $child->images->first()?->path,
                                 'products' => $child->products->map(function ($p) {
                                     return [
                                         'id' => $p->id,

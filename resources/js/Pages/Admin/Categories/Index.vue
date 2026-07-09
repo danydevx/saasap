@@ -121,14 +121,18 @@
                   accept="image/jpeg,image/png,image/webp,image/gif"
                   @change="handleImageChange"
                 />
-                <div v-if="imagePreview || form.image" class="mt-2">
-                  <img :src="imagePreview || form.image" class="img-thumbnail" style="max-height: 150px;" alt="Preview" />
+                <div v-if="imagePreview" class="mt-2">
+                  <img :src="imagePreview" class="img-thumbnail" style="max-height: 150px;" alt="Preview" />
                 </div>
-                <small class="text-muted">JPG, PNG o WebP, max 5MB. Tambien puedes ingresar una URL abajo.</small>
-              </div>
-              <div class="mb-3">
-                <label class="form-label">URL de imagen (alternativo)</label>
-                <input v-model="form.image" type="text" class="form-control" placeholder="https://...">
+                <small class="text-muted">JPG, PNG o WebP, max 5MB.</small>
+                <button
+                  v-if="editingCategory && editingCategory.images && editingCategory.images.length > 0"
+                  type="button"
+                  class="btn btn-outline-danger btn-sm mt-2"
+                  @click="removeImage"
+                >
+                  <i class="bi bi-trash me-1"></i>Eliminar imagen
+                </button>
               </div>
               <div class="mb-3">
                 <label class="form-label">Orden</label>
@@ -172,7 +176,8 @@ const form = ref({
   title: '',
   description: '',
   parent_id: null,
-  image: '',
+  image: null,
+  remove_image: false,
   sort_order: 0,
   active: true,
 })
@@ -198,13 +203,18 @@ const flatCategories = computed(() => {
 const editCategory = (category) => {
   editingCategory.value = category
   imagePreview.value = null
+  if (imageInput.value) imageInput.value.value = ''
   form.value = {
     title: category.title,
     description: category.description || '',
     parent_id: category.parent_id,
-    image: category.image || '',
+    image: null,
+    remove_image: false,
     sort_order: category.sort_order || 0,
     active: category.active,
+  }
+  if (category.images && category.images.length > 0) {
+    imagePreview.value = category.images[0].path
   }
 }
 
@@ -224,12 +234,8 @@ const handleImageChange = (e) => {
     return
   }
 
-  const reader = new FileReader()
-  reader.onload = (e) => {
-    form.value.image = e.target.result
-    imagePreview.value = e.target.result
-  }
-  reader.readAsDataURL(file)
+  form.value.image = file
+  imagePreview.value = URL.createObjectURL(file)
 }
 
 const deleteCategory = (category) => {
@@ -247,19 +253,41 @@ const closeModal = () => {
     title: '',
     description: '',
     parent_id: null,
-    image: '',
+    image: null,
+    remove_image: false,
     sort_order: 0,
     active: true,
   }
 }
 
+const removeImage = () => {
+  form.value.remove_image = true
+  imagePreview.value = null
+  if (imageInput.value) imageInput.value.value = ''
+}
+
 const submitForm = () => {
   sending.value = true
 
+  const data = new FormData()
+  data.append('title', form.value.title)
+  data.append('description', form.value.description || '')
+  data.append('parent_id', form.value.parent_id || '')
+  data.append('active', form.value.active ? '1' : '0')
+  data.append('sort_order', form.value.sort_order || '0')
+
+  if (form.value.image) {
+    data.append('image', form.value.image)
+  }
+  if (form.value.remove_image) {
+    data.append('remove_image', '1')
+  }
+
   if (editingCategory.value) {
-    router.put(
+    data.append('_method', 'PUT')
+    router.post(
       `/admin/businesses/${props.business.id}/menu-categories/${editingCategory.value.id}`,
-      form.value,
+      data,
       {
         onFinish: () => {
           sending.value = false
@@ -270,7 +298,7 @@ const submitForm = () => {
   } else {
     router.post(
       `/admin/businesses/${props.business.id}/menu-categories`,
-      form.value,
+      data,
       {
         onFinish: () => {
           sending.value = false

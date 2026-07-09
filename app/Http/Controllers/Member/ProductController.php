@@ -211,4 +211,35 @@ class ProductController extends Controller
         return redirect()->route('member.businesses.products.index', $business->id)
             ->with('success', 'Producto eliminado correctamente.');
     }
+
+    public function reorder(Request $request, Business $business)
+    {
+        $user = $request->user();
+
+        if ($user->hasAnyRole(['superadmin', 'admin'])) {
+        } else {
+            abort_unless($business->user_id === $user->id, 403);
+        }
+
+        $data = $request->validate([
+            'ids' => ['required', 'array'],
+            'ids.*' => ['integer', \Illuminate\Validation\Rule::exists('business_products', 'id')->where('business_id', $business->id)],
+            'page' => ['nullable', 'integer', 'min:1'],
+            'perPage' => ['nullable', 'integer', 'min:1'],
+        ]);
+
+        $page = $data['page'] ?? 1;
+        $perPage = $data['perPage'] ?? count($data['ids']);
+        $start = (($page - 1) * $perPage) + 1;
+
+        \DB::transaction(function () use ($data, $business, $start) {
+            foreach ($data['ids'] as $index => $id) {
+                \Modules\Products\Models\BusinessProduct::where('id', $id)
+                    ->where('business_id', $business->id)
+                    ->update(['sort_order' => $start + $index]);
+            }
+        });
+
+        return back(303);
+    }
 }

@@ -107,12 +107,12 @@ class ReviewController extends Controller
         $activity->log('review_created', [
             'actor' => $request->user(),
             'subject' => $review,
-            'description' => 'Review created',
+            'description' => 'Resena creada',
             'request' => $request,
         ]);
 
         return redirect()->route('member.businesses.reviews.index', $business->id)
-            ->with('success', 'Review created successfully.');
+            ->with('success', 'Resena creada correctamente.');
     }
 
     public function edit(Request $request, Business $business, BusinessReview $review)
@@ -158,12 +158,12 @@ class ReviewController extends Controller
         $activity->log('review_updated', [
             'actor' => $request->user(),
             'subject' => $review,
-            'description' => 'Review updated',
+            'description' => 'Resena actualizada',
             'request' => $request,
         ]);
 
         return redirect()->route('member.businesses.reviews.index', $business->id)
-            ->with('success', 'Review updated successfully.');
+            ->with('success', 'Resena actualizada correctamente.');
     }
 
     public function destroy(Request $request, Business $business, BusinessReview $review, ActivityService $activity)
@@ -173,12 +173,41 @@ class ReviewController extends Controller
         $activity->log('review_deleted', [
             'actor' => $request->user(),
             'subject' => $review,
-            'description' => 'Review deleted',
+            'description' => 'Resena eliminada',
         ]);
 
-        $review->delete();
-
         return redirect()->route('member.businesses.reviews.index', $business->id)
-            ->with('success', 'Review deleted successfully.');
+            ->with('success', 'Resena eliminada correctamente.');
+    }
+
+    public function reorder(Request $request, Business $business)
+    {
+        $user = $request->user();
+
+        if ($user->hasAnyRole(['superadmin', 'admin'])) {
+        } else {
+            abort_unless($business->user_id === $user->id, 403);
+        }
+
+        $data = $request->validate([
+            'ids' => ['required', 'array'],
+            'ids.*' => ['integer', \Illuminate\Validation\Rule::exists('business_reviews', 'id')->where('business_id', $business->id)],
+            'page' => ['nullable', 'integer', 'min:1'],
+            'perPage' => ['nullable', 'integer', 'min:1'],
+        ]);
+
+        $page = $data['page'] ?? 1;
+        $perPage = $data['perPage'] ?? count($data['ids']);
+        $start = (($page - 1) * $perPage) + 1;
+
+        \DB::transaction(function () use ($data, $business, $start) {
+            foreach ($data['ids'] as $index => $id) {
+                \Modules\Reviews\Models\BusinessReview::where('id', $id)
+                    ->where('business_id', $business->id)
+                    ->update(['sort_order' => $start + $index]);
+            }
+        });
+
+        return back(303);
     }
 }

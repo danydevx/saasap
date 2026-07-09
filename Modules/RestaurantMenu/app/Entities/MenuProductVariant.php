@@ -14,6 +14,7 @@ class MenuProductVariant extends Model
         'title',
         'description',
         'price',
+        'image',
         'active',
         'sort_order',
     ];

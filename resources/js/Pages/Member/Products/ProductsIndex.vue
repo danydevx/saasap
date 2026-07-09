@@ -19,6 +19,9 @@
       :endpoint="`/member/businesses/${business?.id}/products`"
       :columns="columns"
       :initial-data="dataTable"
+      :initial-per-page="perPage"
+      :reorderable="true"
+      :reorder-endpoint="`/member/businesses/${business?.id}/products/reorder`"
       search-placeholder="Buscar productos..."
       empty-title="No hay productos"
       empty-text="Comienza creando tu primer producto."
@@ -252,6 +255,7 @@ let productModal = null
 
 const creating = ref(false)
 const deleting = ref(null)
+const perPage = ref(10)
 
 const form = ref({
   name: '',
@@ -270,7 +274,7 @@ const form = ref({
 })
 
 const onDataTableUpdated = (data) => {
-  // Optional: handle data update
+  perPage.value = data.per_page
 }
 
 const openCreateModal = () => {

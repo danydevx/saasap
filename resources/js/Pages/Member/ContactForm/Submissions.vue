@@ -6,7 +6,13 @@
       title="Contactos del Sitio"
       :breadcrumbs="breadcrumbs"
       :backHref="'/member/business-modules'"
-    />
+    >
+      <template #actions>
+        <a :href="`/member/businesses/${business?.id}/contact-form/export`" class="btn btn-success btn-sm">
+          <i class="bi bi-download me-1"></i>Exportar CSV
+        </a>
+      </template>
+    </PageHeader>
 
     <BaseDataTable
       ref="dataTableRef"
@@ -45,6 +51,9 @@
           <Link :href="`/member/businesses/${business?.id}/leads/${row.id}`" class="btn btn-sm btn-outline-primary">
             <i class="bi bi-eye"></i>
           </Link>
+          <button class="btn btn-sm btn-outline-danger" @click="deleteSubmission(row)">
+            <i class="bi bi-trash"></i>
+          </button>
         </div>
       </template>
     </BaseDataTable>
@@ -53,7 +62,7 @@
 
 <script setup>
 import { computed, ref } from 'vue'
-import { Head, Link, usePage } from '@inertiajs/vue3'
+import { Head, Link, usePage, router } from '@inertiajs/vue3'
 import MemberLayout from '@/Layouts/MemberLayout.vue'
 import PageHeader from '@/Components/Admin/PageHeader.vue'
 import BaseDataTable from '@/Components/DataTable/BaseDataTable.vue'
@@ -85,5 +94,13 @@ const onDataTableUpdated = (data) => {
 const formatDate = (date) => {
   if (!date) return '-'
   return new Date(date).toLocaleDateString('es-AR')
+}
+
+const deleteSubmission = (row) => {
+  if (confirm(`¿Eliminar el mensaje de "${row.name}"?`)) {
+    router.delete(`/member/businesses/${business.value?.id}/leads/${row.id}`, {
+      preserveScroll: true,
+    })
+  }
 }
 </script>

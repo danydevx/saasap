@@ -284,6 +284,9 @@ Route::put('/member/businesses/{business}/gallery/{image}', [GalleryController::
 Route::delete('/member/businesses/{business}/gallery/{image}', [GalleryController::class, 'destroy'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.businesses.gallery.destroy');
+Route::post('/member/businesses/{business}/gallery/reorder', [GalleryController::class, 'reorder'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.gallery.reorder');
 
 Route::get('/member/businesses/{business}/products', [ProductController::class, 'index'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
@@ -303,6 +306,9 @@ Route::put('/member/businesses/{business}/products/{product}', [ProductControlle
 Route::delete('/member/businesses/{business}/products/{product}', [ProductController::class, 'destroy'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.businesses.products.destroy');
+Route::post('/member/businesses/{business}/products/reorder', [ProductController::class, 'reorder'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.products.reorder');
 
 Route::get('/member/businesses/{business}/appointments', [AppointmentController::class, 'index'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
@@ -351,6 +357,9 @@ Route::get('/member/businesses/{business}/leads/create', [LeadController::class,
 Route::post('/member/businesses/{business}/leads', [LeadController::class, 'store'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.businesses.leads.store');
+Route::get('/member/businesses/{business}/leads/export', [LeadController::class, 'export'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.leads.export');
 Route::get('/member/businesses/{business}/leads/{lead}', [LeadController::class, 'show'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.businesses.leads.show');
@@ -367,6 +376,9 @@ Route::delete('/member/businesses/{business}/leads/{lead}', [LeadController::cla
 Route::get('/member/businesses/{business}/contact-form/submissions', [ContactFormController::class, 'submissions'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.business.contact-form.submissions');
+Route::get('/member/businesses/{business}/contact-form/export', [ContactFormController::class, 'export'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.business.contact-form.export');
 
 Route::get('/member/businesses/{business}/ai-chatbot', [AiChatbotController::class, 'index'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
@@ -381,6 +393,9 @@ Route::get('/member/businesses/{business}/reviews/create', [ReviewController::cl
 Route::post('/member/businesses/{business}/reviews', [ReviewController::class, 'store'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.businesses.reviews.store');
+Route::post('/member/businesses/{business}/reviews/reorder', [ReviewController::class, 'reorder'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.reviews.reorder');
 Route::get('/member/businesses/{business}/reviews/{review}/edit', [ReviewController::class, 'edit'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.businesses.reviews.edit');
@@ -445,6 +460,12 @@ Route::get('/member/businesses/{business}/menu-products', [MemberMenuProductCont
 Route::post('/member/businesses/{business}/menu-products', [MemberMenuProductController::class, 'store'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.menu.products.store');
+Route::post('/member/businesses/{business}/menu-products/reorder', [MemberMenuProductController::class, 'reorder'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.menu.products.reorder');
+Route::get('/member/businesses/{business}/menu-products/{product}/edit', [MemberMenuProductController::class, 'edit'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.menu.products.edit');
 Route::put('/member/businesses/{business}/menu-products/{product}', [MemberMenuProductController::class, 'update'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.menu.products.update');

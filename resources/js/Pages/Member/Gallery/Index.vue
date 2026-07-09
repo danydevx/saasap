@@ -6,73 +6,83 @@
       title="Galeria"
       :breadcrumbs="breadcrumbs"
       :backHref="'/member/business-modules'"
-    />
-
-    <div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
-      <div>
-        <p class="text-muted mb-0">Gestiona las imagenes de tu galeria.</p>
-      </div>
-      <div>
+    >
+      <template #description>
+        <p class="text-muted mb-0">Gestiona las imagenes de tu galeria. Arrastra para reordenar.</p>
+      </template>
+      <template #actions>
         <button class="btn btn-primary btn-sm" @click="openUploadModal">
           <i class="bi bi-plus-lg me-1"></i>
           Subir imagen
         </button>
-      </div>
-    </div>
+      </template>
+    </PageHeader>
 
     <div v-if="$page.props.flash?.success" class="alert alert-success alert-dismissible fade show" role="alert">
       {{ $page.props.flash.success }}
       <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 
-    <div v-if="images.data.length === 0" class="card border-0 shadow-sm">
-      <div class="card-body text-center text-muted py-5">
-        No hay imagenes en la galeria.
-      </div>
-    </div>
+    <SortableCards
+      ref="sortableCardsRef"
+      :items="images.data"
+      item-class="col-6 col-md-4 col-lg-3"
+      :reorderable="true"
+      :reorder-endpoint="`/member/businesses/${business?.id}/gallery/reorder`"
+      :loading="loading"
+      empty-title="No hay imagenes en la galeria"
+      empty-text="Comienza subiendo tu primera imagen."
+      toast-message="Orden actualizado"
+      :has-pagination="!!images.links"
+      @reordered="onReordered"
+    >
+      <template #header>
+        <div class="d-flex flex-wrap align-items-center justify-content-between">
+          <p class="text-muted mb-0">Arrastra las imagenes para reordenar.</p>
+        </div>
+      </template>
 
-    <div v-else class="row g-3">
-      <div v-for="img in images.data" :key="img.id" class="col-12 col-md-6 col-lg-4">
-        <div class="card border-0 shadow-sm h-100">
-          <div class="card-img-top ratio ratio-4x3 bg-light d-flex align-items-center justify-content-center overflow-hidden">
-            <img v-if="img.path" :src="img.path" :alt="img.title || img.original_name" class="w-100 h-100" style="object-fit: cover;" />
-            <i v-else class="bi bi-image text-muted fs-1"></i>
-          </div>
-          <div class="card-body">
-            <h5 class="card-title mb-1">{{ img.title || 'Sin titulo' }}</h5>
-            <p v-if="img.description" class="card-text small text-muted">{{ img.description }}</p>
-            <p v-if="img.location" class="card-text small text-muted">
-              <i class="bi bi-geo-alt me-1"></i>{{ img.location.name }}
-            </p>
-            <div class="d-flex gap-2 mt-2 flex-wrap">
-              <button
-                class="btn btn-sm btn-outline-primary"
-                @click="openEditModal(img)"
-              >
-                <i class="bi bi-pencil me-1"></i>Editar
-              </button>
-              <button
-                class="btn btn-sm"
-                :class="img.is_active ? 'btn-outline-secondary' : 'btn-outline-success'"
-                @click="toggleActive(img)"
-              >
-                {{ img.is_active ? 'Desactivar' : 'Activar' }}
-              </button>
-              <button
-                class="btn btn-sm btn-outline-danger"
-                @click="deleteImage(img)"
-              >
-                <i class="bi bi-trash me-1"></i>Eliminar
-              </button>
-            </div>
+      <template #item="{ item: img }">
+        <div class="card-img-top ratio ratio-4x3 bg-light d-flex align-items-center justify-content-center overflow-hidden">
+          <img v-if="img.path" :src="img.path" :alt="img.title || img.original_name" class="w-100 h-100" style="object-fit: cover;" />
+          <i v-else class="bi bi-image text-muted fs-1"></i>
+        </div>
+        <div class="card-body">
+          <h5 class="card-title mb-1">{{ img.title || 'Sin titulo' }}</h5>
+          <p v-if="img.description" class="card-text small text-muted">{{ img.description }}</p>
+          <p v-if="img.location" class="card-text small text-muted">
+            <i class="bi bi-geo-alt me-1"></i>{{ img.location.name }}
+          </p>
+          <div class="d-flex gap-2 mt-2 flex-wrap">
+            <button
+              class="btn btn-sm btn-outline-primary"
+              @click="openEditModal(img)"
+            >
+              <i class="bi bi-pencil me-1"></i>Editar
+            </button>
+            <button
+              class="btn btn-sm"
+              :class="img.is_active ? 'btn-outline-secondary' : 'btn-outline-success'"
+              @click="toggleActive(img)"
+            >
+              {{ img.is_active ? 'Desactivar' : 'Activar' }}
+            </button>
+            <button
+              class="btn btn-sm btn-outline-danger"
+              @click="deleteImage(img)"
+            >
+              <i class="bi bi-trash me-1"></i>Eliminar
+            </button>
           </div>
         </div>
-      </div>
-    </div>
+      </template>
 
-    <div v-if="images.links" class="d-flex justify-content-center mt-4">
-      <Pagination :links="images.links" />
-    </div>
+      <template #pagination>
+        <div v-if="images.links" class="d-flex justify-content-center mt-4">
+          <Pagination :links="images.links" />
+        </div>
+      </template>
+    </SortableCards>
 
     <div ref="uploadModalElement" class="modal fade" tabindex="-1">
       <div class="modal-dialog">
@@ -196,6 +206,7 @@ import { Modal } from 'bootstrap'
 import MemberLayout from '@/Layouts/MemberLayout.vue'
 import PageHeader from '@/Components/Admin/PageHeader.vue'
 import Pagination from '@/Components/Member/Pagination.vue'
+import SortableCards from '@/Components/DataTable/SortableCards.vue'
 import FieldText from '@/Components/Fields/FieldText.vue'
 import FieldTextarea from '@/Components/Fields/FieldTextarea.vue'
 import FieldSelect from '@/Components/Fields/FieldSelect.vue'
@@ -212,11 +223,13 @@ const breadcrumbs = computed(() => [
   { label: 'Galeria', active: true },
 ])
 
+const sortableCardsRef = ref(null)
 const uploadModalElement = ref(null)
 const editModalElement = ref(null)
 let uploadModal = null
 let editModal = null
 
+const loading = ref(false)
 const uploading = ref(false)
 const saving = ref(false)
 const formError = ref('')
@@ -353,6 +366,10 @@ const deleteImage = (img) => {
       preserveScroll: true,
     })
   }
+}
+
+const onReordered = (ids) => {
+  console.log('Reordered:', ids)
 }
 
 onMounted(() => {

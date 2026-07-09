@@ -14,7 +14,6 @@ class MenuCategory extends Model
         'parent_id',
         'title',
         'description',
-        'image',
         'slug',
         'active',
         'sort_order',
@@ -82,6 +81,11 @@ class MenuCategory extends Model
     public function products(): HasMany
     {
         return $this->hasMany(MenuProduct::class, 'category_id');
+    }
+
+    public function images(): HasMany
+    {
+        return $this->hasMany(MenuCategoryImage::class, 'category_id')->orderBy('sort_order');
     }
 
     public function activeProducts(): HasMany
