@@ -1,95 +1,113 @@
 <template>
   <MemberLayout>
-    <Head :title="business ? `Servicios - ${business.name}` : 'Servicios'" />
+    <Head :title="`Servicios - ${business?.name || ''}`" />
 
-    <div class="container-fluid py-4">
-      <div v-if="business" class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-          <h1 class="h4 mb-1">Servicios</h1>
-          <p class="text-muted mb-0">{{ business.name }}</p>
-        </div>
+    <PageHeader
+      title="Servicios"
+      :breadcrumbs="breadcrumbs"
+      :backHref="'/member/business-modules'"
+    >
+      <template #actions>
         <button class="btn btn-primary" @click="openCreateModal">
           <i class="bi bi-plus me-1"></i>Nuevo servicio
         </button>
-      </div>
+      </template>
+    </PageHeader>
 
-      <div class="card border-0 shadow-sm">
-        <div class="card-body">
-          <div v-if="!servicesList.length" class="text-center py-5">
-            <i class="bi bi-briefcase display-1 text-muted"></i>
-            <p class="text-muted mt-3">No hay servicios creados aún.</p>
-            <button class="btn btn-primary" @click="openCreateModal">Crear primer servicio</button>
+    <BaseDataTable
+      ref="dataTableRef"
+      :endpoint="`/member/businesses/${business?.id}/services`"
+      :columns="columns"
+      :initial-data="dataTable"
+      :initial-per-page="perPage"
+      search-placeholder="Buscar servicios..."
+      empty-title="No hay servicios"
+      empty-text="Comienza creando tu primer servicio."
+      @updated="onDataTableUpdated"
+    >
+      <template #cell-name="{ row }">
+        <div class="d-flex align-items-center gap-2">
+          <img
+            v-if="row.image"
+            :src="row.image"
+            class="rounded"
+            style="width: 40px; height: 40px; object-fit: cover;"
+          />
+          <div v-else class="bg-light rounded d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+            <i class="bi bi-briefcase text-muted"></i>
           </div>
-
-          <div v-else class="table-responsive">
-            <table class="table table-hover">
-              <thead>
-                <tr>
-                  <th>Nombre</th>
-                  <th>Precio</th>
-                  <th>Duración</th>
-                  <th>Reservas online</th>
-                  <th>Activo</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="service in servicesList" :key="service.id">
-                  <td>
-                    <strong>{{ service?.name }}</strong>
-                    <p v-if="service.description" class="text-muted small mb-0">{{ service.description.substring(0, 80) }}...</p>
-                  </td>
-                  <td>{{ service.price ? `$${service.price}` : '—' }}</td>
-                  <td>{{ service.duration_minutes }} min</td>
-                  <td>
-                    <span v-if="service.allows_online_booking" class="badge bg-success">Sí</span>
-                    <span v-else class="badge bg-secondary">No</span>
-                  </td>
-                  <td>
-                    <span v-if="service.is_active" class="badge bg-success">Activo</span>
-                    <span v-else class="badge bg-secondary">Inactivo</span>
-                  </td>
-                  <td>
-                    <button class="btn btn-sm btn-outline-primary me-1" @click="openEditModal(service)">
-                      <i class="bi bi-pencil"></i>
-                    </button>
-                    <button class="btn btn-sm btn-outline-danger" @click="deleteService(service)">
-                      <i class="bi bi-trash"></i>
-                    </button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+          <div>
+            <strong>{{ row.name }}</strong>
+            <p v-if="row.description" class="text-muted small mb-0">{{ row.description.substring(0, 50) }}...</p>
           </div>
         </div>
-      </div>
+      </template>
 
-      <div ref="modalElement" class="modal fade" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title">{{ editingService ? 'Editar servicio' : 'Nuevo servicio' }}</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <form @submit.prevent="submitService">
-              <div class="modal-body">
-                <div class="row g-3">
-                  <div class="col-md-8">
-                    <label class="form-label">Nombre del servicio</label>
-                    <input v-model="form.name" type="text" class="form-control" required>
-                  </div>
+      <template #cell-price="{ value, row }">
+        <span v-if="row.price" class="fw-semibold">${{ row.price }}</span>
+        <span v-else class="text-muted">—</span>
+      </template>
 
-                  <div class="col-md-4">
-                    <label class="form-label">Precio</label>
-                    <div class="input-group">
-                      <span class="input-group-text">$</span>
-                      <input v-model.number="form.price" type="number" step="0.01" min="0" class="form-control">
-                    </div>
-                  </div>
+      <template #cell-duration_minutes="{ value }">
+        {{ value }} min
+      </template>
+
+      <template #cell-allows_online_booking="{ value }">
+        <span v-if="value" class="badge bg-success">Si</span>
+        <span v-else class="badge bg-secondary">No</span>
+      </template>
+
+      <template #cell-is_active="{ value }">
+        <span v-if="value" class="badge bg-success">Activo</span>
+        <span v-else class="badge bg-secondary">Inactivo</span>
+      </template>
+
+      <template #cell-actions="{ row }">
+        <div class="actions">
+          <button class="btn btn-sm btn-outline-primary" @click="openEditModal(row)">
+            <i class="bi bi-pencil"></i>
+          </button>
+          <button class="btn btn-sm btn-outline-danger" @click="deleteService(row)">
+            <i class="bi bi-trash"></i>
+          </button>
+        </div>
+      </template>
+    </BaseDataTable>
+
+    <div ref="modalElement" class="modal fade" tabindex="-1">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">{{ editingService ? 'Editar servicio' : 'Nuevo servicio' }}</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <form @submit.prevent="submitService">
+            <div class="modal-body">
+              <div class="row g-3">
+                <div class="col-md-8">
+                  <FieldText
+                    id="service-name"
+                    label="Nombre del servicio"
+                    v-model="form.name"
+                    required
+                  />
+                </div>
+
+                <div class="col-md-4">
+                  <FieldNumber
+                    id="service-price"
+                    label="Precio"
+                    v-model="form.price"
+                  />
+                </div>
 
                 <div class="col-12">
-                  <label class="form-label">Descripción</label>
-                  <textarea v-model="form.description" class="form-control" rows="3"></textarea>
+                  <FieldTextarea
+                    id="service-description"
+                    label="Descripcion"
+                    v-model="form.description"
+                    :rows="3"
+                  />
                 </div>
 
                 <div class="col-md-4">
@@ -102,47 +120,64 @@
                 </div>
 
                 <div class="col-md-4">
-                  <label class="form-label">Duración (minutos)</label>
-                    <input v-model.number="form.duration_minutes" type="number" min="1" max="1440" class="form-control" required>
-                  </div>
+                  <FieldNumber
+                    id="service-duration"
+                    label="Duracion (minutos)"
+                    v-model="form.duration_minutes"
+                    required
+                  />
+                </div>
 
-                  <div class="col-md-4">
-                    <label class="form-label">Depósito requerido</label>
-                    <div class="input-group">
-                      <span class="input-group-text">$</span>
-                      <input v-model.number="form.deposit_amount" type="number" step="0.01" min="0" class="form-control">
-                    </div>
-                  </div>
+                <div class="col-md-4">
+                  <FieldNumber
+                    id="service-deposit-amount"
+                    label="Monto deposito"
+                    v-model="form.deposit_amount"
+                  />
+                </div>
 
-                  <div class="col-md-4">
-                    <label class="form-label">WhatsApp</label>
-                    <input v-model="form.whatsapp_contact" type="text" class="form-control" placeholder="+54 9 11 1234-5678">
-                  </div>
+                <div class="col-md-6">
+                  <FieldSwitch
+                    id="service-deposit-required"
+                    label="Requiere deposito"
+                    v-model="form.deposit_required"
+                  />
+                </div>
 
-                  <div class="col-md-6">
-                    <div class="form-check form-switch mt-4">
-                      <input v-model="form.allows_online_booking" class="form-check-input" type="checkbox" id="allowBooking">
-                      <label class="form-check-label" for="allowBooking">Permitir reservas online</label>
-                    </div>
-                  </div>
+                <div class="col-md-6">
+                  <FieldPhone
+                    id="service-whatsapp"
+                    label="WhatsApp"
+                    placeholder="+54 9 11 1234-5678"
+                    v-model="form.whatsapp_contact"
+                  />
+                </div>
 
-                  <div class="col-md-6">
-                    <div class="form-check form-switch mt-4">
-                      <input v-model="form.is_active" class="form-check-input" type="checkbox" id="isActive">
-                      <label class="form-check-label" for="isActive">Servicio activo</label>
-                    </div>
-                  </div>
+                <div class="col-md-6">
+                  <FieldSwitch
+                    id="service-online-booking"
+                    label="Permite reserva online"
+                    v-model="form.allows_online_booking"
+                  />
+                </div>
+
+                <div class="col-md-6">
+                  <FieldSwitch
+                    id="service-active"
+                    label="Servicio activo"
+                    v-model="form.is_active"
+                  />
                 </div>
               </div>
-              <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="submit" class="btn btn-primary" :disabled="sending">
-                  <span v-if="sending">Guardando...</span>
-                  <span v-else>{{ editingService ? 'Actualizar' : 'Crear' }}</span>
-                </button>
-              </div>
-            </form>
-          </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+              <button type="submit" class="btn btn-primary" :disabled="sending">
+                <span v-if="sending">Guardando...</span>
+                <span v-else>{{ editingService ? 'Actualizar' : 'Crear' }}</span>
+              </button>
+            </div>
+          </form>
         </div>
       </div>
     </div>
@@ -150,28 +185,50 @@
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick, computed } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import { Head, useForm, router } from '@inertiajs/vue3'
 import { Modal } from 'bootstrap'
 import MemberLayout from '@/Layouts/MemberLayout.vue'
+import PageHeader from '@/Components/Admin/PageHeader.vue'
+import BaseDataTable from '@/Components/DataTable/BaseDataTable.vue'
+import FieldText from '@/Components/Fields/FieldText.vue'
+import FieldNumber from '@/Components/Fields/FieldNumber.vue'
+import FieldTextarea from '@/Components/Fields/FieldTextarea.vue'
+import FieldSwitch from '@/Components/Fields/FieldSwitch.vue'
+import FieldPhone from '@/Components/Fields/FieldPhone.vue'
 
 const props = defineProps({
   business: Object,
-  services: Array,
+  services: Object,
+  locations: { type: Array, default: () => [] },
+  dataTable: Object,
 })
 
-const servicesList = computed(() => {
-  if (!props.services) return []
-  if (Array.isArray(props.services)) return props.services
-  if (Array.isArray(props.services.data)) return props.services.data
-  return []
-})
+const business = computed(() => props.business)
+
+const breadcrumbs = computed(() => [
+  { label: business.value?.name, href: '/member/business-modules' },
+  { label: 'Servicios', active: true },
+])
+
+const perPage = ref(10)
+
+const columns = [
+  { key: 'name', label: 'Nombre', sortable: true },
+  { key: 'price', label: 'Precio', sortable: true },
+  { key: 'duration_minutes', label: 'Duracion', sortable: true },
+  { key: 'allows_online_booking', label: 'Reservas online', sortable: true },
+  { key: 'is_active', label: 'Estado', sortable: true },
+  { key: 'actions', label: 'Acciones', sortable: false },
+]
+
+const dataTableRef = ref(null)
 const modalElement = ref(null)
 const imageInput = ref(null)
 const imagePreview = ref(null)
 let serviceModal = null
-let editingService = ref(null)
-let sending = false
+const editingService = ref(null)
+const sending = ref(false)
 
 const form = useForm({
   name: '',
@@ -187,24 +244,57 @@ const form = useForm({
   sort_order: 0,
 })
 
+const onDataTableUpdated = (data) => {
+  perPage.value = data.per_page
+}
+
+const openCreateModal = () => {
+  editingService.value = null
+  form.reset()
+  imagePreview.value = null
+  nextTick(() => serviceModal.show())
+}
+
+const openEditModal = (service) => {
+  editingService.value = service
+  form.name = service.name
+  form.description = service.description || ''
+  form.duration_minutes = service.duration_minutes
+  form.price = service.price
+  form.deposit_required = service.deposit_required || false
+  form.deposit_amount = service.deposit_amount
+  form.allows_online_booking = service.allows_online_booking ?? true
+  form.whatsapp_contact = service.whatsapp_contact || ''
+  form.is_active = service.is_active ?? true
+  form.sort_order = service.sort_order || 0
+  imagePreview.value = service.image || null
+  nextTick(() => serviceModal.show())
+}
+
+const closeModal = () => {
+  serviceModal.hide()
+  editingService.value = null
+  form.reset()
+  imagePreview.value = null
+}
+
 const handleImageChange = (e) => {
   const file = e.target.files[0]
   if (!file) return
 
   const maxSize = 10 * 1024 * 1024
   if (file.size > maxSize) {
-    alert('El archivo supera el tamaño máximo de 10MB.')
+    alert('El archivo supera el tamano maximo de 10MB.')
     return
   }
 
   const allowedTypes = ['image/jpeg', 'image/png']
   if (!allowedTypes.includes(file.type)) {
-    alert('Solo se permiten imágenes JPG o PNG.')
+    alert('Solo se permiten archivos JPG o PNG.')
     return
   }
 
   form.image = file
-
   const reader = new FileReader()
   reader.onload = (e) => {
     imagePreview.value = e.target.result
@@ -212,85 +302,56 @@ const handleImageChange = (e) => {
   reader.readAsDataURL(file)
 }
 
-const openCreateModal = () => {
-  editingService.value = null
-  imagePreview.value = null
-  if (imageInput.value) imageInput.value.value = ''
-  form.reset()
-  form.duration_minutes = 30
-  form.allows_online_booking = true
-  form.is_active = true
-  form.image = null
-  nextTick(() => {
-    serviceModal.show()
-  })
-}
-
-const openEditModal = (service) => {
-  editingService.value = service
-  imagePreview.value = service.image || null
-  if (imageInput.value) imageInput.value.value = ''
-  form.name = service.name
-  form.description = service.description || ''
-  form.image = null
-  form.duration_minutes = service.duration_minutes
-  form.price = service.price
-  form.deposit_required = service.deposit_required
-  form.deposit_amount = service.deposit_amount
-  form.allows_online_booking = service.allows_online_booking
-  form.whatsapp_contact = service.whatsapp_contact || ''
-  form.is_active = service.is_active
-  form.sort_order = service.sort_order || 0
-  nextTick(() => {
-    serviceModal.show()
-  })
-}
-
 const submitService = () => {
-  sending = true
-  if (editingService.value) {
-    router.post(`/member/businesses/${props.business.id}/services/${editingService.value.id}`, {
-      ...form.data(),
-      _method: 'PUT',
-    }, {
-      forceFormData: true,
-      preserveScroll: true,
-      onFinish: () => {
-        sending = false
-        serviceModal.hide()
-      },
-      onError: (errors) => {
-        sending = false
-        console.error('Errors:', errors)
-        alert('Error al actualizar: ' + Object.values(errors).join(', '))
-      },
-    })
-  } else {
-    form.post(`/member/businesses/${props.business.id}/services`, {
-      forceFormData: true,
-      preserveScroll: true,
-      onFinish: () => {
-        sending = false
-        serviceModal.hide()
-      },
-      onError: (errors) => {
-        sending = false
-        console.error('Errors:', errors)
-        alert('Error al crear: ' + Object.values(errors).join(', '))
-      },
-    })
-  }
+  sending.value = true
+
+  const url = editingService.value
+    ? `/member/businesses/${business.value.id}/services/${editingService.value.id}`
+    : `/member/businesses/${business.value.id}/services`
+
+  const method = editingService.value ? 'post' : 'post'
+
+  router[method](url, {
+    ...form.data(),
+    _method: editingService.value ? 'PUT' : 'POST',
+  }, {
+    forceFormData: true,
+    preserveScroll: true,
+    onSuccess: () => {
+      closeModal()
+      sending.value = false
+      if (dataTableRef.value) {
+        dataTableRef.value.reload()
+      }
+    },
+    onError: (errors) => {
+      sending.value = false
+      console.error('Errors:', errors)
+    },
+  })
 }
 
 const deleteService = (service) => {
-  if (confirm('¿Estás seguro de eliminar este servicio?')) {
-    router.delete(`/member/businesses/${props.business.id}/services/${service.id}`, {
-      preserveScroll: true,
-    })
+  if (!confirm(`¿Estas seguro de eliminar "${service.name}"?`)) {
+    return
   }
+
+  router.delete(`/member/businesses/${business.value.id}/services/${service.id}`, {
+    preserveScroll: true,
+    onSuccess: () => {
+      if (dataTableRef.value) {
+        dataTableRef.value.reload()
+      }
+    },
+  })
 }
 
 onMounted(() => {
   serviceModal = new Modal(modalElement.value)
+  serviceModal._element.addEventListener('hidden.bs.modal', () => {
+    editingService.value = null
+    form.reset()
+    imagePreview.value = null
+  })
 })
 </script>

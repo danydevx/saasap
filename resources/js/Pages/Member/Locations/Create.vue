@@ -181,7 +181,7 @@ const form = useForm({
 })
 
 const breadcrumbs = computed(() => [
-  { label: business.value.name, href: `/member/businesses/${business.value.id}/locations` },
+  { label: business.value.name, href: '/member/business-modules' },
   { label: 'Nueva Ubicacion', active: true },
 ])
 

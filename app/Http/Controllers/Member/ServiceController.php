@@ -17,11 +17,44 @@ class ServiceController extends Controller
     {
         $this->authorize('viewAny', [BusinessService::class, $business]);
 
-        $services = $business->services()
+        $perPage = min((int) $request->get('per_page', 10), 100);
+        $search = $request->get('search', '');
+        $sort = $request->get('sort', 'sort_order');
+        $direction = $request->get('direction', 'asc');
+
+        $allowedSorts = ['name', 'price', 'duration_minutes', 'is_active', 'sort_order', 'created_at'];
+        if (!in_array($sort, $allowedSorts)) {
+            $sort = 'sort_order';
+        }
+        $direction = strtolower($direction) === 'desc' ? 'desc' : 'asc';
+
+        $query = $business->services()
             ->with('location')
-            ->orderBy('sort_order')
+            ->when($search, function ($q) use ($search) {
+                $q->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                      ->orWhere('description', 'like', "%{$search}%");
+                });
+            })
+            ->orderBy($sort, $direction)
+            ->orderBy('name');
+
+        $services = $query->paginate($perPage);
+
+        $locations = $business->locations()
+            ->where('is_active', true)
             ->orderBy('name')
-            ->paginate(20);
+            ->get(['id', 'name']);
+
+        $dataTable = [
+            'data' => $services->items(),
+            'current_page' => $services->currentPage(),
+            'last_page' => $services->lastPage(),
+            'per_page' => $services->perPage(),
+            'total' => $services->total(),
+            'from' => $services->firstItem(),
+            'to' => $services->lastItem(),
+        ];
 
         return Inertia::render('Member/Services/Index', [
             'business' => [
@@ -29,6 +62,8 @@ class ServiceController extends Controller
                 'name' => $business->name,
             ],
             'services' => $services,
+            'locations' => $locations,
+            'dataTable' => $dataTable,
         ]);
     }
 
@@ -63,6 +98,7 @@ class ServiceController extends Controller
             'whatsapp_contact' => ['nullable', 'string', 'max:50'],
             'is_active' => ['boolean'],
             'sort_order' => ['nullable', 'integer', 'min:0'],
+            'business_location_id' => ['nullable', 'exists:business_locations,id'],
         ]);
 
         $data['business_id'] = $business->id;

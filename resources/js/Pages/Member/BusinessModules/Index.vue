@@ -97,7 +97,7 @@
                   class="btn btn-outline-primary btn-sm w-100"
                 >
                   <i class="bi bi-calendar-check d-block mb-1"></i>
-                  <small>Turnos</small>
+                  <small>Citas</small>
                 </Link>
               </div>
               <div class="col-6 col-md-3" v-if="hasModule(business.modules, 'appointments')">
@@ -214,7 +214,7 @@ const moduleLabels = {
   services: 'Servicios',
   products: 'Productos',
   gallery: 'Galeria',
-  appointments: 'Turnos',
+  appointments: 'Citas',
   leads: 'Leads',
   contact_form: 'Formulario',
   ai_chatbot: 'AI Chatbot',

@@ -2,7 +2,7 @@
   <div class="minisite">
     <div class="bg-light py-4 mb-4">
       <div class="container">
-        <h1 class="mb-0">Reservar turno</h1>
+        <h1 class="mb-0">Reservar cita</h1>
       </div>
     </div>
 
@@ -91,7 +91,7 @@
           <div class="card bg-light">
             <div class="card-body">
               <h5 class="card-title">Informacion de tu reserva</h5>
-              <p class="text-muted small">Complete el formulario para reservar su turno</p>
+              <p class="text-muted small">Complete el formulario para reservar su cita</p>
               <ul class="list-unstyled mb-0">
                 <li v-if="selectedService" class="mb-2">
                   <i class="bi bi-scissors me-2 text-primary"></i>{{ selectedService.name }}

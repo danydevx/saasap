@@ -35,28 +35,23 @@
             </div>
 
             <div class="col-12">
-              <div class="mb-3">
-                <label for="service-description" class="form-label">Descripcion</label>
-                <textarea
-                  id="service-description"
-                  class="form-control"
-                  rows="3"
-                  v-model="form.description"
-                  :class="{ 'is-invalid': form.errors.description }"
-                ></textarea>
-                <div v-if="form.errors.description" class="invalid-feedback">{{ form.errors.description }}</div>
-              </div>
+              <FieldTextarea
+                id="service-description"
+                label="Descripcion"
+                v-model="form.description"
+                :formError="form.errors.description"
+                :rows="3"
+              />
             </div>
 
             <div class="col-12 col-md-6">
-              <label for="service-location" class="form-label">Ubicacion</label>
-              <select id="service-location" class="form-select" v-model="form.business_location_id" :class="{ 'is-invalid': form.errors.business_location_id }">
-                <option value="">Todas las ubicaciones</option>
-                <option v-for="loc in locations" :key="loc.id" :value="loc.id">
-                  {{ loc.name }}
-                </option>
-              </select>
-              <div v-if="form.errors.business_location_id" class="invalid-feedback">{{ form.errors.business_location_id }}</div>
+              <FieldSelect
+                id="service-location"
+                label="Ubicacion"
+                v-model="form.business_location_id"
+                :options="locationOptions"
+                :formError="form.errors.business_location_id"
+              />
             </div>
 
             <div class="col-12 col-md-3">
@@ -107,10 +102,12 @@
             </div>
 
             <div class="col-12 col-md-4">
-              <FieldSwitch
-                id="service-whatsapp-contact"
-                label="Contactar por WhatsApp"
+              <FieldPhone
+                id="service-whatsapp"
+                label="WhatsApp"
+                placeholder="+54 9 11 1234-5678"
                 v-model="form.whatsapp_contact"
+                :formError="form.errors.whatsapp_contact"
               />
             </div>
 
@@ -142,7 +139,10 @@ import MemberLayout from '@/Layouts/MemberLayout.vue'
 import PageHeader from '@/Components/Admin/PageHeader.vue'
 import FieldText from '@/Components/Fields/FieldText.vue'
 import FieldNumber from '@/Components/Fields/FieldNumber.vue'
+import FieldTextarea from '@/Components/Fields/FieldTextarea.vue'
+import FieldSelect from '@/Components/Fields/FieldSelect.vue'
 import FieldSwitch from '@/Components/Fields/FieldSwitch.vue'
+import FieldPhone from '@/Components/Fields/FieldPhone.vue'
 
 const props = defineProps({
   business: { type: Object, required: true },
@@ -151,17 +151,21 @@ const props = defineProps({
 
 const business = computed(() => props.business)
 
+const locationOptions = computed(() => [
+  { value: '', label: 'Todas las ubicaciones' },
+  ...props.locations.map(l => ({ value: l.id, label: l.name }))
+])
+
 const form = useForm({
   name: '',
   slug: '',
   description: '',
-  image: '',
   duration_minutes: 30,
   price: '',
   deposit_required: false,
   deposit_amount: '',
   allows_online_booking: true,
-  whatsapp_contact: false,
+  whatsapp_contact: '',
   is_active: true,
   sort_order: 0,
   business_location_id: '',

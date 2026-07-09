@@ -18,10 +18,56 @@ class LeadController extends Controller
     {
         $this->authorize('viewAny', [BusinessLead::class, $business]);
 
-        $leads = $business->leads()
+        $perPage = min((int) $request->get('per_page', 10), 100);
+        $search = $request->get('search', '');
+        $sort = $request->get('sort', 'created_at');
+        $direction = $request->get('direction', 'desc');
+
+        $allowedSorts = ['name', 'email', 'status', 'source', 'created_at'];
+        if (!in_array($sort, $allowedSorts)) {
+            $sort = 'created_at';
+        }
+        $direction = strtolower($direction) === 'asc' ? 'asc' : 'desc';
+
+        $query = $business->leads()
             ->with('location')
-            ->orderByDesc('created_at')
-            ->paginate(20);
+            ->when($search, function ($q) use ($search) {
+                $q->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                      ->orWhere('email', 'like', "%{$search}%")
+                      ->orWhere('phone', 'like', "%{$search}%");
+                });
+            })
+            ->orderBy($sort, $direction);
+
+        $leads = $query->paginate($perPage);
+
+        $dataTable = [
+            'data' => collect($leads->items())->map(function ($lead) {
+                return [
+                    'id' => $lead->id,
+                    'name' => $lead->name,
+                    'email' => $lead->email,
+                    'phone' => $lead->phone,
+                    'status' => $lead->status->value,
+                    'status_label' => $lead->status->label(),
+                    'source' => $lead->source->value,
+                    'source_label' => $lead->source->label(),
+                    'notes' => $lead->notes,
+                    'created_at' => $lead->created_at->toDateTimeString(),
+                    'location' => $lead->location ? [
+                        'id' => $lead->location->id,
+                        'name' => $lead->location->name,
+                    ] : null,
+                ];
+            })->toArray(),
+            'current_page' => $leads->currentPage(),
+            'last_page' => $leads->lastPage(),
+            'per_page' => $leads->perPage(),
+            'total' => $leads->total(),
+            'from' => $leads->firstItem(),
+            'to' => $leads->lastItem(),
+        ];
 
         return Inertia::render('Member/Leads/Index', [
             'business' => [
@@ -29,6 +75,7 @@ class LeadController extends Controller
                 'name' => $business->name,
             ],
             'leads' => $leads,
+            'dataTable' => $dataTable,
         ]);
     }
 

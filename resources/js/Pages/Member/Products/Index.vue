@@ -2,26 +2,31 @@
   <MemberLayout>
     <Head :title="business ? `Productos - ${business.name}` : 'Productos'" />
 
+    <PageHeader
+      title="Productos del Menu"
+      :breadcrumbs="breadcrumbs"
+      :backHref="`/member/businesses/${business?.id}/content`"
+    />
+
     <div class="container-fluid py-4">
       <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-          <h1 class="h4 mb-1">Productos del Menú</h1>
           <p class="text-muted mb-0">{{ business?.name }}</p>
         </div>
-      <div class="d-flex gap-2">
-        <Link :href="`/member/businesses/${business?.id}/menu-categories`" class="btn btn-outline-secondary">
-          <i class="bi bi-folder me-1"></i>Categorías
-        </Link>
-        <button @click="showCreateModal = true" class="btn btn-primary">
-          <i class="bi bi-plus-lg"></i> Nuevo Producto
-        </button>
-      </div>
+        <div class="d-flex gap-2">
+          <Link :href="`/member/businesses/${business?.id}/menu-categories`" class="btn btn-outline-secondary">
+            <i class="bi bi-folder me-1"></i>Categorias
+          </Link>
+          <button @click="openCreateModal" class="btn btn-primary">
+            <i class="bi bi-plus-lg"></i> Nuevo Producto
+          </button>
+        </div>
       </div>
 
-    <div class="row mb-4">
+      <div class="row mb-4">
       <div class="col-md-4">
         <select v-model="filterCategory" class="form-select" @change="filterProducts">
-          <option :value="null">Todas las categorías</option>
+          <option :value="null">Todas las categorias</option>
           <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.title }}</option>
         </select>
       </div>
@@ -38,7 +43,7 @@
     </div>
 
     <div v-if="productsList.length === 0" class="alert alert-info">
-      No hay productos{{ selectedCategoryName ? ' en esta categoría' : '' }}.
+      No hay productos{{ selectedCategoryName ? ' en esta categoria' : '' }}.
     </div>
 
     <div class="row">
@@ -77,57 +82,84 @@
       <pagination :data="products" />
     </div>
 
-    <div v-if="showCreateModal || editingProduct" class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5)">
+    <div ref="modalElement" class="modal fade" tabindex="-1">
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title">{{ editingProduct ? 'Editar Producto' : 'Nuevo Producto' }}</h5>
-            <button type="button" class="btn-close" @click="closeModal"></button>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
           </div>
           <form @submit.prevent="submitForm">
             <div class="modal-body">
               <div class="row">
                 <div class="col-md-8">
                   <div class="mb-3">
-                    <label class="form-label">Nombre del producto</label>
-                    <input v-model="form.title" type="text" class="form-control" required>
+                    <FieldText
+                      id="product-title"
+                      label="Nombre del producto"
+                      v-model="form.title"
+                      required
+                    />
                   </div>
                   <div class="mb-3">
-                    <label class="form-label">Categoría</label>
-                    <select v-model="form.category_id" class="form-select" required>
-                      <option value="">Seleccionar categoría</option>
+                    <FieldSelect
+                      id="product-category"
+                      label="Categoria"
+                      v-model="form.category_id"
+                      required
+                    >
+                      <option value="">Seleccionar categoria</option>
                       <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.title }}</option>
-                    </select>
+                    </FieldSelect>
                   </div>
                   <div class="mb-3">
-                    <label class="form-label">Descripción</label>
-                    <textarea v-model="form.description" class="form-control" rows="3"></textarea>
+                    <FieldTextarea
+                      id="product-description"
+                      label="Descripcion"
+                      v-model="form.description"
+                      :rows="3"
+                    />
                   </div>
                   <div class="row">
                     <div class="col-md-6">
                       <div class="mb-3">
-                        <label class="form-label">Precio base</label>
-                        <input v-model.number="form.base_price" type="number" step="0.01" class="form-control">
+                        <FieldNumber
+                          id="product-base-price"
+                          label="Precio base"
+                          v-model="form.base_price"
+                        />
                       </div>
                     </div>
                     <div class="col-md-6">
                       <div class="mb-3">
-                        <label class="form-label">Orden</label>
-                        <input v-model.number="form.sort_order" type="number" class="form-control">
+                        <FieldNumber
+                          id="product-sort"
+                          label="Orden"
+                          v-model="form.sort_order"
+                        />
                       </div>
                     </div>
                   </div>
-                  <div class="mb-3 form-check">
-                    <input v-model="form.show_price" type="checkbox" class="form-check-input" id="showPriceCheck">
-                    <label class="form-check-label" for="showPriceCheck">Mostrar precio</label>
+                  <div class="mb-3">
+                    <FieldSwitch
+                      id="product-show-price"
+                      label="Mostrar precio"
+                      v-model="form.show_price"
+                    />
                   </div>
-                  <div class="mb-3 form-check">
-                    <input v-model="form.featured" type="checkbox" class="form-check-input" id="featuredCheck">
-                    <label class="form-check-label" for="featuredCheck">Producto destacado</label>
+                  <div class="mb-3">
+                    <FieldSwitch
+                      id="product-featured"
+                      label="Producto destacado"
+                      v-model="form.featured"
+                    />
                   </div>
-                  <div class="mb-3 form-check">
-                    <input v-model="form.active" type="checkbox" class="form-check-input" id="activeCheck">
-                    <label class="form-check-label" for="activeCheck">Activo</label>
+                  <div class="mb-3">
+                    <FieldSwitch
+                      id="product-active"
+                      label="Activo"
+                      v-model="form.active"
+                    />
                   </div>
                 </div>
                 <div class="col-md-4">
@@ -168,23 +200,30 @@
               </button>
             </div>
             <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" @click="closeModal">Cancelar</button>
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
               <button type="submit" class="btn btn-primary" :disabled="sending">
                 {{ sending ? 'Guardando...' : 'Guardar' }}
               </button>
             </div>
             </form>
+          </div>
         </div>
       </div>
-    </div>
     </div>
   </MemberLayout>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import { Head, usePage, Link, router } from '@inertiajs/vue3'
+import { Modal } from 'bootstrap'
 import MemberLayout from '@/Layouts/MemberLayout.vue'
+import PageHeader from '@/Components/Admin/PageHeader.vue'
+import FieldText from '@/Components/Fields/FieldText.vue'
+import FieldNumber from '@/Components/Fields/FieldNumber.vue'
+import FieldTextarea from '@/Components/Fields/FieldTextarea.vue'
+import FieldSelect from '@/Components/Fields/FieldSelect.vue'
+import FieldSwitch from '@/Components/Fields/FieldSwitch.vue'
 
 const props = defineProps({
   business: Object,
@@ -192,6 +231,16 @@ const props = defineProps({
   categories: Array,
   selectedCategory: [Number, String],
 })
+
+const business = computed(() => props.business)
+
+const breadcrumbs = computed(() => [
+  { label: business.value?.name, href: `/member/businesses/${business.value?.id}/content` },
+  { label: 'Productos del Menu', active: true },
+])
+
+const modalElement = ref(null)
+let productModal = null
 
 const showCreateModal = ref(false)
 const editingProduct = ref(null)
@@ -209,7 +258,7 @@ const productsList = computed(() => {
 
 const selectedCategoryName = computed(() => {
   if (!filterCategory.value) return null
-  if (filterCategory.value === 'uncategorized') return 'Sin categoría'
+  if (filterCategory.value === 'uncategorized') return 'Sin categoria'
   const cat = props.categories.find(c => c.id === filterCategory.value)
   return cat?.title
 })
@@ -227,19 +276,37 @@ const form = ref({
   variants: [],
 })
 
+const openCreateModal = () => {
+  editingProduct.value = null
+  imagePreview.value = null
+  form.value = {
+    title: '',
+    category_id: '',
+    description: '',
+    image: null,
+    base_price: null,
+    show_price: true,
+    featured: false,
+    active: true,
+    sort_order: 0,
+    variants: [],
+  }
+  nextTick(() => productModal.show())
+}
+
 const handleImageChange = (e) => {
   const file = e.target.files[0]
   if (!file) return
 
   const maxSize = 10 * 1024 * 1024
   if (file.size > maxSize) {
-    alert('El archivo supera el tamaño máximo de 10MB.')
+    alert('El archivo supera el tamano maximo de 10MB.')
     return
   }
 
   const allowedTypes = ['image/jpeg', 'image/png']
   if (!allowedTypes.includes(file.type)) {
-    alert('Solo se permiten imágenes JPG o PNG.')
+    alert('Solo se permiten imagenes JPG o PNG.')
     return
   }
 
@@ -289,10 +356,11 @@ const editProduct = (product) => {
       sort_order: v.sort_order || 0,
     })) || [],
   }
+  nextTick(() => productModal.show())
 }
 
 const deleteProduct = (product) => {
-  if (!confirm(`¿Eliminar el producto "${product.title}"?`)) return
+  if (!confirm(`Eliminar el producto "${product.title}"?`)) return
 
   router.delete(`/member/businesses/${props.business.id}/menu-products/${product.id}`, {
     preserveScroll: true,
@@ -300,22 +368,7 @@ const deleteProduct = (product) => {
 }
 
 const closeModal = () => {
-  showCreateModal.value = false
-  editingProduct.value = null
-  imagePreview.value = null
-  if (imageInput.value) imageInput.value.value = ''
-  form.value = {
-    title: '',
-    category_id: '',
-    description: '',
-    image: null,
-    base_price: null,
-    show_price: true,
-    featured: false,
-    active: true,
-    sort_order: 0,
-    variants: [],
-  }
+  productModal.hide()
 }
 
 const addVariant = () => {
@@ -366,4 +419,8 @@ const submitForm = () => {
     })
   }
 }
+
+onMounted(() => {
+  productModal = new Modal(modalElement.value)
+})
 </script>

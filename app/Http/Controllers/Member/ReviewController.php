@@ -15,10 +15,53 @@ class ReviewController extends Controller
     {
         $this->authorize('viewAny', [BusinessReview::class, $business]);
 
-        $reviews = $business->reviews()
+        $perPage = min((int) $request->get('per_page', 10), 100);
+        $search = $request->get('search', '');
+        $sort = $request->get('sort', 'created_at');
+        $direction = $request->get('direction', 'desc');
+
+        $allowedSorts = ['client_name', 'rating', 'is_active', 'created_at'];
+        if (!in_array($sort, $allowedSorts)) {
+            $sort = 'created_at';
+        }
+        $direction = strtolower($direction) === 'asc' ? 'asc' : 'desc';
+
+        $query = $business->reviews()
             ->with('location')
-            ->orderByDesc('created_at')
-            ->paginate(20);
+            ->when($search, function ($q) use ($search) {
+                $q->where(function ($q) use ($search) {
+                    $q->where('client_name', 'like', "%{$search}%")
+                      ->orWhere('company', 'like', "%{$search}%")
+                      ->orWhere('comment', 'like', "%{$search}%");
+                });
+            })
+            ->orderBy($sort, $direction);
+
+        $reviews = $query->paginate($perPage);
+
+        $dataTable = [
+            'data' => collect($reviews->items())->map(function ($review) {
+                return [
+                    'id' => $review->id,
+                    'client_name' => $review->client_name,
+                    'company' => $review->company,
+                    'comment' => $review->comment,
+                    'rating' => $review->rating,
+                    'google_link' => $review->google_link,
+                    'is_active' => $review->is_active,
+                    'location' => $review->location ? [
+                        'id' => $review->location->id,
+                        'name' => $review->location->name,
+                    ] : null,
+                ];
+            })->toArray(),
+            'current_page' => $reviews->currentPage(),
+            'last_page' => $reviews->lastPage(),
+            'per_page' => $reviews->perPage(),
+            'total' => $reviews->total(),
+            'from' => $reviews->firstItem(),
+            'to' => $reviews->lastItem(),
+        ];
 
         return Inertia::render('Member/Reviews/Index', [
             'business' => [
@@ -26,6 +69,7 @@ class ReviewController extends Controller
                 'name' => $business->name,
             ],
             'reviews' => $reviews,
+            'dataTable' => $dataTable,
         ]);
     }
 

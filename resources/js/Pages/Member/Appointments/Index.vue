@@ -1,90 +1,78 @@
 <template>
   <MemberLayout>
-    <Head :title="`Citas - ${business.name}`" />
+    <Head :title="`Citas - ${business?.name || ''}`" />
 
-    <div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
-      <div>
-        <h1 class="h4 mb-1">{{ business.name }}</h1>
-        <p class="text-muted mb-0">Gestiona las citas de tu negocio.</p>
-      </div>
-      <div>
+    <PageHeader
+      title="Citas"
+      :breadcrumbs="breadcrumbs"
+      :backHref="'/member/business-modules'"
+    >
+      <template #actions>
         <button @click="openCreateModal" class="btn btn-primary btn-sm">
           <i class="bi bi-plus-lg me-1"></i>
           Nueva Cita
         </button>
-      </div>
-    </div>
+      </template>
+    </PageHeader>
 
-    <div class="card border-0 shadow-sm">
-      <div class="card-body">
-        <div v-if="$page.props.flash?.success" class="alert alert-success alert-dismissible fade show" role="alert">
-          {{ $page.props.flash.success }}
-          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
+    <BaseDataTable
+      ref="dataTableRef"
+      :endpoint="`/member/businesses/${business?.id}/appointments`"
+      :columns="columns"
+      :initial-data="dataTable"
+      search-placeholder="Buscar citas..."
+      empty-title="No hay citas"
+      empty-text="Comienza creando tu primera cita."
+      @updated="onDataTableUpdated"
+    >
+      <template #cell-appointment_date="{ row }">
+        {{ formatDate(row.appointment_date) }}
+      </template>
 
-        <div class="table-responsive">
-          <table class="table table-hover align-middle mb-0">
-            <thead class="table-light">
-              <tr>
-                <th scope="col">Fecha</th>
-                <th scope="col">Hora</th>
-                <th scope="col">Cliente</th>
-                <th scope="col">Servicio</th>
-                <th scope="col">Ubicacion</th>
-                <th scope="col">Estado</th>
-                <th scope="col" class="text-end">Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-if="appointments.data.length === 0">
-                <td colspan="7" class="text-center text-muted py-4">
-                  No hay citas registradas.
-                </td>
-              </tr>
-              <tr v-for="apt in appointments.data" :key="apt.id">
-                <td>{{ formatDate(apt.appointment_date) }}</td>
-                <td>{{ apt.start_time }}</td>
-                <td>
-                  <div>{{ apt.customer_name }}</div>
-                  <small class="text-muted">{{ apt.customer_email }}</small>
-                </td>
-                <td>{{ apt.service?.name || '-' }}</td>
-                <td>{{ apt.location?.name || '-' }}</td>
-                <td>
-                  <span :class="statusClass(apt.status)" class="badge">
-                    {{ apt.status_label }}
-                  </span>
-                </td>
-                <td class="text-end">
-                  <div class="d-flex gap-1 justify-content-end">
-                    <Link :href="`/member/businesses/${business.id}/appointments/${apt.id}/edit`" class="btn btn-sm btn-outline-primary">
-                      <i class="bi bi-pencil"></i>
-                    </Link>
-                    <button
-                      v-if="apt.status !== 'cancelled'"
-                      class="btn btn-sm btn-outline-warning"
-                      @click="cancelAppointment(apt)"
-                    >
-                      <i class="bi bi-x-lg"></i>
-                    </button>
-                    <button
-                      class="btn btn-sm btn-outline-danger"
-                      @click="deleteAppointment(apt)"
-                    >
-                      <i class="bi bi-trash"></i>
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+      <template #cell-start_time="{ row }">
+        {{ row.start_time }}
+      </template>
 
-        <div v-if="appointments.links" class="d-flex justify-content-center mt-4">
-          <Pagination :links="appointments.links" />
+      <template #cell-customer_name="{ row }">
+        <div>{{ row.customer_name }}</div>
+        <small class="text-muted">{{ row.customer_email }}</small>
+      </template>
+
+      <template #cell-service="{ row }">
+        {{ row.service?.name || '-' }}
+      </template>
+
+      <template #cell-location="{ row }">
+        {{ row.location?.name || '-' }}
+      </template>
+
+      <template #cell-status="{ row }">
+        <span :class="statusClass(row.status)" class="badge">
+          {{ row.status_label }}
+        </span>
+      </template>
+
+      <template #cell-actions="{ row }">
+        <div class="actions">
+          <Link :href="`/member/businesses/${business?.id}/appointments/${row.id}/edit`" class="btn btn-sm btn-outline-primary">
+            <i class="bi bi-pencil"></i>
+          </Link>
+          <button
+            v-if="row.status !== 'cancelled'"
+            class="btn btn-sm btn-outline-warning"
+            @click="cancelAppointment(row)"
+          >
+            <i class="bi bi-x-lg"></i>
+          </button>
+          <button
+            class="btn btn-sm btn-outline-danger"
+            @click="deleteAppointment(row)"
+          >
+            <i class="bi bi-trash"></i>
+          </button>
         </div>
-      </div>
-    </div>
+      </template>
+    </BaseDataTable>
 
     <div ref="modalElement" class="modal fade" tabindex="-1">
       <div class="modal-dialog modal-lg">
@@ -95,48 +83,80 @@
           </div>
           <form @submit.prevent="submitAppointment">
             <div class="modal-body">
-              <div class="row g-3">
+              <div class="row g-3 mb-3">
                 <div class="col-md-6">
-                  <label class="form-label">Nombre del cliente *</label>
-                  <input v-model="form.customer_name" type="text" class="form-control" required>
+                  <FieldText
+                    id="appointment-name"
+                    label="Nombre del cliente"
+                    v-model="form.customer_name"
+                    required
+                  />
                 </div>
                 <div class="col-md-6">
-                  <label class="form-label">Email del cliente *</label>
-                  <input v-model="form.customer_email" type="email" class="form-control" required>
+                  <FieldEmail
+                    id="appointment-email"
+                    label="Email del cliente"
+                    v-model="form.customer_email"
+                    required
+                  />
                 </div>
                 <div class="col-md-6">
-                  <label class="form-label">Telefono</label>
-                  <input v-model="form.customer_phone" type="text" class="form-control">
+                  <FieldPhone
+                    id="appointment-phone"
+                    label="Telefono"
+                    v-model="form.customer_phone"
+                  />
                 </div>
                 <div class="col-md-6">
-                  <label class="form-label">Servicio *</label>
-                  <select v-model="form.business_service_id" class="form-select" required>
+                  <FieldSelect
+                    id="appointment-service"
+                    label="Servicio"
+                    v-model="form.business_service_id"
+                    required
+                  >
                     <option :value="null" disabled>Seleccionar servicio</option>
                     <option v-for="svc in services" :key="svc.id" :value="svc.id">
                       {{ svc.name }} ({{ svc.duration_minutes }} min)
                     </option>
-                  </select>
+                  </FieldSelect>
                 </div>
                 <div class="col-md-6">
-                  <label class="form-label">Ubicacion</label>
-                  <select v-model="form.business_location_id" class="form-select">
+                  <FieldSelect
+                    id="appointment-location"
+                    label="Ubicacion"
+                    v-model="form.business_location_id"
+                  >
                     <option :value="null">Sin ubicacion</option>
                     <option v-for="loc in locations" :key="loc.id" :value="loc.id">
                       {{ loc.name }}
                     </option>
-                  </select>
+                  </FieldSelect>
                 </div>
                 <div class="col-md-3">
-                  <label class="form-label">Fecha *</label>
-                  <input v-model="form.appointment_date" type="date" class="form-control" required :min="today">
+                  <FieldDate
+                    id="appointment-date"
+                    label="Fecha"
+                    v-model="form.appointment_date"
+                    :min="today"
+                    required
+                  />
                 </div>
                 <div class="col-md-3">
-                  <label class="form-label">Hora *</label>
-                  <input v-model="form.start_time" type="time" class="form-control" required>
+                  <FieldTime
+                    id="appointment-time"
+                    label="Hora"
+                    v-model="form.start_time"
+                    required
+                  />
                 </div>
                 <div class="col-12">
-                  <label class="form-label">Notas</label>
-                  <textarea v-model="form.notes" class="form-control" rows="2" placeholder="Notas adicionales..."></textarea>
+                  <FieldTextarea
+                    id="appointment-notes"
+                    label="Notas"
+                    v-model="form.notes"
+                    :rows="2"
+                    placeholder="Notas adicionales..."
+                  />
                 </div>
               </div>
             </div>
@@ -154,18 +174,43 @@
 </template>
 
 <script setup>
-import { computed, ref, nextTick } from 'vue'
+import { computed, ref, nextTick, onMounted } from 'vue'
 import { Head, Link, router, usePage } from '@inertiajs/vue3'
 import { Modal } from 'bootstrap'
 import MemberLayout from '@/Layouts/MemberLayout.vue'
-import Pagination from '@/Components/Member/Pagination.vue'
+import PageHeader from '@/Components/Admin/PageHeader.vue'
+import BaseDataTable from '@/Components/DataTable/BaseDataTable.vue'
+import FieldText from '@/Components/Fields/FieldText.vue'
+import FieldEmail from '@/Components/Fields/FieldEmail.vue'
+import FieldPhone from '@/Components/Fields/FieldPhone.vue'
+import FieldSelect from '@/Components/Fields/FieldSelect.vue'
+import FieldDate from '@/Components/Fields/FieldDate.vue'
+import FieldTime from '@/Components/Fields/FieldTime.vue'
+import FieldTextarea from '@/Components/Fields/FieldTextarea.vue'
 
 const page = usePage()
 const business = computed(() => page.props.business)
 const appointments = computed(() => page.props.appointments || { data: [], links: [] })
 const services = computed(() => page.props.services || [])
 const locations = computed(() => page.props.locations || [])
+const dataTable = computed(() => page.props.dataTable)
 
+const breadcrumbs = computed(() => [
+  { label: business.value?.name, href: '/member/business-modules' },
+  { label: 'Citas', active: true },
+])
+
+const columns = [
+  { key: 'appointment_date', label: 'Fecha', sortable: true },
+  { key: 'start_time', label: 'Hora', sortable: true },
+  { key: 'customer_name', label: 'Cliente', sortable: true },
+  { key: 'service', label: 'Servicio', sortable: false },
+  { key: 'location', label: 'Ubicacion', sortable: false },
+  { key: 'status', label: 'Estado', sortable: true },
+  { key: 'actions', label: 'Acciones', sortable: false },
+]
+
+const dataTableRef = ref(null)
 const modalElement = ref(null)
 let appointmentModal = null
 const sending = ref(false)
@@ -181,6 +226,10 @@ const form = ref({
   start_time: '',
   notes: '',
 })
+
+const onDataTableUpdated = (data) => {
+  // Optional: handle data update
+}
 
 const openCreateModal = () => {
   form.value = {
@@ -205,6 +254,9 @@ const submitAppointment = () => {
     onSuccess: () => {
       sending.value = false
       appointmentModal.hide()
+      if (dataTableRef.value) {
+        dataTableRef.value.reload()
+      }
     },
     onError: () => {
       sending.value = false
@@ -233,23 +285,44 @@ const statusClass = (status) => {
 }
 
 const cancelAppointment = (apt) => {
-  if (confirm('¿Estás seguro de cancelar esta cita?')) {
+  if (confirm('Estas seguro de cancelar esta cita?')) {
     router.post(`/member/businesses/${business.value.id}/appointments/${apt.id}/cancel`, {}, {
       preserveScroll: true,
+      onSuccess: () => {
+        if (dataTableRef.value) {
+          dataTableRef.value.reload()
+        }
+      },
     })
   }
 }
 
 const deleteAppointment = (apt) => {
-  if (confirm('¿Estás seguro de eliminar esta cita? Esta acción no se puede deshacer.')) {
+  if (confirm('Estas seguro de eliminar esta cita? Esta accion no se puede deshacer.')) {
     router.delete(`/member/businesses/${business.value.id}/appointments/${apt.id}`, {
       preserveScroll: true,
+      onSuccess: () => {
+        if (dataTableRef.value) {
+          dataTableRef.value.reload()
+        }
+      },
     })
   }
 }
 
-import { onMounted } from 'vue'
 onMounted(() => {
   appointmentModal = new Modal(modalElement.value)
+  appointmentModal._element.addEventListener('hidden.bs.modal', () => {
+    form.value = {
+      customer_name: '',
+      customer_email: '',
+      customer_phone: '',
+      business_service_id: null,
+      business_location_id: null,
+      appointment_date: '',
+      start_time: '',
+      notes: '',
+    }
+  })
 })
 </script>

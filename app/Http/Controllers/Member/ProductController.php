@@ -16,18 +16,59 @@ class ProductController extends Controller
     {
         $this->authorize('viewAny', [BusinessProduct::class, $business]);
 
-        $products = $business->products()
-            ->with('location')
-            ->orderBy('sort_order')
-            ->orderBy('name')
-            ->paginate(20);
+        $perPage = min((int) $request->get('per_page', 10), 100);
+        $search = $request->get('search', '');
+        $sort = $request->get('sort', 'sort_order');
+        $direction = $request->get('direction', 'asc');
 
-        return Inertia::render('Member/Products/Index', [
+        $allowedSorts = ['name', 'price', 'is_active', 'is_featured', 'sort_order', 'created_at'];
+        if (!in_array($sort, $allowedSorts)) {
+            $sort = 'sort_order';
+        }
+        $direction = strtolower($direction) === 'desc' ? 'desc' : 'asc';
+
+        $query = $business->products()
+            ->with('location', 'category')
+            ->when($search, function ($q) use ($search) {
+                $q->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                      ->orWhere('description', 'like', "%{$search}%");
+                });
+            })
+            ->orderBy($sort, $direction)
+            ->orderBy('name');
+
+        $products = $query->paginate($perPage);
+
+        $locations = $business->locations()
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        $categories = $business->productCategories()
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        $dataTable = [
+            'data' => $products->items(),
+            'current_page' => $products->currentPage(),
+            'last_page' => $products->lastPage(),
+            'per_page' => $products->perPage(),
+            'total' => $products->total(),
+            'from' => $products->firstItem(),
+            'to' => $products->lastItem(),
+        ];
+
+        return Inertia::render('Member/Products/ProductsIndex', [
             'business' => [
                 'id' => $business->id,
                 'name' => $business->name,
             ],
             'products' => $products,
+            'locations' => $locations,
+            'categories' => $categories,
+            'dataTable' => $dataTable,
         ]);
     }
 
@@ -54,16 +95,17 @@ class ProductController extends Controller
             'name' => ['required', 'string', 'max:150'],
             'slug' => ['required', 'string', 'max:150'],
             'description' => ['nullable', 'string'],
-            'price' => ['nullable', 'numeric', 'min:0'],
-            'compare_at_price' => ['nullable', 'numeric', 'min:0'],
+            'price' => ['nullable', 'numeric', 'min:0', 'max:99999999.99'],
+            'compare_at_price' => ['nullable', 'numeric', 'min:0', 'max:99999999.99'],
             'sku' => ['nullable', 'string', 'max:100'],
             'barcode' => ['nullable', 'string', 'max:100'],
             'quantity' => ['nullable', 'integer', 'min:0'],
             'is_active' => ['boolean'],
             'is_featured' => ['boolean'],
-            'whatsapp_contact' => ['boolean'],
+            'whatsapp_contact' => ['nullable', 'string', 'max:50'],
             'sort_order' => ['nullable', 'integer', 'min:0'],
             'business_location_id' => ['nullable', 'exists:business_locations,id'],
+            'category_id' => ['nullable', 'exists:business_product_categories,id'],
         ]);
 
         $data['business_id'] = $business->id;
@@ -87,6 +129,7 @@ class ProductController extends Controller
         $this->authorize('update', [BusinessProduct::class, $product]);
 
         $locations = $business->locations()->where('is_active', true)->orderBy('name')->get(['id', 'name']);
+        $categories = $business->productCategories()->where('is_active', true)->orderBy('name')->get(['id', 'name']);
 
         return Inertia::render('Member/Products/Edit', [
             'business' => [
@@ -108,8 +151,10 @@ class ProductController extends Controller
                 'whatsapp_contact' => $product->whatsapp_contact,
                 'sort_order' => $product->sort_order,
                 'business_location_id' => $product->business_location_id,
+                'category_id' => $product->category_id,
             ],
             'locations' => $locations,
+            'categories' => $categories,
         ]);
     }
 
@@ -121,16 +166,17 @@ class ProductController extends Controller
             'name' => ['required', 'string', 'max:150'],
             'slug' => ['required', 'string', 'max:150'],
             'description' => ['nullable', 'string'],
-            'price' => ['nullable', 'numeric', 'min:0'],
-            'compare_at_price' => ['nullable', 'numeric', 'min:0'],
+            'price' => ['nullable', 'numeric', 'min:0', 'max:99999999.99'],
+            'compare_at_price' => ['nullable', 'numeric', 'min:0', 'max:99999999.99'],
             'sku' => ['nullable', 'string', 'max:100'],
             'barcode' => ['nullable', 'string', 'max:100'],
             'quantity' => ['nullable', 'integer', 'min:0'],
             'is_active' => ['boolean'],
             'is_featured' => ['boolean'],
-            'whatsapp_contact' => ['boolean'],
+            'whatsapp_contact' => ['nullable', 'string', 'max:50'],
             'sort_order' => ['nullable', 'integer', 'min:0'],
             'business_location_id' => ['nullable', 'exists:business_locations,id'],
+            'category_id' => ['nullable', 'exists:business_product_categories,id'],
         ]);
 
         if (isset($data['slug'])) {

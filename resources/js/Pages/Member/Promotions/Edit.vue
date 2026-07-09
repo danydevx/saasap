@@ -2,36 +2,44 @@
   <MemberLayout>
     <Head :title="`Editar Promocion - ${business.name}`" />
 
-    <div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
-      <div>
-        <Link :href="`/member/businesses/${business.id}/promotions`" class="text-decoration-none text-muted small">
-          <i class="bi bi-arrow-left me-1"></i>Volver
-        </Link>
-        <h1 class="h4 mb-1 mt-1">Editar Promocion</h1>
-      </div>
-    </div>
+    <PageHeader
+      title="Editar Promocion"
+      :breadcrumbs="breadcrumbs"
+      :backHref="`/member/businesses/${business.id}/promotions`"
+    />
 
     <div class="card border-0 shadow-sm">
       <div class="card-body">
         <form @submit.prevent="submit">
-          <div class="row g-3">
+          <div class="row g-3 mb-3">
             <div class="col-md-6">
-              <label class="form-label">Nombre *</label>
-              <input type="text" v-model="form.name" class="form-control" required />
-              <div v-if="errors.name" class="text-danger small">{{ errors.name }}</div>
+              <FieldText
+                id="promotion-name"
+                label="Nombre"
+                v-model="form.name"
+                :formError="errors.name"
+                required
+              />
             </div>
 
             <div class="col-md-6">
-              <label class="form-label">Ubicacion</label>
-              <select v-model="form.business_location_id" class="form-select">
+              <FieldSelect
+                id="promotion-location"
+                label="Ubicacion"
+                v-model="form.business_location_id"
+              >
                 <option :value="null">Todas las ubicaciones</option>
                 <option v-for="loc in locations" :key="loc.id" :value="loc.id">{{ loc.name }}</option>
-              </select>
+              </FieldSelect>
             </div>
 
             <div class="col-12">
-              <label class="form-label">Descripcion</label>
-              <textarea v-model="form.description" class="form-control" rows="3"></textarea>
+              <FieldTextarea
+                id="promotion-description"
+                label="Descripcion"
+                v-model="form.description"
+                :rows="3"
+              />
             </div>
 
             <div class="col-12">
@@ -50,40 +58,59 @@
             </div>
 
             <div class="col-md-4">
-              <label class="form-label">Precio Regular</label>
-              <input type="number" v-model="form.regular_price" class="form-control" min="0" step="0.01" />
+              <FieldNumber
+                id="promotion-regular-price"
+                label="Precio Regular"
+                v-model="form.regular_price"
+              />
             </div>
 
             <div class="col-md-4">
-              <label class="form-label">Precio Promo</label>
-              <input type="number" v-model="form.promotion_price" class="form-control" min="0" step="0.01" />
+              <FieldNumber
+                id="promotion-price"
+                label="Precio Promo"
+                v-model="form.promotion_price"
+              />
             </div>
 
             <div class="col-md-4">
-              <label class="form-label">Codigo de Cupon</label>
-              <input type="text" v-model="form.coupon_code" class="form-control" />
+              <FieldText
+                id="promotion-coupon"
+                label="Codigo de Cupon"
+                v-model="form.coupon_code"
+              />
             </div>
 
             <div class="col-md-6">
-              <label class="form-label">Fecha de Inicio</label>
-              <input type="datetime-local" v-model="form.starts_at" class="form-control" />
+              <FieldDate
+                id="promotion-starts"
+                label="Fecha de Inicio"
+                v-model="form.starts_at"
+              />
             </div>
 
             <div class="col-md-6">
-              <label class="form-label">Fecha de Vencimiento</label>
-              <input type="datetime-local" v-model="form.expires_at" class="form-control" />
+              <FieldDate
+                id="promotion-expires"
+                label="Fecha de Vencimiento"
+                v-model="form.expires_at"
+              />
             </div>
 
             <div class="col-md-4">
-              <label class="form-label">Orden</label>
-              <input type="number" v-model="form.sort_order" class="form-control" min="0" />
+              <FieldNumber
+                id="promotion-sort"
+                label="Orden"
+                v-model="form.sort_order"
+              />
             </div>
 
             <div class="col-md-8 d-flex align-items-end">
-              <div class="form-check mb-3 w-100">
-                <input type="checkbox" v-model="form.is_active" class="form-check-input" id="is_active" />
-                <label class="form-check-label" for="is_active">Activo</label>
-              </div>
+              <FieldSwitch
+                id="promotion-active"
+                label="Activo"
+                v-model="form.is_active"
+              />
             </div>
 
             <div class="col-12">
@@ -105,9 +132,23 @@
 import { computed, reactive, ref } from 'vue'
 import { Head, Link, router, usePage } from '@inertiajs/vue3'
 import MemberLayout from '@/Layouts/MemberLayout.vue'
+import PageHeader from '@/Components/Admin/PageHeader.vue'
+import FieldText from '@/Components/Fields/FieldText.vue'
+import FieldNumber from '@/Components/Fields/FieldNumber.vue'
+import FieldTextarea from '@/Components/Fields/FieldTextarea.vue'
+import FieldSelect from '@/Components/Fields/FieldSelect.vue'
+import FieldDate from '@/Components/Fields/FieldDate.vue'
+import FieldSwitch from '@/Components/Fields/FieldSwitch.vue'
 
 const page = usePage()
 const business = computed(() => page.props.business)
+const promotion = computed(() => page.props.promotion)
+
+const breadcrumbs = computed(() => [
+  { label: business.value.name, href: '/member/business-modules' },
+  { label: 'Promociones', href: `/member/businesses/${business.value.id}/promotions` },
+  { label: promotion.value?.name || 'Editar', active: true },
+])
 const promotion = computed(() => page.props.promotion)
 const locations = computed(() => page.props.locations || [])
 const errors = computed(() => page.props.errors || {})
@@ -136,13 +177,13 @@ const handleImageChange = (e) => {
 
   const maxSize = 5 * 1024 * 1024
   if (file.size > maxSize) {
-    alert('El archivo supera el tamaño máximo de 5MB.')
+    alert('El archivo supera el tamano maximo de 5MB.')
     return
   }
 
   const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
   if (!allowedTypes.includes(file.type)) {
-    alert('Solo se permiten imágenes (JPEG, PNG, WebP, GIF).')
+    alert('Solo se permiten imagenes (JPEG, PNG, WebP, GIF).')
     return
   }
 

@@ -1,68 +1,89 @@
 <template>
   <MemberLayout>
-    <Head :title="`New Review - ${business.name}`" />
+    <Head :title="`Nueva Resena - ${business.name}`" />
 
     <div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
       <div>
         <Link :href="`/member/businesses/${business.id}/reviews`" class="text-decoration-none text-muted small">
-          <i class="bi bi-arrow-left me-1"></i>Back
+          <i class="bi bi-arrow-left me-1"></i>Volver
         </Link>
-        <h1 class="h4 mb-1 mt-1">New Review</h1>
+        <h1 class="h4 mb-1 mt-1">Nueva Resena</h1>
       </div>
     </div>
 
     <div class="card border-0 shadow-sm">
       <div class="card-body">
         <form @submit.prevent="submit">
-          <div class="row g-3">
+          <div class="row g-3 mb-3">
             <div class="col-md-6">
-              <label class="form-label">Client Name *</label>
-              <input type="text" v-model="form.client_name" class="form-control" required />
-              <div v-if="errors.client_name" class="text-danger small">{{ errors.client_name }}</div>
+              <FieldText
+                id="review-client-name"
+                label="Nombre del cliente"
+                v-model="form.client_name"
+                :formError="errors.client_name"
+                required
+              />
             </div>
 
             <div class="col-md-6">
-              <label class="form-label">Company</label>
-              <input type="text" v-model="form.company" class="form-control" />
+              <FieldText
+                id="review-company"
+                label="Empresa"
+                v-model="form.company"
+              />
             </div>
 
             <div class="col-12">
-              <label class="form-label">Comment *</label>
-              <textarea v-model="form.comment" class="form-control" rows="4" required></textarea>
-              <div v-if="errors.comment" class="text-danger small">{{ errors.comment }}</div>
+              <FieldTextarea
+                id="review-comment"
+                label="Comentario"
+                v-model="form.comment"
+                :formError="errors.comment"
+                :rows="4"
+                required
+              />
             </div>
 
             <div class="col-md-6">
-              <label class="form-label">Rating *</label>
-              <select v-model="form.rating" class="form-select" required>
-                <option value="">Select rating...</option>
-                <option value="5">5 Stars</option>
-                <option value="4">4 Stars</option>
-                <option value="3">3 Stars</option>
-                <option value="2">2 Stars</option>
-                <option value="1">1 Star</option>
-              </select>
-              <div v-if="errors.rating" class="text-danger small">{{ errors.rating }}</div>
+              <FieldSelect
+                id="review-rating"
+                label="Calificacion"
+                v-model="form.rating"
+                :formError="errors.rating"
+                required
+              >
+                <option value="">Seleccionar...</option>
+                <option value="5">5 Estrellas</option>
+                <option value="4">4 Estrellas</option>
+                <option value="3">3 Estrellas</option>
+                <option value="2">2 Estrellas</option>
+                <option value="1">1 Estrella</option>
+              </FieldSelect>
             </div>
 
             <div class="col-md-6">
-              <label class="form-label">Google Link</label>
-              <input type="url" v-model="form.google_link" class="form-control" placeholder="https://..." />
+              <FieldUrl
+                id="review-google-link"
+                label="Link de Google"
+                v-model="form.google_link"
+                placeholder="https://..."
+              />
             </div>
 
             <div class="col-12">
-              <div class="form-check">
-                <input type="checkbox" v-model="form.is_active" class="form-check-input" id="is_active" />
-                <label class="form-check-label" for="is_active">Active</label>
-              </div>
+              <FieldSwitch
+                id="review-active"
+                label="Activa"
+                v-model="form.is_active"
+              />
             </div>
 
             <div class="col-12">
               <button type="submit" class="btn btn-primary" :disabled="sending">
-                {{ sending ? 'Saving...' : 'Save' }}
+                {{ sending ? 'Guardando...' : 'Guardar' }}
               </button>
               <Link :href="`/member/businesses/${business.id}/reviews`" class="btn btn-outline-secondary ms-2">
-                Cancel
+                Cancelar
               </Link>
             </div>
           </div>
@@ -73,9 +94,14 @@
 </template>
 
 <script setup>
-import { computed, reactive } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { Head, Link, router, usePage } from '@inertiajs/vue3'
 import MemberLayout from '@/Layouts/MemberLayout.vue'
+import FieldText from '@/Components/Fields/FieldText.vue'
+import FieldTextarea from '@/Components/Fields/FieldTextarea.vue'
+import FieldSelect from '@/Components/Fields/FieldSelect.vue'
+import FieldUrl from '@/Components/Fields/FieldUrl.vue'
+import FieldSwitch from '@/Components/Fields/FieldSwitch.vue'
 
 const page = usePage()
 const business = computed(() => page.props.business)

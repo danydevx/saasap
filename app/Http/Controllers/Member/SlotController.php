@@ -17,11 +17,27 @@ class SlotController extends Controller
     {
         $this->authorize('viewAny', [\Modules\Appointments\Models\BusinessAppointmentSlot::class, $business]);
 
-        $slots = $business->appointmentSlots()
+        $perPage = min((int) $request->get('per_page', 10), 100);
+        $search = $request->get('search', '');
+        $sort = $request->get('sort', 'specific_date');
+        $direction = $request->get('direction', 'desc');
+
+        $allowedSorts = ['specific_date', 'start_time', 'is_available', 'created_at'];
+        if (!in_array($sort, $allowedSorts)) {
+            $sort = 'specific_date';
+        }
+        $direction = strtolower($direction) === 'asc' ? 'asc' : 'desc';
+
+        $query = $business->appointmentSlots()
             ->with(['service', 'location'])
-            ->orderBy('specific_date', 'desc')
-            ->orderBy('start_time', 'desc')
-            ->paginate(20);
+            ->when($search, function ($q) use ($search) {
+                $q->whereHas('service', function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%");
+                });
+            })
+            ->orderBy($sort, $direction);
+
+        $slots = $query->paginate($perPage);
 
         $services = $business->services()
             ->where('is_active', true)
@@ -34,6 +50,34 @@ class SlotController extends Controller
             ->orderBy('name')
             ->get(['id', 'name']);
 
+        $dataTable = [
+            'data' => collect($slots->items())->map(function ($slot) {
+                return [
+                    'id' => $slot->id,
+                    'service' => $slot->service ? [
+                        'id' => $slot->service->id,
+                        'name' => $slot->service->name,
+                    ] : null,
+                    'location' => $slot->location ? [
+                        'id' => $slot->location->id,
+                        'name' => $slot->location->name,
+                    ] : null,
+                    'day_of_week' => $slot->day_of_week,
+                    'specific_date' => $slot->specific_date,
+                    'start_time' => $slot->start_time,
+                    'end_time' => $slot->end_time,
+                    'slots_available' => $slot->slots_available,
+                    'is_available' => $slot->is_available,
+                ];
+            })->toArray(),
+            'current_page' => $slots->currentPage(),
+            'last_page' => $slots->lastPage(),
+            'per_page' => $slots->perPage(),
+            'total' => $slots->total(),
+            'from' => $slots->firstItem(),
+            'to' => $slots->lastItem(),
+        ];
+
         return Inertia::render('Member/Slots/Index', [
             'business' => [
                 'id' => $business->id,
@@ -42,6 +86,7 @@ class SlotController extends Controller
             'slots' => $slots,
             'services' => $services,
             'locations' => $locations,
+            'dataTable' => $dataTable,
         ]);
     }
 

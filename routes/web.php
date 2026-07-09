@@ -81,6 +81,7 @@ use App\Http\Controllers\Member\MenuCategoryController as MemberMenuCategoryCont
 use App\Http\Controllers\Member\MenuProductController as MemberMenuProductController;
 use App\Http\Controllers\Member\MenuProductVariantController as MemberMenuProductVariantController;
 use App\Http\Controllers\Member\MenuProductImageController as MemberMenuProductImageController;
+use App\Http\Controllers\Member\ProductCategoryController as MemberProductCategoryController;
 use App\Http\Controllers\Member\MinisiteThemeController as MemberMinisiteThemeController;
 use App\Http\Controllers\Member\MediaFileController as MemberMediaFileController;
 use App\Http\Controllers\Member\NotificationController;
@@ -418,6 +419,19 @@ Route::put('/member/businesses/{business}/menu-categories/{category}', [MemberMe
 Route::delete('/member/businesses/{business}/menu-categories/{category}', [MemberMenuCategoryController::class, 'destroy'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.menu.categories.destroy');
+
+Route::get('/member/businesses/{business}/product-categories', [MemberProductCategoryController::class, 'index'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.product.categories.index');
+Route::post('/member/businesses/{business}/product-categories', [MemberProductCategoryController::class, 'store'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.product.categories.store');
+Route::put('/member/businesses/{business}/product-categories/{category}', [MemberProductCategoryController::class, 'update'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.product.categories.update');
+Route::delete('/member/businesses/{business}/product-categories/{category}', [MemberProductCategoryController::class, 'destroy'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.product.categories.destroy');
 
 Route::get('/member/businesses/{business}/menu-products', [MemberMenuProductController::class, 'index'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])

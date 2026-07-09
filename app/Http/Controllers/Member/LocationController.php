@@ -15,10 +15,49 @@ class LocationController extends Controller
     {
         $this->authorize('viewAny', [BusinessLocation::class, $business]);
 
-        $locations = $business->locations()
-            ->orderBy('is_primary', 'desc')
-            ->orderBy('name')
-            ->paginate(20);
+        $perPage = min((int) $request->get('per_page', 10), 100);
+        $search = $request->get('search', '');
+        $sort = $request->get('sort', 'name');
+        $direction = $request->get('direction', 'asc');
+
+        $allowedSorts = ['name', 'city', 'is_primary', 'is_active', 'created_at'];
+        if (!in_array($sort, $allowedSorts)) {
+            $sort = 'name';
+        }
+        $direction = strtolower($direction) === 'desc' ? 'desc' : 'asc';
+
+        $query = $business->locations()
+            ->when($search, function ($q) use ($search) {
+                $q->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                      ->orWhere('city', 'like', "%{$search}%")
+                      ->orWhere('address_line_1', 'like', "%{$search}%");
+                });
+            })
+            ->orderByRaw("CASE WHEN is_primary = 1 THEN 0 ELSE 1 END")
+            ->orderBy($sort, $direction);
+
+        $locations = $query->paginate($perPage);
+
+        $dataTable = [
+            'data' => collect($locations->items())->map(function ($loc) {
+                return [
+                    'id' => $loc->id,
+                    'name' => $loc->name,
+                    'address_line_1' => $loc->address_line_1,
+                    'city' => $loc->city,
+                    'phone' => $loc->phone,
+                    'is_primary' => $loc->is_primary,
+                    'is_active' => $loc->is_active,
+                ];
+            })->toArray(),
+            'current_page' => $locations->currentPage(),
+            'last_page' => $locations->lastPage(),
+            'per_page' => $locations->perPage(),
+            'total' => $locations->total(),
+            'from' => $locations->firstItem(),
+            'to' => $locations->lastItem(),
+        ];
 
         return Inertia::render('Member/Locations/Index', [
             'business' => [
@@ -26,6 +65,7 @@ class LocationController extends Controller
                 'name' => $business->name,
             ],
             'locations' => $locations,
+            'dataTable' => $dataTable,
         ]);
     }
 

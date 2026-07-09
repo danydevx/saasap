@@ -19,16 +19,57 @@ class GalleryController extends Controller
     {
         $this->authorize('viewAny', [BusinessGalleryImage::class, $business]);
 
-        $images = $business->galleryImages()
+        $perPage = min((int) $request->get('per_page', 10), 100);
+        $search = $request->get('search', '');
+        $sort = $request->get('sort', 'sort_order');
+        $direction = $request->get('direction', 'asc');
+
+        $allowedSorts = ['title', 'sort_order', 'is_active', 'created_at'];
+        if (!in_array($sort, $allowedSorts)) {
+            $sort = 'sort_order';
+        }
+        $direction = strtolower($direction) === 'desc' ? 'desc' : 'asc';
+
+        $query = $business->galleryImages()
             ->with('location')
-            ->orderBy('sort_order')
-            ->orderByDesc('id')
-            ->paginate(20);
+            ->when($search, function ($q) use ($search) {
+                $q->where(function ($q) use ($search) {
+                    $q->where('title', 'like', "%{$search}%")
+                      ->orWhere('description', 'like', "%{$search}%");
+                });
+            })
+            ->orderBy($sort, $direction)
+            ->orderByDesc('id');
+
+        $images = $query->paginate($perPage);
 
         $locations = $business->locations()
             ->where('is_active', true)
             ->orderBy('name')
             ->get(['id', 'name']);
+
+        $dataTable = [
+            'data' => collect($images->items())->map(function ($img) {
+                return [
+                    'id' => $img->id,
+                    'path' => $img->path,
+                    'title' => $img->title,
+                    'description' => $img->description,
+                    'sort_order' => $img->sort_order,
+                    'is_active' => $img->is_active,
+                    'location' => $img->location ? [
+                        'id' => $img->location->id,
+                        'name' => $img->location->name,
+                    ] : null,
+                ];
+            })->toArray(),
+            'current_page' => $images->currentPage(),
+            'last_page' => $images->lastPage(),
+            'per_page' => $images->perPage(),
+            'total' => $images->total(),
+            'from' => $images->firstItem(),
+            'to' => $images->lastItem(),
+        ];
 
         return Inertia::render('Member/Gallery/Index', [
             'business' => [
@@ -39,6 +80,7 @@ class GalleryController extends Controller
             'locations' => $locations,
             'maxSizeKb' => self::MAX_FILE_SIZE_KB,
             'allowedTypes' => self::ALLOWED_MIME_TYPES,
+            'dataTable' => $dataTable,
         ]);
     }
 

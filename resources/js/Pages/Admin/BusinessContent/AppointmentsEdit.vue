@@ -1,13 +1,13 @@
 <template>
   <AdminLayout>
-    <Head :title="`Editar Turno - ${business.name}`" />
+    <Head :title="`Editar Cita - ${business.name}`" />
 
     <div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
       <div>
         <Link :href="`/admin/businesses/${business.id}/appointments`" class="text-decoration-none text-muted small">
           <i class="bi bi-arrow-left me-1"></i>Volver
         </Link>
-        <h1 class="h4 mb-1 mt-1">Editar Turno</h1>
+        <h1 class="h4 mb-1 mt-1">Editar Cita</h1>
       </div>
     </div>
 

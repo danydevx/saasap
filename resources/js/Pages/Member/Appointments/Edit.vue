@@ -2,128 +2,116 @@
   <MemberLayout>
     <Head :title="`Editar Cita - ${business.name}`" />
 
-    <div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
-      <div>
-        <Link :href="`/member/businesses/${business.id}/appointments`" class="text-decoration-none text-muted small">
-          <i class="bi bi-arrow-left me-1"></i>Volver
-        </Link>
-        <h1 class="h4 mb-1 mt-1">Editar Cita</h1>
-      </div>
-    </div>
+    <PageHeader
+      title="Editar Cita"
+      :breadcrumbs="breadcrumbs"
+      :backHref="`/member/businesses/${business.id}/appointments`"
+    />
 
     <div class="card border-0 shadow-sm">
       <div class="card-body">
         <form @submit.prevent="submit">
-          <div class="row g-3">
+          <div class="row g-3 mb-3">
             <div class="col-md-6">
-              <label for="customer_name" class="form-label">Nombre del cliente *</label>
-              <input
+              <FieldText
                 id="customer_name"
-                type="text"
-                class="form-control"
+                label="Nombre del cliente"
                 v-model="form.customer_name"
+                :formError="errors.customer_name"
                 required
               />
-              <div v-if="errors.customer_name" class="text-danger small">{{ errors.customer_name }}</div>
             </div>
 
             <div class="col-md-6">
-              <label for="customer_email" class="form-label">Email del cliente *</label>
-              <input
+              <FieldEmail
                 id="customer_email"
-                type="email"
-                class="form-control"
+                label="Email del cliente"
                 v-model="form.customer_email"
+                :formError="errors.customer_email"
                 required
               />
-              <div v-if="errors.customer_email" class="text-danger small">{{ errors.customer_email }}</div>
             </div>
 
             <div class="col-md-6">
-              <label for="customer_phone" class="form-label">Telefono</label>
-              <input
+              <FieldPhone
                 id="customer_phone"
-                type="text"
-                class="form-control"
+                label="Telefono"
                 v-model="form.customer_phone"
               />
             </div>
 
             <div class="col-md-6">
-              <label for="business_service_id" class="form-label">Servicio *</label>
-              <select
+              <FieldSelect
                 id="business_service_id"
-                class="form-select"
+                label="Servicio"
                 v-model="form.business_service_id"
+                :formError="errors.business_service_id"
                 required
               >
                 <option :value="null" disabled>Seleccionar servicio</option>
                 <option v-for="svc in services" :key="svc.id" :value="svc.id">
                   {{ svc.name }} ({{ svc.duration_minutes }} min)
                 </option>
-              </select>
-              <div v-if="errors.business_service_id" class="text-danger small">{{ errors.business_service_id }}</div>
+              </FieldSelect>
             </div>
 
             <div class="col-md-6">
-              <label for="business_location_id" class="form-label">Ubicacion</label>
-              <select
+              <FieldSelect
                 id="business_location_id"
-                class="form-select"
+                label="Ubicacion"
                 v-model="form.business_location_id"
+                :formError="errors.business_location_id"
               >
                 <option :value="null">Sin ubicacion</option>
                 <option v-for="loc in locations" :key="loc.id" :value="loc.id">
                   {{ loc.name }}
                 </option>
-              </select>
-              <div v-if="errors.business_location_id" class="text-danger small">{{ errors.business_location_id }}</div>
+              </FieldSelect>
             </div>
 
             <div class="col-md-3">
-              <label for="appointment_date" class="form-label">Fecha *</label>
-              <input
+              <FieldDate
                 id="appointment_date"
-                type="date"
-                class="form-control"
+                label="Fecha"
                 v-model="form.appointment_date"
+                :formError="errors.appointment_date"
                 required
               />
-              <div v-if="errors.appointment_date" class="text-danger small">{{ errors.appointment_date }}</div>
             </div>
 
             <div class="col-md-3">
-              <label for="start_time" class="form-label">Hora *</label>
-              <input
+              <FieldTime
                 id="start_time"
-                type="time"
-                class="form-control"
+                label="Hora"
                 v-model="form.start_time"
+                :formError="errors.start_time"
                 required
               />
-              <div v-if="errors.start_time" class="text-danger small">{{ errors.start_time }}</div>
             </div>
 
             <div class="col-md-4">
-              <label for="status" class="form-label">Estado *</label>
-              <select id="status" class="form-select" v-model="form.status" required>
+              <FieldSelect
+                id="status"
+                label="Estado"
+                v-model="form.status"
+                required
+              >
                 <option value="pending">Pendiente</option>
                 <option value="confirmed">Confirmada</option>
                 <option value="completed">Completada</option>
                 <option value="cancelled">Cancelada</option>
                 <option value="no_show">No asistio</option>
-              </select>
+              </FieldSelect>
             </div>
 
             <div class="col-12">
-              <label for="notes" class="form-label">Notas</label>
-              <textarea
+              <FieldTextarea
                 id="notes"
-                class="form-control"
-                rows="3"
+                label="Notas"
                 v-model="form.notes"
+                :rows="3"
                 placeholder="Notas adicionales..."
-              ></textarea>
+              />
             </div>
 
             <div class="col-12 d-flex gap-2">
@@ -145,6 +133,14 @@
 import { computed, reactive, ref } from 'vue'
 import { Head, Link, router, usePage } from '@inertiajs/vue3'
 import MemberLayout from '@/Layouts/MemberLayout.vue'
+import PageHeader from '@/Components/Admin/PageHeader.vue'
+import FieldText from '@/Components/Fields/FieldText.vue'
+import FieldEmail from '@/Components/Fields/FieldEmail.vue'
+import FieldPhone from '@/Components/Fields/FieldPhone.vue'
+import FieldSelect from '@/Components/Fields/FieldSelect.vue'
+import FieldDate from '@/Components/Fields/FieldDate.vue'
+import FieldTime from '@/Components/Fields/FieldTime.vue'
+import FieldTextarea from '@/Components/Fields/FieldTextarea.vue'
 
 const page = usePage()
 const business = computed(() => page.props.business)
@@ -152,6 +148,11 @@ const appointment = computed(() => page.props.appointment)
 const services = computed(() => page.props.services || [])
 const locations = computed(() => page.props.locations || [])
 const errors = computed(() => page.props.errors || {})
+
+const breadcrumbs = computed(() => [
+  { label: business.value.name, href: `/member/businesses/${business.value.id}/appointments` },
+  { label: 'Editar Cita', active: true },
+])
 
 const sending = ref(false)
 

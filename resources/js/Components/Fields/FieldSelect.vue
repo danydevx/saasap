@@ -9,10 +9,15 @@
         @blur="onBlur"
         :disabled="readonly"
       >
-        <option value="">Seleccione una opción</option>
-        <option v-for="option in options" :key="option.value" :value="option.value">
-          {{ option.label }}
-        </option> 
+        <option value="">{{ placeholder || 'Seleccione una opcion' }}</option>
+        <template v-if="options && options.length">
+          <option v-for="option in options" :key="option.value" :value="option.value">
+            {{ option.label }}
+          </option>
+        </template>
+        <template v-else>
+          <slot></slot>
+        </template>
       </select>
       <label :for="id">{{ label }} <strong v-if="required">*</strong></label>
       <div v-if="(showValidation && validationMessage) || formError" class="invalid-feedback">
@@ -33,9 +38,9 @@ export default {
     showValidation: { type: Boolean, default: false },
     formError: { type: String, default: "" },
     validateFunction: { type: Function, default: null },
-    options: { type: Array, required: true },
+    options: { type: Array, default: null },
     classObject: { type: String, default: "" },
-    readonly: { type: Boolean, default: false }, // <--- NUEVO
+    readonly: { type: Boolean, default: false },
   },
   emits: ["update:modelValue", "blur"],
   computed: {

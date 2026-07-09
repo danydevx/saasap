@@ -1,13 +1,13 @@
 <template>
   <AdminLayout>
-    <Head :title="`Turno - ${business.name}`" />
+    <Head :title="`Cita - ${business.name}`" />
 
     <div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
       <div>
         <Link :href="`/admin/businesses/${business.id}/appointments`" class="text-decoration-none text-muted small">
           <i class="bi bi-arrow-left me-1"></i>Volver
         </Link>
-        <h1 class="h4 mb-1 mt-1">Detalle del Turno</h1>
+        <h1 class="h4 mb-1 mt-1">Detalle de la Cita</h1>
       </div>
     </div>
 
@@ -102,7 +102,7 @@ const statusClass = (status) => {
 }
 
 const cancelAppointment = () => {
-  if (confirm('¿Estás seguro de cancelar este turno?')) {
+  if (confirm('¿Estás seguro de cancelar esta cita?')) {
     router.post(`/admin/businesses/${business.value.id}/appointments/${appointment.value.id}/cancel`, {}, {
       preserveScroll: true,
     })
@@ -110,7 +110,7 @@ const cancelAppointment = () => {
 }
 
 const deleteAppointment = () => {
-  if (confirm('¿Estás seguro de eliminar este turno? Esta acción no se puede deshacer.')) {
+  if (confirm('¿Estás seguro de eliminar esta cita? Esta acción no se puede deshacer.')) {
     router.delete(`/admin/businesses/${business.value.id}/appointments/${appointment.value.id}`, {
       preserveScroll: true,
     })

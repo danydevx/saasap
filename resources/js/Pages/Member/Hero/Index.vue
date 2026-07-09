@@ -2,16 +2,14 @@
   <MemberLayout>
     <Head :title="`Hero - ${business.name}`" />
 
-    <div class="container-fluid py-4">
-      <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-          <h1 class="h4 mb-1">Hero</h1>
-          <p class="text-muted mb-0">{{ business.name }}</p>
-        </div>
-      </div>
+    <PageHeader
+      title="Hero"
+      :breadcrumbs="breadcrumbs"
+      :backHref="'/member/business-modules'"
+    />
 
-      <div class="card border-0 shadow-sm">
-        <div class="card-body">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body">
         <form @submit.prevent="submit">
           <div class="row g-4">
             <div class="col-12">
@@ -19,18 +17,31 @@
             </div>
 
             <div class="col-md-6">
-              <label class="form-label">Título</label>
-              <input v-model="form.title" type="text" class="form-control" placeholder="Tu título aquí">
+              <FieldText
+                id="hero-title"
+                label="Titulo"
+                v-model="form.title"
+                placeholder="Tu titulo aqui"
+              />
             </div>
 
             <div class="col-md-6">
-              <label class="form-label">Subtítulo</label>
-              <input v-model="form.subtitle" type="text" class="form-control" placeholder="Tu subtítulo aquí">
+              <FieldText
+                id="hero-subtitle"
+                label="Subtitulo"
+                v-model="form.subtitle"
+                placeholder="Tu subtitulo aqui"
+              />
             </div>
 
             <div class="col-12">
-              <label class="form-label">Texto auxiliar</label>
-              <textarea v-model="form.text_aux" class="form-control" rows="2" placeholder="Texto adicional que aparece debajo del subtítulo"></textarea>
+              <FieldTextarea
+                id="hero-text-aux"
+                label="Texto auxiliar"
+                v-model="form.text_aux"
+                placeholder="Texto adicional que aparece debajo del subtitulo"
+                :rows="2"
+              />
             </div>
 
             <div class="col-12">
@@ -40,37 +51,44 @@
             <div class="col-12">
               <div v-for="(btn, index) in form.buttons" :key="index" class="row g-3 mb-3 p-3 bg-light rounded">
                 <div class="col-md-3">
-                  <label class="form-label">Texto</label>
-                  <input v-model="btn.text" type="text" class="form-control" placeholder="Reservar turno">
+                  <FieldText
+                    :id="'btn-text-' + index"
+                    label="Texto"
+                    v-model="btn.text"
+                    placeholder="Reservar cita"
+                  />
                 </div>
                 <div class="col-md-2">
-                  <label class="form-label">Tipo de enlace</label>
-                  <select v-model="btn.link_type" class="form-select">
-                    <option value="external">Externo (URL)</option>
-                    <option value="internal">Interno (Ancla)</option>
-                  </select>
+                  <FieldSelect
+                    :id="'btn-link-type-' + index"
+                    label="Tipo de enlace"
+                    v-model="btn.link_type"
+                    :options="linkTypeOptions"
+                  />
                 </div>
                 <div class="col-md-4">
-                  <label class="form-label">{{ btn.link_type === 'internal' ? 'Sección' : 'URL' }}</label>
-                  <select v-if="btn.link_type === 'internal'" v-model="btn.anchor" class="form-select">
-                    <option value="services">Servicios</option>
-                    <option value="gallery">Galería</option>
-                    <option value="products">Productos</option>
-                    <option value="appointments">Reservas</option>
-                    <option value="contact">Contacto</option>
-                    <option value="reviews">Reseñas</option>
-                    <option value="locations">Ubicaciones</option>
-                    <option value="promotions">Promociones</option>
-                  </select>
-                  <input v-else v-model="btn.url" type="text" class="form-control" placeholder="https://...">
+                  <FieldSelect
+                    v-if="btn.link_type === 'internal'"
+                    :id="'btn-anchor-' + index"
+                    label="Seccion"
+                    v-model="btn.anchor"
+                    :options="anchorOptions"
+                  />
+                  <FieldUrl
+                    v-else
+                    :id="'btn-url-' + index"
+                    label="URL"
+                    v-model="btn.url"
+                    placeholder="https://..."
+                  />
                 </div>
                 <div class="col-md-2">
-                  <label class="form-label">Estilo</label>
-                  <select v-model="btn.style" class="form-select">
-                    <option value="primary">Primario</option>
-                    <option value="secondary">Secundario</option>
-                    <option value="outline">Outline</option>
-                  </select>
+                  <FieldSelect
+                    :id="'btn-style-' + index"
+                    label="Estilo"
+                    v-model="btn.style"
+                    :options="styleOptions"
+                  />
                 </div>
                 <div class="col-md-1 d-flex align-items-end">
                   <button type="button" class="btn btn-outline-danger" @click="removeButton(index)">
@@ -80,7 +98,7 @@
               </div>
 
               <button type="button" class="btn btn-outline-primary btn-sm" @click="addButton">
-                <i class="bi bi-plus me-1"></i>Agregar botón
+                <i class="bi bi-plus me-1"></i>Agregar boton
               </button>
             </div>
 
@@ -89,12 +107,12 @@
             </div>
 
             <div class="col-md-4">
-              <label class="form-label">Tipo de fondo</label>
-              <select v-model="form.background_type" class="form-select">
-                <option value="color">Color sólido</option>
-                <option value="gradient">Degradado</option>
-                <option value="image">Imagen</option>
-              </select>
+              <FieldSelect
+                id="background-type"
+                label="Tipo de fondo"
+                v-model="form.background_type"
+                :options="backgroundTypeOptions"
+              />
             </div>
 
             <div v-if="form.background_type === 'color'" class="col-md-4">
@@ -130,69 +148,78 @@
             </div>
 
             <div class="col-12">
-              <h5 class="border-bottom pb-2 mb-3 mt-4">Alineación y opciones</h5>
+              <h5 class="border-bottom pb-2 mb-3 mt-4">Alineacion y opciones</h5>
             </div>
 
             <div class="col-md-4">
-              <label class="form-label">Alineación del texto</label>
-              <select v-model="form.alignment" class="form-select">
-                <option value="left">Izquierda</option>
-                <option value="center">Centro</option>
-                <option value="right">Derecha</option>
-              </select>
+              <FieldSelect
+                id="alignment"
+                label="Alineacion del texto"
+                v-model="form.alignment"
+                :options="alignmentOptions"
+              />
             </div>
 
             <div class="col-md-4">
-              <div class="form-check form-switch mt-4">
-                <input v-model="form.show_contact_info" class="form-check-input" type="checkbox" id="showContact">
-                <label class="form-check-label" for="showContact">Mostrar información de contacto</label>
-              </div>
+              <FieldSwitch
+                id="show-contact"
+                label="Mostrar informacion de contacto"
+                v-model="form.show_contact_info"
+              />
             </div>
 
-<div class="col-md-4">
-                <div class="form-check form-switch mt-4">
-                  <input v-model="form.show_social_links" class="form-check-input" type="checkbox" id="showSocial">
-                  <label class="form-check-label" for="showSocial">Mostrar redes sociales</label>
+            <div class="col-md-4">
+              <FieldSwitch
+                id="show-social"
+                label="Mostrar redes sociales"
+                v-model="form.show_social_links"
+              />
+            </div>
+
+            <div v-if="form.show_social_links" class="col-12">
+              <label class="form-label">Enlaces de redes sociales</label>
+              <div v-for="(social, index) in form.social_links" :key="index" class="row g-3 mb-2 p-2 bg-light rounded">
+                <div class="col-md-3">
+                  <FieldSelect
+                    :id="'social-platform-' + index"
+                    label="Plataforma"
+                    v-model="social.platform"
+                    :options="platformOptions"
+                  />
+                </div>
+                <div class="col-md-6">
+                  <FieldUrl
+                    :id="'social-url-' + index"
+                    label="URL"
+                    v-model="social.url"
+                    placeholder="https://..."
+                  />
+                </div>
+                <div class="col-md-2">
+                  <FieldText
+                    :id="'social-name-' + index"
+                    label="Nombre (opcional)"
+                    v-model="social.name"
+                    placeholder="Nombre"
+                  />
+                </div>
+                <div class="col-md-1 d-flex align-items-end">
+                  <button type="button" class="btn btn-outline-danger" @click="removeSocial(index)">
+                    <i class="bi bi-trash"></i>
+                  </button>
                 </div>
               </div>
+              <button type="button" class="btn btn-outline-primary btn-sm mt-2" @click="addSocial">
+                <i class="bi bi-plus me-1"></i>Agregar red social
+              </button>
+            </div>
 
-              <div v-if="form.show_social_links" class="col-12">
-                <label class="form-label">Enlaces de redes sociales</label>
-                <div v-for="(social, index) in form.social_links" :key="index" class="row g-3 mb-2 p-2 bg-light rounded">
-                  <div class="col-md-3">
-                    <select v-model="social.platform" class="form-select">
-                      <option value="facebook">Facebook</option>
-                      <option value="instagram">Instagram</option>
-                      <option value="twitter">Twitter</option>
-                      <option value="linkedin">LinkedIn</option>
-                      <option value="youtube">YouTube</option>
-                      <option value="tiktok">TikTok</option>
-                      <option value="whatsapp">WhatsApp</option>
-                      <option value="telegram">Telegram</option>
-                    </select>
-                  </div>
-                  <div class="col-md-6">
-                    <input v-model="social.url" type="url" class="form-control" placeholder="https://...">
-                  </div>
-                  <div class="col-md-2">
-                    <input v-model="social.name" type="text" class="form-control" placeholder="Nombre (opcional)">
-                  </div>
-                  <div class="col-md-1">
-                    <button type="button" class="btn btn-outline-danger" @click="removeSocial(index)">
-                      <i class="bi bi-trash"></i>
-                    </button>
-                  </div>
-                </div>
-                <button type="button" class="btn btn-outline-primary btn-sm mt-2" @click="addSocial">
-                  <i class="bi bi-plus me-1"></i>Agregar red social
-                </button>
-              </div>
-
-              <div class="col-md-4">
-              <div class="form-check form-switch mt-4">
-                <input v-model="form.is_active" class="form-check-input" type="checkbox" id="isActive">
-                <label class="form-check-label" for="isActive">Hero activo</label>
-              </div>
+            <div class="col-md-4">
+              <FieldSwitch
+                id="is-active"
+                label="Hero activo"
+                v-model="form.is_active"
+              />
             </div>
           </div>
 
@@ -205,18 +232,76 @@
         </form>
       </div>
     </div>
-    </div>
   </MemberLayout>
 </template>
 
 <script setup>
+import { ref, computed } from 'vue'
 import { Head, useForm } from '@inertiajs/vue3'
 import MemberLayout from '@/Layouts/MemberLayout.vue'
+import PageHeader from '@/Components/Admin/PageHeader.vue'
+import FieldText from '@/Components/Fields/FieldText.vue'
+import FieldSelect from '@/Components/Fields/FieldSelect.vue'
+import FieldTextarea from '@/Components/Fields/FieldTextarea.vue'
+import FieldSwitch from '@/Components/Fields/FieldSwitch.vue'
+import FieldUrl from '@/Components/Fields/FieldUrl.vue'
 
 const props = defineProps({
   business: Object,
   hero: Object,
 })
+
+const business = computed(() => props.business)
+
+const breadcrumbs = computed(() => [
+  { label: business.value.name, href: '/member/business-modules' },
+  { label: 'Hero', active: true },
+])
+
+const linkTypeOptions = [
+  { value: 'external', label: 'Externo (URL)' },
+  { value: 'internal', label: 'Interno (Ancla)' },
+]
+
+const anchorOptions = [
+  { value: 'services', label: 'Servicios' },
+  { value: 'gallery', label: 'Galeria' },
+  { value: 'products', label: 'Productos' },
+  { value: 'appointments', label: 'Reservas' },
+  { value: 'contact', label: 'Contacto' },
+  { value: 'reviews', label: 'Reseñas' },
+  { value: 'locations', label: 'Ubicaciones' },
+  { value: 'promotions', label: 'Promociones' },
+]
+
+const styleOptions = [
+  { value: 'primary', label: 'Primario' },
+  { value: 'secondary', label: 'Secundario' },
+  { value: 'outline', label: 'Outline' },
+]
+
+const backgroundTypeOptions = [
+  { value: 'color', label: 'Color solido' },
+  { value: 'gradient', label: 'Degradado' },
+  { value: 'image', label: 'Imagen' },
+]
+
+const alignmentOptions = [
+  { value: 'left', label: 'Izquierda' },
+  { value: 'center', label: 'Centro' },
+  { value: 'right', label: 'Derecha' },
+]
+
+const platformOptions = [
+  { value: 'facebook', label: 'Facebook' },
+  { value: 'instagram', label: 'Instagram' },
+  { value: 'twitter', label: 'Twitter' },
+  { value: 'linkedin', label: 'LinkedIn' },
+  { value: 'youtube', label: 'YouTube' },
+  { value: 'tiktok', label: 'TikTok' },
+  { value: 'whatsapp', label: 'WhatsApp' },
+  { value: 'telegram', label: 'Telegram' },
+]
 
 const form = useForm({
   title: props.hero?.title || '',
@@ -236,7 +321,7 @@ const form = useForm({
   is_active: props.hero?.is_active ?? true,
 })
 
-let sending = false
+const sending = ref(false)
 
 const addButton = () => {
   form.buttons.push({ text: '', link_type: 'external', url: '', anchor: 'services', style: 'primary' })
@@ -263,8 +348,8 @@ const cleanColor = (value) => {
   return value
 }
 
-const submit = async () => {
-  sending = true
+const submit = () => {
+  sending.value = true
 
   form.transform(data => {
     const fd = new FormData()
@@ -289,7 +374,7 @@ const submit = async () => {
   form.post(`/member/businesses/${props.business.id}/hero`, {
     forceFormData: true,
     onFinish: () => {
-      sending = false
+      sending.value = false
     },
   })
 }

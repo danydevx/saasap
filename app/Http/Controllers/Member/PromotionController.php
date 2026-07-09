@@ -19,11 +19,58 @@ class PromotionController extends Controller
     {
         $this->authorize('viewAny', [BusinessPromotion::class, $business]);
 
-        $promotions = $business->promotions()
+        $perPage = min((int) $request->get('per_page', 10), 100);
+        $search = $request->get('search', '');
+        $sort = $request->get('sort', 'sort_order');
+        $direction = $request->get('direction', 'asc');
+
+        $allowedSorts = ['name', 'regular_price', 'promotion_price', 'is_active', 'sort_order', 'created_at'];
+        if (!in_array($sort, $allowedSorts)) {
+            $sort = 'sort_order';
+        }
+        $direction = strtolower($direction) === 'desc' ? 'desc' : 'asc';
+
+        $query = $business->promotions()
             ->with('location')
-            ->orderBy('sort_order')
-            ->orderByDesc('created_at')
-            ->paginate(20);
+            ->when($search, function ($q) use ($search) {
+                $q->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                      ->orWhere('description', 'like', "%{$search}%")
+                      ->orWhere('coupon_code', 'like', "%{$search}%");
+                });
+            })
+            ->orderBy($sort, $direction)
+            ->orderByDesc('created_at');
+
+        $promotions = $query->paginate($perPage);
+
+        $dataTable = [
+            'data' => collect($promotions->items())->map(function ($promo) {
+                return [
+                    'id' => $promo->id,
+                    'name' => $promo->name,
+                    'description' => $promo->description,
+                    'image' => $promo->image,
+                    'regular_price' => $promo->regular_price,
+                    'promotion_price' => $promo->promotion_price,
+                    'coupon_code' => $promo->coupon_code,
+                    'starts_at' => $promo->starts_at,
+                    'expires_at' => $promo->expires_at,
+                    'is_active' => $promo->is_active,
+                    'sort_order' => $promo->sort_order,
+                    'location' => $promo->location ? [
+                        'id' => $promo->location->id,
+                        'name' => $promo->location->name,
+                    ] : null,
+                ];
+            })->toArray(),
+            'current_page' => $promotions->currentPage(),
+            'last_page' => $promotions->lastPage(),
+            'per_page' => $promotions->perPage(),
+            'total' => $promotions->total(),
+            'from' => $promotions->firstItem(),
+            'to' => $promotions->lastItem(),
+        ];
 
         return Inertia::render('Member/Promotions/Index', [
             'business' => [
@@ -31,6 +78,7 @@ class PromotionController extends Controller
                 'name' => $business->name,
             ],
             'promotions' => $promotions,
+            'dataTable' => $dataTable,
         ]);
     }
 

@@ -2,16 +2,19 @@
   <MemberLayout>
     <Head :title="`Slots - ${business.name}`" />
 
+    <PageHeader
+      title="Turnos de Disponibilidad"
+      :breadcrumbs="breadcrumbs"
+      :backHref="'/member/business-modules'"
+    />
+
     <div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
       <div>
-        <Link :href="`/member/businesses/${business.id}/content`" class="text-decoration-none text-muted small">
-          <i class="bi bi-arrow-left me-1"></i>Volver
-        </Link>
-        <h1 class="h4 mb-1 mt-1">Slots de Disponibilidad</h1>
+        <p class="text-muted mb-0">Gestiona los turnos disponibles para reservas online.</p>
       </div>
       <div>
         <button type="button" class="btn btn-primary btn-sm" @click="openCreateModal">
-          <i class="bi bi-plus me-1"></i>Nuevo Slot
+          <i class="bi bi-plus me-1"></i>Nuevo Turno
         </button>
       </div>
     </div>
@@ -28,7 +31,7 @@
         </div>
 
         <div v-if="slots.data.length === 0" class="text-center text-muted py-5">
-          No hay slots de disponibilidad. Crea uno para permitir reservas online.
+          No hay turnos de disponibilidad. Crea uno para permitir reservas online.
         </div>
 
         <div v-else class="table-responsive">
@@ -93,44 +96,62 @@
       </div>
     </div>
 
-    <!-- Create Modal -->
-    <div v-if="showCreateModal" class="modal d-block" tabindex="-1" style="background: rgba(0,0,0,0.5)">
+    <div ref="createModalElement" class="modal fade" tabindex="-1">
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title">Nuevo Slot</h5>
-            <button type="button" class="btn-close" @click="closeCreateModal"></button>
+            <h5 class="modal-title">Nuevo Turno</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
           </div>
           <form @submit.prevent="createSlot">
             <div class="modal-body">
               <div class="mb-3">
-                <label class="form-label">Servicio *</label>
-                <select v-model="form.business_service_id" class="form-select" required>
+                <FieldSelect
+                  id="slot-service"
+                  label="Servicio"
+                  v-model="form.business_service_id"
+                  required
+                >
                   <option value="">Seleccionar...</option>
                   <option v-for="svc in services" :key="svc.id" :value="svc.id">{{ svc.name }}</option>
-                </select>
+                </FieldSelect>
               </div>
               <div class="mb-3">
-                <label class="form-label">Ubicacion</label>
-                <select v-model="form.business_location_id" class="form-select">
+                <FieldSelect
+                  id="slot-location"
+                  label="Ubicacion"
+                  v-model="form.business_location_id"
+                >
                   <option :value="null">Todas las ubicaciones</option>
                   <option v-for="loc in locations" :key="loc.id" :value="loc.id">{{ loc.name }}</option>
-                </select>
+                </FieldSelect>
               </div>
               <div class="mb-3">
-                <label class="form-label">Tipo de schedule</label>
-                <select v-model="scheduleType" class="form-select" @change="resetSchedule">
+                <FieldSelect
+                  id="slot-schedule-type"
+                  label="Tipo de schedule"
+                  v-model="scheduleType"
+                >
                   <option value="date">Fecha especifica</option>
                   <option value="recurring">Recurrente (dia de la semana)</option>
-                </select>
+                </FieldSelect>
               </div>
               <div v-if="scheduleType === 'date'" class="mb-3">
-                <label class="form-label">Fecha *</label>
-                <input type="date" v-model="form.specific_date" class="form-control" required :min="minDate" />
+                <FieldDate
+                  id="slot-date"
+                  label="Fecha"
+                  v-model="form.specific_date"
+                  :min="minDate"
+                  required
+                />
               </div>
               <div v-else class="mb-3">
-                <label class="form-label">Dia de la semana *</label>
-                <select v-model="form.day_of_week" class="form-select" required>
+                <FieldSelect
+                  id="slot-day"
+                  label="Dia de la semana"
+                  v-model="form.day_of_week"
+                  required
+                >
                   <option :value="0">Domingo</option>
                   <option :value="1">Lunes</option>
                   <option :value="2">Martes</option>
@@ -138,27 +159,38 @@
                   <option :value="4">Jueves</option>
                   <option :value="5">Viernes</option>
                   <option :value="6">Sabado</option>
-                </select>
+                </FieldSelect>
               </div>
-              <div class="row">
-                <div class="col-6 mb-3">
-                  <label class="form-label">Hora inicio *</label>
-                  <input type="time" v-model="form.start_time" class="form-control" required />
+              <div class="row g-3">
+                <div class="col-6">
+                  <FieldTime
+                    id="slot-start"
+                    label="Hora inicio"
+                    v-model="form.start_time"
+                    required
+                  />
                 </div>
-                <div class="col-6 mb-3">
-                  <label class="form-label">Hora fin *</label>
-                  <input type="time" v-model="form.end_time" class="form-control" required />
+                <div class="col-6">
+                  <FieldTime
+                    id="slot-end"
+                    label="Hora fin"
+                    v-model="form.end_time"
+                    required
+                  />
                 </div>
               </div>
-              <div class="mb-3">
-                <label class="form-label">Cupos disponibles</label>
-                <input type="number" v-model="form.slots_available" class="form-control" min="1" value="1" />
+              <div class="mb-3 mt-3">
+                <FieldNumber
+                  id="slot-capacity"
+                  label="Cupos disponibles"
+                  v-model="form.slots_available"
+                />
               </div>
             </div>
             <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" @click="closeCreateModal">Cancelar</button>
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
               <button type="submit" class="btn btn-primary" :disabled="creating">
-                {{ creating ? 'Creando...' : 'Crear Slot' }}
+                {{ creating ? 'Creando...' : 'Crear Turno' }}
               </button>
             </div>
           </form>
@@ -166,44 +198,61 @@
       </div>
     </div>
 
-    <!-- Edit Modal -->
-    <div v-if="showEditModal" class="modal d-block" tabindex="-1" style="background: rgba(0,0,0,0.5)">
+    <div ref="editModalElement" class="modal fade" tabindex="-1">
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title">Editar Slot</h5>
-            <button type="button" class="btn-close" @click="closeEditModal"></button>
+            <h5 class="modal-title">Editar Turno</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
           </div>
           <form @submit.prevent="updateSlot">
             <div class="modal-body">
               <div class="mb-3">
-                <label class="form-label">Servicio *</label>
-                <select v-model="editForm.business_service_id" class="form-select" required>
+                <FieldSelect
+                  id="edit-slot-service"
+                  label="Servicio"
+                  v-model="editForm.business_service_id"
+                  required
+                >
                   <option value="">Seleccionar...</option>
                   <option v-for="svc in services" :key="svc.id" :value="svc.id">{{ svc.name }}</option>
-                </select>
+                </FieldSelect>
               </div>
               <div class="mb-3">
-                <label class="form-label">Ubicacion</label>
-                <select v-model="editForm.business_location_id" class="form-select">
+                <FieldSelect
+                  id="edit-slot-location"
+                  label="Ubicacion"
+                  v-model="editForm.business_location_id"
+                >
                   <option :value="null">Todas las ubicaciones</option>
                   <option v-for="loc in locations" :key="loc.id" :value="loc.id">{{ loc.name }}</option>
-                </select>
+                </FieldSelect>
               </div>
               <div class="mb-3">
-                <label class="form-label">Tipo de schedule</label>
-                <select v-model="editScheduleType" class="form-select" @change="resetEditSchedule">
+                <FieldSelect
+                  id="edit-slot-schedule-type"
+                  label="Tipo de schedule"
+                  v-model="editScheduleType"
+                >
                   <option value="date">Fecha especifica</option>
                   <option value="recurring">Recurrente (dia de la semana)</option>
-                </select>
+                </FieldSelect>
               </div>
               <div v-if="editScheduleType === 'date'" class="mb-3">
-                <label class="form-label">Fecha *</label>
-                <input type="date" v-model="editForm.specific_date" class="form-control" required />
+                <FieldDate
+                  id="edit-slot-date"
+                  label="Fecha"
+                  v-model="editForm.specific_date"
+                  required
+                />
               </div>
               <div v-else class="mb-3">
-                <label class="form-label">Dia de la semana *</label>
-                <select v-model="editForm.day_of_week" class="form-select" required>
+                <FieldSelect
+                  id="edit-slot-day"
+                  label="Dia de la semana"
+                  v-model="editForm.day_of_week"
+                  required
+                >
                   <option :value="0">Domingo</option>
                   <option :value="1">Lunes</option>
                   <option :value="2">Martes</option>
@@ -211,33 +260,45 @@
                   <option :value="4">Jueves</option>
                   <option :value="5">Viernes</option>
                   <option :value="6">Sabado</option>
-                </select>
+                </FieldSelect>
               </div>
-              <div class="row">
-                <div class="col-6 mb-3">
-                  <label class="form-label">Hora inicio *</label>
-                  <input type="time" v-model="editForm.start_time" class="form-control" required />
+              <div class="row g-3">
+                <div class="col-6">
+                  <FieldTime
+                    id="edit-slot-start"
+                    label="Hora inicio"
+                    v-model="editForm.start_time"
+                    required
+                  />
                 </div>
-                <div class="col-6 mb-3">
-                  <label class="form-label">Hora fin *</label>
-                  <input type="time" v-model="editForm.end_time" class="form-control" required />
+                <div class="col-6">
+                  <FieldTime
+                    id="edit-slot-end"
+                    label="Hora fin"
+                    v-model="editForm.end_time"
+                    required
+                  />
                 </div>
               </div>
-              <div class="row">
-                <div class="col-6 mb-3">
-                  <label class="form-label">Cupos disponibles</label>
-                  <input type="number" v-model="editForm.slots_available" class="form-control" min="1" />
+              <div class="row g-3 mt-1">
+                <div class="col-6">
+                  <FieldNumber
+                    id="edit-slot-capacity"
+                    label="Cupos disponibles"
+                    v-model="editForm.slots_available"
+                  />
                 </div>
-                <div class="col-6 mb-3 d-flex align-items-end">
-                  <div class="form-check w-100">
-                    <input type="checkbox" v-model="editForm.is_available" class="form-check-input" id="edit-is-available" />
-                    <label class="form-check-label" for="edit-is-available">Activo</label>
-                  </div>
+                <div class="col-6 d-flex align-items-end">
+                  <FieldSwitch
+                    id="edit-slot-active"
+                    label="Activo"
+                    v-model="editForm.is_available"
+                  />
                 </div>
               </div>
             </div>
             <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" @click="closeEditModal">Cancelar</button>
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
               <button type="submit" class="btn btn-primary" :disabled="saving">
                 {{ saving ? 'Guardando...' : 'Guardar Cambios' }}
               </button>
@@ -250,10 +311,17 @@
 </template>
 
 <script setup>
-import { computed, reactive, ref } from 'vue'
+import { computed, reactive, ref, onMounted, nextTick } from 'vue'
 import { Head, Link, router, usePage } from '@inertiajs/vue3'
+import { Modal } from 'bootstrap'
 import MemberLayout from '@/Layouts/MemberLayout.vue'
+import PageHeader from '@/Components/Admin/PageHeader.vue'
 import Pagination from '@/Components/Admin/Pagination.vue'
+import FieldSelect from '@/Components/Fields/FieldSelect.vue'
+import FieldDate from '@/Components/Fields/FieldDate.vue'
+import FieldTime from '@/Components/Fields/FieldTime.vue'
+import FieldNumber from '@/Components/Fields/FieldNumber.vue'
+import FieldSwitch from '@/Components/Fields/FieldSwitch.vue'
 
 const page = usePage()
 const business = computed(() => page.props.business)
@@ -261,8 +329,16 @@ const slots = computed(() => page.props.slots || { data: [] })
 const services = computed(() => page.props.services || [])
 const locations = computed(() => page.props.locations || [])
 
-const showCreateModal = ref(false)
-const showEditModal = ref(false)
+const breadcrumbs = computed(() => [
+  { label: business.value.name, href: '/member/business-modules' },
+  { label: 'Turnos', active: true },
+])
+
+const createModalElement = ref(null)
+const editModalElement = ref(null)
+let createModal = null
+let editModal = null
+
 const creating = ref(false)
 const saving = ref(false)
 const deleting = ref(null)
@@ -322,11 +398,11 @@ const openCreateModal = () => {
   form.end_time = '10:00'
   form.slots_available = 1
   scheduleType.value = 'date'
-  showCreateModal.value = true
+  nextTick(() => createModal.show())
 }
 
 const closeCreateModal = () => {
-  showCreateModal.value = false
+  createModal.hide()
 }
 
 const openEditModal = (slot) => {
@@ -349,12 +425,11 @@ const openEditModal = (slot) => {
     editForm.specific_date = ''
   }
 
-  showEditModal.value = true
+  nextTick(() => editModal.show())
 }
 
 const closeEditModal = () => {
-  showEditModal.value = false
-  editingSlot.value = null
+  editModal.hide()
 }
 
 const createSlot = () => {
@@ -397,7 +472,7 @@ const toggleSlot = (slot) => {
 }
 
 const deleteSlot = (slot) => {
-  if (confirm('Eliminar este slot?')) {
+  if (confirm('Eliminar este turno?')) {
     deleting.value = slot.id
     router.delete(`/member/businesses/${business.value.id}/slots/${slot.id}`, {
       preserveScroll: true,
@@ -407,4 +482,9 @@ const deleteSlot = (slot) => {
     })
   }
 }
+
+onMounted(() => {
+  createModal = new Modal(createModalElement.value)
+  editModal = new Modal(editModalElement.value)
+})
 </script>

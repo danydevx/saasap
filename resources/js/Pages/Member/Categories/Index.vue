@@ -1,15 +1,20 @@
 <template>
   <MemberLayout>
-    <Head title="Categorías del Menú" />
+    <Head title="Categorias del Menu" />
+
+    <PageHeader
+      title="Categorias del Menu"
+      :breadcrumbs="breadcrumbs"
+      :backHref="`/member/businesses/${business?.id}/content`"
+    />
 
     <div class="container-fluid py-4">
       <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-          <h1 class="h4 mb-1">Categorías del Menú</h1>
           <p class="text-muted mb-0">{{ business?.name }}</p>
         </div>
-        <button @click="showCreateModal = true" class="btn btn-primary">
-          <i class="bi bi-plus-lg"></i> Nueva Categoría
+        <button @click="openCreateModal" class="btn btn-primary">
+          <i class="bi bi-plus-lg"></i> Nueva Categoria
         </button>
       </div>
 
@@ -23,12 +28,12 @@
     </div>
 
     <div v-if="categories.length === 0" class="alert alert-info">
-      No hay categorías creadas. Crea tu primera categoría para empezar.
+      No hay categorias creadas. Crea tu primera categoria para empezar.
     </div>
 
     <div class="mb-3">
       <Link :href="`/member/businesses/${business.id}/menu-products?uncategorized=1`" class="btn btn-outline-secondary btn-sm">
-        <i class="bi bi-dash-circle me-1"></i>Productos sin categoría
+        <i class="bi bi-dash-circle me-1"></i>Productos sin categoria
       </Link>
     </div>
 
@@ -39,7 +44,7 @@
             <strong>{{ category.title }}</strong>
             <span v-if="!category.active" class="badge bg-secondary ms-2">Inactiva</span>
           </span>
-          <small class="text-muted d-block">{{ category.children?.length || 0 }} subcategorías, {{ category.products?.length || 0 }} productos</small>
+          <small class="text-muted d-block">{{ category.children?.length || 0 }} subcategorias, {{ category.products?.length || 0 }} productos</small>
           <Link :href="`/member/businesses/${business.id}/menu-products?category=${category.id}`" class="text-decoration-none small">
             <i class="bi bi-box-seam me-1"></i>Ver productos
           </Link>
@@ -80,31 +85,42 @@
       </div>
     </div>
 
-    <div v-if="showCreateModal || editingCategory" class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5)">
+    <div ref="modalElement" class="modal fade" tabindex="-1">
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title">{{ editingCategory ? 'Editar Categoría' : 'Nueva Categoría' }}</h5>
-            <button type="button" class="btn-close" @click="closeModal"></button>
+            <h5 class="modal-title">{{ editingCategory ? 'Editar Categoria' : 'Nueva Categoria' }}</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
           </div>
           <form @submit.prevent="submitForm">
             <div class="modal-body">
               <div class="mb-3">
-                <label class="form-label">Nombre de la categoría</label>
-                <input v-model="form.title" type="text" class="form-control" required>
+                <FieldText
+                  id="category-title"
+                  label="Nombre de la categoria"
+                  v-model="form.title"
+                  required
+                />
               </div>
               <div class="mb-3">
-                <label class="form-label">Descripción</label>
-                <textarea v-model="form.description" class="form-control" rows="3"></textarea>
+                <FieldTextarea
+                  id="category-description"
+                  label="Descripcion"
+                  v-model="form.description"
+                  :rows="3"
+                />
               </div>
               <div class="mb-3">
-                <label class="form-label">Categoría padre</label>
-                <select v-model="form.parent_id" class="form-select">
-                  <option :value="null">Ninguna (categoría principal)</option>
+                <FieldSelect
+                  id="category-parent"
+                  label="Categoria padre"
+                  v-model="form.parent_id"
+                >
+                  <option :value="null">Ninguna (categoria principal)</option>
                   <option v-for="cat in flatCategories" :key="cat.id" :value="cat.id">
                     {{ cat.nested_title }}
                   </option>
-                </select>
+                </FieldSelect>
               </div>
               <div class="mb-3">
                 <label class="form-label">Imagen</label>
@@ -118,23 +134,33 @@
                 <div v-if="imagePreview || form.image" class="mt-2">
                   <img :src="imagePreview || form.image" class="img-thumbnail" style="max-height: 150px;" alt="Preview" />
                 </div>
-                <small class="text-muted">JPG, PNG o WebP, max 5MB. Tambien puedes ingresar una URL abajo.</small>
+                <small class="text-muted d-block">JPG, PNG o WebP, max 5MB. Tambien puedes ingresar una URL abajo.</small>
               </div>
               <div class="mb-3">
-                <label class="form-label">URL de imagen (alternativo)</label>
-                <input v-model="form.image" type="text" class="form-control" placeholder="https://...">
+                <FieldUrl
+                  id="category-image-url"
+                  label="URL de imagen (alternativo)"
+                  v-model="form.image"
+                  placeholder="https://..."
+                />
               </div>
               <div class="mb-3">
-                <label class="form-label">Orden</label>
-                <input v-model.number="form.sort_order" type="number" class="form-control">
+                <FieldNumber
+                  id="category-sort"
+                  label="Orden"
+                  v-model="form.sort_order"
+                />
               </div>
-              <div class="mb-3 form-check">
-                <input v-model="form.active" type="checkbox" class="form-check-input" id="activeCheck">
-                <label class="form-check-label" for="activeCheck">Activa</label>
+              <div class="mb-3">
+                <FieldSwitch
+                  id="category-active"
+                  label="Activa"
+                  v-model="form.active"
+                />
               </div>
             </div>
             <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" @click="closeModal">Cancelar</button>
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
               <button type="submit" class="btn btn-primary" :disabled="sending">
                 {{ sending ? 'Guardando...' : 'Guardar' }}
               </button>
@@ -148,14 +174,32 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import { Head, usePage, Link, router } from '@inertiajs/vue3'
+import { Modal } from 'bootstrap'
 import MemberLayout from '@/Layouts/MemberLayout.vue'
+import PageHeader from '@/Components/Admin/PageHeader.vue'
+import FieldText from '@/Components/Fields/FieldText.vue'
+import FieldTextarea from '@/Components/Fields/FieldTextarea.vue'
+import FieldSelect from '@/Components/Fields/FieldSelect.vue'
+import FieldNumber from '@/Components/Fields/FieldNumber.vue'
+import FieldSwitch from '@/Components/Fields/FieldSwitch.vue'
+import FieldUrl from '@/Components/Fields/FieldUrl.vue'
 
 const props = defineProps({
   business: Object,
   categories: Array,
 })
+
+const business = computed(() => props.business)
+
+const breadcrumbs = computed(() => [
+  { label: business.value?.name, href: `/member/businesses/${business.value?.id}/content` },
+  { label: 'Categorias del Menu', active: true },
+])
+
+const modalElement = ref(null)
+let categoryModal = null
 
 const showCreateModal = ref(false)
 const editingCategory = ref(null)
@@ -190,6 +234,20 @@ const flatCategories = computed(() => {
   return flat
 })
 
+const openCreateModal = () => {
+  editingCategory.value = null
+  imagePreview.value = null
+  form.value = {
+    title: '',
+    description: '',
+    parent_id: null,
+    image: '',
+    sort_order: 0,
+    active: true,
+  }
+  nextTick(() => categoryModal.show())
+}
+
 const editCategory = (category) => {
   editingCategory.value = category
   imagePreview.value = null
@@ -201,6 +259,7 @@ const editCategory = (category) => {
     sort_order: category.sort_order || 0,
     active: category.active,
   }
+  nextTick(() => categoryModal.show())
 }
 
 const handleImageChange = (e) => {
@@ -209,13 +268,13 @@ const handleImageChange = (e) => {
 
   const maxSize = 5 * 1024 * 1024
   if (file.size > maxSize) {
-    alert('El archivo supera el tamaño máximo de 5MB.')
+    alert('El archivo supera el tamano maximo de 5MB.')
     return
   }
 
   const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
   if (!allowedTypes.includes(file.type)) {
-    alert('Solo se permiten imágenes (JPEG, PNG, WebP, GIF).')
+    alert('Solo se permiten imagenes (JPEG, PNG, WebP, GIF).')
     return
   }
 
@@ -228,7 +287,7 @@ const handleImageChange = (e) => {
 }
 
 const deleteCategory = (category) => {
-  if (!confirm(`¿Eliminar la categoría "${category.title}"?`)) return
+  if (!confirm(`Eliminar la categoria "${category.title}"?`)) return
 
   router.delete(`/member/businesses/${props.business.id}/menu-categories/${category.id}`, {
     preserveScroll: true,
@@ -236,18 +295,7 @@ const deleteCategory = (category) => {
 }
 
 const closeModal = () => {
-  showCreateModal.value = false
-  editingCategory.value = null
-  imagePreview.value = null
-  if (imageInput.value) imageInput.value.value = ''
-  form.value = {
-    title: '',
-    description: '',
-    parent_id: null,
-    image: '',
-    sort_order: 0,
-    active: true,
-  }
+  categoryModal.hide()
 }
 
 const submitForm = () => {
@@ -271,4 +319,8 @@ const submitForm = () => {
     })
   }
 }
+
+onMounted(() => {
+  categoryModal = new Modal(modalElement.value)
+})
 </script>

@@ -48,4 +48,9 @@ class BusinessProduct extends Model
     {
         return $this->hasMany(BusinessProductImage::class);
     }
+
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(BusinessProductCategory::class, 'category_id');
+    }
 }

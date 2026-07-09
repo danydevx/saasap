@@ -75,7 +75,7 @@
 
     <section id="appointments" v-if="isModuleEnabled('appointments')" class="py-5 text-center" :style="{ backgroundColor: 'var(--minisite-primary)', color: 'white' }">
       <div class="container">
-        <h2 class="fw-bold mb-3">¿Listo para tu turno?</h2>
+        <h2 class="fw-bold mb-3">¿Listo para tu cita?</h2>
         <p class="mb-4 lead">Reserva online de forma rápida y sencilla</p>
         <Link :href="`/b/${business.slug}/book`" class="btn btn-lg btn-light">
           <i class="bi bi-calendar-check me-2"></i>Reservar ahora

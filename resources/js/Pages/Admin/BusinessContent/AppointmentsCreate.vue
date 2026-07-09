@@ -1,13 +1,13 @@
 <template>
   <AdminLayout>
-    <Head :title="`Nuevo Turno - ${business.name}`" />
+    <Head :title="`Nueva Cita - ${business.name}`" />
 
     <div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
       <div>
         <Link :href="`/admin/businesses/${business.id}/appointments`" class="text-decoration-none text-muted small">
           <i class="bi bi-arrow-left me-1"></i>Volver
         </Link>
-        <h1 class="h4 mb-1 mt-1">Nuevo Turno</h1>
+        <h1 class="h4 mb-1 mt-1">Nueva Cita</h1>
       </div>
     </div>
 
@@ -119,7 +119,7 @@
 
             <div class="col-12">
               <button type="submit" class="btn btn-primary" :disabled="sending">
-                {{ sending ? 'Guardando...' : 'Crear Turno' }}
+                {{ sending ? 'Guardando...' : 'Crear Cita' }}
               </button>
               <Link :href="`/admin/businesses/${business.id}/appointments`" class="btn btn-outline-secondary ms-2">
                 Cancelar

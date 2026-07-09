@@ -15,7 +15,50 @@ class SocialNetworkController extends Controller
     {
         $this->authorize('viewAny', [BusinessSocialNetwork::class, $business]);
 
-        $socialNetworks = $business->socialNetworks()->orderBy('sort_order')->get();
+        $perPage = min((int) $request->get('per_page', 10), 100);
+        $search = $request->get('search', '');
+        $sort = $request->get('sort', 'sort_order');
+        $direction = $request->get('direction', 'asc');
+
+        $allowedSorts = ['platform', 'is_active', 'sort_order', 'created_at'];
+        if (!in_array($sort, $allowedSorts)) {
+            $sort = 'sort_order';
+        }
+        $direction = strtolower($direction) === 'desc' ? 'desc' : 'asc';
+
+        $query = $business->socialNetworks()
+            ->when($search, function ($q) use ($search) {
+                $q->where(function ($q) use ($search) {
+                    $q->where('platform', 'like', "%{$search}%")
+                      ->orWhere('username', 'like', "%{$search}%")
+                      ->orWhere('url', 'like', "%{$search}%");
+                });
+            })
+            ->orderBy($sort, $direction);
+
+        $socialNetworks = $query->paginate($perPage);
+
+        $dataTable = [
+            'data' => collect($socialNetworks->items())->map(function ($sn) {
+                return [
+                    'id' => $sn->id,
+                    'platform' => $sn->platform,
+                    'url' => $sn->url,
+                    'username' => $sn->username,
+                    'is_active' => $sn->is_active,
+                    'show_on_hero' => $sn->show_on_hero,
+                    'show_on_footer' => $sn->show_on_footer,
+                    'show_on_contact' => $sn->show_on_contact,
+                    'sort_order' => $sn->sort_order,
+                ];
+            })->toArray(),
+            'current_page' => $socialNetworks->currentPage(),
+            'last_page' => $socialNetworks->lastPage(),
+            'per_page' => $socialNetworks->perPage(),
+            'total' => $socialNetworks->total(),
+            'from' => $socialNetworks->firstItem(),
+            'to' => $socialNetworks->lastItem(),
+        ];
 
         return Inertia::render('Member/SocialNetworks/Index', [
             'business' => [
@@ -24,6 +67,7 @@ class SocialNetworkController extends Controller
             ],
             'socialNetworks' => $socialNetworks,
             'platforms' => BusinessSocialNetwork::$platforms,
+            'dataTable' => $dataTable,
         ]);
     }
 

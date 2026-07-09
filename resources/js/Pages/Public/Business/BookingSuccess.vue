@@ -1,7 +1,7 @@
 <template>
   <div>
     <h1>Reserva confirmada!</h1>
-    <p>Tu turno ha sido reservado exitosamente.</p>
+    <p>Tu cita ha sido reservada exitosamente.</p>
     <p>Te enviaremos un email de confirmacion.</p>
     <Link :href="`/b/${$page.props.business?.slug || ''}`">Volver al negocio</Link>
   </div>

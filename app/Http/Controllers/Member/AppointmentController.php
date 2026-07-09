@@ -18,11 +18,31 @@ class AppointmentController extends Controller
     {
         $this->authorize('viewAny', [BusinessAppointment::class, $business]);
 
-        $appointments = $business->appointments()
+        $perPage = min((int) $request->get('per_page', 10), 100);
+        $search = $request->get('search', '');
+        $sort = $request->get('sort', 'appointment_date');
+        $direction = $request->get('direction', 'desc');
+
+        $allowedSorts = ['appointment_date', 'start_time', 'customer_name', 'status', 'created_at'];
+        if (!in_array($sort, $allowedSorts)) {
+            $sort = 'appointment_date';
+        }
+        $direction = strtolower($direction) === 'asc' ? 'asc' : 'desc';
+
+        $query = $business->appointments()
             ->with(['location', 'service'])
-            ->orderByDesc('appointment_date')
-            ->orderByDesc('start_time')
-            ->paginate(20);
+            ->when($search, function ($q) use ($search) {
+                $q->where(function ($q) use ($search) {
+                    $q->where('customer_name', 'like', "%{$search}%")
+                      ->orWhere('customer_email', 'like', "%{$search}%")
+                      ->orWhereHas('service', function ($q) use ($search) {
+                          $q->where('name', 'like', "%{$search}%");
+                      });
+                });
+            })
+            ->orderBy($sort, $direction);
+
+        $appointments = $query->paginate($perPage);
 
         $services = $business->services()
             ->where('is_active', true)
@@ -34,6 +54,37 @@ class AppointmentController extends Controller
             ->orderBy('name')
             ->get(['id', 'name', 'address_line_1']);
 
+        $dataTable = [
+            'data' => collect($appointments->items())->map(function ($apt) {
+                return [
+                    'id' => $apt->id,
+                    'customer_name' => $apt->customer_name,
+                    'customer_email' => $apt->customer_email,
+                    'customer_phone' => $apt->customer_phone,
+                    'appointment_date' => $apt->appointment_date,
+                    'start_time' => $apt->start_time,
+                    'end_time' => $apt->end_time,
+                    'status' => $apt->status->value,
+                    'status_label' => $apt->status->label(),
+                    'notes' => $apt->notes,
+                    'service' => $apt->service ? [
+                        'id' => $apt->service->id,
+                        'name' => $apt->service->name,
+                    ] : null,
+                    'location' => $apt->location ? [
+                        'id' => $apt->location->id,
+                        'name' => $apt->location->name,
+                    ] : null,
+                ];
+            })->toArray(),
+            'current_page' => $appointments->currentPage(),
+            'last_page' => $appointments->lastPage(),
+            'per_page' => $appointments->perPage(),
+            'total' => $appointments->total(),
+            'from' => $appointments->firstItem(),
+            'to' => $appointments->lastItem(),
+        ];
+
         return Inertia::render('Member/Appointments/Index', [
             'business' => [
                 'id' => $business->id,
@@ -42,6 +93,7 @@ class AppointmentController extends Controller
             'appointments' => $appointments,
             'services' => $services,
             'locations' => $locations,
+            'dataTable' => $dataTable,
         ]);
     }
 

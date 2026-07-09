@@ -1,18 +1,18 @@
 <template>
   <AdminLayout>
-    <Head :title="`Turnos - ${business.name}`" />
+    <Head :title="`Citas - ${business.name}`" />
 
     <div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
       <div>
         <Link href="/admin/businesses" class="text-decoration-none text-muted small">
           <i class="bi bi-arrow-left me-1"></i>Negocios
         </Link>
-        <h1 class="h4 mb-1 mt-1">{{ business.name }} - Turnos</h1>
+        <h1 class="h4 mb-1 mt-1">{{ business.name }} - Citas</h1>
       </div>
       <div>
         <Link :href="`/admin/businesses/${business.id}/appointments/create`" class="btn btn-primary btn-sm">
           <i class="bi bi-plus-lg me-1"></i>
-          Nuevo Turno
+          Nueva Cita
         </Link>
       </div>
     </div>
@@ -40,7 +40,7 @@
             <tbody>
               <tr v-if="appointments.data.length === 0">
                 <td colspan="7" class="text-center text-muted py-4">
-                  No hay turnos registrados.
+                  No hay citas registradas.
                 </td>
               </tr>
               <tr v-for="apt in appointments.data" :key="apt.id">
@@ -119,7 +119,7 @@ const statusClass = (status) => {
 }
 
 const cancelAppointment = (apt) => {
-  if (confirm('¿Estás seguro de cancelar este turno?')) {
+  if (confirm('¿Estás seguro de cancelar esta cita?')) {
     router.post(`/admin/businesses/${business.value.id}/appointments/${apt.id}/cancel`, {}, {
       preserveScroll: true,
     })
@@ -127,7 +127,7 @@ const cancelAppointment = (apt) => {
 }
 
 const deleteAppointment = (apt) => {
-  if (confirm('¿Estás seguro de eliminar este turno? Esta acción no se puede deshacer.')) {
+  if (confirm('¿Estás seguro de eliminar esta cita? Esta acción no se puede deshacer.')) {
     router.delete(`/admin/businesses/${business.value.id}/appointments/${apt.id}`, {
       preserveScroll: true,
     })

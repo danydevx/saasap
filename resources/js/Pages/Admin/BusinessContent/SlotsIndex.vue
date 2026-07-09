@@ -1,17 +1,17 @@
 <template>
   <AdminLayout>
-    <Head :title="`Slots - ${business.name}`" />
+    <Head :title="`Turnos - ${business.name}`" />
 
     <div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
       <div>
         <Link href="/admin/businesses" class="text-decoration-none text-muted small">
           <i class="bi bi-arrow-left me-1"></i>Negocios
         </Link>
-        <h1 class="h4 mb-1 mt-1">{{ business.name }} - Slots</h1>
+        <h1 class="h4 mb-1 mt-1">{{ business.name }} - Turnos</h1>
       </div>
       <div>
         <button type="button" class="btn btn-primary btn-sm" @click="openCreateModal">
-          <i class="bi bi-plus me-1"></i>Nuevo Slot
+          <i class="bi bi-plus me-1"></i>Nuevo Turno
         </button>
       </div>
     </div>
@@ -98,7 +98,7 @@
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title">Nuevo Slot</h5>
+            <h5 class="modal-title">Nuevo Turno</h5>
             <button type="button" class="btn-close" @click="closeCreateModal"></button>
           </div>
           <form @submit.prevent="createSlot">
@@ -158,7 +158,7 @@
             <div class="modal-footer">
               <button type="button" class="btn btn-secondary" @click="closeCreateModal">Cancelar</button>
               <button type="submit" class="btn btn-primary" :disabled="creating">
-                {{ creating ? 'Creando...' : 'Crear Slot' }}
+                {{ creating ? 'Creando...' : 'Crear Turno' }}
               </button>
             </div>
           </form>
@@ -171,7 +171,7 @@
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title">Editar Slot</h5>
+            <h5 class="modal-title">Editar Turno</h5>
             <button type="button" class="btn-close" @click="closeEditModal"></button>
           </div>
           <form @submit.prevent="updateSlot">
@@ -397,7 +397,7 @@ const toggleSlot = (slot) => {
 }
 
 const deleteSlot = (slot) => {
-  if (confirm('Eliminar este slot?')) {
+  if (confirm('Eliminar este turno?')) {
     deleting.value = slot.id
     router.delete(`/admin/businesses/${business.value.id}/slots/${slot.id}`, {
       preserveScroll: true,

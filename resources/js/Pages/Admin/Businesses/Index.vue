@@ -77,10 +77,10 @@
                     <Link :href="`/admin/businesses/${biz.id}/gallery`" class="btn btn-outline-secondary" title="Galeria">
                       <i class="bi bi-images"></i>
                     </Link>
-                    <Link :href="`/admin/businesses/${biz.id}/appointments`" class="btn btn-outline-secondary" title="Turnos">
+                    <Link :href="`/admin/businesses/${biz.id}/appointments`" class="btn btn-outline-secondary" title="Citas">
                       <i class="bi bi-calendar-check"></i>
                     </Link>
-                    <Link :href="`/admin/businesses/${biz.id}/slots`" class="btn btn-outline-secondary" title="Slots">
+                    <Link :href="`/admin/businesses/${biz.id}/slots`" class="btn btn-outline-secondary" title="Turnos">
                       <i class="bi bi-clock"></i>
                     </Link>
                     <Link :href="`/admin/businesses/${biz.id}/leads`" class="btn btn-outline-secondary" title="Leads">

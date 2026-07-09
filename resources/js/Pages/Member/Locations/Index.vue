@@ -1,86 +1,98 @@
 <template>
   <MemberLayout>
-    <Head :title="`Ubicaciones - ${business.name}`" />
+    <Head :title="`Ubicaciones - ${business?.name || ''}`" />
 
-    <div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
-      <div>
-        <h1 class="h4 mb-1">{{ business.name }}</h1>
-        <p class="text-muted mb-0">Gestiona las ubicaciones de tu negocio.</p>
-      </div>
-      <div>
-        <Link :href="`/member/businesses/${business.id}/locations/create`" class="btn btn-primary btn-sm">
+    <PageHeader
+      title="Ubicaciones"
+      :breadcrumbs="breadcrumbs"
+      :backHref="'/member/business-modules'"
+    >
+      <template #actions>
+        <Link :href="`/member/businesses/${business?.id}/locations/create`" class="btn btn-primary btn-sm">
           <i class="bi bi-plus-lg me-1"></i>
           Nueva Ubicacion
         </Link>
-      </div>
-    </div>
+      </template>
+    </PageHeader>
 
-    <div class="card border-0 shadow-sm">
-      <div class="card-body">
-        <div v-if="$page.props.flash?.success" class="alert alert-success alert-dismissible fade show" role="alert">
-          {{ $page.props.flash.success }}
-          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    <BaseDataTable
+      ref="dataTableRef"
+      :endpoint="`/member/businesses/${business?.id}/locations`"
+      :columns="columns"
+      :initial-data="dataTable"
+      search-placeholder="Buscar ubicaciones..."
+      empty-title="No hay ubicaciones"
+      empty-text="Comienza creando tu primera ubicacion."
+      @updated="onDataTableUpdated"
+    >
+      <template #cell-name="{ row }">
+        <div>
+          <strong>{{ row.name }}</strong>
+          <span v-if="row.is_primary" class="badge bg-warning ms-2">Principal</span>
         </div>
+      </template>
 
-        <div class="table-responsive">
-          <table class="table table-hover align-middle mb-0">
-            <thead class="table-light">
-              <tr>
-                <th scope="col">Nombre</th>
-                <th scope="col">Direccion</th>
-                <th scope="col">Telefono</th>
-                <th scope="col">Principal</th>
-                <th scope="col">Activa</th>
-                <th scope="col" class="text-end">Accion</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-if="locations.data.length === 0">
-                <td colspan="6" class="text-center text-muted py-4">
-                  No hay ubicaciones registradas.
-                </td>
-              </tr>
-              <tr v-for="loc in locations.data" :key="loc.id">
-                <td class="fw-semibold">{{ loc.name }}</td>
-                <td>
-                  {{ loc.address_line_1 }}
-                  <span v-if="loc.address_line_2">, {{ loc.address_line_2 }}</span>
-                  <br>
-                  <small class="text-muted">{{ loc.city }}{{ loc.state ? ', ' + loc.state : '' }} {{ loc.postal_code }}</small>
-                </td>
-                <td>{{ loc.phone || '-' }}</td>
-                <td>
-                  <span v-if="loc.is_primary" class="badge bg-warning">Principal</span>
-                </td>
-                <td>
-                  <span v-if="loc.is_active" class="badge bg-success">Activa</span>
-                  <span v-else class="badge bg-secondary">Inactiva</span>
-                </td>
-                <td class="text-end">
-                  <Link :href="`/member/businesses/${business.id}/locations/${loc.id}/edit`" class="btn btn-sm btn-outline-primary">
-                    Editar
-                  </Link>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+      <template #cell-address_line_1="{ row }">
+        <div>
+          {{ row.address_line_1 }}
+          <span v-if="row.city">, {{ row.city }}</span>
         </div>
+      </template>
 
-        <div v-if="locations.links" class="d-flex justify-content-center mt-4">
-          <Pagination :links="locations.links" />
+      <template #cell-phone="{ row }">
+        {{ row.phone || '-' }}
+      </template>
+
+      <template #cell-is_primary="{ row }">
+        <span v-if="row.is_primary" class="badge bg-warning">Principal</span>
+        <span v-else class="text-muted">-</span>
+      </template>
+
+      <template #cell-is_active="{ row }">
+        <span :class="row.is_active ? 'badge bg-success' : 'badge bg-secondary'">
+          {{ row.is_active ? 'Activa' : 'Inactiva' }}
+        </span>
+      </template>
+
+      <template #cell-actions="{ row }">
+        <div class="actions">
+          <Link :href="`/member/businesses/${business?.id}/locations/${row.id}/edit`" class="btn btn-sm btn-outline-primary">
+            <i class="bi bi-pencil"></i>
+          </Link>
         </div>
-      </div>
-    </div>
+      </template>
+    </BaseDataTable>
   </MemberLayout>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { Head, Link, usePage } from '@inertiajs/vue3'
 import MemberLayout from '@/Layouts/MemberLayout.vue'
-import Pagination from '@/Components/Member/Pagination.vue'
+import PageHeader from '@/Components/Admin/PageHeader.vue'
+import BaseDataTable from '@/Components/DataTable/BaseDataTable.vue'
 
 const page = usePage()
 const business = computed(() => page.props.business)
-const locations = computed(() => page.props.locations || { data: [], links: [] })
+const dataTable = computed(() => page.props.dataTable)
+
+const breadcrumbs = computed(() => [
+  { label: business.value?.name, href: '/member/business-modules' },
+  { label: 'Ubicaciones', active: true },
+])
+
+const columns = [
+  { key: 'name', label: 'Nombre', sortable: true },
+  { key: 'address_line_1', label: 'Direccion', sortable: false },
+  { key: 'phone', label: 'Telefono', sortable: false },
+  { key: 'is_primary', label: 'Principal', sortable: true },
+  { key: 'is_active', label: 'Estado', sortable: true },
+  { key: 'actions', label: 'Acciones', sortable: false },
+]
+
+const dataTableRef = ref(null)
+
+const onDataTableUpdated = (data) => {
+  // Optional: handle data update
+}
 </script>

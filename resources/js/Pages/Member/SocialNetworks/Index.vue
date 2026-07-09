@@ -1,81 +1,81 @@
 <template>
-  <div class="container-fluid py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <div>
-        <h1 class="h4 mb-1">Redes Sociales</h1>
-        <p class="text-muted mb-0">{{ business.name }}</p>
-      </div>
-      <button class="btn btn-primary" @click="openCreateModal">
-        <i class="bi bi-plus me-1"></i>Agregar red social
-      </button>
-    </div>
+  <MemberLayout>
+    <Head :title="`Redes Sociales - ${business?.name || ''}`" />
 
-    <div class="card border-0 shadow-sm">
-      <div class="card-body">
-        <div v-if="socialNetworks.length === 0" class="text-center py-5">
-          <i class="bi bi-share display-1 text-muted"></i>
-          <p class="text-muted mt-3">No hay redes sociales configuradas aún.</p>
-          <button class="btn btn-primary" @click="openCreateModal">Agregar primera red social</button>
-        </div>
+    <PageHeader
+      title="Redes Sociales"
+      :breadcrumbs="breadcrumbs"
+      :backHref="'/member/business-modules'"
+    >
+      <template #actions>
+        <button class="btn btn-primary" @click="openCreateModal">
+          <i class="bi bi-plus me-1"></i>Agregar red social
+        </button>
+      </template>
+    </PageHeader>
 
-        <div v-else class="table-responsive">
-          <table class="table table-hover">
-            <thead>
-              <tr>
-                <th>Plataforma</th>
-                <th>Usuario</th>
-                <th>URL</th>
-                <th>Hero</th>
-                <th>Footer</th>
-                <th>Contacto</th>
-                <th>Activo</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="network in socialNetworks" :key="network.id">
-                <td>
-                  <div class="d-flex align-items-center gap-2">
-                    <i :class="getPlatformIcon(network.platform)" :style="{ color: getPlatformColor(network.platform) }"></i>
-                    <strong>{{ getPlatformName(network.platform) }}</strong>
-                  </div>
-                </td>
-                <td>{{ network.username || '—' }}</td>
-                <td>
-                  <a :href="network.url" target="_blank" class="text-truncate d-inline-block" style="max-width: 200px;">
-                    {{ network.url }}
-                  </a>
-                </td>
-                <td>
-                  <span v-if="network.show_on_hero" class="badge bg-success">Sí</span>
-                  <span v-else class="badge bg-secondary">No</span>
-                </td>
-                <td>
-                  <span v-if="network.show_on_footer" class="badge bg-success">Sí</span>
-                  <span v-else class="badge bg-secondary">No</span>
-                </td>
-                <td>
-                  <span v-if="network.show_on_contact" class="badge bg-success">Sí</span>
-                  <span v-else class="badge bg-secondary">No</span>
-                </td>
-                <td>
-                  <span v-if="network.is_active" class="badge bg-success">Activo</span>
-                  <span v-else class="badge bg-secondary">Inactivo</span>
-                </td>
-                <td>
-                  <button class="btn btn-sm btn-outline-primary me-1" @click="openEditModal(network)">
-                    <i class="bi bi-pencil"></i>
-                  </button>
-                  <button class="btn btn-sm btn-outline-danger" @click="deleteNetwork(network)">
-                    <i class="bi bi-trash"></i>
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+    <BaseDataTable
+      ref="dataTableRef"
+      :endpoint="`/member/businesses/${business?.id}/social-networks`"
+      :columns="columns"
+      :initial-data="dataTable"
+      search-placeholder="Buscar redes sociales..."
+      empty-title="No hay redes sociales"
+      empty-text="Comienza agregando tu primera red social."
+      @updated="onDataTableUpdated"
+    >
+      <template #cell-platform="{ row }">
+        <div class="d-flex align-items-center gap-2">
+          <i :class="getPlatformIcon(row.platform)" :style="{ color: getPlatformColor(row.platform) }"></i>
+          <strong>{{ getPlatformName(row.platform) }}</strong>
         </div>
-      </div>
-    </div>
+      </template>
+
+      <template #cell-username="{ row }">
+        {{ row.username || '—' }}
+      </template>
+
+      <template #cell-url="{ row }">
+        <a :href="row.url" target="_blank" class="text-truncate d-inline-block" style="max-width: 200px;">
+          {{ row.url }}
+        </a>
+      </template>
+
+      <template #cell-show_on_hero="{ row }">
+        <span :class="row.show_on_hero ? 'badge bg-success' : 'badge bg-secondary'">
+          {{ row.show_on_hero ? 'Si' : 'No' }}
+        </span>
+      </template>
+
+      <template #cell-show_on_footer="{ row }">
+        <span :class="row.show_on_footer ? 'badge bg-success' : 'badge bg-secondary'">
+          {{ row.show_on_footer ? 'Si' : 'No' }}
+        </span>
+      </template>
+
+      <template #cell-show_on_contact="{ row }">
+        <span :class="row.show_on_contact ? 'badge bg-success' : 'badge bg-secondary'">
+          {{ row.show_on_contact ? 'Si' : 'No' }}
+        </span>
+      </template>
+
+      <template #cell-is_active="{ row }">
+        <span :class="row.is_active ? 'badge bg-success' : 'badge bg-secondary'">
+          {{ row.is_active ? 'Activo' : 'Inactivo' }}
+        </span>
+      </template>
+
+      <template #cell-actions="{ row }">
+        <div class="actions">
+          <button class="btn btn-sm btn-outline-primary" @click="openEditModal(row)">
+            <i class="bi bi-pencil"></i>
+          </button>
+          <button class="btn btn-sm btn-outline-danger" @click="deleteNetwork(row)">
+            <i class="bi bi-trash"></i>
+          </button>
+        </div>
+      </template>
+    </BaseDataTable>
 
     <div ref="modalElement" class="modal fade" tabindex="-1">
       <div class="modal-dialog">
@@ -87,86 +87,126 @@
           <form @submit.prevent="submitNetwork">
             <div class="modal-body">
               <div class="mb-3" v-if="!editingNetwork">
-                <label class="form-label">Plataforma</label>
-                <select v-model="form.platform" class="form-select" required>
-                  <option value="">Seleccionar plataforma</option>
+                <FieldSelect
+                  id="network-platform"
+                  label="Plataforma"
+                  v-model="form.platform"
+                  required
+                >
                   <option v-for="(info, key) in platforms" :key="key" :value="key">
                     {{ info.name }}
                   </option>
-                </select>
+                </FieldSelect>
               </div>
-
               <div class="mb-3" v-else>
                 <label class="form-label">Plataforma</label>
-                <input type="text" class="form-control" :value="getPlatformName(editingNetwork.platform)" disabled>
+                <div class="d-flex align-items-center gap-2">
+                  <i :class="getPlatformIcon(form.platform)" :style="{ color: getPlatformColor(form.platform) }"></i>
+                  <strong>{{ getPlatformName(form.platform) }}</strong>
+                </div>
               </div>
-
               <div class="mb-3">
-                <label class="form-label">URL</label>
-                <input v-model="form.url" type="url" class="form-control" placeholder="https://..." required>
+                <FieldUrl
+                  id="network-url"
+                  label="URL"
+                  v-model="form.url"
+                  placeholder="https://..."
+                  required
+                />
               </div>
-
               <div class="mb-3">
-                <label class="form-label">Usuario (opcional)</label>
-                <input v-model="form.username" type="text" class="form-control" placeholder="@usuario">
+                <FieldText
+                  id="network-username"
+                  label="Usuario"
+                  v-model="form.username"
+                  placeholder="@usuario"
+                />
               </div>
-
-              <div class="row g-3">
-                <div class="col-6">
-                  <div class="form-check form-switch">
-                    <input v-model="form.show_on_hero" class="form-check-input" type="checkbox" id="showHero">
-                    <label class="form-check-label" for="showHero">Mostrar en Hero</label>
-                  </div>
-                </div>
-                <div class="col-6">
-                  <div class="form-check form-switch">
-                    <input v-model="form.show_on_footer" class="form-check-input" type="checkbox" id="showFooter">
-                    <label class="form-check-label" for="showFooter">Mostrar en Footer</label>
-                  </div>
-                </div>
-                <div class="col-6">
-                  <div class="form-check form-switch">
-                    <input v-model="form.show_on_contact" class="form-check-input" type="checkbox" id="showContact">
-                    <label class="form-check-label" for="showContact">Mostrar en Contacto</label>
-                  </div>
-                </div>
-                <div class="col-6">
-                  <div class="form-check form-switch">
-                    <input v-model="form.is_active" class="form-check-input" type="checkbox" id="isActive">
-                    <label class="form-check-label" for="isActive">Activo</label>
-                  </div>
-                </div>
+              <div class="mb-3">
+                <FieldSwitch
+                  id="network-hero"
+                  label="Mostrar en Hero"
+                  v-model="form.show_on_hero"
+                />
+              </div>
+              <div class="mb-3">
+                <FieldSwitch
+                  id="network-footer"
+                  label="Mostrar en Footer"
+                  v-model="form.show_on_footer"
+                />
+              </div>
+              <div class="mb-3">
+                <FieldSwitch
+                  id="network-contact"
+                  label="Mostrar en Contacto"
+                  v-model="form.show_on_contact"
+                />
+              </div>
+              <div class="mb-3">
+                <FieldSwitch
+                  id="network-active"
+                  label="Activo"
+                  v-model="form.is_active"
+                />
               </div>
             </div>
             <div class="modal-footer">
               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
               <button type="submit" class="btn btn-primary" :disabled="sending">
-                <span v-if="sending">Guardando...</span>
-                <span v-else>{{ editingNetwork ? 'Actualizar' : 'Crear' }}</span>
+                {{ sending ? 'Guardando...' : 'Guardar' }}
               </button>
             </div>
           </form>
         </div>
       </div>
     </div>
-  </div>
+  </MemberLayout>
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import { useForm, router } from '@inertiajs/vue3'
 import { Modal } from 'bootstrap'
+import MemberLayout from '@/Layouts/MemberLayout.vue'
+import PageHeader from '@/Components/Admin/PageHeader.vue'
+import BaseDataTable from '@/Components/DataTable/BaseDataTable.vue'
+import FieldText from '@/Components/Fields/FieldText.vue'
+import FieldUrl from '@/Components/Fields/FieldUrl.vue'
+import FieldSelect from '@/Components/Fields/FieldSelect.vue'
+import FieldSwitch from '@/Components/Fields/FieldSwitch.vue'
 
 const props = defineProps({
   business: Object,
   socialNetworks: Array,
   platforms: Object,
+  dataTable: Object,
 })
 
+const business = computed(() => props.business)
+const dataTable = computed(() => props.dataTable)
+
+const breadcrumbs = computed(() => [
+  { label: business.value?.name, href: '/member/business-modules' },
+  { label: 'Redes Sociales', active: true },
+])
+
+const columns = [
+  { key: 'platform', label: 'Plataforma', sortable: true },
+  { key: 'username', label: 'Usuario', sortable: false },
+  { key: 'url', label: 'URL', sortable: false },
+  { key: 'show_on_hero', label: 'Hero', sortable: false },
+  { key: 'show_on_footer', label: 'Footer', sortable: false },
+  { key: 'show_on_contact', label: 'Contacto', sortable: false },
+  { key: 'is_active', label: 'Estado', sortable: true },
+  { key: 'actions', label: 'Acciones', sortable: false },
+]
+
+const dataTableRef = ref(null)
 const modalElement = ref(null)
 let networkModal = null
-let editingNetwork = ref(null)
-let sending = false
+const editingNetwork = ref(null)
+const sending = ref(false)
 
 const form = useForm({
   platform: '',
@@ -193,61 +233,79 @@ const getPlatformColor = (platform) => {
   return platforms[platform]?.color || '#666666'
 }
 
+const onDataTableUpdated = (data) => {
+  // Optional: handle data update
+}
+
 const openCreateModal = () => {
   editingNetwork.value = null
   form.reset()
-  form.platform = ''
-  form.is_active = true
-  form.show_on_hero = false
-  form.show_on_footer = true
-  form.show_on_contact = true
-  nextTick(() => {
-    networkModal.show()
-  })
+  nextTick(() => networkModal.show())
 }
 
 const openEditModal = (network) => {
   editingNetwork.value = network
+  form.platform = network.platform
   form.url = network.url
   form.username = network.username || ''
   form.is_active = network.is_active
   form.show_on_hero = network.show_on_hero
   form.show_on_footer = network.show_on_footer
   form.show_on_contact = network.show_on_contact
-  form.sort_order = network.sort_order || 0
-  nextTick(() => {
-    networkModal.show()
-  })
+  nextTick(() => networkModal.show())
 }
 
 const submitNetwork = () => {
-  sending = true
+  sending.value = true
   if (editingNetwork.value) {
-    form.post(`/member/businesses/${props.business.id}/social-networks/${editingNetwork.value.id}`, {
-      onFinish: () => {
-        sending = false
+    router.put(`/member/businesses/${business.value.id}/social-networks/${editingNetwork.value.id}`, form.data(), {
+      preserveScroll: true,
+      onSuccess: () => {
+        sending.value = false
         networkModal.hide()
+        if (dataTableRef.value) {
+          dataTableRef.value.reload()
+        }
+      },
+      onError: () => {
+        sending.value = false
       },
     })
   } else {
-    form.post(`/member/businesses/${props.business.id}/social-networks`, {
-      onFinish: () => {
-        sending = false
+    router.post(`/member/businesses/${business.value.id}/social-networks`, form.data(), {
+      preserveScroll: true,
+      onSuccess: () => {
+        sending.value = false
         networkModal.hide()
+        if (dataTableRef.value) {
+          dataTableRef.value.reload()
+        }
+      },
+      onError: () => {
+        sending.value = false
       },
     })
   }
 }
 
 const deleteNetwork = (network) => {
-  if (confirm('¿Estás seguro de eliminar esta red social?')) {
-    router.delete(`/member/businesses/${props.business.id}/social-networks/${network.id}`, {
+  if (confirm('Estas seguro de eliminar esta red social?')) {
+    router.delete(`/member/businesses/${business.value.id}/social-networks/${network.id}`, {
       preserveScroll: true,
+      onSuccess: () => {
+        if (dataTableRef.value) {
+          dataTableRef.value.reload()
+        }
+      },
     })
   }
 }
 
 onMounted(() => {
   networkModal = new Modal(modalElement.value)
+  networkModal._element.addEventListener('hidden.bs.modal', () => {
+    editingNetwork.value = null
+    form.reset()
+  })
 })
 </script>

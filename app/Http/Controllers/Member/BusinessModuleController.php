@@ -20,6 +20,14 @@ class BusinessModuleController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate(20);
 
+        $businesses->getCollection()->transform(function ($business) {
+            $business->modules = $business->modules->map(fn ($m) => [
+                'module_key' => $m->moduleDefinition?->key,
+                'is_enabled' => $m->is_enabled,
+            ]);
+            return $business;
+        });
+
         return Inertia::render('Member/BusinessModules/Index', [
             'businesses' => $businesses,
         ]);

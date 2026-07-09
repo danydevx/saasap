@@ -2,9 +2,14 @@
   <MemberLayout>
     <Head :title="`Galeria - ${business.name}`" />
 
+    <PageHeader
+      title="Galeria"
+      :breadcrumbs="breadcrumbs"
+      :backHref="'/member/business-modules'"
+    />
+
     <div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
       <div>
-        <h1 class="h4 mb-1">{{ business.name }}</h1>
         <p class="text-muted mb-0">Gestiona las imagenes de tu galeria.</p>
       </div>
       <div>
@@ -69,13 +74,12 @@
       <Pagination :links="images.links" />
     </div>
 
-    <!-- Upload Modal -->
-    <div v-if="showUploadModal" class="modal d-block" tabindex="-1" style="background: rgba(0,0,0,0.5);">
+    <div ref="uploadModalElement" class="modal fade" tabindex="-1">
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title">Subir imagen</h5>
-            <button type="button" class="btn-close" @click="closeUploadModal"></button>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
           </div>
           <form @submit.prevent="uploadImage">
             <div class="modal-body">
@@ -93,36 +97,28 @@
                 <div v-if="formError" class="invalid-feedback d-block">{{ formError }}</div>
                 <small class="text-muted">Max: 5MB. Formatos: JPEG, PNG, WebP, GIF</small>
               </div>
-              <div class="mb-3">
-                <label for="upload-title" class="form-label">Titulo</label>
-                <input
-                  id="upload-title"
-                  type="text"
-                  class="form-control"
-                  v-model="uploadForm.title"
-                  placeholder="Opcional"
-                />
-              </div>
-              <div class="mb-3">
-                <label for="upload-description" class="form-label">Descripcion</label>
-                <textarea
-                  id="upload-description"
-                  class="form-control"
-                  rows="2"
-                  v-model="uploadForm.description"
-                  placeholder="Opcional"
-                ></textarea>
-              </div>
-              <div class="mb-3">
-                <label for="upload-location" class="form-label">Ubicacion</label>
-                <select id="upload-location" class="form-select" v-model="uploadForm.business_location_id">
-                  <option :value="null">Sin ubicacion</option>
-                  <option v-for="loc in locations" :key="loc.id" :value="loc.id">{{ loc.name }}</option>
-                </select>
-              </div>
+              <FieldText
+                id="upload-title"
+                label="Titulo"
+                v-model="uploadForm.title"
+              />
+              <FieldTextarea
+                id="upload-description"
+                label="Descripcion"
+                v-model="uploadForm.description"
+                :rows="2"
+              />
+              <FieldSelect
+                id="upload-location"
+                label="Ubicacion"
+                v-model="uploadForm.business_location_id"
+              >
+                <option :value="null">Sin ubicacion</option>
+                <option v-for="loc in locations" :key="loc.id" :value="loc.id">{{ loc.name }}</option>
+              </FieldSelect>
             </div>
             <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" @click="closeUploadModal">Cancelar</button>
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
               <button type="submit" class="btn btn-primary" :disabled="uploading || !uploadForm.file">
                 {{ uploading ? 'Subiendo...' : 'Subir' }}
               </button>
@@ -132,65 +128,56 @@
       </div>
     </div>
 
-    <!-- Edit Modal -->
-    <div v-if="showEditModal" class="modal d-block" tabindex="-1" style="background: rgba(0,0,0,0.5);">
+    <div ref="editModalElement" class="modal fade" tabindex="-1">
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title">Editar imagen</h5>
-            <button type="button" class="btn-close" @click="closeEditModal"></button>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
           </div>
           <form @submit.prevent="saveEdit">
             <div class="modal-body">
-              <div class="mb-3 text-center">
+              <div class="text-center mb-3">
                 <img v-if="editForm.path" :src="editForm.path" class="img-thumbnail" style="max-height: 200px;" :alt="editForm.title" />
               </div>
-              <div class="mb-3">
-                <label for="edit-title" class="form-label">Titulo</label>
-                <input
-                  id="edit-title"
-                  type="text"
-                  class="form-control"
-                  v-model="editForm.title"
-                />
-              </div>
-              <div class="mb-3">
-                <label for="edit-description" class="form-label">Descripcion</label>
-                <textarea
-                  id="edit-description"
-                  class="form-control"
-                  rows="2"
-                  v-model="editForm.description"
-                ></textarea>
-              </div>
-              <div class="mb-3">
-                <label for="edit-location" class="form-label">Ubicacion</label>
-                <select id="edit-location" class="form-select" v-model="editForm.business_location_id">
-                  <option :value="null">Sin ubicacion</option>
-                  <option v-for="loc in locations" :key="loc.id" :value="loc.id">{{ loc.name }}</option>
-                </select>
-              </div>
-              <div class="row">
+              <FieldText
+                id="edit-title"
+                label="Titulo"
+                v-model="editForm.title"
+              />
+              <FieldTextarea
+                id="edit-description"
+                label="Descripcion"
+                v-model="editForm.description"
+                :rows="2"
+              />
+              <FieldSelect
+                id="edit-location"
+                label="Ubicacion"
+                v-model="editForm.business_location_id"
+              >
+                <option :value="null">Sin ubicacion</option>
+                <option v-for="loc in locations" :key="loc.id" :value="loc.id">{{ loc.name }}</option>
+              </FieldSelect>
+              <div class="row g-3">
                 <div class="col-6">
-                  <label for="edit-sort" class="form-label">Orden</label>
-                  <input
+                  <FieldNumber
                     id="edit-sort"
-                    type="number"
-                    class="form-control"
+                    label="Orden"
                     v-model="editForm.sort_order"
-                    min="0"
                   />
                 </div>
                 <div class="col-6 d-flex align-items-end">
-                  <div class="form-check mb-3 w-100">
-                    <input type="checkbox" v-model="editForm.is_active" class="form-check-input" id="edit-active" />
-                    <label class="form-check-label" for="edit-active">Activo</label>
-                  </div>
+                  <FieldSwitch
+                    id="edit-active"
+                    label="Activo"
+                    v-model="editForm.is_active"
+                  />
                 </div>
               </div>
             </div>
             <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" @click="closeEditModal">Cancelar</button>
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
               <button type="submit" class="btn btn-primary" :disabled="saving">
                 {{ saving ? 'Guardando...' : 'Guardar' }}
               </button>
@@ -203,18 +190,33 @@
 </template>
 
 <script setup>
-import { computed, reactive, ref } from 'vue'
+import { computed, reactive, ref, onMounted, nextTick } from 'vue'
 import { Head, usePage, router } from '@inertiajs/vue3'
+import { Modal } from 'bootstrap'
 import MemberLayout from '@/Layouts/MemberLayout.vue'
+import PageHeader from '@/Components/Admin/PageHeader.vue'
 import Pagination from '@/Components/Member/Pagination.vue'
+import FieldText from '@/Components/Fields/FieldText.vue'
+import FieldTextarea from '@/Components/Fields/FieldTextarea.vue'
+import FieldSelect from '@/Components/Fields/FieldSelect.vue'
+import FieldNumber from '@/Components/Fields/FieldNumber.vue'
+import FieldSwitch from '@/Components/Fields/FieldSwitch.vue'
 
 const page = usePage()
 const business = computed(() => page.props.business)
 const images = computed(() => page.props.images || { data: [], links: [] })
 const locations = computed(() => page.props.locations || [])
 
-const showUploadModal = ref(false)
-const showEditModal = ref(false)
+const breadcrumbs = computed(() => [
+  { label: business.value.name, href: '/member/business-modules' },
+  { label: 'Galeria', active: true },
+])
+
+const uploadModalElement = ref(null)
+const editModalElement = ref(null)
+let uploadModal = null
+let editModal = null
+
 const uploading = ref(false)
 const saving = ref(false)
 const formError = ref('')
@@ -246,12 +248,11 @@ const resetUploadForm = () => {
 
 const openUploadModal = () => {
   resetUploadForm()
-  showUploadModal.value = true
+  nextTick(() => uploadModal.show())
 }
 
 const closeUploadModal = () => {
-  showUploadModal.value = false
-  resetUploadForm()
+  uploadModal.hide()
 }
 
 const openEditModal = (img) => {
@@ -262,11 +263,11 @@ const openEditModal = (img) => {
   editForm.business_location_id = img.business_location_id
   editForm.sort_order = img.sort_order || 0
   editForm.is_active = img.is_active
-  showEditModal.value = true
+  nextTick(() => editModal.show())
 }
 
 const closeEditModal = () => {
-  showEditModal.value = false
+  editModal.hide()
 }
 
 const onFileChange = (e) => {
@@ -276,13 +277,13 @@ const onFileChange = (e) => {
 
   const maxSize = 5 * 1024 * 1024
   if (file.size > maxSize) {
-    formError.value = 'El archivo supera el tamaño máximo de 5MB.'
+    formError.value = 'El archivo supera el tamano maximo de 5MB.'
     return
   }
 
   const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
   if (!allowedTypes.includes(file.type)) {
-    formError.value = 'Solo se permiten imágenes (JPEG, PNG, WebP, GIF).'
+    formError.value = 'Solo se permiten imagenes (JPEG, PNG, WebP, GIF).'
     return
   }
 
@@ -353,4 +354,9 @@ const deleteImage = (img) => {
     })
   }
 }
+
+onMounted(() => {
+  uploadModal = new Modal(uploadModalElement.value)
+  editModal = new Modal(editModalElement.value)
+})
 </script>

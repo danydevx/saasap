@@ -23,7 +23,7 @@
                 <span class="badge bg-secondary">{{ service.duration_minutes }} min</span>
               </div>
               <Link :href="`/b/${business.slug}/book?service=${service.id}`" class="btn btn-primary w-100 mb-2">
-                Reservar turno
+                Reservar cita
               </Link>
               <a v-if="service.whatsapp_contact && business.phone" :href="`https://wa.me/${business.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent('Hola, me interesa el servicio: ' + service.name)}`" target="_blank" class="btn btn-success w-100">
                 <i class="bi bi-whatsapp me-1"></i>Contactar por WhatsApp

@@ -41,7 +41,7 @@
                 <div v-for="(btn, index) in form.buttons" :key="index" class="row g-3 mb-3 p-3 bg-light rounded">
                   <div class="col-md-3">
                     <label class="form-label">Texto</label>
-                    <input v-model="btn.text" type="text" class="form-control" placeholder="Reservar turno">
+                    <input v-model="btn.text" type="text" class="form-control" placeholder="Reservar cita">
                   </div>
                   <div class="col-md-2">
                     <label class="form-label">Tipo de enlace</label>

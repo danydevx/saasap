@@ -14,6 +14,7 @@ use Modules\Gallery\Models\BusinessGalleryImage;
 use Modules\Leads\Models\BusinessLead;
 use Modules\Locations\Models\BusinessLocation;
 use Modules\Products\Models\BusinessProduct;
+use Modules\Products\Models\BusinessProductCategory;
 use Modules\Services\Models\BusinessService;
 use Modules\Appointments\Models\BusinessAppointment;
 use Modules\Appointments\Models\BusinessAppointmentSlot;
@@ -94,6 +95,11 @@ class Business extends Model
     public function products(): HasMany
     {
         return $this->hasMany(BusinessProduct::class);
+    }
+
+    public function productCategories(): HasMany
+    {
+        return $this->hasMany(BusinessProductCategory::class);
     }
 
     public function services(): HasMany
