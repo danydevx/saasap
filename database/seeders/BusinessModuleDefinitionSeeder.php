@@ -99,6 +99,22 @@ class BusinessModuleDefinitionSeeder extends Seeder
                 'sort_order' => 11,
                 'has_settings' => false,
             ],
+            [
+                'key' => 'about',
+                'name' => 'Acerca de',
+                'description' => 'Sección Acerca de para tu negocio',
+                'icon' => 'bi bi-info-circle',
+                'sort_order' => 12,
+                'has_settings' => false,
+            ],
+            [
+                'key' => 'socialmedia',
+                'name' => 'Redes Sociales',
+                'description' => 'Gestiona tus redes sociales',
+                'icon' => 'bi bi-share',
+                'sort_order' => 13,
+                'has_settings' => false,
+            ],
         ];
 
         foreach ($modules as $module) {

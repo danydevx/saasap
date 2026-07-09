@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\ApiKeyController as AdminApiKeyController;
 use App\Http\Controllers\Admin\AutomationController;
 use App\Http\Controllers\Public\BusinessController as PublicBusinessController;
 use App\Http\Controllers\Public\MenuController;
+use App\Http\Controllers\Public\PromotionVerificationController;
 use App\Http\Controllers\Admin\BusinessController;
 use App\Http\Controllers\Admin\BusinessModuleController;
 use App\Http\Controllers\Admin\BusinessContentController;
@@ -68,6 +69,7 @@ use App\Http\Controllers\Member\LocationController;
 use App\Http\Controllers\Member\ServiceController;
 use App\Http\Controllers\Member\GalleryController;
 use App\Http\Controllers\Member\HeroController;
+use App\Http\Controllers\Member\AboutController;
 use App\Http\Controllers\Member\SocialNetworkController;
 use App\Http\Controllers\Member\ProductController;
 use App\Http\Controllers\Member\AppointmentController;
@@ -137,6 +139,7 @@ Route::get('/b/{slug}/book/success', [PublicBusinessController::class, 'bookingS
 Route::get('/b/{slug}/contact', [PublicBusinessController::class, 'contact'])->name('public.business.contact');
 Route::post('/b/{slug}/contact', [PublicBusinessController::class, 'storeContact'])->name('public.business.contact.store');
 Route::get('/b/{slug}/menu', [MenuController::class, 'show'])->name('public.menu.show');
+Route::get('/b/{slug}/verify/{promotionId}/{couponCode}', [PromotionVerificationController::class, 'verify'])->name('public.promotion.verify');
 
 Route::post('/stripe/webhook', [StripeWebhookController::class, 'handle'])->name('stripe.webhook');
 
@@ -258,6 +261,13 @@ Route::get('/member/businesses/{business}/hero', [HeroController::class, 'index'
 Route::post('/member/businesses/{business}/hero', [HeroController::class, 'update'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.businesses.hero.update');
+
+Route::get('/member/businesses/{business}/about', [AboutController::class, 'index'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.about.index');
+Route::post('/member/businesses/{business}/about', [AboutController::class, 'update'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.about.update');
 
 Route::get('/member/businesses/{business}/social-networks', [SocialNetworkController::class, 'index'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
@@ -427,6 +437,9 @@ Route::delete('/member/businesses/{business}/promotions/{promotion}', [Promotion
 Route::post('/member/businesses/{business}/promotions/reorder', [PromotionController::class, 'reorder'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.businesses.promotions.reorder');
+Route::post('/member/businesses/{business}/promotions/{promotion}/regenerate-qr', [PromotionController::class, 'regenerateQrCode'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.promotions.regenerate-qr');
 
 Route::get('/member/businesses/{business}/menu-categories', [MemberMenuCategoryController::class, 'index'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])

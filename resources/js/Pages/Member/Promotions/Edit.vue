@@ -8,6 +8,15 @@
       :backHref="`/member/businesses/${business.id}/promotions`"
     />
 
+    <div v-if="$page.props.flash?.success" class="alert alert-success alert-dismissible fade show" role="alert">
+      {{ $page.props.flash.success }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    <div v-if="$page.props.flash?.error" class="alert alert-danger alert-dismissible fade show" role="alert">
+      {{ $page.props.flash.error }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
     <div class="card border-0 shadow-sm">
       <div class="card-body">
         <form @submit.prevent="submit">
@@ -51,8 +60,16 @@
                 accept="image/jpeg,image/png,image/webp,image/gif"
                 @change="handleImageChange"
               />
-              <div v-if="imagePreview || form.image" class="mt-2">
+              <div v-if="imagePreview || form.image" class="mt-2 d-flex align-items-center gap-2">
                 <img :src="imagePreview || form.image" class="img-thumbnail" style="max-height: 150px;" alt="Preview" />
+                <button
+                  v-if="imagePreview || form.image"
+                  type="button"
+                  class="btn btn-sm btn-outline-danger"
+                  @click="removeImage"
+                >
+                  <i class="bi bi-trash"></i> Quitar
+                </button>
               </div>
               <small class="text-muted">JPG, PNG o WebP, max 5MB</small>
             </div>
@@ -79,6 +96,31 @@
                 label="Codigo de Cupon"
                 v-model="form.coupon_code"
               />
+            </div>
+
+            <div class="col-12">
+              <div v-if="promotion.qr_code_path" class="card bg-light p-3">
+                <div class="d-flex align-items-center gap-3">
+                  <img :src="promotion.qr_code_path" alt="QR Code" class="rounded" style="max-height: 120px;">
+                  <div>
+                    <strong>Codigo QR</strong>
+                    <p class="text-muted small mb-2">Escanealo para verificar la promocion.</p>
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-outline-primary"
+                      :disabled="regenerating"
+                      @click="regenerateQr"
+                    >
+                      <i class="bi bi-arrow-clockwise me-1"></i>
+                      {{ regenerating ? 'Regenerando...' : 'Regenerar QR' }}
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div v-else-if="form.coupon_code" class="alert alert-info">
+                <i class="bi bi-info-circle me-2"></i>
+                El codigo QR se generara automaticamente al guardar.
+              </div>
             </div>
 
             <div class="col-md-6">
@@ -121,6 +163,14 @@
               <Link :href="`/member/businesses/${business.id}/promotions`" class="btn btn-outline-secondary ms-2">
                 Cancelar
               </Link>
+              <button
+                type="button"
+                class="btn btn-outline-danger ms-auto"
+                @click="deletePromotion"
+              >
+                <i class="bi bi-trash me-1"></i>
+                Eliminar
+              </button>
             </div>
           </div>
         </form>
@@ -156,11 +206,13 @@ const sending = computed(() => false)
 
 const imageInput = ref(null)
 const imagePreview = ref(null)
+const imageFile = ref(null)
+const removeImageFlag = ref(false)
+const regenerating = ref(false)
 
 const form = reactive({
   name: promotion.value.name,
   description: promotion.value.description || '',
-  image: promotion.value.image || '',
   business_location_id: promotion.value.business_location_id,
   regular_price: promotion.value.regular_price || '',
   promotion_price: promotion.value.promotion_price || '',
@@ -187,15 +239,68 @@ const handleImageChange = (e) => {
     return
   }
 
-  const reader = new FileReader()
-  reader.onload = (e) => {
-    form.image = e.target.result
-    imagePreview.value = e.target.result
+  imageFile.value = file
+  removeImageFlag.value = false
+  imagePreview.value = URL.createObjectURL(file)
+}
+
+const removeImage = () => {
+  imageFile.value = null
+  imagePreview.value = null
+  removeImageFlag.value = true
+  if (imageInput.value) {
+    imageInput.value.value = ''
   }
-  reader.readAsDataURL(file)
 }
 
 const submit = () => {
-  router.put(`/member/businesses/${business.value.id}/promotions/${promotion.value.id}`, form)
+  const formData = new FormData()
+  formData.append('name', form.name)
+  formData.append('description', form.description || '')
+  formData.append('business_location_id', form.business_location_id || '')
+  formData.append('regular_price', form.regular_price || '')
+  formData.append('promotion_price', form.promotion_price || '')
+  formData.append('coupon_code', form.coupon_code || '')
+  formData.append('starts_at', form.starts_at || '')
+  formData.append('expires_at', form.expires_at || '')
+  formData.append('sort_order', form.sort_order || 0)
+  formData.append('is_active', form.is_active ? '1' : '0')
+
+  if (imageFile.value) {
+    formData.append('image', imageFile.value)
+  }
+  if (removeImageFlag.value) {
+    formData.append('remove_image', '1')
+  }
+
+  router.post(`/member/businesses/${business.value.id}/promotions/${promotion.value.id}`, formData, {
+    _method: 'put',
+  })
+}
+
+const regenerateQr = () => {
+  if (!confirm('Regenerar el codigo QR?')) return
+  regenerating.value = true
+  router.post(`/member/businesses/${business.value.id}/promotions/${promotion.value.id}/regenerate-qr`, {
+    onSuccess: () => {
+      regenerating.value = false
+      console.log('QR regenerated, reloading...')
+      window.location.reload()
+    },
+    onError: (errors) => {
+      regenerating.value = false
+      console.log('Error regenerating:', errors)
+      alert('Error al regenerar el codigo QR')
+    },
+  })
+}
+
+const deletePromotion = () => {
+  if (!confirm(`Eliminar la promocion "${promotion.value.name}"?`)) return
+  router.delete(`/member/businesses/${business.value.id}/promotions/${promotion.value.id}`, {
+    onSuccess: () => {
+      window.location.href = `/member/businesses/${business.value.id}/promotions`
+    },
+  })
 }
 </script>

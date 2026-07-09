@@ -155,11 +155,11 @@ const sending = computed(() => false)
 
 const imageInput = ref(null)
 const imagePreview = ref(null)
+const imageFile = ref(null)
 
 const form = reactive({
   name: '',
   description: '',
-  image: '',
   business_location_id: null,
   regular_price: '',
   promotion_price: '',
@@ -186,15 +186,27 @@ const handleImageChange = (e) => {
     return
   }
 
-  const reader = new FileReader()
-  reader.onload = (e) => {
-    form.image = e.target.result
-    imagePreview.value = e.target.result
-  }
-  reader.readAsDataURL(file)
+  imageFile.value = file
+  imagePreview.value = URL.createObjectURL(file)
 }
 
 const submit = () => {
-  router.post(`/member/businesses/${business.value.id}/promotions`, form)
+  const formData = new FormData()
+  formData.append('name', form.name)
+  formData.append('description', form.description || '')
+  formData.append('business_location_id', form.business_location_id || '')
+  formData.append('regular_price', form.regular_price || '')
+  formData.append('promotion_price', form.promotion_price || '')
+  formData.append('coupon_code', form.coupon_code || '')
+  formData.append('starts_at', form.starts_at || '')
+  formData.append('expires_at', form.expires_at || '')
+  formData.append('sort_order', form.sort_order || 0)
+  formData.append('is_active', form.is_active ? '1' : '0')
+
+  if (imageFile.value) {
+    formData.append('image', imageFile.value)
+  }
+
+  router.post(`/member/businesses/${business.value.id}/promotions`, formData)
 }
 </script>

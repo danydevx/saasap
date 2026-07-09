@@ -13,5 +13,6 @@
     "Reviews": true,
     "Promotions": true,
     "Hero": true,
-    "SocialMedia": true
+    "SocialMedia": true,
+    "About": true
 }

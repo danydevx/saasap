@@ -21,6 +21,7 @@ use Modules\Appointments\Models\BusinessAppointmentSlot;
 use Modules\Reviews\Models\BusinessReview;
 use Modules\Promotions\Models\BusinessPromotion;
 use Modules\Hero\Models\BusinessHero;
+use Modules\About\Models\BusinessAbout;
 use App\Models\MinisiteTheme;
 
 class Business extends Model
@@ -145,6 +146,11 @@ class Business extends Model
     public function hero(): HasOne
     {
         return $this->hasOne(BusinessHero::class)->where('is_active', true)->orderBy('sort_order');
+    }
+
+    public function about(): HasOne
+    {
+        return $this->hasOne(BusinessAbout::class);
     }
 
     public function socialNetworks(): HasMany

@@ -67,6 +67,12 @@
           <Link :href="`/member/businesses/${business?.id}/promotions/${row.id}/edit`" class="btn btn-sm btn-outline-primary">
             <i class="bi bi-pencil"></i>
           </Link>
+          <button
+            class="btn btn-sm btn-outline-danger"
+            @click="deletePromotion(row)"
+          >
+            <i class="bi bi-trash"></i>
+          </button>
         </div>
       </template>
     </BaseDataTable>
@@ -75,7 +81,7 @@
 
 <script setup>
 import { computed, ref } from 'vue'
-import { Head, Link, usePage } from '@inertiajs/vue3'
+import { Head, Link, router, usePage } from '@inertiajs/vue3'
 import MemberLayout from '@/Layouts/MemberLayout.vue'
 import PageHeader from '@/Components/Admin/PageHeader.vue'
 import BaseDataTable from '@/Components/DataTable/BaseDataTable.vue'
@@ -118,5 +124,12 @@ const formatDate = (date) => {
 
 const isExpired = (date) => {
   return new Date(date) < new Date()
+}
+
+const deletePromotion = (row) => {
+  if (!confirm(`Eliminar la promocion "${row.name}"?`)) return
+  router.delete(`/member/businesses/${business.value.id}/promotions/${row.id}`, {
+    preserveScroll: true,
+  })
 }
 </script>

@@ -172,6 +172,15 @@
                   <small>Menú</small>
                 </Link>
               </div>
+              <div class="col-6 col-md-3" v-if="hasModule(business.modules, 'about')">
+                <Link
+                  :href="`/member/businesses/${business.id}/about`"
+                  class="btn btn-outline-primary btn-sm w-100"
+                >
+                  <i class="bi bi-info-circle d-block mb-1"></i>
+                  <small>Acerca de</small>
+                </Link>
+              </div>
             </div>
           </div>
           <div class="card-footer bg-white">
@@ -222,6 +231,7 @@ const moduleLabels = {
   promotions: 'Promotions',
   restaurant_menu: 'Menú',
   socialmedia: 'Redes Sociales',
+  about: 'Acerca de',
 }
 
 const getModuleLabel = (key) => moduleLabels[key] || key

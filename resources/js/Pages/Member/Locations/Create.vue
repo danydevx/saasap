@@ -52,24 +52,25 @@
               />
             </div>
 
-            <div class="col-12 col-md-4">
+            <div class="col-12 col-md-6">
               <FieldText
                 id="location-city"
-                label="Ciudad"
-                placeholder="Buenos Aires"
+                label="Ciudad / Colonia"
+                placeholder="Guadalajara"
                 v-model="form.city"
                 :formError="form.errors.city"
                 required
               />
             </div>
 
-            <div class="col-12 col-md-4">
-              <FieldText
-                id="location-state"
-                label="Provincia/Estado"
-                placeholder="CABA"
-                v-model="form.state"
-                :formError="form.errors.state"
+            <div class="col-12 col-md-6">
+              <LocationSelector
+                v-model="locationData"
+                :state-error="form.errors.state_code"
+                :municipality-error="form.errors.municipality"
+                required
+                @state-changed="onStateChanged"
+                @municipality-changed="onMunicipalityChanged"
               />
             </div>
 
@@ -145,7 +146,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { Head, Link, useForm } from '@inertiajs/vue3'
 import MemberLayout from '@/Layouts/MemberLayout.vue'
 import PageHeader from '@/Components/Admin/PageHeader.vue'
@@ -153,6 +154,7 @@ import FieldText from '@/Components/Fields/FieldText.vue'
 import FieldNumber from '@/Components/Fields/FieldNumber.vue'
 import FieldSwitch from '@/Components/Fields/FieldSwitch.vue'
 import MapPicker from '@/Components/MapPicker.vue'
+import LocationSelector from '@/Components/LocationSelector.vue'
 
 const props = defineProps({
   business: {
@@ -163,14 +165,18 @@ const props = defineProps({
 
 const business = computed(() => props.business)
 
+const locationData = ref({ state_code: '', municipality: '' })
+
 const form = useForm({
   name: '',
   address_line_1: '',
   address_line_2: '',
   city: '',
   state: '',
+  state_code: '',
+  municipality: '',
   postal_code: '',
-  country: '',
+  country: 'MX',
   phone: '',
   email: '',
   latitude: '',
@@ -185,7 +191,23 @@ const breadcrumbs = computed(() => [
   { label: 'Nueva Ubicacion', active: true },
 ])
 
+const onStateChanged = ({ lat, lng }) => {
+  if (lat && lng) {
+    form.latitude = parseFloat(lat).toFixed(7)
+    form.longitude = parseFloat(lng).toFixed(7)
+  }
+}
+
+const onMunicipalityChanged = ({ lat, lng }) => {
+  if (lat && lng) {
+    form.latitude = parseFloat(lat).toFixed(7)
+    form.longitude = parseFloat(lng).toFixed(7)
+  }
+}
+
 const submit = () => {
+  form.state_code = locationData.value.state_code
+  form.municipality = locationData.value.municipality
   form.post(`/member/businesses/${business.value.id}/locations`)
 }
 </script>

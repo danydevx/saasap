@@ -23,15 +23,15 @@ class PlanBusinessModuleSeeder extends Seeder
         $plansData = [
             'free' => [
                 'name' => 'Plan Free',
-                'modules' => ['locations', 'contact_form', 'gallery'],
+                'modules' => ['locations', 'contact_form', 'gallery', 'about', 'socialmedia'],
             ],
             'business' => [
                 'name' => 'Plan Negocio',
-                'modules' => ['locations', 'contact_form', 'gallery', 'leads', 'services', 'appointments', 'products', 'reviews', 'promotions', 'restaurant_menu'],
+                'modules' => ['locations', 'contact_form', 'gallery', 'leads', 'services', 'appointments', 'products', 'reviews', 'promotions', 'restaurant_menu', 'about', 'socialmedia'],
             ],
             'ai' => [
                 'name' => 'Plan IA',
-                'modules' => ['locations', 'contact_form', 'gallery', 'leads', 'services', 'appointments', 'products', 'ai_chatbot', 'reviews', 'promotions', 'restaurant_menu'],
+                'modules' => ['locations', 'contact_form', 'gallery', 'leads', 'services', 'appointments', 'products', 'ai_chatbot', 'reviews', 'promotions', 'restaurant_menu', 'about', 'socialmedia'],
             ],
         ];
 

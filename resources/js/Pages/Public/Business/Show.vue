@@ -15,6 +15,9 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarPublic">
           <ul class="navbar-nav ms-auto">
+            <li v-if="isModuleEnabled('about')" class="nav-item">
+              <a :href="`#about`" class="nav-link" :style="{ color: navbarTextColor }">Nosotros</a>
+            </li>
             <li v-if="isModuleEnabled('services')" class="nav-item">
               <a :href="`#services`" class="nav-link" :style="{ color: navbarTextColor }">Servicios</a>
             </li>
@@ -65,6 +68,22 @@
       :phone="business.phone"
       :email="business.email"
     />
+
+    <section v-if="about" id="about" class="py-5" style="background-color: #fff;">
+      <div class="container">
+        <div class="row align-items-center">
+          <div class="col-lg-6 mb-4 mb-lg-0">
+            <img v-if="about.image_path" :src="about.image_path" class="img-fluid rounded shadow" :alt="about.title">
+          </div>
+          <div class="col-lg-6">
+            <h2 class="fw-bold mb-3">{{ about.title || 'Acerca de nosotros' }}</h2>
+            <p v-if="about.subtitle" class="text-muted mb-3">{{ about.subtitle }}</p>
+            <p v-if="about.description" class="text-muted">{{ about.description }}</p>
+            <img v-if="about.logo_path" :src="about.logo_path" class="img-fluid mt-3" style="max-height: 80px;" :alt="business.name">
+          </div>
+        </div>
+      </div>
+    </section>
 
     <ServicesSection
       id="services"

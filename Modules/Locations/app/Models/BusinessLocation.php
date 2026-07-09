@@ -15,6 +15,8 @@ class BusinessLocation extends Model
         'address_line_2',
         'city',
         'state',
+        'state_code',
+        'municipality',
         'postal_code',
         'country',
         'phone',

@@ -16,6 +16,7 @@ use Modules\Leads\Models\BusinessLead;
 use Modules\Reviews\Models\BusinessReview;
 use Modules\Promotions\Models\BusinessPromotion;
 use Modules\Hero\Models\BusinessHero;
+use Modules\About\Models\BusinessAbout;
 use Modules\SocialMedia\Models\BusinessSocialNetwork;
 
 class BusinessController extends Controller
@@ -160,6 +161,11 @@ class BusinessController extends Controller
 
         $hero = $business->hero;
 
+        $about = null;
+        if (in_array('about', $modules)) {
+            $about = $business->about;
+        }
+
         return Inertia::render('Public/Business/Show', [
             'business' => [
                 'id' => $business->id,
@@ -208,6 +214,14 @@ class BusinessController extends Controller
                 'buttons' => $hero->buttons,
                 'show_contact_info' => $hero->show_contact_info,
                 'show_social_links' => $hero->show_social_links,
+            ] : null,
+            'about' => $about ? [
+                'id' => $about->id,
+                'title' => $about->title,
+                'subtitle' => $about->subtitle,
+                'description' => $about->description,
+                'image_path' => $about->image_path,
+                'logo_path' => $about->logo_path,
             ] : null,
         ]);
     }

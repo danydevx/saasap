@@ -49,22 +49,24 @@
               />
             </div>
 
-            <div class="col-12 col-md-4">
+            <div class="col-12 col-md-6">
               <FieldText
                 id="location-city"
-                label="Ciudad"
+                label="Ciudad / Colonia"
                 v-model="form.city"
                 :formError="form.errors.city"
                 required
               />
             </div>
 
-            <div class="col-12 col-md-4">
-              <FieldText
-                id="location-state"
-                label="Provincia/Estado"
-                v-model="form.state"
-                :formError="form.errors.state"
+            <div class="col-12 col-md-6">
+              <LocationSelector
+                v-model="locationData"
+                :state-error="form.errors.state_code"
+                :municipality-error="form.errors.municipality"
+                required
+                @state-changed="onStateChanged"
+                @municipality-changed="onMunicipalityChanged"
               />
             </div>
 
@@ -137,7 +139,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { Head, Link, useForm } from '@inertiajs/vue3'
 import MemberLayout from '@/Layouts/MemberLayout.vue'
 import PageHeader from '@/Components/Admin/PageHeader.vue'
@@ -145,6 +147,7 @@ import FieldText from '@/Components/Fields/FieldText.vue'
 import FieldNumber from '@/Components/Fields/FieldNumber.vue'
 import FieldSwitch from '@/Components/Fields/FieldSwitch.vue'
 import MapPicker from '@/Components/MapPicker.vue'
+import LocationSelector from '@/Components/LocationSelector.vue'
 
 const props = defineProps({
   business: {
@@ -159,14 +162,21 @@ const props = defineProps({
 
 const business = computed(() => props.business)
 
+const locationData = ref({
+  state_code: props.location.state_code || '',
+  municipality: props.location.municipality || '',
+})
+
 const form = useForm({
   name: props.location.name,
   address_line_1: props.location.address_line_1,
   address_line_2: props.location.address_line_2 || '',
   city: props.location.city,
   state: props.location.state || '',
+  state_code: props.location.state_code || '',
+  municipality: props.location.municipality || '',
   postal_code: props.location.postal_code || '',
-  country: props.location.country || '',
+  country: props.location.country || 'MX',
   phone: props.location.phone || '',
   email: props.location.email || '',
   latitude: props.location.latitude || '',
@@ -181,7 +191,23 @@ const breadcrumbs = computed(() => [
   { label: 'Editar', active: true },
 ])
 
+const onStateChanged = ({ lat, lng }) => {
+  if (lat && lng) {
+    form.latitude = parseFloat(lat).toFixed(7)
+    form.longitude = parseFloat(lng).toFixed(7)
+  }
+}
+
+const onMunicipalityChanged = ({ lat, lng }) => {
+  if (lat && lng) {
+    form.latitude = parseFloat(lat).toFixed(7)
+    form.longitude = parseFloat(lng).toFixed(7)
+  }
+}
+
 const submit = () => {
+  form.state_code = locationData.value.state_code
+  form.municipality = locationData.value.municipality
   form.put(`/member/businesses/${business.value.id}/locations/${props.location.id}`)
 }
 </script>
