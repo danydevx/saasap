@@ -1,12 +1,15 @@
 <template>
   <AdminLayout>
-    <Head title="Gestionar Modulos" />
+    <Head title="Modulos del Negocio" />
 
     <div class="container-fluid py-4">
       <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="h4 mb-0">Modulos: {{ business?.name || 'Cargando...' }}</h1>
+        <div>
+          <h1 class="h4 mb-0">{{ business?.name || 'Cargando...' }}</h1>
+          <small class="text-muted">Modulos del minisite</small>
+        </div>
         <Link href="/admin/business-modules" class="btn btn-outline-secondary">
-          Volver
+          <i class="bi bi-arrow-left me-1"></i>Volver
         </Link>
       </div>
 
@@ -20,61 +23,63 @@
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
       </div>
 
-      <form v-if="business?.modules?.length" @submit.prevent="submit">
-        <div class="card border-0 shadow-sm mb-4">
-          <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-              <thead class="table-light">
-                <tr>
-                  <th scope="col">Modulo</th>
-                  <th scope="col">Estado</th>
-                  <th scope="col" class="text-end">Accion</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(module, index) in form.modules" :key="module.id">
-                  <td class="fw-semibold">
-                    {{ module.module_name }}
-                    <span v-if="!module.allowed_by_plan" class="badge bg-secondary ms-2">No disponible en plan</span>
-                  </td>
-                  <td>
-                    <span :class="module.is_enabled ? 'badge bg-success' : 'badge bg-secondary'">
-                      {{ module.is_enabled ? 'Habilitado' : 'Deshabilitado' }}
-                    </span>
-                  </td>
-                  <td class="text-end">
-                    <button
-                      v-if="module.allowed_by_plan"
-                      type="button"
-                      class="btn btn-sm"
-                      :class="module.is_enabled ? 'btn-outline-danger' : 'btn-outline-success'"
-                      @click="toggleModule(index)"
-                    >
-                      {{ module.is_enabled ? 'Deshabilitar' : 'Habilitar' }}
-                    </button>
-                    <span v-else class="text-muted small">
-                      Requiere upgrade de plan
-                    </span>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+      <div class="row g-4">
+        <div v-for="module in form.modules" :key="module.id" class="col-md-6 col-lg-4">
+          <div class="card h-100 border-0 shadow-sm" :class="{ 'border-success border-2': module.is_enabled }">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-start mb-3">
+                <div class="d-flex align-items-center gap-2">
+                  <div class="bg-light rounded d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                    <i :class="module.module_icon || 'bi bi-box'"></i>
+                  </div>
+                  <div>
+                    <strong>{{ module.module_name }}</strong>
+                    <br>
+                    <small class="text-muted">{{ module.module_key }}</small>
+                  </div>
+                </div>
+                <span :class="module.is_enabled ? 'badge bg-success' : 'badge bg-secondary'">
+                  {{ module.is_enabled ? 'Activo' : 'Inactivo' }}
+                </span>
+              </div>
+
+              <div v-if="!module.allowed_by_plan" class="alert alert-warning py-2 small mb-3">
+                <i class="bi bi-lock me-1"></i>No disponible en el plan (requiere upgrade)
+              </div>
+
+              <div v-if="!module.is_active_globally" class="alert alert-secondary py-2 small mb-3">
+                <i class="bi bi-exclamation-triangle me-1"></i>Modulo desactivado globalmente
+              </div>
+
+              <div class="d-flex gap-2 flex-wrap">
+                <button
+                  v-if="module.is_enabled && module.has_settings && module.settings_url"
+                  type="button"
+                  class="btn btn-sm btn-outline-warning"
+                  @click="goToConfig(module)"
+                >
+                  <i class="bi bi-gear me-1"></i>Configurar
+                </button>
+
+                <button
+                  type="button"
+                  class="btn btn-sm"
+                  :class="module.is_enabled ? 'btn-outline-danger' : 'btn-success'"
+                  :disabled="!module.allowed_by_plan && module.is_active_globally"
+                  @click="toggleModule(module)"
+                >
+                  <i :class="module.is_enabled ? 'bi bi-x-lg me-1' : 'bi bi-check-lg me-1'"></i>
+                  {{ module.is_enabled ? 'Desinstalar' : 'Instalar' }}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
+      </div>
 
-        <div class="d-flex justify-content-end gap-2">
-          <Link href="/admin/business-modules" class="btn btn-outline-secondary">
-            Cancelar
-          </Link>
-          <button type="submit" class="btn btn-primary" :disabled="form.processing">
-            <span v-if="form.processing">Guardando...</span>
-            <span v-else>Guardar Cambios</span>
-          </button>
-        </div>
-      </form>
-
-      <div v-else class="mt-4">
-        <p class="text-muted">No hay modulos disponibles.</p>
+      <div v-if="form.modules.length === 0" class="text-center py-5">
+        <i class="bi bi-grid display-1 text-muted"></i>
+        <p class="text-muted mt-3">No hay modulos disponibles para este negocio.</p>
       </div>
     </div>
   </AdminLayout>
@@ -91,21 +96,32 @@ const business = computed(() => page.props.business)
 const form = reactive({
   modules: business.value?.modules?.map(m => ({
     id: m.id,
+    module_key: m.module_key,
+    module_name: m.module_name,
+    module_icon: m.module_icon,
     is_enabled: m.is_enabled,
+    is_active_globally: m.is_active_globally,
+    has_settings: m.has_settings,
+    settings_url: m.settings_url,
+    allowed_by_plan: m.allowed_by_plan,
   })) || [],
-  processing: false,
 })
 
-const toggleModule = (index) => {
-  form.modules[index].is_enabled = !form.modules[index].is_enabled
+const toggleModule = (module) => {
+  router.put(`/admin/businesses/${business.value.id}/modules`, {
+    modules: [{
+      id: module.id,
+      is_enabled: !module.is_enabled,
+    }],
+  }, {
+    preserveScroll: true,
+    preserveState: false,
+  })
 }
 
-const submit = () => {
-  form.processing = true
-  router.put(`/admin/business-modules/${business.value.id}`, form, {
-    onFinish: () => {
-      form.processing = false
-    },
-  })
+const goToConfig = (module) => {
+  if (module.settings_url) {
+    window.location.href = module.settings_url
+  }
 }
 </script>

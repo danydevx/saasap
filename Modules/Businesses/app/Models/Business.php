@@ -223,6 +223,7 @@ class Business extends Model
 
         $planModules = PlanBusinessModule::where('plan_id', $subscription->plan_id)
             ->where('is_enabled', true)
+            ->whereHas('moduleDefinition', fn ($q) => $q->where('is_active', true))
             ->with('moduleDefinition')
             ->get()
             ->pluck('moduleDefinition.key')
@@ -243,10 +244,12 @@ class Business extends Model
 
         return PlanBusinessModule::where('plan_id', $plan->id)
             ->where('is_enabled', true)
+            ->whereHas('moduleDefinition', fn ($q) => $q->where('is_active', true))
             ->with('moduleDefinition')
             ->get()
             ->pluck('moduleDefinition.key')
             ->flip()
+            ->map(fn () => true)
             ->toArray();
     }
 }

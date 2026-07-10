@@ -60,6 +60,13 @@
                   <span v-else class="badge bg-secondary">Inactivo</span>
                 </td>
                 <td class="text-end">
+                  <Link
+                    v-if="def.has_settings && def.settings_url"
+                    :href="def.settings_url"
+                    class="btn btn-sm btn-outline-warning me-2"
+                  >
+                    <i class="bi bi-gear me-1"></i>Configurar
+                  </Link>
                   <Link :href="`/admin/business-module-definitions/${def.id}/edit`" class="btn btn-sm btn-outline-primary">
                     Editar
                   </Link>

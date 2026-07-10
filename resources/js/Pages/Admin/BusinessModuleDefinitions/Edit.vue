@@ -67,6 +67,17 @@
               />
             </div>
 
+            <div class="col-12 col-md-6" v-if="form.has_settings">
+              <FieldText
+                id="def-settings-url"
+                label="URL de Configuracion"
+                v-model="form.settings_url"
+                :formError="form.errors.settings_url"
+                placeholder="/admin/features"
+              />
+              <small class="text-muted">Ruta interna para la pagina de configuracion del modulo</small>
+            </div>
+
             <div class="col-12 col-md-6">
               <FieldSwitch
                 id="def-active"
@@ -110,6 +121,7 @@ const form = useForm({
   icon: props.definition.icon || '',
   sort_order: props.definition.sort_order ?? 0,
   has_settings: !!props.definition.has_settings,
+  settings_url: props.definition.settings_url || '',
   is_active: !!props.definition.is_active,
 })
 

@@ -33,7 +33,7 @@ class BusinessModuleDefinitionSeeder extends Seeder
                 'description' => 'Galeria de imagenes para mostrar tus productos o servicios',
                 'icon' => 'bi bi-images',
                 'sort_order' => 3,
-                'has_settings' => false,
+                'has_settings' => true,
             ],
             [
                 'key' => 'leads',
@@ -41,7 +41,7 @@ class BusinessModuleDefinitionSeeder extends Seeder
                 'description' => 'Captura y gestion de prospectos de clientes',
                 'icon' => 'bi bi-person-plus',
                 'sort_order' => 4,
-                'has_settings' => false,
+                'has_settings' => true,
             ],
             [
                 'key' => 'services',
@@ -49,7 +49,7 @@ class BusinessModuleDefinitionSeeder extends Seeder
                 'description' => 'Gestiona los servicios que ofreces',
                 'icon' => 'bi bi-briefcase',
                 'sort_order' => 5,
-                'has_settings' => false,
+                'has_settings' => true,
             ],
             [
                 'key' => 'appointments',
@@ -65,7 +65,7 @@ class BusinessModuleDefinitionSeeder extends Seeder
                 'description' => 'Gestion de productos en venta',
                 'icon' => 'bi bi-box-seam',
                 'sort_order' => 7,
-                'has_settings' => false,
+                'has_settings' => true,
             ],
             [
                 'key' => 'ai_chatbot',
@@ -81,7 +81,7 @@ class BusinessModuleDefinitionSeeder extends Seeder
                 'description' => 'Customer reviews and testimonials',
                 'icon' => 'bi bi-star',
                 'sort_order' => 9,
-                'has_settings' => false,
+                'has_settings' => true,
             ],
             [
                 'key' => 'promotions',
@@ -89,7 +89,7 @@ class BusinessModuleDefinitionSeeder extends Seeder
                 'description' => 'Manage promotions, deals and coupons',
                 'icon' => 'bi bi-tag',
                 'sort_order' => 10,
-                'has_settings' => false,
+                'has_settings' => true,
             ],
             [
                 'key' => 'restaurant_menu',
@@ -121,7 +121,8 @@ class BusinessModuleDefinitionSeeder extends Seeder
                 'description' => 'Amenidades y caracteristicas de tu negocio (wifi, estacionamiento, etc)',
                 'icon' => 'bi bi-check-circle',
                 'sort_order' => 14,
-                'has_settings' => false,
+                'has_settings' => true,
+                'settings_url' => '/admin/features',
             ],
         ];
 

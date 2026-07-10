@@ -8,7 +8,7 @@
       :backHref="'/member/business-modules'"
     >
       <template #actions>
-        <button class="btn btn-outline-primary" @click="showImportModal = true">
+        <button class="btn btn-outline-primary" @click="openImportModal">
           <i class="bi bi-download me-1"></i>Importar
         </button>
         <button class="btn btn-primary" @click="openCreateModal">
@@ -49,11 +49,11 @@
                 <div class="d-flex justify-content-between align-items-start mb-2">
                   <div class="d-flex align-items-center gap-2">
                     <div class="bg-light rounded d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                      <i :class="bf.feature.icon || 'bi bi-check'"></i>
+                      <i :class="bf.feature_icon || 'bi bi-check'"></i>
                     </div>
                     <div>
-                      <strong>{{ bf.feature.title }}</strong>
-                      <p v-if="bf.location" class="text-muted small mb-0">{{ bf.location.name }}</p>
+                      <strong>{{ bf.feature_title }}</strong>
+                      <p v-if="bf.location_id && bf.location_name" class="text-muted small mb-0">{{ bf.location_name }}</p>
                     </div>
                   </div>
                   <div class="dropdown">
@@ -80,7 +80,7 @@
                     </ul>
                   </div>
                 </div>
-                <p v-if="bf.feature.description" class="text-muted small mb-0">{{ bf.feature.description }}</p>
+                <p v-if="bf.feature_description" class="text-muted small mb-0">{{ bf.feature_description }}</p>
                 <div class="mt-2">
                   <span v-if="bf.is_active" class="badge bg-success">Activo</span>
                   <span v-else class="badge bg-secondary">Inactivo</span>
@@ -91,7 +91,7 @@
         </div>
 
         <div class="text-center mt-4">
-          <button class="btn btn-outline-primary" @click="showImportModal = true" v-if="availableFeaturesCount > 0">
+          <button class="btn btn-outline-primary" @click="openImportModal" v-if="availableFeaturesCount > 0">
             <i class="bi bi-download me-1"></i>Importar mas ({{ availableFeaturesCount }} disponibles)
           </button>
         </div>
@@ -327,12 +327,19 @@ const openCreateModal = () => {
   })
 }
 
+const openImportModal = () => {
+  importForm.value.feature_ids = []
+  nextTick(() => {
+    importModal.show()
+  })
+}
+
 const openEditModal = (bf) => {
   editForm.value = {
     id: bf.id,
-    title: bf.feature.title,
-    description: bf.feature.description || '',
-    icon: bf.feature.icon || 'bi bi-check',
+    title: bf.feature_title,
+    description: bf.feature_description || '',
+    icon: bf.feature_icon || 'bi bi-check',
     location_id: bf.location_id,
     is_active: bf.is_active,
     feature_id: bf.feature_id,

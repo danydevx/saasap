@@ -20,6 +20,7 @@ class BusinessModuleDefinition extends Model
         'sort_order',
         'is_active',
         'has_settings',
+        'settings_url',
     ];
 
     protected $casts = [

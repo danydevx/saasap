@@ -16,15 +16,17 @@ class BusinessModuleController extends Controller
         $user = $request->user();
 
         $businesses = Business::where('user_id', $user->id)
-            ->with('modules.moduleDefinition')
+            ->with(['modules.moduleDefinition' => fn ($q) => $q->where('is_active', true)])
             ->orderBy('created_at', 'desc')
             ->paginate(20);
 
         $businesses->getCollection()->transform(function ($business) {
-            $business->modules = $business->modules->map(fn ($m) => [
-                'module_key' => $m->moduleDefinition?->key,
-                'is_enabled' => $m->is_enabled,
-            ]);
+            $business->modules = $business->modules
+                ->filter(fn ($m) => $m->moduleDefinition?->is_active)
+                ->map(fn ($m) => [
+                    'module_key' => $m->module_key,
+                    'is_enabled' => $m->is_enabled,
+                ]);
             return $business;
         });
 
@@ -41,7 +43,7 @@ class BusinessModuleController extends Controller
             abort(403, 'No tienes permiso para gestionar este negocio.');
         }
 
-        $business->load('modules.moduleDefinition');
+        $business->load(['modules.moduleDefinition' => fn ($q) => $q->where('is_active', true)]);
         $planModules = $this->getPlanModulesForUser($user);
 
         return Inertia::render('Member/BusinessModules/Edit', [
@@ -52,11 +54,11 @@ class BusinessModuleController extends Controller
                 'plan_name' => $this->getUserPlanName($user),
                 'modules' => $business->modules->map(fn ($m) => [
                     'id' => $m->id,
-                    'module_key' => $m->moduleDefinition?->key,
-                    'module_name' => $m->moduleDefinition?->name,
+                    'module_key' => $m->module_key,
+                    'module_name' => $m->moduleDefinition?->name ?? $m->module_key,
                     'is_enabled' => $m->is_enabled,
                     'settings' => $m->settings,
-                    'allowed_by_plan' => $planModules[$m->moduleDefinition?->key] ?? false,
+                    'allowed_by_plan' => $planModules[$m->module_key] ?? false,
                 ]),
             ],
         ]);
@@ -125,10 +127,12 @@ class BusinessModuleController extends Controller
 
         return PlanBusinessModule::where('plan_id', $subscription->plan_id)
             ->where('is_enabled', true)
+            ->whereHas('moduleDefinition', fn ($q) => $q->where('is_active', true))
             ->with('moduleDefinition')
             ->get()
             ->pluck('moduleDefinition.key')
             ->flip()
+            ->map(fn () => true)
             ->toArray();
     }
 

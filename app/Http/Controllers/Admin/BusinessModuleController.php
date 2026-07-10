@@ -13,7 +13,7 @@ class BusinessModuleController extends Controller
 {
     public function index(Request $request)
     {
-        $businesses = Business::with(['user', 'modules.moduleDefinition'])
+        $businesses = Business::with(['user', 'modules.moduleDefinition' => fn ($q) => $q->where('is_active', true)])
             ->orderBy('created_at', 'desc')
             ->paginate(20);
 
@@ -43,11 +43,15 @@ class BusinessModuleController extends Controller
                 ] : null,
                 'modules' => $business->modules->map(fn ($m) => [
                     'id' => $m->id,
-                    'module_key' => $m->moduleDefinition?->key,
-                    'module_name' => $m->moduleDefinition?->name,
+                    'module_key' => $m->module_key,
+                    'module_name' => $m->moduleDefinition?->name ?? $m->module_key,
+                    'module_icon' => $m->moduleDefinition?->icon,
                     'is_enabled' => $m->is_enabled,
+                    'is_active_globally' => $m->moduleDefinition?->is_active ?? false,
+                    'has_settings' => $m->moduleDefinition?->has_settings ?? false,
+                    'settings_url' => $m->moduleDefinition?->settings_url,
                     'settings' => $m->settings,
-                    'allowed_by_plan' => $planModules[$m->moduleDefinition?->key] ?? false,
+                    'allowed_by_plan' => $planModules[$m->module_key] ?? false,
                 ]),
             ],
         ]);
@@ -98,10 +102,12 @@ class BusinessModuleController extends Controller
 
         return PlanBusinessModule::where('plan_id', $subscription->plan_id)
             ->where('is_enabled', true)
+            ->whereHas('moduleDefinition', fn ($q) => $q->where('is_active', true))
             ->with('moduleDefinition')
             ->get()
             ->pluck('moduleDefinition.key')
             ->flip()
+            ->map(fn () => true)
             ->toArray();
     }
 

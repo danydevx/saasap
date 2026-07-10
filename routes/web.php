@@ -24,6 +24,7 @@ use App\Http\Controllers\Admin\BusinessHeroController;
 use App\Http\Controllers\Admin\BusinessSocialNetworkController;
 use App\Http\Controllers\Admin\BusinessModuleDefinitionController;
 use App\Http\Controllers\Admin\MinisiteThemeController;
+use App\Http\Controllers\Admin\ModuleSettingsController;
 use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\ExportController;
 use App\Http\Controllers\Admin\FeatureFlagController;
@@ -1178,6 +1179,13 @@ Route::prefix('admin')->middleware(['auth', 'admin_or_user:1'])->group(function 
     Route::delete('/business-module-definitions/{definition}', [BusinessModuleDefinitionController::class, 'destroy'])
         ->middleware(['auth', 'admin_or_user:1'])
         ->name('admin.business-module-definitions.destroy');
+
+    Route::get('/modules/{moduleKey}/settings', [ModuleSettingsController::class, 'show'])
+        ->middleware(['auth', 'admin_or_user:1'])
+        ->name('admin.module-settings.show');
+    Route::put('/modules/{moduleKey}/settings', [ModuleSettingsController::class, 'update'])
+        ->middleware(['auth', 'admin_or_user:1'])
+        ->name('admin.module-settings.update');
 
     Route::get('/payments', [PaymentController::class, 'index'])
         ->middleware(['permission_or_user:payments.view,1', 'module:billing'])

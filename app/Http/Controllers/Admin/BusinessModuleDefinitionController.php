@@ -25,6 +25,11 @@ class BusinessModuleDefinitionController extends Controller
             ->paginate(20)
             ->withQueryString();
 
+        $definitions->getCollection()->transform(function ($def) {
+            $def->settings_url = $def->settings_url ?? ($def->has_settings ? '/admin/modules/' . $def->key . '/settings' : null);
+            return $def;
+        });
+
         return Inertia::render('Admin/BusinessModuleDefinitions/Index', [
             'definitions' => $definitions,
             'filters' => ['search' => $search],
@@ -45,6 +50,7 @@ class BusinessModuleDefinitionController extends Controller
             'icon' => ['nullable', 'string', 'max:100'],
             'sort_order' => ['nullable', 'integer', 'min:0'],
             'has_settings' => ['boolean'],
+            'settings_url' => ['nullable', 'string', 'max:255'],
         ]);
 
         BusinessModuleDefinition::create([
@@ -54,6 +60,7 @@ class BusinessModuleDefinitionController extends Controller
             'icon' => $data['icon'] ?? null,
             'sort_order' => $data['sort_order'] ?? 0,
             'has_settings' => (bool) ($data['has_settings'] ?? false),
+            'settings_url' => $data['settings_url'] ?? null,
             'is_active' => true,
         ]);
 
@@ -63,6 +70,11 @@ class BusinessModuleDefinitionController extends Controller
 
     public function edit(BusinessModuleDefinition $definition)
     {
+        $settingsUrl = $definition->settings_url;
+        if (!$settingsUrl && $definition->has_settings) {
+            $settingsUrl = '/admin/modules/' . $definition->key . '/settings';
+        }
+
         return Inertia::render('Admin/BusinessModuleDefinitions/Edit', [
             'definition' => [
                 'id' => $definition->id,
@@ -72,6 +84,7 @@ class BusinessModuleDefinitionController extends Controller
                 'icon' => $definition->icon,
                 'sort_order' => $definition->sort_order,
                 'has_settings' => (bool) $definition->has_settings,
+                'settings_url' => $settingsUrl,
                 'is_active' => (bool) $definition->is_active,
             ],
         ]);
@@ -86,6 +99,7 @@ class BusinessModuleDefinitionController extends Controller
             'icon' => ['nullable', 'string', 'max:100'],
             'sort_order' => ['nullable', 'integer', 'min:0'],
             'has_settings' => ['boolean'],
+            'settings_url' => ['nullable', 'string', 'max:255'],
             'is_active' => ['boolean'],
         ]);
 
@@ -96,6 +110,7 @@ class BusinessModuleDefinitionController extends Controller
             'icon' => $data['icon'] ?? null,
             'sort_order' => $data['sort_order'] ?? 0,
             'has_settings' => (bool) ($data['has_settings'] ?? false),
+            'settings_url' => $data['settings_url'] ?? null,
             'is_active' => (bool) ($data['is_active'] ?? false),
         ]);
 

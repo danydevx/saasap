@@ -42,6 +42,11 @@
                 <li><Link href="/admin/features" class="dropdown-item" prefetch="hover">Caracteristicas Predefinidas</Link></li>
               </ul>
             </li>
+            <li class="nav-item">
+              <Link href="/admin/business-module-definitions" class="nav-link" prefetch="hover">
+                <i class="bi bi-grid me-1"></i>Modulos
+              </Link>
+            </li>
             <li v-if="showBillingMenu" class="nav-item dropdown">
               <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
                 Comercial

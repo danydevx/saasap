@@ -32,11 +32,11 @@ class FeatureController extends Controller
             ->orderBy('sort_order')
             ->paginate(20);
 
-        $categories = FeatureCategory::where('is_active', true)
+        $categories = FeatureCategory::withCount('predefinedFeatures')
             ->orderBy('sort_order')
-            ->get(['id', 'name']);
+            ->get();
 
-        return Inertia::render('Admin/Features/Features/Index', [
+        return Inertia::render('Admin/Features/Index', [
             'features' => $features,
             'categories' => $categories,
             'filters' => $request->only(['category_id', 'search']),

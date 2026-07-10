@@ -89,6 +89,7 @@ class FeatureController extends Controller
                     'id' => $bf->id,
                     'feature_id' => $bf->feature_id,
                     'feature_title' => $bf->feature->title,
+                    'feature_description' => $bf->feature->description,
                     'feature_icon' => $bf->feature->icon,
                     'feature_image' => $bf->feature->image_path,
                     'location_id' => $bf->location_id,
