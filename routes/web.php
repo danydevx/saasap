@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\AutomationController;
 use App\Http\Controllers\Public\BusinessController as PublicBusinessController;
 use App\Http\Controllers\Public\MenuController;
 use App\Http\Controllers\Public\PromotionVerificationController;
+use Modules\Features\Http\Controllers\Public\FeatureController as PublicFeatureController;
 use App\Http\Controllers\Admin\BusinessController;
 use App\Http\Controllers\Admin\BusinessModuleController;
 use App\Http\Controllers\Admin\BusinessContentController;
@@ -79,6 +80,7 @@ use App\Http\Controllers\Member\ContactFormController;
 use App\Http\Controllers\Member\AiChatbotController;
 use App\Http\Controllers\Member\ReviewController;
 use App\Http\Controllers\Member\PromotionController;
+use Modules\Features\Http\Controllers\Member\FeatureController;
 use App\Http\Controllers\Member\MenuCategoryController as MemberMenuCategoryController;
 use App\Http\Controllers\Member\MenuProductController as MemberMenuProductController;
 use App\Http\Controllers\Member\MenuProductVariantController as MemberMenuProductVariantController;
@@ -133,6 +135,7 @@ Route::get('/b/{slug}/locations', [PublicBusinessController::class, 'locations']
 Route::get('/b/{slug}/services', [PublicBusinessController::class, 'services'])->name('public.business.services');
 Route::get('/b/{slug}/gallery', [PublicBusinessController::class, 'gallery'])->name('public.business.gallery');
 Route::get('/b/{slug}/products', [PublicBusinessController::class, 'products'])->name('public.business.products');
+Route::get('/b/{slug}/features', [PublicFeatureController::class, 'index'])->name('public.business.features.index');
 Route::get('/b/{slug}/book', [PublicBusinessController::class, 'book'])->name('public.business.book');
 Route::post('/b/{slug}/book', [PublicBusinessController::class, 'storeBooking'])->name('public.business.booking.store');
 Route::get('/b/{slug}/book/success', [PublicBusinessController::class, 'bookingSuccess'])->name('public.business.booking.success');
@@ -440,6 +443,31 @@ Route::post('/member/businesses/{business}/promotions/reorder', [PromotionContro
 Route::post('/member/businesses/{business}/promotions/{promotion}/regenerate-qr', [PromotionController::class, 'regenerateQrCode'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.businesses.promotions.regenerate-qr');
+
+Route::get('/member/businesses/{business}/features', [FeatureController::class, 'index'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.features.index');
+Route::post('/member/businesses/{business}/features', [FeatureController::class, 'store'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.features.store');
+Route::post('/member/businesses/{business}/features/import', [FeatureController::class, 'importBulk'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.features.import-bulk');
+Route::post('/member/businesses/{business}/features/import/{feature}', [FeatureController::class, 'import'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.features.import');
+Route::put('/member/businesses/{business}/features/{feature}', [FeatureController::class, 'update'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.features.update');
+Route::delete('/member/businesses/{business}/features/{feature}', [FeatureController::class, 'destroy'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.features.destroy');
+Route::put('/member/businesses/{business}/feature-assignments', [FeatureController::class, 'updateAssignment'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.feature-assignments.update');
+Route::delete('/member/businesses/{business}/feature-assignments/{assignment}', [FeatureController::class, 'removeAssignment'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.feature-assignments.remove');
 
 Route::get('/member/businesses/{business}/menu-categories', [MemberMenuCategoryController::class, 'index'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])

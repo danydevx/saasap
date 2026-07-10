@@ -37,6 +37,9 @@
                 <li><Link href="/admin/businesses" class="dropdown-item" prefetch="hover">Negocios</Link></li>
                 <li><Link href="/admin/business-modules" class="dropdown-item" prefetch="hover">Modulos de Negocio</Link></li>
                 <li><Link href="/admin/minisite-themes" class="dropdown-item" prefetch="hover">Themes de Minisite</Link></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><Link href="/admin/feature-categories" class="dropdown-item" prefetch="hover">Categorias de Caracteristicas</Link></li>
+                <li><Link href="/admin/features" class="dropdown-item" prefetch="hover">Caracteristicas Predefinidas</Link></li>
               </ul>
             </li>
             <li v-if="showBillingMenu" class="nav-item dropdown">

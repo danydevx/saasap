@@ -181,6 +181,15 @@
                   <small>Acerca de</small>
                 </Link>
               </div>
+              <div class="col-6 col-md-3" v-if="hasModule(business.modules, 'features')">
+                <Link
+                  :href="`/member/businesses/${business.id}/features`"
+                  class="btn btn-outline-primary btn-sm w-100"
+                >
+                  <i class="bi bi-check-circle d-block mb-1"></i>
+                  <small>Caracteristicas</small>
+                </Link>
+              </div>
             </div>
           </div>
           <div class="card-footer bg-white">
@@ -229,9 +238,10 @@ const moduleLabels = {
   ai_chatbot: 'AI Chatbot',
   reviews: 'Reviews',
   promotions: 'Promotions',
-  restaurant_menu: 'Menú',
+  restaurant_menu: 'Menu',
   socialmedia: 'Redes Sociales',
   about: 'Acerca de',
+  features: 'Caracteristicas',
 }
 
 const getModuleLabel = (key) => moduleLabels[key] || key

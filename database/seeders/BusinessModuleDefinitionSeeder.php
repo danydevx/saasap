@@ -115,6 +115,14 @@ class BusinessModuleDefinitionSeeder extends Seeder
                 'sort_order' => 13,
                 'has_settings' => false,
             ],
+            [
+                'key' => 'features',
+                'name' => 'Caracteristicas',
+                'description' => 'Amenidades y caracteristicas de tu negocio (wifi, estacionamiento, etc)',
+                'icon' => 'bi bi-check-circle',
+                'sort_order' => 14,
+                'has_settings' => false,
+            ],
         ];
 
         foreach ($modules as $module) {

@@ -22,6 +22,8 @@ use Modules\Reviews\Models\BusinessReview;
 use Modules\Promotions\Models\BusinessPromotion;
 use Modules\Hero\Models\BusinessHero;
 use Modules\About\Models\BusinessAbout;
+use Modules\Features\Models\Feature;
+use Modules\Features\Models\BusinessFeature;
 use App\Models\MinisiteTheme;
 
 class Business extends Model
@@ -156,6 +158,16 @@ class Business extends Model
     public function socialNetworks(): HasMany
     {
         return $this->hasMany(\Modules\SocialMedia\Models\BusinessSocialNetwork::class);
+    }
+
+    public function features(): HasMany
+    {
+        return $this->hasMany(Feature::class);
+    }
+
+    public function businessFeatures(): HasMany
+    {
+        return $this->hasMany(BusinessFeature::class);
     }
 
     public function getEnabledModules(): array

@@ -27,11 +27,11 @@ class PlanBusinessModuleSeeder extends Seeder
             ],
             'business' => [
                 'name' => 'Plan Negocio',
-                'modules' => ['locations', 'contact_form', 'gallery', 'leads', 'services', 'appointments', 'products', 'reviews', 'promotions', 'restaurant_menu', 'about', 'socialmedia'],
+                'modules' => ['locations', 'contact_form', 'gallery', 'leads', 'services', 'appointments', 'products', 'reviews', 'promotions', 'restaurant_menu', 'about', 'socialmedia', 'features'],
             ],
             'ai' => [
                 'name' => 'Plan IA',
-                'modules' => ['locations', 'contact_form', 'gallery', 'leads', 'services', 'appointments', 'products', 'ai_chatbot', 'reviews', 'promotions', 'restaurant_menu', 'about', 'socialmedia'],
+                'modules' => ['locations', 'contact_form', 'gallery', 'leads', 'services', 'appointments', 'products', 'ai_chatbot', 'reviews', 'promotions', 'restaurant_menu', 'about', 'socialmedia', 'features'],
             ],
         ];
 

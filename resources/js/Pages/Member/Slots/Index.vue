@@ -108,7 +108,7 @@
               <div class="mb-3">
                 <FieldSelect
                   id="slot-schedule-type"
-                  label="Tipo de schedule"
+                  label="Tipo de horario"
                   v-model="scheduleType"
                 >
                   <option value="date">Fecha especifica</option>
@@ -210,7 +210,7 @@
               <div class="mb-3">
                 <FieldSelect
                   id="edit-slot-schedule-type"
-                  label="Tipo de schedule"
+                  label="Tipo de horario"
                   v-model="editScheduleType"
                 >
                   <option value="date">Fecha especifica</option>

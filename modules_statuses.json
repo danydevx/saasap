@@ -14,5 +14,6 @@
     "Promotions": true,
     "Hero": true,
     "SocialMedia": true,
-    "About": true
+    "About": true,
+    "Features": true
 }

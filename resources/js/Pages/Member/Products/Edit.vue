@@ -182,7 +182,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, reactive } from 'vue'
+import { ref, computed, onMounted, reactive, nextTick } from 'vue'
 import { Head, usePage, router } from '@inertiajs/vue3'
 import { Modal } from 'bootstrap'
 import Sortable from 'sortablejs'
