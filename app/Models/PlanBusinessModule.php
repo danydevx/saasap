@@ -13,6 +13,7 @@ class PlanBusinessModule extends Model
     protected $fillable = [
         'plan_id',
         'module_definition_id',
+        'module_key',
         'is_enabled',
     ];
 

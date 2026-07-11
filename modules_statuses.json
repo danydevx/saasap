@@ -16,5 +16,7 @@
     "SocialMedia": true,
     "About": true,
     "Features": true,
-    "Faqs": true
+    "Faqs": true,
+    "Seo": true,
+    "Branding": true
 }

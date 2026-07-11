@@ -46,6 +46,8 @@ class BusinessModuleController extends Controller
 
         $business->load(['modules.moduleDefinition' => fn ($q) => $q->where('is_active', true)]);
 
+        $planModules = $this->getPlanModulesForUser($user);
+
         return Inertia::render('Member/BusinessModules/Edit', [
             'business' => [
                 'id' => $business->id,
@@ -64,6 +66,8 @@ class BusinessModuleController extends Controller
                     ->values()
                     ->toArray(),
             ],
+            'planModules' => array_keys($planModules),
+            'planName' => $this->getUserPlanName($user),
         ]);
     }
 

@@ -26,6 +26,7 @@ use Modules\Features\Models\Feature;
 use Modules\Features\Models\BusinessFeature;
 use Modules\Faqs\Models\BusinessFaq;
 use Modules\Faqs\Models\BusinessFaqCategory;
+use Modules\Seo\Models\BusinessSeoSetting;
 use App\Models\MinisiteTheme;
 
 class Business extends Model
@@ -180,6 +181,11 @@ class Business extends Model
     public function faqCategories(): HasMany
     {
         return $this->hasMany(BusinessFaqCategory::class);
+    }
+
+    public function seoSetting(): HasOne
+    {
+        return $this->hasOne(BusinessSeoSetting::class);
     }
 
     public function getEnabledModules(): array

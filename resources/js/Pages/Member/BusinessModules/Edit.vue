@@ -17,9 +17,23 @@
       </div>
     </div>
 
+    <div class="alert alert-info d-flex align-items-center gap-2 mb-4" role="alert">
+      <i class="bi bi-info-circle"></i>
+      <div>
+        Los modulos marcados con <span class="badge bg-danger ms-1"><i class="bi bi-lock"></i> Requiere upgrade</span> no estan incluidos en tu plan actual.
+        <span v-if="planName"> Tu plan: <strong>{{ planName }}</strong></span>
+      </div>
+    </div>
+
     <div class="row g-3">
       <div class="col-6 col-md-4 col-lg-3" v-for="mod in localModules" :key="mod.id">
-        <div class="card border-0 shadow-sm h-100" :class="{ 'opacity-50': !mod.is_enabled }">
+        <div
+          class="card border-0 shadow-sm h-100"
+          :class="{
+            'opacity-50': !mod.is_enabled,
+            'border-danger': isLocked(mod),
+          }"
+        >
           <div v-if="mod.module_image" class="card-img-top overflow-hidden" style="height: 100px;">
             <img :src="mod.module_image" class="w-100 h-100 object-fit-cover" :alt="mod.module_name" />
           </div>
@@ -32,26 +46,38 @@
                 <i :class="getModuleIcon(mod.module_key)" style="font-size: 1rem;"></i>
               </div>
               <div class="flex-grow-1 min-width-0">
-                <h3 class="h6 mb-0 small fw-semibold text-truncate">{{ mod.module_name }}</h3>
-                <span v-if="!mod.is_enabled" class="badge bg-secondary">Inactivo</span>
+                <h3 class="h6 mb-0 small fw-semibold text-truncate d-flex align-items-center gap-2">
+                  {{ mod.module_name }}
+                  <span v-if="isLocked(mod)" class="badge bg-danger ms-auto">
+                    <i class="bi bi-lock"></i>
+                  </span>
+                </h3>
+                <span v-if="isLocked(mod)" class="badge bg-danger">Requiere upgrade</span>
+                <span v-else-if="!mod.is_enabled" class="badge bg-secondary">Inactivo</span>
+                <span v-else class="badge bg-success">Activo</span>
               </div>
             </div>
             <p v-if="mod.module_description" class="text-muted small mb-3 text-truncate">{{ mod.module_description }}</p>
-            <div class="d-flex gap-2">
+            <div class="d-flex flex-column gap-2">
               <button
-                class="btn btn-primary btn-sm w-50"
-                :class="{ 'disabled': !mod.is_enabled }"
-                @click="mod.is_enabled && goToModule(mod)"
+                class="btn btn-primary btn-sm"
+                :class="{ 'disabled': !mod.is_enabled || isLocked(mod) }"
+                @click="!isLocked(mod) && mod.is_enabled && goToModule(mod)"
               >
                 <i class="bi bi-eye me-1"></i>Ver Contenido
               </button>
               <button
-                class="btn btn-sm w-50"
-                :class="mod.is_enabled ? 'btn-outline-danger' : 'btn-success'"
-                @click="toggleModule(mod)"
-                :disabled="saving === mod.id"
+                class="btn btn-sm"
+                :class="isLocked(mod) ? 'btn-secondary' : (mod.is_enabled ? 'btn-outline-danger' : 'btn-success')"
+                @click="!isLocked(mod) && toggleModule(mod)"
+                :disabled="saving === mod.id || isLocked(mod)"
               >
-                <i class="bi bi-power me-1"></i>{{ mod.is_enabled ? 'Desactivar' : 'Activar' }}
+                <template v-if="isLocked(mod)">
+                  <i class="bi bi-lock me-1"></i>Bloqueado
+                </template>
+                <template v-else>
+                  <i class="bi bi-power me-1"></i>{{ mod.is_enabled ? 'Desactivar' : 'Activar' }}
+                </template>
               </button>
             </div>
           </div>
@@ -73,7 +99,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import { Head, Link, router } from '@inertiajs/vue3'
 import MemberLayout from '@/Layouts/MemberLayout.vue'
 import { toast } from 'vue3-toastify'
@@ -83,10 +109,22 @@ const props = defineProps({
     type: Object,
     required: true,
   },
+  planModules: {
+    type: Array,
+    default: () => [],
+  },
+  planName: {
+    type: String,
+    default: '',
+  },
 })
 
 const localModules = ref([...props.business.modules])
 const saving = ref(null)
+
+const isLocked = (mod) => {
+  return !props.planModules.includes(mod.module_key)
+}
 
 const moduleIcons = {
   hero: 'bi bi-house',
@@ -105,6 +143,9 @@ const moduleIcons = {
   about: 'bi bi-info-circle',
   features: 'bi bi-check-circle',
   ai_chatbot: 'bi bi-robot',
+  faqs: 'bi bi-question-circle',
+  seo: 'bi bi-graph-up',
+  branding: 'bi bi-palette',
 }
 
 const moduleUrls = {
@@ -124,6 +165,9 @@ const moduleUrls = {
   about: 'about',
   features: 'features',
   ai_chatbot: 'ai-chatbot',
+  faqs: 'faqs',
+  seo: 'seo',
+  branding: 'branding',
 }
 
 const getModuleIcon = (key) => moduleIcons[key] || 'bi bi-box'
@@ -138,6 +182,10 @@ const goToModule = (mod) => {
 }
 
 const toggleModule = (mod) => {
+  if (isLocked(mod)) {
+    return
+  }
+
   const message = mod.is_enabled
     ? `Desactivar el modulo "${mod.module_name}"? El contenido no aparecera en el minisitio.`
     : `Activar el modulo "${mod.module_name}"?`

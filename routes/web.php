@@ -83,6 +83,8 @@ use App\Http\Controllers\Member\ReviewController;
 use App\Http\Controllers\Member\PromotionController;
 use App\Http\Controllers\Member\FaqController;
 use App\Http\Controllers\Member\FaqCategoryController;
+use App\Http\Controllers\Member\SeoController;
+use App\Http\Controllers\Member\BrandingController;
 use Modules\Features\Http\Controllers\Member\FeatureController;
 use App\Http\Controllers\Member\MenuCategoryController as MemberMenuCategoryController;
 use App\Http\Controllers\Member\MenuProductController as MemberMenuProductController;
@@ -206,7 +208,7 @@ Route::post('/logout', [LogoutController::class, 'destroy'])
     ->middleware('auth')
     ->name('logout');
 
-Route::get('/member', [DashboardController::class, 'index'])
+Route::get('/member/dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.dashboard');
 
@@ -301,6 +303,20 @@ Route::put('/member/businesses/{business}/faq-categories/{category}', [FaqCatego
 Route::delete('/member/businesses/{business}/faq-categories/{category}', [FaqCategoryController::class, 'destroy'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.businesses.faq-categories.destroy');
+
+Route::get('/member/businesses/{business}/seo', [SeoController::class, 'index'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.seo.index');
+Route::post('/member/businesses/{business}/seo', [SeoController::class, 'update'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.seo.update');
+
+Route::get('/member/businesses/{business}/branding', [BrandingController::class, 'index'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.branding.index');
+Route::post('/member/businesses/{business}/branding', [BrandingController::class, 'update'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.branding.update');
 
 Route::get('/member/businesses/{business}/hero', [HeroController::class, 'index'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])

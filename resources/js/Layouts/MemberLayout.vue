@@ -59,22 +59,6 @@
           </Link>
         </div>
 
-        <div v-if="canUseIntegrations" class="sidebar-section">
-          <div class="sidebar-section-title">Integraciones</div>
-          <Link href="/member/integrations" class="sidebar-link" :class="{ active: isActive('/member/integrations') }">
-            <i class="bi bi-plug"></i>
-            <span>Integraciones</span>
-          </Link>
-          <Link v-if="canUseApi" href="/member/api-keys" class="sidebar-link" :class="{ active: isActive('/member/api-keys') }">
-            <i class="bi bi-key"></i>
-            <span>API Keys</span>
-          </Link>
-          <Link v-if="canUseWebhooks" href="/member/webhooks" class="sidebar-link" :class="{ active: isActive('/member/webhooks') }">
-            <i class="bi bi-arrow-left-right"></i>
-            <span>Webhooks</span>
-          </Link>
-        </div>
-
         <div class="sidebar-section">
           <div class="sidebar-section-title">Cuenta</div>
           <Link href="/member/profile" class="sidebar-link" :class="{ active: isActive('/member/profile') }">
@@ -85,28 +69,20 @@
             <i class="bi bi-lock"></i>
             <span>Password</span>
           </Link>
-          <Link href="/member/sessions" class="sidebar-link" :class="{ active: isActive('/member/sessions') }">
-            <i class="bi bi-display"></i>
-            <span>Sesiones</span>
-          </Link>
           <Link href="/member/preferences" class="sidebar-link" :class="{ active: isActive('/member/preferences') }">
             <i class="bi bi-gear"></i>
             <span>Preferencias</span>
           </Link>
         </div>
 
-        <div v-if="canNotifications || canActivity || canMedia" class="sidebar-section">
+        <div class="sidebar-section">
           <div class="sidebar-section-title">Recursos</div>
-          <Link v-if="canNotifications" href="/member/notifications" class="sidebar-link" :class="{ active: isActive('/member/notifications') }">
+          <Link href="/member/notifications" class="sidebar-link" :class="{ active: isActive('/member/notifications') }">
             <i class="bi bi-bell"></i>
             <span>Notificaciones</span>
             <span v-if="unreadCount > 0" class="badge bg-primary ms-auto">{{ unreadCount }}</span>
           </Link>
-          <Link v-if="canActivity" href="/member/activity" class="sidebar-link" :class="{ active: isActive('/member/activity') }">
-            <i class="bi bi-clock-history"></i>
-            <span>Actividad</span>
-          </Link>
-          <Link v-if="canMedia" href="/member/files" class="sidebar-link" :class="{ active: isActive('/member/files') }">
+          <Link href="/member/files" class="sidebar-link" :class="{ active: isActive('/member/files') }">
             <i class="bi bi-folder"></i>
             <span>Archivos</span>
           </Link>
@@ -128,9 +104,6 @@
           <slot name="topbar" />
         </div>
         <div class="d-flex align-items-center gap-2">
-          <Link v-if="canNotifications" href="/member/notification-preferences" class="btn btn-outline-secondary btn-sm">
-            <i class="bi bi-gear"></i>
-          </Link>
           <div class="dropdown">
             <button
               class="btn btn-outline-secondary btn-sm dropdown-toggle"
@@ -252,22 +225,6 @@
             </Link>
           </div>
 
-          <div v-if="canUseIntegrations" class="sidebar-section">
-            <div class="sidebar-section-title">Integraciones</div>
-            <Link href="/member/integrations" class="sidebar-link" :class="{ active: isActive('/member/integrations') }">
-              <i class="bi bi-plug"></i>
-              <span>Integraciones</span>
-            </Link>
-            <Link v-if="canUseApi" href="/member/api-keys" class="sidebar-link" :class="{ active: isActive('/member/api-keys') }">
-              <i class="bi bi-key"></i>
-              <span>API Keys</span>
-            </Link>
-            <Link v-if="canUseWebhooks" href="/member/webhooks" class="sidebar-link" :class="{ active: isActive('/member/webhooks') }">
-              <i class="bi bi-arrow-left-right"></i>
-              <span>Webhooks</span>
-            </Link>
-          </div>
-
           <div class="sidebar-section">
             <div class="sidebar-section-title">Cuenta</div>
             <Link href="/member/profile" class="sidebar-link" :class="{ active: isActive('/member/profile') }">
@@ -278,28 +235,20 @@
               <i class="bi bi-lock"></i>
               <span>Password</span>
             </Link>
-            <Link href="/member/sessions" class="sidebar-link" :class="{ active: isActive('/member/sessions') }">
-              <i class="bi bi-display"></i>
-              <span>Sesiones</span>
-            </Link>
             <Link href="/member/preferences" class="sidebar-link" :class="{ active: isActive('/member/preferences') }">
               <i class="bi bi-gear"></i>
               <span>Preferencias</span>
             </Link>
           </div>
 
-          <div v-if="canNotifications || canActivity || canMedia" class="sidebar-section">
+          <div class="sidebar-section">
             <div class="sidebar-section-title">Recursos</div>
-            <Link v-if="canNotifications" href="/member/notifications" class="sidebar-link" :class="{ active: isActive('/member/notifications') }">
+            <Link href="/member/notifications" class="sidebar-link" :class="{ active: isActive('/member/notifications') }">
               <i class="bi bi-bell"></i>
               <span>Notificaciones</span>
               <span v-if="unreadCount > 0" class="badge bg-primary ms-auto">{{ unreadCount }}</span>
             </Link>
-            <Link v-if="canActivity" href="/member/activity" class="sidebar-link" :class="{ active: isActive('/member/activity') }">
-              <i class="bi bi-clock-history"></i>
-              <span>Actividad</span>
-            </Link>
-            <Link v-if="canMedia" href="/member/files" class="sidebar-link" :class="{ active: isActive('/member/files') }">
+            <Link href="/member/files" class="sidebar-link" :class="{ active: isActive('/member/files') }">
               <i class="bi bi-folder"></i>
               <span>Archivos</span>
             </Link>
@@ -321,33 +270,11 @@ const page = usePage()
 const userName = computed(() => page.props.auth?.user?.name || 'Usuario')
 const unreadCount = computed(() => page.props.notificationUnreadCount || 0)
 const features = computed(() => page.props.features || {})
-const permissions = computed(() => page.props.auth?.permissions || [])
 const modules = computed(() => page.props.modules || {})
 const announcements = computed(() => page.props.systemAnnouncements || [])
 
 const canBilling = computed(() => modules.value.billing !== false)
-const canUseApi = computed(() => modules.value.api !== false && features.value.can_use_api !== false)
-const canUseWebhooks = computed(() => modules.value.webhooks !== false && features.value.can_use_webhooks !== false)
 const canSupport = computed(() => modules.value.support !== false && features.value.module_support !== false)
-const canMedia = computed(() => modules.value.media !== false)
-const canNotifications = computed(() => modules.value.notifications !== false)
-const canActivity = computed(() => modules.value.activity !== false)
-
-const canUseIntegrations = computed(() => {
-  const apiEnabled = (features.value['features.api_enabled'] ?? features.value.can_use_api) !== false
-  const webhooksEnabled = (features.value['features.webhooks_enabled'] ?? features.value.can_use_webhooks) !== false
-  const hasApiPermission = permissions.value.includes('api-keys.manage')
-  const hasWebhookPermission = permissions.value.includes('webhooks.manage')
-
-  const moduleApi = modules.value.api !== false
-  const moduleWebhooks = modules.value.webhooks !== false
-  const moduleIntegrations = modules.value.integrations !== false
-
-  return (
-    moduleIntegrations &&
-    ((apiEnabled && moduleApi && hasApiPermission) || (webhooksEnabled && moduleWebhooks && hasWebhookPermission))
-  )
-})
 
 const isActive = (url) => {
   return window.location.pathname.startsWith(url)

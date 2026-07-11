@@ -29,6 +29,8 @@ use App\Policies\BusinessProductCategoryPolicy;
 use App\Policies\BusinessServicePolicy;
 use App\Policies\BusinessFaqPolicy;
 use App\Policies\BusinessFaqCategoryPolicy;
+use App\Policies\BusinessSeoSettingPolicy;
+use App\Policies\BusinessBrandingSettingPolicy;
 use App\Policies\ContactFormPolicy;
 use App\Policies\MediaFilePolicy;
 use App\Policies\PaymentPolicy;
@@ -117,6 +119,8 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(\Modules\Reviews\Models\BusinessReview::class, BusinessReviewPolicy::class);
         Gate::policy(\Modules\Faqs\Models\BusinessFaq::class, BusinessFaqPolicy::class);
         Gate::policy(\Modules\Faqs\Models\BusinessFaqCategory::class, BusinessFaqCategoryPolicy::class);
+        Gate::policy(\Modules\Seo\Models\BusinessSeoSetting::class, BusinessSeoSettingPolicy::class);
+        Gate::policy(\Modules\Branding\Models\BusinessBrandingSetting::class, BusinessBrandingSettingPolicy::class);
 
         RateLimiter::for('login', function (Request $request) {
             $email = mb_strtolower((string) $request->input('email', ''));

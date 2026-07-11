@@ -132,6 +132,22 @@ class BusinessModuleDefinitionSeeder extends Seeder
                 'has_settings' => true,
                 'settings_url' => '/admin/features',
             ],
+            [
+                'key' => 'seo',
+                'name' => 'Posicionamiento SEO',
+                'description' => 'Configura el posicionamiento en motores de busqueda y redes sociales',
+                'icon' => 'bi bi-graph-up',
+                'sort_order' => 16,
+                'has_settings' => true,
+            ],
+            [
+                'key' => 'branding',
+                'name' => 'Personalización de Marca',
+                'description' => 'Configura los colores, tipografías y estilos de tu marca',
+                'icon' => 'bi bi-palette',
+                'sort_order' => 17,
+                'has_settings' => true,
+            ],
         ];
 
         foreach ($modules as $module) {
