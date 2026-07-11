@@ -815,6 +815,14 @@ Route::get('/admin/dashboard', [App\Http\Controllers\Admin\DashboardController::
     ->middleware(['auth', 'admin_or_user:1'])
     ->name('admin.dashboard');
 
+Route::get('/admin/api-explorer', [App\Http\Controllers\Admin\ApiExplorerController::class, 'index'])
+    ->middleware(['auth', 'admin_or_user:1'])
+    ->name('admin.api-explorer.index');
+
+Route::post('/admin/api-explorer/fetch', [App\Http\Controllers\Admin\ApiExplorerController::class, 'fetch'])
+    ->middleware(['auth', 'admin_or_user:1'])
+    ->name('admin.api-explorer.fetch');
+
 Route::prefix('admin')->middleware(['auth', 'admin_or_user:1'])->group(function () {
 
     Route::get('/business-modules', [BusinessModuleController::class, 'index'])
@@ -1421,7 +1429,13 @@ Route::prefix('admin')->middleware(['auth', 'admin_or_user:1', 'permission_or_us
     Route::put('/permissions/{permission}', [PermissionController::class, 'update'])
         ->middleware('permission_or_user:permissions.edit,1')
         ->name('admin.permissions.update');
-    Route::delete('/permissions/{permission}', [PermissionController::class, 'destroy'])
-        ->middleware('permission_or_user:permissions.delete,1')
-        ->name('admin.permissions.destroy');
+Route::delete('/permissions/{permission}', [PermissionController::class, 'destroy'])
+    ->middleware('permission_or_user:permissions.delete,1')
+    ->name('admin.permissions.destroy');
 });
+
+Route::get('/ai/test', [App\Http\Controllers\AiTestController::class, 'test'])
+    ->name('ai.test');
+
+Route::post('/ai/chat', [App\Http\Controllers\AiTestController::class, 'chat'])
+    ->name('ai.chat');

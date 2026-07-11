@@ -79,6 +79,7 @@
               </a>
               <ul class="dropdown-menu">
                 <li v-if="canViewApiKeys"><Link href="/admin/api-keys" class="dropdown-item" prefetch="hover">API Keys</Link></li>
+                <li><Link href="/admin/api-explorer" class="dropdown-item" prefetch="hover">API Explorer</Link></li>
                 <li v-if="canViewWebhooks"><Link href="/admin/webhooks" class="dropdown-item" prefetch="hover">Webhooks</Link></li>
               </ul>
             </li>
