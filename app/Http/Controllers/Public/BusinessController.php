@@ -486,4 +486,134 @@ class BusinessController extends Controller
 
         return redirect()->back()->with('success', 'Mensaje enviado correctamente.');
     }
+
+    public function formByShortcode(string $slug, string $shortcode, Request $request)
+    {
+        $business = Business::where('slug', $slug)
+            ->where('is_active', true)
+            ->where('is_published', true)
+            ->firstOrFail();
+
+        $modules = $business->modules()->where('is_enabled', true)->get()->pluck('moduleDefinition.key')->toArray();
+        if (!in_array('contact_form', $modules)) {
+            abort(404);
+        }
+
+        $form = $business->contactForms()->where('shortcode', $shortcode)->first();
+
+        if (!$form) {
+            abort(404);
+        }
+
+        $fields = $form->activeFields->map(fn ($field) => [
+            'id' => $field->id,
+            'name' => $field->field_name,
+            'type' => $field->field_type,
+            'label' => $field->label,
+            'placeholder' => $field->placeholder,
+            'is_required' => $field->is_required,
+            'options' => $field->options ?? [],
+        ]);
+
+        return Inertia::render('Public/Business/FormByShortcode', [
+            'business' => [
+                'id' => $business->id,
+                'name' => $business->name,
+                'slug' => $business->slug,
+                'email' => $business->email,
+                'phone' => $business->phone,
+            ],
+            'form' => [
+                'id' => $form->id,
+                'name' => $form->name,
+                'shortcode' => $form->shortcode,
+                'success_message' => $form->success_message,
+                'show_phone' => $form->show_phone,
+                'show_email' => $form->show_email,
+            ],
+            'fields' => $fields,
+        ]);
+    }
+
+    public function storeFormByShortcode(string $slug, string $shortcode, Request $request)
+    {
+        $business = Business::where('slug', $slug)
+            ->where('is_active', true)
+            ->where('is_published', true)
+            ->firstOrFail();
+
+        $modules = $business->modules()->where('is_enabled', true)->get()->pluck('moduleDefinition.key')->toArray();
+        if (!in_array('contact_form', $modules)) {
+            abort(404);
+        }
+
+        $form = $business->contactForms()->where('shortcode', $shortcode)->first();
+
+        if (!$form) {
+            abort(404);
+        }
+
+        $rules = [
+            'name' => ['required', 'string', 'max:150'],
+            'email' => ['required', 'email', 'max:150'],
+            'phone' => ['nullable', 'string', 'max:50'],
+        ];
+
+        $fields = $form->activeFields;
+        foreach ($fields as $field) {
+            $fieldName = $field->field_name;
+            $fieldRules = [];
+
+            if ($field->is_required && !in_array($field->field_type, ['checkbox'])) {
+                $fieldRules[] = 'required';
+            } else {
+                $fieldRules[] = 'nullable';
+            }
+
+            if ($field->field_type === 'email' && $fieldName !== 'email') {
+                $fieldRules[] = 'email';
+            }
+
+            $rules[$fieldName] = $fieldRules;
+        }
+
+        $data = $request->validate($rules);
+
+        $notes = [];
+        $metadata = [];
+
+        foreach ($form->activeFields as $field) {
+            if (in_array($field->field_name, ['name', 'email', 'phone'])) {
+                continue;
+            }
+
+            $value = $data[$field->field_name] ?? null;
+
+            if ($field->field_type === 'checkbox') {
+                $value = $request->has($field->field_name) ? 'Si' : 'No';
+            }
+
+            if ($value !== null) {
+                if ($field->field_type === 'select' && is_array($value)) {
+                    $value = implode(', ', $value);
+                }
+                $metadata[$field->field_name] = $value;
+            }
+        }
+
+        $lead = BusinessLead::create([
+            'business_id' => $business->id,
+            'business_contact_form_id' => $form->id,
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'phone' => $data['phone'] ?? null,
+            'notes' => null,
+            'metadata' => $metadata,
+            'source' => 'form:' . $form->shortcode,
+            'status' => 'new',
+            'ip_address' => $request->ip(),
+        ]);
+
+        return redirect()->back()->with('success', $form->success_message ?? 'Mensaje enviado correctamente.');
+    }
 }

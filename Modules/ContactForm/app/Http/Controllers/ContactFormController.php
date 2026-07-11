@@ -4,53 +4,34 @@ namespace Modules\ContactForm\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Modules\ContactForm\Models\BusinessContactForm;
 
 class ContactFormController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function show(string $shortcode)
     {
-        return view('contactform::index');
+        $form = BusinessContactForm::where('shortcode', $shortcode)->first();
+
+        if (!$form) {
+            return response()->json(['error' => 'Formulario no encontrado'], 404);
+        }
+
+        return response()->json([
+            'id' => $form->id,
+            'name' => $form->name,
+            'shortcode' => $form->shortcode,
+            'success_message' => $form->success_message,
+            'show_phone' => $form->show_phone,
+            'show_email' => $form->show_email,
+            'fields' => $form->activeFields->map(fn ($field) => [
+                'id' => $field->id,
+                'name' => $field->field_name,
+                'type' => $field->field_type,
+                'label' => $field->label,
+                'placeholder' => $field->placeholder,
+                'is_required' => $field->is_required,
+                'options' => $field->options ?? [],
+            ]),
+        ]);
     }
-
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        return view('contactform::create');
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request) {}
-
-    /**
-     * Show the specified resource.
-     */
-    public function show($id)
-    {
-        return view('contactform::show');
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit($id)
-    {
-        return view('contactform::edit');
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, $id) {}
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy($id) {}
 }

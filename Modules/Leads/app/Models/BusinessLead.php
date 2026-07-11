@@ -11,6 +11,7 @@ class BusinessLead extends Model
 {
     protected $fillable = [
         'business_id',
+        'business_contact_form_id',
         'business_location_id',
         'user_id',
         'name',
@@ -42,5 +43,10 @@ class BusinessLead extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(\App\Models\User::class);
+    }
+
+    public function contactForm(): BelongsTo
+    {
+        return $this->belongsTo(\Modules\ContactForm\Models\BusinessContactForm::class, 'business_contact_form_id');
     }
 }

@@ -27,6 +27,8 @@ use Modules\Features\Models\BusinessFeature;
 use Modules\Faqs\Models\BusinessFaq;
 use Modules\Faqs\Models\BusinessFaqCategory;
 use Modules\Seo\Models\BusinessSeoSetting;
+use Modules\ContactForm\Models\BusinessContactForm;
+use Modules\ContactForm\Models\BusinessContactFormField;
 use App\Models\MinisiteTheme;
 
 class Business extends Model
@@ -186,6 +188,16 @@ class Business extends Model
     public function seoSetting(): HasOne
     {
         return $this->hasOne(BusinessSeoSetting::class);
+    }
+
+    public function contactForms(): HasMany
+    {
+        return $this->hasMany(BusinessContactForm::class);
+    }
+
+    public function contactFormFields(): HasMany
+    {
+        return $this->hasMany(BusinessContactFormField::class);
     }
 
     public function getEnabledModules(): array

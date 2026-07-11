@@ -1,14 +1,14 @@
 <template>
   <MemberLayout>
-    <Head :title="`Contactos - ${business?.name || ''}`" />
+    <Head :title="`Envios - ${form?.name || 'Formulario'} - ${business?.name || ''}`" />
 
     <PageHeader
-      title="Contactos del Sitio"
+      :title="`Envios: ${form?.name || 'Formulario'}`"
       :breadcrumbs="breadcrumbs"
-      :backHref="'/member/business-modules'"
+      :backHref="`/member/businesses/${business?.id}/contact-forms`"
     >
       <template #actions>
-        <a :href="`/member/businesses/${business?.id}/contact-form/export`" class="btn btn-success btn-sm">
+        <a :href="`/member/businesses/${business?.id}/contact-forms/${form?.id}/export`" class="btn btn-success btn-sm">
           <i class="bi bi-download me-1"></i>Exportar CSV
         </a>
       </template>
@@ -16,12 +16,12 @@
 
     <BaseDataTable
       ref="dataTableRef"
-      :endpoint="`/member/businesses/${business?.id}/contact-form/submissions`"
+      :endpoint="`/member/businesses/${business?.id}/contact-forms/${form?.id}/submissions`"
       :columns="columns"
       :initial-data="dataTable"
       search-placeholder="Buscar mensajes..."
       empty-title="No hay mensajes"
-      empty-text="Los mensajes del formulario de contacto apareceran aqui."
+      empty-text="Los mensajes de este formulario apareceran aqui."
       @updated="onDataTableUpdated"
     >
       <template #cell-name="{ row }">
@@ -69,11 +69,14 @@ import BaseDataTable from '@/Components/DataTable/BaseDataTable.vue'
 
 const page = usePage()
 const business = computed(() => page.props.business)
+const form = computed(() => page.props.form)
 const dataTable = computed(() => page.props.dataTable)
 
 const breadcrumbs = computed(() => [
   { label: 'Mis Negocios', href: '/member/business-modules' },
-  { label: 'Contactos Web', active: true },
+  { label: 'Formularios', href: `/member/businesses/${business.value?.id}/contact-forms` },
+  { label: form.value?.name || 'Formulario', href: `/member/businesses/${business.value?.id}/contact-forms/${form.value?.id}/edit` },
+  { label: 'Envios', active: true },
 ])
 
 const columns = [

@@ -146,6 +146,8 @@ Route::post('/b/{slug}/book', [PublicBusinessController::class, 'storeBooking'])
 Route::get('/b/{slug}/book/success', [PublicBusinessController::class, 'bookingSuccess'])->name('public.business.booking.success');
 Route::get('/b/{slug}/contact', [PublicBusinessController::class, 'contact'])->name('public.business.contact');
 Route::post('/b/{slug}/contact', [PublicBusinessController::class, 'storeContact'])->name('public.business.contact.store');
+Route::get('/b/{slug}/form/{shortcode}', [PublicBusinessController::class, 'formByShortcode'])->name('public.business.form.shortcode');
+Route::post('/b/{slug}/form/{shortcode}', [PublicBusinessController::class, 'storeFormByShortcode'])->name('public.business.form.shortcode.store');
 Route::get('/b/{slug}/menu', [MenuController::class, 'show'])->name('public.menu.show');
 Route::get('/b/{slug}/verify/{promotionId}/{couponCode}', [PromotionVerificationController::class, 'verify'])->name('public.promotion.verify');
 
@@ -446,12 +448,45 @@ Route::delete('/member/businesses/{business}/leads/{lead}', [LeadController::cla
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.businesses.leads.destroy');
 
-Route::get('/member/businesses/{business}/contact-form/submissions', [ContactFormController::class, 'submissions'])
+Route::get('/member/businesses/{business}/contact-forms', [ContactFormController::class, 'index'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
-    ->name('member.business.contact-form.submissions');
-Route::get('/member/businesses/{business}/contact-form/export', [ContactFormController::class, 'export'])
+    ->name('member.business.contact-forms.index');
+Route::get('/member/businesses/{business}/contact-forms/create', [ContactFormController::class, 'create'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
-    ->name('member.business.contact-form.export');
+    ->name('member.business.contact-forms.create');
+Route::post('/member/businesses/{business}/contact-forms', [ContactFormController::class, 'store'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.business.contact-forms.store');
+Route::get('/member/businesses/{business}/contact-forms/{form}/edit', [ContactFormController::class, 'edit'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.business.contact-forms.edit');
+Route::put('/member/businesses/{business}/contact-forms/{form}', [ContactFormController::class, 'update'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.business.contact-forms.update');
+Route::delete('/member/businesses/{business}/contact-forms/{form}', [ContactFormController::class, 'destroy'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.business.contact-forms.destroy');
+Route::post('/member/businesses/{business}/contact-forms/{form}/fields', [ContactFormController::class, 'storeField'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.business.contact-forms.fields.store');
+Route::put('/member/businesses/{business}/contact-forms/{form}/fields/{field}', [ContactFormController::class, 'updateField'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.business.contact-forms.fields.update');
+Route::delete('/member/businesses/{business}/contact-forms/{form}/fields/{field}', [ContactFormController::class, 'destroyField'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.business.contact-forms.fields.destroy');
+Route::post('/member/businesses/{business}/contact-forms/{form}/reorder', [ContactFormController::class, 'reorder'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.business.contact-forms.reorder');
+Route::get('/member/businesses/{business}/contact-forms/{form}/submissions', [ContactFormController::class, 'submissions'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.business.contact-forms.submissions');
+Route::get('/member/businesses/{business}/contact-forms/export', [ContactFormController::class, 'export'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.business.contact-forms.export');
+Route::get('/member/businesses/{business}/contact-forms/{form}/preview', [ContactFormController::class, 'preview'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.business.contact-forms.preview');
 
 Route::get('/member/businesses/{business}/ai-chatbot', [AiChatbotController::class, 'index'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])

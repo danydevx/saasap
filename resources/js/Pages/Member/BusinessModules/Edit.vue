@@ -157,7 +157,7 @@ const moduleUrls = {
   appointments: 'appointments',
   slots: 'slots',
   leads: 'leads',
-  contact_form: 'contact-form/submissions',
+  contact_form: 'contact-forms',
   reviews: 'reviews',
   promotions: 'promotions',
   restaurant_menu: 'menu-categories',
