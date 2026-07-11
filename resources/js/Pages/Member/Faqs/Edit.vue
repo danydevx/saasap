@@ -1,0 +1,125 @@
+<template>
+  <MemberLayout>
+    <Head :title="`Editar Pregunta - ${business.name}`" />
+
+    <PageHeader
+      :title="'Editar Pregunta Frecuente'"
+      :breadcrumbs="breadcrumbs"
+      :backHref="`/member/businesses/${business.id}/faqs`"
+    />
+
+    <div class="card border-0 shadow-sm">
+      <div class="card-body">
+        <form @submit.prevent="submit">
+          <div class="row g-3">
+            <div class="col-12">
+              <FieldText
+                id="faq-question"
+                label="Pregunta"
+                v-model="form.question"
+                :formError="errors.question"
+                required
+              />
+            </div>
+
+            <div class="col-12">
+              <FieldTextarea
+                id="faq-answer"
+                label="Respuesta"
+                v-model="form.answer"
+                :formError="errors.answer"
+                :rows="4"
+                required
+              />
+            </div>
+
+            <div class="col-12 col-md-6">
+              <FieldSelect
+                id="faq-category"
+                label="Categoria"
+                v-model="form.category_id"
+                :options="categoryOptions"
+                :formError="errors.category_id"
+              />
+            </div>
+
+            <div class="col-12 col-md-6">
+              <FieldNumber
+                id="faq-sort-order"
+                label="Orden"
+                v-model="form.sort_order"
+                :formError="errors.sort_order"
+              />
+              <small class="text-muted">Menor numero aparece primero.</small>
+            </div>
+
+            <div class="col-12 col-md-6">
+              <FieldSwitch
+                id="faq-active"
+                label="Pregunta activa"
+                v-model="form.is_active"
+              />
+            </div>
+          </div>
+
+          <div class="col-12 d-flex gap-2 mt-4">
+            <button type="submit" class="btn btn-primary" :disabled="sending">
+              {{ sending ? 'Guardando...' : 'Guardar Cambios' }}
+            </button>
+            <Link :href="`/member/businesses/${business.id}/faqs`" class="btn btn-outline-secondary">Cancelar</Link>
+          </div>
+        </form>
+      </div>
+    </div>
+  </MemberLayout>
+</template>
+
+<script setup>
+import { computed, ref } from 'vue'
+import { Head, Link, router, usePage } from '@inertiajs/vue3'
+import MemberLayout from '@/Layouts/MemberLayout.vue'
+import PageHeader from '@/Components/Admin/PageHeader.vue'
+import FieldText from '@/Components/Fields/FieldText.vue'
+import FieldTextarea from '@/Components/Fields/FieldTextarea.vue'
+import FieldSelect from '@/Components/Fields/FieldSelect.vue'
+import FieldSwitch from '@/Components/Fields/FieldSwitch.vue'
+import FieldNumber from '@/Components/Fields/FieldNumber.vue'
+
+const props = defineProps({
+  business: { type: Object, required: true },
+  faq: { type: Object, required: true },
+  categories: { type: Array, default: () => [] },
+})
+
+const page = usePage()
+const errors = computed(() => page.props.errors || {})
+const sending = ref(false)
+
+const categoryOptions = computed(() => [
+  { value: '', label: 'Sin categoria' },
+  ...props.categories.map(c => ({ value: c.id, label: c.name }))
+])
+
+const form = ref({
+  question: props.faq.question,
+  answer: props.faq.answer,
+  category_id: props.faq.category_id || '',
+  is_active: props.faq.is_active,
+  sort_order: props.faq.sort_order || 0,
+})
+
+const breadcrumbs = computed(() => [
+  { label: 'Mis Negocios', href: '/member/business-modules' },
+  { label: 'Preguntas Frecuentes', href: `/member/businesses/${props.business.id}/faqs` },
+  { label: 'Editar', active: true },
+])
+
+const submit = () => {
+  sending.value = true
+  router.put(`/member/businesses/${props.business.id}/faqs/${props.faq.id}`, form.value, {
+    onFinish: () => {
+      sending.value = false
+    },
+  })
+}
+</script>

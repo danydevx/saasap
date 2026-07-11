@@ -200,7 +200,7 @@ const product = computed(() => page.props.product)
 const categories = computed(() => page.props.categories || [])
 
 const breadcrumbs = computed(() => [
-  { label: business.value?.name, href: `/member/businesses/${business.value?.id}/modules` },
+  { label: 'Mis Negocios', href: '/member/business-modules' },
   { label: 'Productos del Menu', href: `/member/businesses/${business.value?.id}/menu-products` },
   { label: 'Editar', active: true },
 ])

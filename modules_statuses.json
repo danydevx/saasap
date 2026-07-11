@@ -15,5 +15,6 @@
     "Hero": true,
     "SocialMedia": true,
     "About": true,
-    "Features": true
+    "Features": true,
+    "Faqs": true
 }

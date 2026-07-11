@@ -12,16 +12,26 @@ use Illuminate\Support\Facades\Storage;
 
 class MenuProductController extends Controller
 {
-    public function index(Request $request, Business $business, ?MenuCategory $category = null)
+    public function create(Request $request, Business $business)
+    {
+        return redirect()->route('member.menu.products.index', ['business' => $business->id]);
+    }
+
+    public function index(Request $request, Business $business)
     {
         $user = Auth::user();
         abort_unless($business->user_id === $user->id, 403);
 
         $query = MenuProduct::where('business_id', $business->id)->with('category', 'variants', 'images');
 
-        if ($category) {
-            abort_unless($category->business_id === $business->id, 403);
-            $query->where('category_id', $category->id);
+        $categoryId = $request->query('category');
+        if ($categoryId) {
+            $category = MenuCategory::where('id', $categoryId)
+                ->where('business_id', $business->id)
+                ->first();
+            if ($category) {
+                $query->where('category_id', $category->id);
+            }
         } elseif ($request->boolean('uncategorized')) {
             $query->whereNull('category_id');
         }
@@ -43,7 +53,7 @@ class MenuProductController extends Controller
             'business' => $business,
             'products' => $products,
             'categories' => $categories,
-            'selectedCategory' => $request->boolean('uncategorized') ? 'uncategorized' : ($category?->id ?? null),
+            'selectedCategory' => $request->boolean('uncategorized') ? 'uncategorized' : ($categoryId ?? null),
         ]);
     }
 

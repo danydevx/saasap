@@ -5,10 +5,14 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\BusinessModuleDefinition;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 class BusinessModuleDefinitionController extends Controller
 {
+    private const MAX_IMAGE_SIZE_KB = 2048;
+    private const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+
     public function index(Request $request)
     {
         $search = trim((string) $request->input('search', ''));
@@ -75,6 +79,11 @@ class BusinessModuleDefinitionController extends Controller
             $settingsUrl = '/admin/modules/' . $definition->key . '/settings';
         }
 
+        $imageUrl = null;
+        if ($definition->image) {
+            $imageUrl = Storage::disk('public')->url($definition->image);
+        }
+
         return Inertia::render('Admin/BusinessModuleDefinitions/Edit', [
             'definition' => [
                 'id' => $definition->id,
@@ -82,6 +91,7 @@ class BusinessModuleDefinitionController extends Controller
                 'name' => $definition->name,
                 'description' => $definition->description,
                 'icon' => $definition->icon,
+                'image' => $imageUrl,
                 'sort_order' => $definition->sort_order,
                 'has_settings' => (bool) $definition->has_settings,
                 'settings_url' => $settingsUrl,
@@ -97,11 +107,26 @@ class BusinessModuleDefinitionController extends Controller
             'name' => ['required', 'string', 'max:150'],
             'description' => ['nullable', 'string', 'max:500'],
             'icon' => ['nullable', 'string', 'max:100'],
+            'image' => ['nullable', 'file', 'mimes:jpeg,png,gif,webp', 'max:' . self::MAX_IMAGE_SIZE_KB],
+            'remove_image' => ['boolean'],
             'sort_order' => ['nullable', 'integer', 'min:0'],
             'has_settings' => ['boolean'],
             'settings_url' => ['nullable', 'string', 'max:255'],
             'is_active' => ['boolean'],
         ]);
+
+        if ($request->boolean('remove_image')) {
+            if ($definition->image) {
+                Storage::disk('public')->delete($definition->image);
+            }
+            $definition->image = null;
+        } elseif ($request->hasFile('image')) {
+            if ($definition->image) {
+                Storage::disk('public')->delete($definition->image);
+            }
+            $path = $request->file('image')->store('module-definitions/' . $definition->id, ['disk' => 'public']);
+            $definition->image = $path;
+        }
 
         $definition->update([
             'key' => trim($data['key']),

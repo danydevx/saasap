@@ -1,78 +1,72 @@
 <template>
   <MemberLayout>
-    <Head :title="`Modulos: ${business.name}`" />
+    <Head :title="`Modulos - ${business.name}`" />
 
     <div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
       <div>
         <h1 class="h4 mb-1">{{ business.name }}</h1>
-        <p class="text-muted mb-0">Gestiona los modulos disponibles para este negocio.</p>
+        <p class="text-muted mb-0">Gestiona el contenido de cada modulo.</p>
       </div>
       <div class="d-flex gap-2">
-        <Link :href="`/member/businesses/${business.id}/minisite-theme`" class="btn btn-outline-primary btn-sm">
-          <i class="bi bi-palette me-1"></i>Theme
+        <Link :href="`/member/businesses/${business.id}/edit`" class="btn btn-outline-primary btn-sm">
+          <i class="bi bi-pencil me-1"></i>Editar negocio
         </Link>
         <Link href="/member/business-modules" class="btn btn-outline-secondary btn-sm">
-          Volver
+          <i class="bi bi-arrow-left me-1"></i>Volver
         </Link>
       </div>
     </div>
 
-    <div v-if="business.plan_name" class="alert alert-info mb-4">
-      <strong>Tu plan:</strong> {{ business.plan_name }}
-      <br><small>Solo puedes activar modulos incluidos en tu plan.</small>
-    </div>
-
-    <div class="card border-0 shadow-sm">
-      <div class="card-body">
-        <div v-if="$page.props.flash?.success" class="alert alert-success alert-dismissible fade show" role="alert">
-          {{ $page.props.flash.success }}
-          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-
-        <div class="table-responsive">
-          <table class="table table-hover align-middle mb-0">
-            <thead class="table-light">
-              <tr>
-                <th scope="col">Modulo</th>
-                <th scope="col">Estado</th>
-                <th scope="col" class="text-end">Accion</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="(module, index) in localModules" :key="module.id">
-                <td class="fw-semibold">
-                  {{ module.module_name }}
-                  <span v-if="!module.allowed_by_plan" class="badge bg-secondary ms-2">No disponible en plan</span>
-                </td>
-                <td>
-                  <span v-if="module.is_enabled" class="badge text-bg-success">Habilitado</span>
-                  <span v-else class="badge text-bg-secondary">Deshabilitado</span>
-                </td>
-                <td class="text-end">
-                  <button
-                    v-if="module.allowed_by_plan"
-                    class="btn btn-sm"
-                    :class="module.is_enabled ? 'btn-outline-danger' : 'btn-outline-success'"
-                    type="button"
-                    @click="toggleModule(index)"
-                  >
-                    {{ module.is_enabled ? 'Deshabilitar' : 'Habilitar' }}
-                  </button>
-                  <span v-else class="text-muted small">
-                    Requiere upgrade de plan
-                  </span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+    <div class="row g-3">
+      <div class="col-6 col-md-4 col-lg-3" v-for="mod in localModules" :key="mod.id">
+        <div class="card border-0 shadow-sm h-100" :class="{ 'opacity-50': !mod.is_enabled }">
+          <div v-if="mod.module_image" class="card-img-top overflow-hidden" style="height: 100px;">
+            <img :src="mod.module_image" class="w-100 h-100 object-fit-cover" :alt="mod.module_name" />
+          </div>
+          <div class="card-body py-3 px-3">
+            <div class="d-flex align-items-center gap-2 mb-2">
+              <div
+                class="rounded bg-light d-flex align-items-center justify-content-center flex-shrink-0"
+                style="width: 36px; height: 36px;"
+              >
+                <i :class="getModuleIcon(mod.module_key)" style="font-size: 1rem;"></i>
+              </div>
+              <div class="flex-grow-1 min-width-0">
+                <h3 class="h6 mb-0 small fw-semibold text-truncate">{{ mod.module_name }}</h3>
+                <span v-if="!mod.is_enabled" class="badge bg-secondary">Inactivo</span>
+              </div>
+            </div>
+            <p v-if="mod.module_description" class="text-muted small mb-3 text-truncate">{{ mod.module_description }}</p>
+            <div class="d-flex gap-2">
+              <button
+                class="btn btn-primary btn-sm w-50"
+                :class="{ 'disabled': !mod.is_enabled }"
+                @click="mod.is_enabled && goToModule(mod)"
+              >
+                <i class="bi bi-eye me-1"></i>Ver Contenido
+              </button>
+              <button
+                class="btn btn-sm w-50"
+                :class="mod.is_enabled ? 'btn-outline-danger' : 'btn-success'"
+                @click="toggleModule(mod)"
+                :disabled="saving === mod.id"
+              >
+                <i class="bi bi-power me-1"></i>{{ mod.is_enabled ? 'Desactivar' : 'Activar' }}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
-      <div class="card-footer d-flex justify-content-end gap-2">
-        <Link href="/member/business-modules" class="btn btn-outline-secondary">Cancelar</Link>
-        <button type="button" class="btn btn-primary" @click="saveModules" :disabled="!hasChanges || saving">
-          <span v-if="saving">Guardando...</span>
-          <span v-else>Guardar cambios</span>
-        </button>
+    </div>
+
+    <div v-if="localModules.length === 0" class="card border-0 shadow-sm">
+      <div class="card-body text-center py-5">
+        <i class="bi bi-grid display-1 text-muted"></i>
+        <h3 class="h5 mt-3">No hay modulos activos</h3>
+        <p class="text-muted">Este negocio no tiene modulos activos disponibles.</p>
+        <Link href="/member/business-modules" class="btn btn-outline-secondary">
+          <i class="bi bi-arrow-left me-1"></i>Volver a negocios
+        </Link>
       </div>
     </div>
   </MemberLayout>
@@ -82,6 +76,7 @@
 import { ref, computed } from 'vue'
 import { Head, Link, router } from '@inertiajs/vue3'
 import MemberLayout from '@/Layouts/MemberLayout.vue'
+import { toast } from 'vue3-toastify'
 
 const props = defineProps({
   business: {
@@ -91,35 +86,88 @@ const props = defineProps({
 })
 
 const localModules = ref([...props.business.modules])
-const saving = ref(false)
+const saving = ref(null)
 
-const hasChanges = computed(() => {
-  return localModules.value.some((module, index) => {
-    const original = props.business.modules[index]
-    return original && module.is_enabled !== original.is_enabled
-  })
-})
-
-const toggleModule = (index) => {
-  const module = { ...localModules.value[index] }
-  module.is_enabled = !module.is_enabled
-  localModules.value.splice(index, 1, module)
+const moduleIcons = {
+  hero: 'bi bi-house',
+  locations: 'bi bi-geo-alt',
+  services: 'bi bi-scissors',
+  products: 'bi bi-bag',
+  gallery: 'bi bi-images',
+  appointments: 'bi bi-calendar-check',
+  slots: 'bi bi-clock',
+  leads: 'bi bi-people',
+  contact_form: 'bi bi-envelope',
+  reviews: 'bi bi-star',
+  promotions: 'bi bi-tag',
+  restaurant_menu: 'bi bi-list-ul',
+  socialmedia: 'bi bi-share',
+  about: 'bi bi-info-circle',
+  features: 'bi bi-check-circle',
+  ai_chatbot: 'bi bi-robot',
 }
 
-const saveModules = () => {
-  saving.value = true
+const moduleUrls = {
+  hero: 'hero',
+  locations: 'locations',
+  services: 'services',
+  products: 'menu-products',
+  gallery: 'gallery',
+  appointments: 'appointments',
+  slots: 'slots',
+  leads: 'leads',
+  contact_form: 'contact-form/submissions',
+  reviews: 'reviews',
+  promotions: 'promotions',
+  restaurant_menu: 'menu-categories',
+  socialmedia: 'social-networks',
+  about: 'about',
+  features: 'features',
+  ai_chatbot: 'ai-chatbot',
+}
+
+const getModuleIcon = (key) => moduleIcons[key] || 'bi bi-box'
+
+const getModuleUrl = (key) => {
+  const path = moduleUrls[key] || key
+  return `/member/businesses/${props.business.id}/${path}`
+}
+
+const goToModule = (mod) => {
+  window.location.href = getModuleUrl(mod.module_key)
+}
+
+const toggleModule = (mod) => {
+  const message = mod.is_enabled
+    ? `Desactivar el modulo "${mod.module_name}"? El contenido no aparecera en el minisitio.`
+    : `Activar el modulo "${mod.module_name}"?`
+
+  if (!confirm(message)) {
+    return
+  }
+
+  saving.value = mod.id
+  const newState = !mod.is_enabled
+
   router.put(
     `/member/businesses/${props.business.id}/modules`,
     {
-      modules: localModules.value.map((m) => ({
-        id: m.id,
-        is_enabled: m.is_enabled,
-      })),
+      modules: [{ id: mod.id, is_enabled: newState }],
     },
     {
       preserveScroll: true,
-      onFinish: () => {
-        saving.value = false
+      preserveState: true,
+      onSuccess: () => {
+        const idx = localModules.value.findIndex(m => m.id === mod.id)
+        if (idx !== -1) {
+          localModules.value[idx].is_enabled = newState
+        }
+        saving.value = null
+        toast.success(newState ? 'Modulo activado' : 'Modulo desactivado')
+      },
+      onError: (errors) => {
+        saving.value = null
+        toast.error(errors?.message || 'Error al actualizar el modulo')
       },
     }
   )

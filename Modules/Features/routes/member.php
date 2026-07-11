@@ -9,6 +9,7 @@ Route::middleware(['auth', 'verified'])->prefix('member/businesses/{business}')-
     Route::post('/features/import/{feature}', [FeatureController::class, 'import'])->name('features.import');
     Route::put('/features/{feature}', [FeatureController::class, 'update'])->name('features.update');
     Route::delete('/features/{feature}', [FeatureController::class, 'destroy'])->name('features.destroy');
+    Route::put('/features/reorder', [FeatureController::class, 'reorder'])->name('features.reorder');
     Route::put('/feature-assignments', [FeatureController::class, 'updateAssignment'])->name('feature-assignments.update');
     Route::delete('/feature-assignments/{assignment}', [FeatureController::class, 'removeAssignment'])->name('feature-assignments.remove');
 });

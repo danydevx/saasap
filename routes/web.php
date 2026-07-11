@@ -81,6 +81,8 @@ use App\Http\Controllers\Member\ContactFormController;
 use App\Http\Controllers\Member\AiChatbotController;
 use App\Http\Controllers\Member\ReviewController;
 use App\Http\Controllers\Member\PromotionController;
+use App\Http\Controllers\Member\FaqController;
+use App\Http\Controllers\Member\FaqCategoryController;
 use Modules\Features\Http\Controllers\Member\FeatureController;
 use App\Http\Controllers\Member\MenuCategoryController as MemberMenuCategoryController;
 use App\Http\Controllers\Member\MenuProductController as MemberMenuProductController;
@@ -217,6 +219,12 @@ Route::get('/member/businesses/{business}/modules', [App\Http\Controllers\Member
 Route::put('/member/businesses/{business}/modules', [App\Http\Controllers\Member\BusinessModuleController::class, 'update'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.business-modules.update');
+Route::get('/member/businesses/{business}/edit', [App\Http\Controllers\Member\BusinessController::class, 'edit'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.edit');
+Route::put('/member/businesses/{business}', [App\Http\Controllers\Member\BusinessController::class, 'update'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.update');
 
 Route::get('/member/businesses/{business}/locations', [LocationController::class, 'index'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
@@ -258,6 +266,41 @@ Route::delete('/member/businesses/{business}/services/{service}', [ServiceContro
 Route::post('/member/businesses/{business}/services/reorder', [ServiceController::class, 'reorder'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.businesses.services.reorder');
+
+Route::get('/member/businesses/{business}/faqs', [FaqController::class, 'index'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.faqs.index');
+Route::get('/member/businesses/{business}/faqs/create', [FaqController::class, 'create'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.faqs.create');
+Route::post('/member/businesses/{business}/faqs', [FaqController::class, 'store'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.faqs.store');
+Route::get('/member/businesses/{business}/faqs/{faq}/edit', [FaqController::class, 'edit'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.faqs.edit');
+Route::put('/member/businesses/{business}/faqs/{faq}', [FaqController::class, 'update'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.faqs.update');
+Route::delete('/member/businesses/{business}/faqs/{faq}', [FaqController::class, 'destroy'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.faqs.destroy');
+Route::post('/member/businesses/{business}/faqs/reorder', [FaqController::class, 'reorder'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.faqs.reorder');
+
+Route::get('/member/businesses/{business}/faq-categories', [FaqCategoryController::class, 'index'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.faq-categories.index');
+Route::post('/member/businesses/{business}/faq-categories', [FaqCategoryController::class, 'store'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.faq-categories.store');
+Route::put('/member/businesses/{business}/faq-categories/{category}', [FaqCategoryController::class, 'update'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.faq-categories.update');
+Route::delete('/member/businesses/{business}/faq-categories/{category}', [FaqCategoryController::class, 'destroy'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.faq-categories.destroy');
 
 Route::get('/member/businesses/{business}/hero', [HeroController::class, 'index'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
@@ -469,6 +512,9 @@ Route::put('/member/businesses/{business}/feature-assignments', [FeatureControll
 Route::delete('/member/businesses/{business}/feature-assignments/{assignment}', [FeatureController::class, 'removeAssignment'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.businesses.feature-assignments.remove');
+Route::post('/member/businesses/{business}/features/reorder', [FeatureController::class, 'reorder'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.features.reorder');
 
 Route::get('/member/businesses/{business}/menu-categories', [MemberMenuCategoryController::class, 'index'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
@@ -499,6 +545,9 @@ Route::delete('/member/businesses/{business}/product-categories/{category}', [Me
 Route::get('/member/businesses/{business}/menu-products', [MemberMenuProductController::class, 'index'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.menu.products.index');
+Route::get('/member/businesses/{business}/menu-products/create', [MemberMenuProductController::class, 'create'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.menu.products.create');
 Route::post('/member/businesses/{business}/menu-products', [MemberMenuProductController::class, 'store'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.menu.products.store');
@@ -811,6 +860,28 @@ Route::prefix('admin')->middleware(['auth', 'admin_or_user:1'])->group(function 
         ->name('admin.business.services.update');
     Route::delete('/businesses/{business}/services/{service}', [BusinessContentController::class, 'servicesDestroy'])
         ->name('admin.business.services.destroy');
+
+    Route::get('/businesses/{business}/faqs', [BusinessContentController::class, 'faqsIndex'])
+        ->name('admin.business.faqs.index');
+    Route::get('/businesses/{business}/faqs/create', [BusinessContentController::class, 'faqsCreate'])
+        ->name('admin.business.faqs.create');
+    Route::post('/businesses/{business}/faqs', [BusinessContentController::class, 'faqsStore'])
+        ->name('admin.business.faqs.store');
+    Route::get('/businesses/{business}/faqs/{faq}/edit', [BusinessContentController::class, 'faqsEdit'])
+        ->name('admin.business.faqs.edit');
+    Route::put('/businesses/{business}/faqs/{faq}', [BusinessContentController::class, 'faqsUpdate'])
+        ->name('admin.business.faqs.update');
+    Route::delete('/businesses/{business}/faqs/{faq}', [BusinessContentController::class, 'faqsDestroy'])
+        ->name('admin.business.faqs.destroy');
+
+    Route::get('/businesses/{business}/faq-categories', [BusinessContentController::class, 'faqCategoriesIndex'])
+        ->name('admin.business.faq-categories.index');
+    Route::post('/businesses/{business}/faq-categories', [BusinessContentController::class, 'faqCategoriesStore'])
+        ->name('admin.business.faq-categories.store');
+    Route::put('/businesses/{business}/faq-categories/{category}', [BusinessContentController::class, 'faqCategoriesUpdate'])
+        ->name('admin.business.faq-categories.update');
+    Route::delete('/businesses/{business}/faq-categories/{category}', [BusinessContentController::class, 'faqCategoriesDestroy'])
+        ->name('admin.business.faq-categories.destroy');
 
     Route::get('/businesses/{business}/products', [BusinessContentController::class, 'productsIndex'])
         ->name('admin.business.products.index');

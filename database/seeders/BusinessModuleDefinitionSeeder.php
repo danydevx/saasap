@@ -92,11 +92,19 @@ class BusinessModuleDefinitionSeeder extends Seeder
                 'has_settings' => true,
             ],
             [
+                'key' => 'faqs',
+                'name' => 'Preguntas Frecuentes',
+                'description' => 'Gestiona las preguntas frecuentes de tu negocio',
+                'icon' => 'bi bi-question-circle',
+                'sort_order' => 11,
+                'has_settings' => true,
+            ],
+            [
                 'key' => 'restaurant_menu',
                 'name' => 'Menú de Restaurante',
                 'description' => 'Menu digital para restaurantes con categorias, productos y variantes',
                 'icon' => 'bi bi-list-ul',
-                'sort_order' => 11,
+                'sort_order' => 12,
                 'has_settings' => false,
             ],
             [
@@ -104,7 +112,7 @@ class BusinessModuleDefinitionSeeder extends Seeder
                 'name' => 'Acerca de',
                 'description' => 'Sección Acerca de para tu negocio',
                 'icon' => 'bi bi-info-circle',
-                'sort_order' => 12,
+                'sort_order' => 13,
                 'has_settings' => false,
             ],
             [
@@ -112,7 +120,7 @@ class BusinessModuleDefinitionSeeder extends Seeder
                 'name' => 'Redes Sociales',
                 'description' => 'Gestiona tus redes sociales',
                 'icon' => 'bi bi-share',
-                'sort_order' => 13,
+                'sort_order' => 14,
                 'has_settings' => false,
             ],
             [
@@ -120,7 +128,7 @@ class BusinessModuleDefinitionSeeder extends Seeder
                 'name' => 'Caracteristicas',
                 'description' => 'Amenidades y caracteristicas de tu negocio (wifi, estacionamiento, etc)',
                 'icon' => 'bi bi-check-circle',
-                'sort_order' => 14,
+                'sort_order' => 15,
                 'has_settings' => true,
                 'settings_url' => '/admin/features',
             ],

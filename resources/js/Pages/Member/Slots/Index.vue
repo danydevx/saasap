@@ -309,7 +309,7 @@ const services = computed(() => page.props.services || [])
 const locations = computed(() => page.props.locations || [])
 
 const breadcrumbs = computed(() => [
-  { label: business.value?.name, href: '/member/business-modules' },
+  { label: 'Mis Negocios', href: '/member/business-modules' },
   { label: 'Turnos', active: true },
 ])
 

@@ -16,6 +16,7 @@ class BusinessFeature extends Model
         'feature_id',
         'location_id',
         'is_active',
+        'sort_order',
     ];
 
     protected $casts = [

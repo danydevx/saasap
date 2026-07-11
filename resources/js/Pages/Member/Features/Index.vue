@@ -42,22 +42,32 @@
           </div>
         </div>
 
-        <div class="row g-4">
-          <div v-for="bf in businessFeatures" :key="bf.id" class="col-md-6 col-lg-4">
-            <div class="card h-100 border-0 shadow-sm">
-              <div class="card-body">
-                <div class="d-flex justify-content-between align-items-start mb-2">
-                  <div class="d-flex align-items-center gap-2">
-                    <div class="bg-light rounded d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                      <i :class="bf.feature_icon || 'bi bi-check'"></i>
+        <div class="mb-3 d-flex justify-content-between align-items-center">
+          <span class="text-muted small">Arrastra las cards para reordenar</span>
+          <button class="btn btn-outline-primary btn-sm" @click="openImportModal" v-if="availableFeaturesCount > 0">
+            <i class="bi bi-download me-1"></i>Importar ({{ availableFeaturesCount }})
+          </button>
+        </div>
+
+        <div class="row g-3" ref="featuresGrid">
+          <div v-for="bf in businessFeatures" :key="bf.id" class="col-6 col-md-4 col-lg-3" :data-id="bf.id">
+            <div class="card h-100 border-0 shadow-sm feature-card" :class="{ 'border-primary': isDragging }">
+              <div class="card-body p-2">
+                <div class="d-flex justify-content-between align-items-start">
+                  <div class="d-flex align-items-center gap-2 flex-grow-1 min-width-0">
+                    <div class="drag-handle text-muted cursor-move">
+                      <i class="bi bi-grip-vertical"></i>
                     </div>
-                    <div>
-                      <strong>{{ bf.feature_title }}</strong>
-                      <p v-if="bf.location_id && bf.location_name" class="text-muted small mb-0">{{ bf.location_name }}</p>
+                    <div class="bg-light rounded d-flex align-items-center justify-content-center flex-shrink-0" style="width: 32px; height: 32px;">
+                      <i :class="bf.feature_icon || 'bi bi-check'" style="font-size: 14px;"></i>
+                    </div>
+                    <div class="min-width-0">
+                      <strong class="small">{{ bf.feature_title }}</strong>
+                      <p v-if="bf.location_id && bf.location_name" class="text-muted small mb-0 text-truncate">{{ bf.location_name }}</p>
                     </div>
                   </div>
                   <div class="dropdown">
-                    <button class="btn btn-sm btn-link text-muted" data-bs-toggle="dropdown">
+                    <button class="btn btn-sm btn-link text-muted p-0" data-bs-toggle="dropdown">
                       <i class="bi bi-three-dots-vertical"></i>
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end">
@@ -72,7 +82,7 @@
                         </button>
                       </li>
                       <li><hr class="dropdown-divider"></li>
-                      <li>
+                      <li v-if="!bf.source_feature_id">
                         <button class="dropdown-item text-danger" @click="deleteFeature(bf)">
                           <i class="bi bi-trash me-2"></i>Eliminar
                         </button>
@@ -80,19 +90,33 @@
                     </ul>
                   </div>
                 </div>
-                <p v-if="bf.feature_description" class="text-muted small mb-0">{{ bf.feature_description }}</p>
-                <div class="mt-2">
-                  <span v-if="bf.is_active" class="badge bg-success">Activo</span>
-                  <span v-else class="badge bg-secondary">Inactivo</span>
+                <div class="mt-1 d-flex gap-1">
+                  <span v-if="bf.is_active" class="badge bg-success py-1 px-2" style="font-size: 10px;">Activo</span>
+                  <span v-else class="badge bg-secondary py-1 px-2" style="font-size: 10px;">Inactivo</span>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
+        <div v-if="businessFeaturesPaginated && businessFeaturesPaginated.last_page > 1" class="d-flex justify-content-center mt-4">
+          <nav>
+            <ul class="pagination pagination-sm mb-0">
+              <li class="page-item" :class="{ disabled: businessFeaturesPaginated.current_page === 1 }">
+                <a class="page-link" href="#" @click.prevent="goToPage(businessFeaturesPaginated.current_page - 1)">Anterior</a>
+              </li>
+              <li v-for="page in visiblePages" :key="page" class="page-item" :class="{ active: page === businessFeaturesPaginated.current_page }">
+                <a class="page-link" href="#" @click.prevent="goToPage(page)">{{ page }}</a>
+              </li>
+              <li class="page-item" :class="{ disabled: businessFeaturesPaginated.current_page === businessFeaturesPaginated.last_page }">
+                <a class="page-link" href="#" @click.prevent="goToPage(businessFeaturesPaginated.current_page + 1)">Siguiente</a>
+              </li>
+            </ul>
+          </nav>
+        </div>
+
         <div class="text-center mt-4">
           <button class="btn btn-outline-primary" @click="openImportModal" v-if="availableFeaturesCount > 0">
-            <i class="bi bi-download me-1"></i>Importar mas ({{ availableFeaturesCount }} disponibles)
           </button>
         </div>
       </div>
@@ -206,11 +230,33 @@
             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
           </div>
           <div class="modal-body">
-            <p class="text-muted">Selecciona las caracteristicas que deseas importar de nuestro catalogo.</p>
-            <div v-for="category in groupedAvailableFeatures" :key="category.id" class="mb-4">
-              <h6><i :class="category.icon"></i> {{ category.name }}</h6>
+            <p class="text-muted mb-3">Selecciona las caracteristicas que deseas importar de nuestro catalogo.</p>
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Categoria</label>
+              <select class="form-select" v-model="selectedCategory" @change="onCategoryChange">
+                <option value="">Todas las categorias</option>
+                <option v-for="cat in groupedAvailableFeatures" :key="cat.id" :value="cat.id">
+                  {{ cat.name }} ({{ cat.features.length }})
+                </option>
+              </select>
+            </div>
+            <div v-if="selectedCategoryFeatures.length > 0" class="border rounded p-3 bg-light">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <span class="fw-semibold">Features disponibles</span>
+                <div class="form-check">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    id="selectAllInCategory"
+                    :checked="selectedCategoryFeatures.every(f => importForm.feature_ids.includes(f.id))"
+                    :indeterminate="selectedCategoryFeatures.some(f => importForm.feature_ids.includes(f.id)) && !selectedCategoryFeatures.every(f => importForm.feature_ids.includes(f.id))"
+                    @change="toggleAllInCategory"
+                  >
+                  <label class="form-check-label" for="selectAllInCategory">Seleccionar todas</label>
+                </div>
+              </div>
               <div class="row g-2">
-                <div v-for="feature in category.features" :key="feature.id" class="col-md-6">
+                <div v-for="feature in selectedCategoryFeatures" :key="feature.id" class="col-md-6">
                   <div class="form-check">
                     <input
                       class="form-check-input"
@@ -225,6 +271,9 @@
                   </div>
                 </div>
               </div>
+            </div>
+            <div v-else-if="selectedCategory" class="text-center py-4">
+              <p class="text-muted mb-0">No hay caracteristicas en esta categoria.</p>
             </div>
             <div v-if="availableFeatures.length === 0" class="text-center py-4">
               <p class="text-muted mb-0">No hay caracteristicas disponibles para importar.</p>
@@ -244,15 +293,18 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, nextTick } from 'vue'
+import { ref, computed, onMounted, nextTick, watch } from 'vue'
 import { Head, router } from '@inertiajs/vue3'
 import MemberLayout from '@/Layouts/MemberLayout.vue'
 import PageHeader from '@/Components/Admin/PageHeader.vue'
 import { Modal } from 'bootstrap'
+import Sortable from 'sortablejs'
+import { toast } from 'vue3-toastify'
 
 const props = defineProps({
   business: Object,
   businessFeatures: Array,
+  businessFeaturesPaginated: Object,
   availableFeatures: Array,
   locations: { type: Array, default: () => [] },
 })
@@ -260,7 +312,7 @@ const props = defineProps({
 const business = computed(() => props.business)
 
 const breadcrumbs = computed(() => [
-  { label: business.value?.name, href: '/member/business-modules' },
+  { label: 'Mis Negocios', href: '/member/business-modules' },
   { label: 'Caracteristicas', active: true },
 ])
 
@@ -275,6 +327,55 @@ let createSending = ref(false)
 let editSending = ref(false)
 let importSending = ref(false)
 let showImportModal = ref(false)
+
+const featuresGrid = ref(null)
+const isDragging = ref(false)
+let sortableInstance = null
+
+const visiblePages = computed(() => {
+  if (!props.businessFeaturesPaginated) return []
+  const current = props.businessFeaturesPaginated.current_page
+  const last = props.businessFeaturesPaginated.last_page
+  const pages = []
+  const delta = 2
+  for (let i = Math.max(1, current - delta); i <= Math.min(last, current + delta); i++) {
+    pages.push(i)
+  }
+  return pages
+})
+
+const goToPage = (page) => {
+  if (page < 1 || page > props.businessFeaturesPaginated.last_page) return
+  router.get(`/member/businesses/${business.value.id}/features?page=${page}`, {
+    preserveScroll: true,
+    preserveState: true,
+  })
+}
+
+const initSortable = () => {
+  if (!featuresGrid.value || sortableInstance) return
+  sortableInstance = Sortable.create(featuresGrid.value, {
+    handle: '.drag-handle',
+    animation: 150,
+    ghostClass: 'opacity-25',
+    onStart: () => {
+      isDragging.value = true
+    },
+    onEnd: (evt) => {
+      isDragging.value = false
+      const orderedIds = Array.from(featuresGrid.value.querySelectorAll('[data-id]')).map(el => parseInt(el.dataset.id))
+      router.post(`/member/businesses/${business.value.id}/features/reorder`, {
+        order: orderedIds,
+      }, {
+        preserveScroll: true,
+        preserveState: true,
+        onSuccess: () => {
+          toast.success('Orden actualizado')
+        },
+      })
+    },
+  })
+}
 
 const createForm = ref({
   title: '',
@@ -298,6 +399,33 @@ const importForm = ref({
   feature_ids: [],
 })
 
+const selectedCategory = ref('')
+
+const selectedCategoryFeatures = computed(() => {
+  if (!selectedCategory.value) {
+    return props.availableFeatures
+  }
+  const cat = groupedAvailableFeatures.value.find(c => c.id === selectedCategory.value)
+  return cat ? cat.features : []
+})
+
+const onCategoryChange = () => {}
+
+const toggleAllInCategory = (event) => {
+  const checked = event.target.checked
+  if (checked) {
+    selectedCategoryFeatures.value.forEach(f => {
+      if (!importForm.value.feature_ids.includes(f.id)) {
+        importForm.value.feature_ids.push(f.id)
+      }
+    })
+  } else {
+    importForm.value.feature_ids = importForm.value.feature_ids.filter(
+      id => !selectedCategoryFeatures.value.some(f => f.id === id)
+    )
+  }
+}
+
 const groupedAvailableFeatures = computed(() => {
   const grouped = {}
   props.availableFeatures.forEach(f => {
@@ -309,7 +437,7 @@ const groupedAvailableFeatures = computed(() => {
     }
     grouped[catId].features.push(f)
   })
-  return Object.values(grouped)
+  return Object.values(grouped).filter(cat => cat.features.length > 0)
 })
 
 const availableFeaturesCount = computed(() => props.availableFeatures.length)
@@ -329,6 +457,7 @@ const openCreateModal = () => {
 
 const openImportModal = () => {
   importForm.value.feature_ids = []
+  selectedCategory.value = ''
   nextTick(() => {
     importModal.show()
   })
@@ -406,5 +535,14 @@ onMounted(() => {
   createModal = new Modal(createModalElement.value)
   editModal = new Modal(editModalElement.value)
   importModal = new Modal(importModalElement.value)
+  nextTick(() => {
+    initSortable()
+  })
 })
 </script>
+
+<style scoped>
+.cursor-move {
+  cursor: move;
+}
+</style>

@@ -187,8 +187,9 @@ const form = useForm({
 })
 
 const breadcrumbs = computed(() => [
-  { label: business.value.name, href: '/member/business-modules' },
-  { label: 'Nueva Ubicacion', active: true },
+  { label: 'Mis Negocios', href: '/member/business-modules' },
+  { label: 'Ubicaciones', href: `/member/businesses/${business.value.id}/locations` },
+  { label: 'Nueva', active: true },
 ])
 
 const onStateChanged = ({ lat, lng }) => {

@@ -187,7 +187,7 @@ const business = computed(() => props.business)
 const dataTable = computed(() => props.dataTable)
 
 const breadcrumbs = computed(() => [
-  { label: business.value?.name, href: '/member/business-modules' },
+  { label: 'Mis Negocios', href: '/member/business-modules' },
   { label: 'Redes Sociales', active: true },
 ])
 

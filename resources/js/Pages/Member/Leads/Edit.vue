@@ -126,7 +126,7 @@ const locations = computed(() => page.props.locations || [])
 const errors = computed(() => page.props.errors || {})
 
 const breadcrumbs = computed(() => [
-  { label: business.value.name, href: '/member/business-modules' },
+  { label: 'Mis Negocios', href: '/member/business-modules' },
   { label: 'Contactos', href: `/member/businesses/${business.value.id}/leads` },
   { label: 'Editar', active: true },
 ])

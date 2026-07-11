@@ -219,7 +219,7 @@ const images = computed(() => page.props.images || { data: [], links: [] })
 const locations = computed(() => page.props.locations || [])
 
 const breadcrumbs = computed(() => [
-  { label: business.value.name, href: '/member/business-modules' },
+  { label: 'Mis Negocios', href: '/member/business-modules' },
   { label: 'Galeria', active: true },
 ])
 

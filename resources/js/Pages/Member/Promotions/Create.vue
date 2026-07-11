@@ -145,7 +145,7 @@ const page = usePage()
 const business = computed(() => page.props.business)
 
 const breadcrumbs = computed(() => [
-  { label: business.value.name, href: '/member/business-modules' },
+  { label: 'Mis Negocios', href: '/member/business-modules' },
   { label: 'Promociones', href: `/member/businesses/${business.value.id}/promotions` },
   { label: 'Nueva', active: true },
 ])

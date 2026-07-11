@@ -25,6 +25,7 @@ class BusinessModuleController extends Controller
                 ->filter(fn ($m) => $m->moduleDefinition?->is_active)
                 ->map(fn ($m) => [
                     'module_key' => $m->module_key,
+                    'module_name' => $m->moduleDefinition?->name ?? $m->module_key,
                     'is_enabled' => $m->is_enabled,
                 ]);
             return $business;
@@ -44,27 +45,29 @@ class BusinessModuleController extends Controller
         }
 
         $business->load(['modules.moduleDefinition' => fn ($q) => $q->where('is_active', true)]);
-        $planModules = $this->getPlanModulesForUser($user);
 
         return Inertia::render('Member/BusinessModules/Edit', [
             'business' => [
                 'id' => $business->id,
                 'name' => $business->name,
                 'slug' => $business->slug,
-                'plan_name' => $this->getUserPlanName($user),
-                'modules' => $business->modules->map(fn ($m) => [
-                    'id' => $m->id,
-                    'module_key' => $m->module_key,
-                    'module_name' => $m->moduleDefinition?->name ?? $m->module_key,
-                    'is_enabled' => $m->is_enabled,
-                    'settings' => $m->settings,
-                    'allowed_by_plan' => $planModules[$m->module_key] ?? false,
-                ]),
+                'modules' => $business->modules
+                    ->filter(fn ($m) => $m->moduleDefinition?->is_active)
+                    ->map(fn ($m) => [
+                        'id' => $m->id,
+                        'module_key' => $m->module_key,
+                        'module_name' => $m->moduleDefinition?->name ?? $m->module_key,
+                        'module_description' => $m->moduleDefinition?->description,
+                        'module_image' => $m->moduleDefinition?->image,
+                        'is_enabled' => $m->is_enabled,
+                    ])
+                    ->values()
+                    ->toArray(),
             ],
         ]);
     }
 
-    public function update(Request $request, Business $business, ActivityService $activity)
+    public function update(Request $request, Business $business)
     {
         $user = $request->user();
 
@@ -96,14 +99,7 @@ class BusinessModuleController extends Controller
                 ->update(['is_enabled' => $moduleData['is_enabled']]);
         }
 
-        $activity->log('business_modules_updated', [
-            'actor' => $request->user(),
-            'subject' => $business,
-            'description' => 'Modulos de negocio actualizados por el miembro',
-            'request' => $request,
-        ]);
-
-        return redirect()->back()->with('success', 'Modulos actualizados correctamente.');
+        return redirect()->back()->with('success', 'Modulo actualizado correctamente.');
     }
 
     private function getPlanModulesForUser($user): array

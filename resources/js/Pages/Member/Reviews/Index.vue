@@ -137,7 +137,7 @@ const business = computed(() => page.props.business)
 const reviews = computed(() => page.props.reviews || { data: [] })
 
 const breadcrumbs = computed(() => [
-  { label: business.value?.name, href: '/member/business-modules' },
+  { label: 'Mis Negocios', href: '/member/business-modules' },
   { label: 'Resenas', active: true },
 ])
 

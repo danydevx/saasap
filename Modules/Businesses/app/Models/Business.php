@@ -24,6 +24,8 @@ use Modules\Hero\Models\BusinessHero;
 use Modules\About\Models\BusinessAbout;
 use Modules\Features\Models\Feature;
 use Modules\Features\Models\BusinessFeature;
+use Modules\Faqs\Models\BusinessFaq;
+use Modules\Faqs\Models\BusinessFaqCategory;
 use App\Models\MinisiteTheme;
 
 class Business extends Model
@@ -168,6 +170,16 @@ class Business extends Model
     public function businessFeatures(): HasMany
     {
         return $this->hasMany(BusinessFeature::class);
+    }
+
+    public function faqs(): HasMany
+    {
+        return $this->hasMany(BusinessFaq::class);
+    }
+
+    public function faqCategories(): HasMany
+    {
+        return $this->hasMany(BusinessFaqCategory::class);
     }
 
     public function getEnabledModules(): array

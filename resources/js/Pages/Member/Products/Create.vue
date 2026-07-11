@@ -187,8 +187,8 @@ watch(() => form.name, (val) => {
 })
 
 const breadcrumbs = computed(() => [
-  { label: business.value.name, href: `/member/businesses/${business.value.id}/products` },
-  { label: 'Nuevo', active: true },
+  { label: 'Mis Negocios', href: '/member/business-modules' },
+  { label: 'Nuevo Producto', active: true },
 ])
 
 const submit = () => {

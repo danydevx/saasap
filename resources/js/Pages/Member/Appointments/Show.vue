@@ -100,7 +100,8 @@ const statusOptions = [
 ]
 
 const breadcrumbs = computed(() => [
-  { label: business.value.name, href: `/member/businesses/${business.value.id}/appointments` },
+  { label: 'Mis Negocios', href: '/member/business-modules' },
+  { label: 'Citas', href: `/member/businesses/${business.value.id}/appointments` },
   { label: 'Cita #' + appointment.value.id, active: true },
 ])
 

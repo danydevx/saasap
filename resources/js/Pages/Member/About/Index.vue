@@ -141,7 +141,7 @@ const props = defineProps({
 const business = computed(() => props.business)
 
 const breadcrumbs = computed(() => [
-  { label: business.value.name, href: '/member/business-modules' },
+  { label: 'Mis Negocios', href: '/member/business-modules' },
   { label: 'Acerca de', active: true },
 ])
 

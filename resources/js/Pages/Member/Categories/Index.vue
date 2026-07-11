@@ -5,7 +5,7 @@
     <PageHeader
       title="Categorias del Menu"
       :breadcrumbs="breadcrumbs"
-      :backHref="`/member/businesses/${business?.id}/modules`"
+      :backHref="'/member/business-modules'"
     >
       <template #actions>
         <button @click="openCreateModal" class="btn btn-primary btn-sm">
@@ -190,7 +190,7 @@ const props = defineProps({
 const business = computed(() => props.business)
 
 const breadcrumbs = computed(() => [
-  { label: business.value?.name, href: `/member/businesses/${business.value?.id}/modules` },
+  { label: 'Mis Negocios', href: '/member/business-modules' },
   { label: 'Categorias del Menu', active: true },
 ])
 

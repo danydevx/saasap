@@ -173,6 +173,7 @@ class PlanController extends Controller
 
         if (isset($data['modules'])) {
             foreach ($data['modules'] as $moduleData) {
+                $definition = BusinessModuleDefinition::find($moduleData['module_definition_id']);
                 PlanBusinessModule::updateOrCreate(
                     [
                         'plan_id' => $plan->id,
@@ -180,6 +181,7 @@ class PlanController extends Controller
                     ],
                     [
                         'is_enabled' => $moduleData['is_enabled'],
+                        'module_key' => $definition?->key,
                     ]
                 );
             }

@@ -150,8 +150,9 @@ const locations = computed(() => page.props.locations || [])
 const errors = computed(() => page.props.errors || {})
 
 const breadcrumbs = computed(() => [
-  { label: business.value.name, href: `/member/businesses/${business.value.id}/appointments` },
-  { label: 'Editar Cita', active: true },
+  { label: 'Mis Negocios', href: '/member/business-modules' },
+  { label: 'Citas', href: `/member/businesses/${business.value.id}/appointments` },
+  { label: 'Editar', active: true },
 ])
 
 const sending = ref(false)

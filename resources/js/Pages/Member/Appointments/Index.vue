@@ -196,7 +196,7 @@ const locations = computed(() => page.props.locations || [])
 const dataTable = computed(() => page.props.dataTable)
 
 const breadcrumbs = computed(() => [
-  { label: business.value?.name, href: '/member/business-modules' },
+  { label: 'Mis Negocios', href: '/member/business-modules' },
   { label: 'Citas', active: true },
 ])
 

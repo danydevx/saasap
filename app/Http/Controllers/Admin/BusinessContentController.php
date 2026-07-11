@@ -14,6 +14,8 @@ use Modules\Products\Models\BusinessProduct;
 use Modules\Gallery\Models\BusinessGalleryImage;
 use Modules\Appointments\Models\BusinessAppointment;
 use Modules\Appointments\Enums\AppointmentStatus;
+use Modules\Faqs\Models\BusinessFaq;
+use Modules\Faqs\Models\BusinessFaqCategory;
 
 class BusinessContentController extends Controller
 {
@@ -286,6 +288,186 @@ class BusinessContentController extends Controller
 
         return redirect()->route('admin.business.services.index', $business->id)
             ->with('success', 'Servicio eliminado correctamente.');
+    }
+
+    public function faqsIndex(Request $request, Business $business)
+    {
+        $faqs = $business->faqs()
+            ->with('category')
+            ->orderBy('sort_order')
+            ->orderBy('question')
+            ->paginate(20);
+
+        return Inertia::render('Admin/BusinessContent/FaqsIndex', [
+            'business' => [
+                'id' => $business->id,
+                'name' => $business->name,
+                'slug' => $business->slug,
+            ],
+            'faqs' => $faqs,
+        ]);
+    }
+
+    public function faqsCreate(Request $request, Business $business)
+    {
+        $categories = BusinessFaqCategory::where('business_id', $business->id)
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        return Inertia::render('Admin/BusinessContent/FaqsCreate', [
+            'business' => [
+                'id' => $business->id,
+                'name' => $business->name,
+            ],
+            'categories' => $categories,
+        ]);
+    }
+
+    public function faqsStore(Request $request, Business $business, ActivityService $activity)
+    {
+        $data = $request->validate([
+            'question' => ['required', 'string', 'max:255'],
+            'answer' => ['required', 'string'],
+            'category_id' => ['nullable', 'exists:business_faq_categories,id'],
+            'is_active' => ['boolean'],
+            'sort_order' => ['nullable', 'integer', 'min:0'],
+        ]);
+
+        $data['business_id'] = $business->id;
+
+        $faq = BusinessFaq::create($data);
+
+        $activity->log('admin_faq_created', [
+            'actor' => $request->user(),
+            'subject' => $faq,
+            'description' => 'Admin: Pregunta frecuente creada',
+            'request' => $request,
+        ]);
+
+        return redirect()->route('admin.business.faqs.index', $business->id)
+            ->with('success', 'Pregunta frecuente creada correctamente.');
+    }
+
+    public function faqsEdit(Request $request, Business $business, BusinessFaq $faq)
+    {
+        $categories = BusinessFaqCategory::where('business_id', $business->id)
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        return Inertia::render('Admin/BusinessContent/FaqsEdit', [
+            'business' => [
+                'id' => $business->id,
+                'name' => $business->name,
+            ],
+            'faq' => [
+                'id' => $faq->id,
+                'question' => $faq->question,
+                'answer' => $faq->answer,
+                'category_id' => $faq->category_id,
+                'is_active' => $faq->is_active,
+                'sort_order' => $faq->sort_order,
+            ],
+            'categories' => $categories,
+        ]);
+    }
+
+    public function faqsUpdate(Request $request, Business $business, BusinessFaq $faq, ActivityService $activity)
+    {
+        $data = $request->validate([
+            'question' => ['required', 'string', 'max:255'],
+            'answer' => ['required', 'string'],
+            'category_id' => ['nullable', 'exists:business_faq_categories,id'],
+            'is_active' => ['boolean'],
+            'sort_order' => ['nullable', 'integer', 'min:0'],
+        ]);
+
+        $faq->update($data);
+
+        $activity->log('admin_faq_updated', [
+            'actor' => $request->user(),
+            'subject' => $faq,
+            'description' => 'Admin: Pregunta frecuente actualizada',
+            'request' => $request,
+        ]);
+
+        return redirect()->route('admin.business.faqs.index', $business->id)
+            ->with('success', 'Pregunta frecuente actualizada correctamente.');
+    }
+
+    public function faqsDestroy(Request $request, Business $business, BusinessFaq $faq, ActivityService $activity)
+    {
+        $activity->log('admin_faq_deleted', [
+            'actor' => $request->user(),
+            'subject' => $faq,
+            'description' => 'Admin: Pregunta frecuente eliminada',
+        ]);
+
+        $faq->delete();
+
+        return redirect()->route('admin.business.faqs.index', $business->id)
+            ->with('success', 'Pregunta frecuente eliminada correctamente.');
+    }
+
+    public function faqCategoriesIndex(Request $request, Business $business)
+    {
+        $categories = BusinessFaqCategory::where('business_id', $business->id)
+            ->with('faqs')
+            ->orderBy('sort_order')
+            ->get();
+
+        return Inertia::render('Admin/BusinessContent/FaqCategoriesIndex', [
+            'business' => [
+                'id' => $business->id,
+                'name' => $business->name,
+                'slug' => $business->slug,
+            ],
+            'categories' => $categories,
+        ]);
+    }
+
+    public function faqCategoriesStore(Request $request, Business $business)
+    {
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string'],
+            'is_active' => ['boolean'],
+            'sort_order' => ['nullable', 'integer', 'min:0'],
+        ]);
+
+        $data['business_id'] = $business->id;
+        $data['slug'] = BusinessFaqCategory::generateUniqueSlug($business->id, $data['name']);
+
+        BusinessFaqCategory::create($data);
+
+        return redirect()->back()
+            ->with('success', 'Categoria creada correctamente.');
+    }
+
+    public function faqCategoriesUpdate(Request $request, Business $business, BusinessFaqCategory $category)
+    {
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string'],
+            'is_active' => ['boolean'],
+            'sort_order' => ['nullable', 'integer', 'min:0'],
+        ]);
+
+        $category->update($data);
+
+        return redirect()->back()
+            ->with('success', 'Categoria actualizada correctamente.');
+    }
+
+    public function faqCategoriesDestroy(Request $request, Business $business, BusinessFaqCategory $category)
+    {
+        $category->faqs()->update(['category_id' => null]);
+
+        $category->delete();
+
+        return redirect()->back()
+            ->with('success', 'Categoria eliminada. Las preguntas fueron desvinculadas.');
     }
 
     public function productsIndex(Request $request, Business $business)

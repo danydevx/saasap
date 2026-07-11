@@ -83,7 +83,7 @@ const business = computed(() => page.props.business)
 const dataTable = computed(() => page.props.dataTable)
 
 const breadcrumbs = computed(() => [
-  { label: business.value?.name, href: '/member/business-modules' },
+  { label: 'Mis Negocios', href: '/member/business-modules' },
   { label: 'Contactos', active: true },
 ])
 

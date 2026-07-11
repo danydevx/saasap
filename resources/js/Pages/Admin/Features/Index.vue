@@ -37,7 +37,7 @@
       <div v-if="activeTab === 'features'">
         <div class="card border-0 shadow-sm">
           <div class="card-body">
-            <div v-if="features.length === 0" class="text-center py-5">
+            <div v-if="features.data.length === 0" class="text-center py-5">
               <i class="bi bi-check-circle display-1 text-muted"></i>
               <p class="text-muted mt-3">No hay caracteristicas creadas aun.</p>
               <button class="btn btn-primary" @click="openCreateModal">Crear primera caracteristica</button>
@@ -57,7 +57,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="feature in features" :key="feature.id">
+                  <tr v-for="feature in features.data" :key="feature.id">
                     <td>{{ feature.sort_order }}</td>
                     <td>
                       <strong>{{ feature.title }}</strong>
@@ -256,9 +256,10 @@
 import { Head, useForm, router } from '@inertiajs/vue3'
 import { ref, onMounted, nextTick } from 'vue'
 import { Modal } from 'bootstrap'
+import AdminLayout from '@/Layouts/AdminLayout.vue'
 
 const props = defineProps({
-  features: Array,
+  features: Object,
   categories: Array,
 })
 

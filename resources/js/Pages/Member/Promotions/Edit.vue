@@ -196,7 +196,7 @@ const business = computed(() => page.props.business)
 const promotion = computed(() => page.props.promotion)
 
 const breadcrumbs = computed(() => [
-  { label: business.value.name, href: '/member/business-modules' },
+  { label: 'Mis Negocios', href: '/member/business-modules' },
   { label: 'Promociones', href: `/member/businesses/${business.value.id}/promotions` },
   { label: promotion.value?.name || 'Editar', active: true },
 ])
