@@ -22,11 +22,14 @@ class BusinessModuleDefinition extends Model
         'is_active',
         'has_settings',
         'settings_url',
+        'show_in_menu',
+        'menu_title',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
         'has_settings' => 'boolean',
+        'show_in_menu' => 'boolean',
         'sort_order' => 'integer',
     ];
 

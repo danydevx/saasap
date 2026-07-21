@@ -8,6 +8,7 @@ use App\Services\SystemAnnouncementService;
 use App\Services\TemplateRenderService;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
+use Modules\Businesses\Models\Business;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -54,6 +55,11 @@ class HandleInertiaRequests extends Middleware
                 ->values();
         }
 
+        $businessMenu = [];
+        if ($user && $user->hasRole('member')) {
+            $businessMenu = $this->buildBusinessMenu($user);
+        }
+
         return [
             ...parent::share($request),
             'auth' => [
@@ -75,6 +81,63 @@ class HandleInertiaRequests extends Middleware
                 'error' => fn () => $request->session()->get('error'),
             ],
             'systemAnnouncements' => $announcements,
+            'businessMenu' => $businessMenu,
         ];
+    }
+
+    private function buildBusinessMenu($user): array
+    {
+        $businesses = Business::where('user_id', $user->id)
+            ->with(['modules.moduleDefinition'])
+            ->get()
+            ->map(fn ($biz) => [
+                'id' => $biz->id,
+                'name' => $biz->name,
+                'slug' => $biz->slug,
+                'modules' => $biz->modules
+                    ->filter(fn ($m) => 
+                        $m->is_enabled &&
+                        $m->moduleDefinition &&
+                        $m->moduleDefinition->show_in_menu &&
+                        $m->moduleDefinition->menu_title
+                    )
+                    ->map(fn ($m) => [
+                        'key' => $m->module_key,
+                        'title' => $m->moduleDefinition->menu_title,
+                        'url' => '/member/businesses/' . $biz->id . '/' . $this->getModulePath($m->module_key),
+                    ])->values(),
+            ])
+            ->filter(fn ($biz) => count($biz['modules']) > 0)
+            ->values()
+            ->toArray();
+
+        return $businesses;
+    }
+
+    private function getModulePath(string $moduleKey): string
+    {
+        $paths = [
+            'hero' => 'hero',
+            'locations' => 'locations',
+            'services' => 'services',
+            'products' => 'menu-products',
+            'gallery' => 'gallery',
+            'appointments' => 'appointments',
+            'slots' => 'slots',
+            'leads' => 'leads',
+            'contact_form' => 'contact-forms',
+            'reviews' => 'reviews',
+            'promotions' => 'promotions',
+            'restaurant_menu' => 'menu-categories',
+            'socialmedia' => 'social-networks',
+            'about' => 'about',
+            'features' => 'features',
+            'ai_chatbot' => 'ai-chatbot',
+            'faqs' => 'faqs',
+            'seo' => 'seo',
+            'branding' => 'branding',
+        ];
+
+        return $paths[$moduleKey] ?? $moduleKey;
     }
 }

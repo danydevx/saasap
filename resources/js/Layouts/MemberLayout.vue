@@ -28,8 +28,49 @@
         </div>
 
         <div class="sidebar-section">
-          <div class="sidebar-section-title">Negocios</div>
-          <Link href="/member/business-modules" class="sidebar-link" :class="{ active: isActive('/member/business-modules') }">
+          <div 
+            class="sidebar-section-title d-flex align-items-center justify-content-between"
+            style="cursor: pointer;"
+            @click="toggleBusinessesMenu"
+          >
+            <span>Negocios</span>
+            <i class="bi" :class="businessesMenuOpen ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+          </div>
+
+          <template v-if="businessesMenuOpen && businessMenu.length">
+            <div v-for="business in businessMenu" :key="business.id">
+              <div 
+                class="sidebar-link d-flex align-items-center justify-content-between"
+                style="cursor: pointer;"
+                @click="toggleBusiness(business.id)"
+              >
+                <span class="d-flex align-items-center gap-2">
+                  <i class="bi bi-building"></i>
+                  <span class="text-truncate">{{ business.name }}</span>
+                </span>
+                <i class="bi" :class="openBusiness === business.id ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+              </div>
+              
+              <template v-if="openBusiness === business.id">
+                <Link
+                  v-for="mod in business.modules"
+                  :key="mod.key"
+                  :href="mod.url"
+                  class="sidebar-link ps-4"
+                  :class="{ active: isActive(mod.url) }"
+                >
+                  <span>{{ mod.title }}</span>
+                </Link>
+              </template>
+            </div>
+          </template>
+
+          <Link 
+            v-else
+            href="/member/business-modules" 
+            class="sidebar-link" 
+            :class="{ active: isActive('/member/business-modules') }"
+          >
             <i class="bi bi-building"></i>
             <span>Mis Negocios</span>
           </Link>
@@ -194,8 +235,49 @@
           </div>
 
           <div class="sidebar-section">
-            <div class="sidebar-section-title">Negocios</div>
-            <Link href="/member/business-modules" class="sidebar-link" :class="{ active: isActive('/member/business-modules') }">
+            <div 
+              class="sidebar-section-title d-flex align-items-center justify-content-between"
+              style="cursor: pointer;"
+              @click="toggleBusinessesMenu"
+            >
+              <span>Negocios</span>
+              <i class="bi" :class="businessesMenuOpen ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+            </div>
+
+            <template v-if="businessesMenuOpen && businessMenu.length">
+              <div v-for="business in businessMenu" :key="business.id">
+                <div 
+                  class="sidebar-link d-flex align-items-center justify-content-between"
+                  style="cursor: pointer;"
+                  @click="toggleBusiness(business.id)"
+                >
+                  <span class="d-flex align-items-center gap-2">
+                    <i class="bi bi-building"></i>
+                    <span class="text-truncate">{{ business.name }}</span>
+                  </span>
+                  <i class="bi" :class="openBusiness === business.id ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+                </div>
+                
+                <template v-if="openBusiness === business.id">
+                  <Link
+                    v-for="mod in business.modules"
+                    :key="mod.key"
+                    :href="mod.url"
+                    class="sidebar-link ps-4"
+                    :class="{ active: isActive(mod.url) }"
+                  >
+                    <span>{{ mod.title }}</span>
+                  </Link>
+                </template>
+              </div>
+            </template>
+
+            <Link 
+              v-else
+              href="/member/business-modules" 
+              class="sidebar-link" 
+              :class="{ active: isActive('/member/business-modules') }"
+            >
               <i class="bi bi-building"></i>
               <span>Mis Negocios</span>
             </Link>
@@ -260,7 +342,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { Link, router, usePage } from '@inertiajs/vue3'
 import { useFlashToast } from '@/Composables/useFlashToast'
 
@@ -272,9 +354,28 @@ const unreadCount = computed(() => page.props.notificationUnreadCount || 0)
 const features = computed(() => page.props.features || {})
 const modules = computed(() => page.props.modules || {})
 const announcements = computed(() => page.props.systemAnnouncements || [])
+const businessMenu = computed(() => page.props.businessMenu || [])
 
 const canBilling = computed(() => modules.value.billing !== false)
 const canSupport = computed(() => modules.value.support !== false && features.value.module_support !== false)
+
+const businessesMenuOpen = ref(true)
+const openBusiness = ref(null)
+
+const toggleBusinessesMenu = () => {
+  businessesMenuOpen.value = !businessesMenuOpen.value
+  if (!businessesMenuOpen.value) {
+    openBusiness.value = null
+  }
+}
+
+const hasBusinessModules = computed(() => {
+  return businessMenu.value.some(biz => biz.modules && biz.modules.length > 0)
+})
+
+const toggleBusiness = (id) => {
+  openBusiness.value = openBusiness.value === id ? null : id
+}
 
 const isActive = (url) => {
   return window.location.pathname.startsWith(url)

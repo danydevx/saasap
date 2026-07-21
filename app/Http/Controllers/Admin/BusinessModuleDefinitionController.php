@@ -96,6 +96,8 @@ class BusinessModuleDefinitionController extends Controller
                 'has_settings' => (bool) $definition->has_settings,
                 'settings_url' => $settingsUrl,
                 'is_active' => (bool) $definition->is_active,
+                'show_in_menu' => (bool) $definition->show_in_menu,
+                'menu_title' => $definition->menu_title ?? '',
             ],
         ]);
     }
@@ -113,6 +115,8 @@ class BusinessModuleDefinitionController extends Controller
             'has_settings' => ['boolean'],
             'settings_url' => ['nullable', 'string', 'max:255'],
             'is_active' => ['boolean'],
+            'show_in_menu' => ['boolean'],
+            'menu_title' => ['nullable', 'string', 'max:50'],
         ]);
 
         if ($request->boolean('remove_image')) {
@@ -137,6 +141,8 @@ class BusinessModuleDefinitionController extends Controller
             'has_settings' => (bool) ($data['has_settings'] ?? false),
             'settings_url' => $data['settings_url'] ?? null,
             'is_active' => (bool) ($data['is_active'] ?? false),
+            'show_in_menu' => (bool) ($data['show_in_menu'] ?? false),
+            'menu_title' => $data['menu_title'] ?? null,
         ]);
 
         return redirect()->route('admin.business-module-definitions.index')

@@ -126,6 +126,26 @@
                 v-model="form.is_active"
               />
             </div>
+
+            <div class="col-12 col-md-6">
+              <FieldSwitch
+                id="def-show-menu"
+                label="Mostrar en menu lateral"
+                v-model="form.show_in_menu"
+              />
+              <small class="text-muted d-block mb-2">Appecer&aacute; en el sidebar de los miembros</small>
+            </div>
+
+            <div class="col-12 col-md-6" v-if="form.show_in_menu">
+              <FieldText
+                id="def-menu-title"
+                label="Titulo en el menu"
+                v-model="form.menu_title"
+                :formError="errors.menu_title"
+                placeholder="Ej: Galeria, Citas, Servicios"
+              />
+              <small class="text-muted">Texto que aparecer&aacute; en el submenu del miembro</small>
+            </div>
           </div>
 
           <div class="col-12 d-flex gap-2 mt-4">
@@ -171,6 +191,8 @@ const form = reactive({
   has_settings: !!props.definition.has_settings,
   settings_url: props.definition.settings_url || '',
   is_active: !!props.definition.is_active,
+  show_in_menu: !!props.definition.show_in_menu,
+  menu_title: props.definition.menu_title || '',
   imageFile: null,
 })
 
@@ -209,6 +231,8 @@ const submit = () => {
   data.append('has_settings', form.has_settings ? '1' : '0')
   data.append('settings_url', form.settings_url || '')
   data.append('is_active', form.is_active ? '1' : '0')
+  data.append('show_in_menu', form.show_in_menu ? '1' : '0')
+  data.append('menu_title', form.menu_title || '')
   data.append('_method', 'PUT')
 
   if (form.imageFile) {
