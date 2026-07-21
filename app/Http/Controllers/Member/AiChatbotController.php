@@ -11,6 +11,12 @@ class AiChatbotController extends Controller
 {
     public function index(Request $request, Business $business)
     {
+        $user = $request->user();
+
+        if (!$user->hasAnyRole(['superadmin', 'admin']) && $business->user_id !== $user->id) {
+            abort(403, 'No tienes permiso para acceder a este modulo.');
+        }
+
         return Inertia::render('Member/AiChatbot/Index', [
             'business' => [
                 'id' => $business->id,

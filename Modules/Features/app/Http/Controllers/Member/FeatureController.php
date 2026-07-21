@@ -340,6 +340,11 @@ class FeatureController extends Controller
 
     public function updateAssignment(Request $request, Business $business)
     {
+        $user = $request->user();
+        if (!$user->hasAnyRole(['superadmin', 'admin']) && $business->user_id !== $user->id) {
+            abort(403, 'No tienes permiso para modificar esta asignacion.');
+        }
+
         $validated = $request->validate([
             'feature_id' => ['required', 'exists:features,id'],
             'location_id' => ['nullable', 'exists:business_locations,id'],
@@ -362,8 +367,13 @@ class FeatureController extends Controller
         return redirect()->back()->with('success', 'Asignacion actualizada.');
     }
 
-    public function removeAssignment(Business $business, $assignmentId)
+    public function removeAssignment(Request $request, Business $business, $assignmentId)
     {
+        $user = $request->user();
+        if (!$user->hasAnyRole(['superadmin', 'admin']) && $business->user_id !== $user->id) {
+            abort(403, 'No tienes permiso para remover esta asignacion.');
+        }
+
         $businessFeature = BusinessFeature::where('business_id', $business->id)
             ->where('id', $assignmentId)
             ->first();
@@ -386,6 +396,11 @@ class FeatureController extends Controller
 
     public function reorder(Request $request, Business $business)
     {
+        $user = $request->user();
+        if (!$user->hasAnyRole(['superadmin', 'admin']) && $business->user_id !== $user->id) {
+            abort(403, 'No tienes permiso para reordenar.');
+        }
+
         $validated = $request->validate([
             'order' => ['required', 'array'],
             'order.*' => ['required', 'exists:business_features,id'],
