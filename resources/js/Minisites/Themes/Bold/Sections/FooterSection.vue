@@ -212,22 +212,22 @@ const getSocialLinkStyle = (platform) => {
 }
 
 .footer-description {
-  font-size: 0.9rem;
+  font-size: var(--font-size-sm, 0.9rem);
   opacity: 0.8;
   line-height: 1.6;
 }
 
 .footer-title {
-  font-family: 'Oswald', sans-serif;
+  font-family: var(--heading-font);
   text-transform: uppercase;
   letter-spacing: 1px;
   font-weight: 600;
   margin-bottom: 1rem;
-  font-size: 1rem;
+  font-size: var(--font-size-base, 1rem);
 }
 
 .footer-contact {
-  font-size: 0.9rem;
+  font-size: var(--font-size-sm, 0.9rem);
 }
 
 .footer-contact li {
@@ -247,7 +247,7 @@ const getSocialLinkStyle = (platform) => {
 }
 
 .footer-social {
-  font-size: 1.5rem;
+  font-size: var(--font-size-h5, 1.5rem);
 }
 
 .social-link {
@@ -270,7 +270,7 @@ const getSocialLinkStyle = (platform) => {
 }
 
 .footer-links {
-  font-size: 0.85rem;
+  font-size: var(--font-size-sm, 0.85rem);
 }
 
 .footer-link {
@@ -285,7 +285,7 @@ const getSocialLinkStyle = (platform) => {
 
 .footer-bottom {
   border-top: 1px solid rgba(255, 255, 255, 0.1);
-  font-size: 0.85rem;
+  font-size: var(--font-size-sm, 0.85rem);
   opacity: 0.7;
 }
 

@@ -8,6 +8,7 @@ use App\Http\Middleware\EnsureLegalDocumentsAccepted;
 use App\Http\Middleware\EnsurePermissionOrUser;
 use App\Http\Middleware\EnsureUserActive;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\MinisiteTemplate;
 use App\Services\SystemErrorService;
 use Illuminate\Auth\Middleware\EnsureEmailIsVerified;
 use Illuminate\Foundation\Application;
@@ -30,6 +31,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(append: [
             CheckMaintenanceMode::class,
+            MinisiteTemplate::class,
             HandleInertiaRequests::class,
             EnsureLegalDocumentsAccepted::class,
         ]);

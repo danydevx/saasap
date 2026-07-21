@@ -19,8 +19,7 @@
               v-for="(btn, idx) in buttons"
               :key="idx"
               :href="getButtonHref(btn)"
-              class="btn btn-lg hero-btn"
-              :class="getButtonClass(btn.style)"
+              class="btn btn-lg hero-btn btn-scheme"
             >
               {{ btn.text }}
             </a>
@@ -225,8 +224,8 @@ const getSocialIcon = (platform) => {
 }
 
 .hero-title {
-  font-family: 'Oswald', sans-serif;
-  font-size: 3.5rem;
+  font-family: var(--heading-font);
+  font-size: var(--font-size-h1, 3.5rem);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 2px;
@@ -236,8 +235,8 @@ const getSocialIcon = (platform) => {
 }
 
 .hero-subtitle {
-  font-family: 'Roboto Condensed', sans-serif;
-  font-size: 1.25rem;
+  font-family: var(--body-font);
+  font-size: var(--font-size-h6, 1.25rem);
   opacity: 0.95;
   font-weight: 300;
   max-width: 600px;
@@ -245,9 +244,9 @@ const getSocialIcon = (platform) => {
 }
 
 .hero-text-aux {
-  font-family: 'Roboto Condensed', sans-serif;
+  font-family: var(--body-font);
   opacity: 0.8;
-  font-size: 0.95rem;
+  font-size: var(--font-size-sm, 0.95rem);
   max-width: 600px;
   margin: 0 auto;
 }
@@ -257,7 +256,7 @@ const getSocialIcon = (platform) => {
 }
 
 .hero-btn {
-  font-family: 'Oswald', sans-serif;
+  font-family: var(--heading-font);
   text-transform: uppercase;
   letter-spacing: 1px;
   font-weight: 500;
@@ -272,8 +271,8 @@ const getSocialIcon = (platform) => {
 }
 
 .hero-contact {
-  font-family: 'Roboto Condensed', sans-serif;
-  font-size: 0.9rem;
+  font-family: var(--body-font);
+  font-size: var(--font-size-sm, 0.9rem);
   opacity: 0.9;
 }
 
@@ -282,7 +281,7 @@ const getSocialIcon = (platform) => {
 }
 
 .hero-social {
-  font-size: 1.5rem;
+  font-size: var(--font-size-h5, 1.5rem);
 }
 
 .social-link {
@@ -311,11 +310,11 @@ const getSocialIcon = (platform) => {
 
 @media (max-width: 768px) {
   .hero-title {
-    font-size: 2.5rem;
+    font-size: var(--font-size-h2, 2.5rem);
   }
 
   .hero-subtitle {
-    font-size: 1rem;
+    font-size: var(--font-size-base, 1rem);
   }
 
   .hero-layout-split .col-lg-7:last-child {

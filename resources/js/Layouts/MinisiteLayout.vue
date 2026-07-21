@@ -25,7 +25,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted, watch } from 'vue'
 
 const props = defineProps({
   business: Object,
@@ -34,40 +34,79 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  branding: Object,
+})
+
+const brandingCss = computed(() => {
+  return props.branding?.generated_css || null
+})
+
+const injectBrandingCss = (css) => {
+  let el = document.getElementById('minisite-branding-css')
+  if (!el) {
+    el = document.createElement('style')
+    el.id = 'minisite-branding-css'
+    document.head.appendChild(el)
+  }
+  if (css) {
+    el.textContent = css
+  } else {
+    el.textContent = ''
+  }
+}
+
+onMounted(() => {
+  injectBrandingCss(brandingCss.value)
+})
+
+watch(brandingCss, (css) => {
+  injectBrandingCss(css)
 })
 
 const themeStyles = computed(() => {
   if (!props.theme?.css_variables) return {}
 
-  const { colors, fonts, border_radius, button_style, card_style } = props.theme.css_variables
+  const { colors, fonts, buttons_style, buttons_uppercase } = props.theme.css_variables
+
+  const mapColor = (key, fallback) => colors?.[key] || fallback
+  const mapFont = (key, fallback) => fonts?.[key] || fallback
+
+  const buttonRadius = buttons_style === 'rounded' ? '50px' :
+                       buttons_style === 'square' ? '0px' :
+                       buttons_style === 'round' ? '8px' : '8px'
 
   return {
-    '--minisite-primary': colors?.primary || '#1a1a2e',
-    '--minisite-secondary': colors?.secondary || '#6B7280',
-    '--minisite-accent': colors?.accent || '#3B82F6',
-    '--minisite-background': colors?.background || '#ffffff',
-    '--minisite-text': colors?.text || '#1a1a2e',
-    '--minisite-text-light': colors?.text_light || '#6B7280',
-    '--minisite-font-headings': fonts?.headings || 'Montserrat, sans-serif',
-    '--minisite-font-body': fonts?.body || 'Inter, sans-serif',
-    '--minisite-border-radius': border_radius || '8px',
-    '--minisite-button-radius': button_style === 'rounded-pill' ? '50px' :
-                                button_style === 'rounded-0' ? '0' :
-                                button_style === 'rounded-20' ? '20px' :
-                                button_style === 'rounded-8' ? '8px' : border_radius || '8px',
-    '--minisite-card-radius': border_radius || '8px',
+    '--brand-primary': mapColor('brand_primary', '#1a1a2e'),
+    '--brand-secondary': mapColor('brand_secondary', '#6B7280'),
+    '--brand-tertiary': mapColor('brand_tertiary', '#EC4899'),
+    '--brand-quaternary': mapColor('brand_quaternary', '#10B981'),
+    '--brand-accent': mapColor('brand_accent', '#3B82F6'),
+    '--brand-hover': mapColor('brand_hover', '#1F2937'),
+    '--brand-link': mapColor('brand_link', '#3B82F6'),
+    '--brand-background': mapColor('brand_background', '#ffffff'),
+    '--brand-text': mapColor('brand_text', '#1a1a2e'),
+    '--brand-text-light': mapColor('brand_text_light', '#6B7280'),
+    '--brand-bgcolor-header': mapColor('brand_bgcolor_header', '#FFFFFF'),
+    '--brand-bgcolor-footer': mapColor('brand_bgcolor_footer', '#F8F9FA'),
+    '--heading-font': mapFont('font_heading', 'Poppins, sans-serif'),
+    '--body-font': mapFont('font_body', 'Open Sans, sans-serif'),
+    '--buttons-font': mapFont('font_buttons', 'Poppins, sans-serif'),
+    '--brand-button-radius': buttonRadius,
+    '--brand-card-radius': '8px',
+    '--buttons-text-transform': buttons_uppercase ? 'uppercase' : 'none',
   }
 })
 
 const pageStyleClass = computed(() => {
-  const style = props.theme?.layout_config?.page_style || 'light'
+  const style = props.branding?.page_style || props.theme?.layout_config?.page_style || 'light'
   return `minisite-style-${style}`
 })
 
 const layoutClasses = computed(() => {
-  if (!props.theme?.layout_config) return ''
+  if (!props.theme?.layout_config && !props.branding) return ''
 
-  const { section_style, hero_style } = props.theme.layout_config
+  const section_style = props.branding?.section_style || props.theme?.layout_config?.section_style || 'spacious'
+  const hero_style = props.branding?.hero_style || props.theme?.layout_config?.hero_style || 'fullwidth'
   const classes = []
 
   if (section_style === 'spacious') classes.push('minisite-section-spacious')
@@ -87,12 +126,11 @@ const layoutClasses = computed(() => {
 })
 
 const footerStyles = computed(() => {
-  if (!props.theme?.css_variables?.colors) {
-    return { backgroundColor: '#f8f9fa', color: '#1a1a1a' }
+  if (!props.theme?.css_variables?.colors && !props.branding?.generated_css) {
+    return { backgroundColor: '#1a1a2e', color: '#ffffff' }
   }
-  const { primary, background } = props.theme.css_variables.colors
   return {
-    backgroundColor: primary || '#1a1a2e',
+    backgroundColor: 'var(--brand-primary)',
     color: '#ffffff',
   }
 })
@@ -116,9 +154,9 @@ const isModuleEnabled = (moduleKey) => {
 
 <style scoped>
 .minisite-layout {
-  font-family: var(--minisite-font-body);
-  background-color: var(--minisite-background);
-  color: var(--minisite-text);
+  font-family: var(--body-font);
+  background-color: var(--brand-background);
+  color: var(--brand-text);
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -130,44 +168,46 @@ const isModuleEnabled = (moduleKey) => {
 .minisite-layout :deep(h4),
 .minisite-layout :deep(h5),
 .minisite-layout :deep(h6) {
-  font-family: var(--minisite-font-headings);
-  color: var(--minisite-primary);
+  font-family: var(--heading-font);
+  color: var(--brand-primary);
 }
 
 .minisite-layout :deep(.btn-primary) {
-  background-color: var(--minisite-primary);
-  border-color: var(--minisite-primary);
-  border-radius: var(--minisite-button-radius);
+  background-color: var(--brand-primary);
+  border-color: var(--brand-primary);
+  border-radius: var(--brand-button-radius);
+  text-transform: var(--buttons-text-transform, none);
 }
 
 .minisite-layout :deep(.btn-outline-primary) {
-  color: var(--minisite-primary);
-  border-color: var(--minisite-primary);
-  border-radius: var(--minisite-button-radius);
+  color: var(--brand-primary);
+  border-color: var(--brand-primary);
+  border-radius: var(--brand-button-radius);
+  text-transform: var(--buttons-text-transform, none);
 }
 
 .minisite-layout :deep(.card) {
-  border-radius: var(--minisite-card-radius);
+  border-radius: var(--brand-card-radius);
   border: none;
 }
 
 .minisite-layout :deep(.section-divider) {
-  border-color: var(--minisite-accent);
+  border-color: var(--brand-accent);
 }
 
 /* Dark style */
 .minisite-style-dark {
-  --minisite-bg-dark: #1a1a2e;
+  --brand-bg-dark: #1a1a2e;
 }
 
 .minisite-style-dark .minisite-footer {
-  background-color: var(--minisite-primary) !important;
+  background-color: var(--brand-primary) !important;
   color: #ffffff;
 }
 
 /* Light style */
 .minisite-style-light {
-  --minisite-bg-light: #FDF8F3;
+  --brand-bg-light: #FDF8F3;
 }
 
 /* Section styles */

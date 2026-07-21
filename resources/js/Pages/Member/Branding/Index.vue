@@ -32,6 +32,16 @@
             </button>
           </li>
           <li class="nav-item" role="presentation">
+            <button class="nav-link" :class="{ active: activeTab === 'layout' }" @click="activeTab = 'layout'" type="button">
+              <i class="bi bi-layout-sidebar me-1"></i>Layout
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" :class="{ active: activeTab === 'sections' }" @click="activeTab = 'sections'" type="button">
+              <i class="bi bi-grid me-1"></i>Secciones
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
             <button class="nav-link" :class="{ active: activeTab === 'preview' }" @click="activeTab = 'preview'" type="button">
               <i class="bi bi-eye me-1"></i>Vista Previa
             </button>
@@ -301,6 +311,15 @@
                 </div>
 
                 <div class="col-12 col-md-6">
+                  <FieldSwitch
+                    id="buttons-uppercase"
+                    label="Botones en mayusculas"
+                    v-model="form.buttons_uppercase"
+                  />
+                  <small class="text-muted d-block mb-3">Muestra el texto de los botones en mayusculas</small>
+                </div>
+
+                <div class="col-12">
                   <label class="form-label">Estilo de Botones</label>
                   <div class="d-flex gap-2">
                     <div
@@ -332,6 +351,201 @@
                     </div>
                   </div>
                   <small class="text-muted d-block mt-2">Selecciona el estilo de los botones</small>
+                </div>
+              </div>
+            </div>
+
+            <div class="tab-pane fade" :class="{ 'show active': activeTab === 'layout' }" role="tabpanel">
+              <div class="row g-3">
+                <div class="col-12">
+                  <h6 class="text-muted mb-3">Estilo de Pagina</h6>
+                  <p class="text-muted small">Define el estilo visual general de tu minisitio.</p>
+                </div>
+
+                <div class="col-12 col-md-6">
+                  <FieldSelect
+                    id="page-style"
+                    label="Estilo de Pagina"
+                    v-model="form.page_style"
+                    :options="pageStyleOptions"
+                    :formError="errors.page_style"
+                  />
+                  <small class="text-muted d-block mb-3">Afecta el fondo y tonos generales del sitio</small>
+                </div>
+
+                <div class="col-12 col-md-6">
+                  <FieldSelect
+                    id="section-style"
+                    label="Estilo de Secciones"
+                    v-model="form.section_style"
+                    :options="sectionStyleOptions"
+                    :formError="errors.section_style"
+                  />
+                  <small class="text-muted d-block mb-3">Controla el espaciado entre secciones</small>
+                </div>
+
+                <div class="col-12 col-md-6">
+                  <FieldSelect
+                    id="hero-style"
+                    label="Estilo de Hero"
+                    v-model="form.hero_style"
+                    :options="heroStyleOptions"
+                    :formError="errors.hero_style"
+                  />
+                  <small class="text-muted d-block mb-3">Configura la presentacion del hero principal</small>
+                </div>
+              </div>
+            </div>
+
+            <div class="tab-pane fade" :class="{ 'show active': activeTab === 'sections' }" role="tabpanel">
+              <div class="row g-4">
+                <div class="col-12">
+                  <h6 class="text-muted mb-3">Variantes de Seccion</h6>
+                  <p class="text-muted small">Selecciona como se mostrara cada seccion en tu minisitio pubblico.</p>
+                </div>
+
+                <div class="col-12 col-md-6">
+                  <div class="card">
+                    <div class="card-header">
+                      <h6 class="mb-0"><i class="bi bi-briefcase me-2"></i>Servicios</h6>
+                    </div>
+                    <div class="card-body">
+                      <div class="d-flex gap-3">
+                        <div
+                          class="variant-option"
+                          :class="{ active: form.section_variants?.services === 'cards' || !form.section_variants?.services }"
+                          @click="form.section_variants = { ...form.section_variants, services: 'cards' }"
+                        >
+                          <div class="variant-preview">
+                            <div class="d-flex gap-2">
+                              <div class="card-preview" v-for="i in 3" :key="i"></div>
+                            </div>
+                          </div>
+                          <span class="variant-label">Tarjetas</span>
+                        </div>
+                        <div
+                          class="variant-option"
+                          :class="{ active: form.section_variants?.services === 'list' }"
+                          @click="form.section_variants = { ...form.section_variants, services: 'list' }"
+                        >
+                          <div class="variant-preview">
+                            <div class="list-preview">
+                              <div class="line" v-for="i in 3" :key="i"></div>
+                            </div>
+                          </div>
+                          <span class="variant-label">Lista</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-12 col-md-6">
+                  <div class="card">
+                    <div class="card-header">
+                      <h6 class="mb-0"><i class="bi bi-geo-alt me-2"></i>Ubicaciones</h6>
+                    </div>
+                    <div class="card-body">
+                      <div class="d-flex gap-3">
+                        <div
+                          class="variant-option"
+                          :class="{ active: form.section_variants?.locations === 'cards' || !form.section_variants?.locations }"
+                          @click="form.section_variants = { ...form.section_variants, locations: 'cards' }"
+                        >
+                          <div class="variant-preview">
+                            <div class="d-flex gap-2">
+                              <div class="card-preview" v-for="i in 3" :key="i"></div>
+                            </div>
+                          </div>
+                          <span class="variant-label">Tarjetas</span>
+                        </div>
+                        <div
+                          class="variant-option"
+                          :class="{ active: form.section_variants?.locations === 'list' }"
+                          @click="form.section_variants = { ...form.section_variants, locations: 'list' }"
+                        >
+                          <div class="variant-preview">
+                            <div class="list-preview">
+                              <div class="line" v-for="i in 3" :key="i"></div>
+                            </div>
+                          </div>
+                          <span class="variant-label">Lista</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-12 col-md-6">
+                  <div class="card">
+                    <div class="card-header">
+                      <h6 class="mb-0"><i class="bi bi-images me-2"></i>Galeria</h6>
+                    </div>
+                    <div class="card-body">
+                      <div class="d-flex gap-3">
+                        <div
+                          class="variant-option"
+                          :class="{ active: form.section_variants?.gallery === 'grid' || !form.section_variants?.gallery }"
+                          @click="form.section_variants = { ...form.section_variants, gallery: 'grid' }"
+                        >
+                          <div class="variant-preview">
+                            <div class="grid-preview"></div>
+                          </div>
+                          <span class="variant-label">Cuadricula</span>
+                        </div>
+                        <div
+                          class="variant-option"
+                          :class="{ active: form.section_variants?.gallery === 'carousel' }"
+                          @click="form.section_variants = { ...form.section_variants, gallery: 'carousel' }"
+                        >
+                          <div class="variant-preview">
+                            <div class="carousel-preview">
+                              <div class="carousel-track">
+                                <div class="carousel-item" v-for="i in 3" :key="i"></div>
+                              </div>
+                            </div>
+                          </div>
+                          <span class="variant-label">Carrusel</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-12 col-md-6">
+                  <div class="card">
+                    <div class="card-header">
+                      <h6 class="mb-0"><i class="bi bi-box-seam me-2"></i>Productos</h6>
+                    </div>
+                    <div class="card-body">
+                      <div class="d-flex gap-3">
+                        <div
+                          class="variant-option"
+                          :class="{ active: form.section_variants?.products === 'cards' || !form.section_variants?.products }"
+                          @click="form.section_variants = { ...form.section_variants, products: 'cards' }"
+                        >
+                          <div class="variant-preview">
+                            <div class="d-flex gap-2">
+                              <div class="card-preview" v-for="i in 3" :key="i"></div>
+                            </div>
+                          </div>
+                          <span class="variant-label">Tarjetas</span>
+                        </div>
+                        <div
+                          class="variant-option"
+                          :class="{ active: form.section_variants?.products === 'list' }"
+                          @click="form.section_variants = { ...form.section_variants, products: 'list' }"
+                        >
+                          <div class="variant-preview">
+                            <div class="list-preview">
+                              <div class="line" v-for="i in 3" :key="i"></div>
+                            </div>
+                          </div>
+                          <span class="variant-label">Lista</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -444,11 +658,14 @@ const defaultColors = {
   brand_secondary: { light: '#8B5CF6', dark: '#A78BFA' },
   brand_tertiary: { light: '#EC4899', dark: '#F472B6' },
   brand_quaternary: { light: '#10B981', dark: '#34D399' },
-  accent: { light: '#F59E0B', dark: '#FBBF24' },
-  hover: { light: '#1F2937', dark: '#374151' },
+  brand_accent: { light: '#F59E0B', dark: '#FBBF24' },
+  brand_hover: { light: '#1F2937', dark: '#374151' },
   brand_link: { light: '#3B82F6', dark: '#60A5FA' },
   brand_bgcolor_header: { light: '#FFFFFF', dark: '#1A1A2E' },
   brand_bgcolor_footer: { light: '#F8F9FA', dark: '#16213E' },
+  brand_background: { light: '#FFFFFF', dark: '#1A1A2E' },
+  brand_text: { light: '#1a1a2e', dark: '#ffffff' },
+  brand_text_light: { light: '#6B7280', dark: '#B0B0B0' },
 }
 
 const form = reactive({
@@ -461,6 +678,11 @@ const form = reactive({
   custom_font_url: branding.value?.custom_font_url || '',
   dark_mode: branding.value?.dark_mode ?? true,
   buttons_style: branding.value?.buttons_style || 'round',
+  buttons_uppercase: branding.value?.buttons_uppercase ?? false,
+  section_variants: branding.value?.section_variants || { services: 'cards', locations: 'cards', gallery: 'grid', products: 'cards' },
+  page_style: branding.value?.page_style || '',
+  section_style: branding.value?.section_style || '',
+  hero_style: branding.value?.hero_style || '',
 })
 
 const fontLinkId = 'dynamic-google-fonts'
@@ -507,6 +729,33 @@ const fontOptions = [
   { value: 'Source Sans Pro', label: 'Source Sans Pro' },
 ]
 
+const pageStyleOptions = [
+  { value: 'light', label: 'Claro' },
+  { value: 'dark', label: 'Oscuro' },
+  { value: 'clean', label: 'Limpio' },
+  { value: 'warm', label: 'Calido' },
+  { value: 'fresh', label: 'Fresco' },
+  { value: 'dramatic', label: 'Dramatico' },
+]
+
+const sectionStyleOptions = [
+  { value: 'spacious', label: 'Espacioso' },
+  { value: 'classic', label: 'Clasico' },
+  { value: 'cozy', label: 'Acogedor' },
+  { value: 'dramatic', label: 'Dramatico' },
+  { value: 'balanced', label: 'Balanceado' },
+  { value: 'rounded', label: 'Redondeado' },
+]
+
+const heroStyleOptions = [
+  { value: 'fullwidth', label: 'Ancho Completo' },
+  { value: 'centered', label: 'Centrado' },
+  { value: 'split', label: 'Dividido' },
+  { value: 'boxed', label: 'En Caja' },
+  { value: 'fullbleed', label: 'Full Bleed' },
+  { value: 'friendly', label: 'Amigable' },
+]
+
 const getColor = (colorKey) => {
   const color = form.colors[colorKey]
   if (!color) return '#000000'
@@ -538,6 +787,11 @@ const submit = () => {
   data.append('custom_font_url', form.custom_font_url || '')
   data.append('dark_mode', form.dark_mode ? '1' : '0')
   data.append('buttons_style', form.buttons_style || 'round')
+  data.append('buttons_uppercase', form.buttons_uppercase ? '1' : '0')
+  data.append('section_variants', JSON.stringify(form.section_variants))
+  data.append('page_style', form.page_style || '')
+  data.append('section_style', form.section_style || '')
+  data.append('hero_style', form.hero_style || '')
 
   router.post(`/member/businesses/${business.value.id}/branding`, data, {
     onSuccess: () => {
@@ -593,5 +847,102 @@ const submit = () => {
 .preview-footer {
   padding: 1rem 2rem;
   text-align: center;
+}
+
+.variant-option {
+  flex: 1;
+  border: 2px solid #dee2e6;
+  border-radius: 8px;
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.variant-option:hover {
+  border-color: #adb5bd;
+}
+
+.variant-option.active {
+  border-color: #3B82F6;
+  background-color: rgba(59, 130, 246, 0.05);
+}
+
+.variant-preview {
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+
+.card-preview {
+  width: 30px;
+  height: 40px;
+  background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+  border-radius: 4px;
+}
+
+.list-preview {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 0 8px;
+}
+
+.list-preview .line {
+  height: 8px;
+  background: linear-gradient(90deg, #e9ecef 0%, #dee2e6 100%);
+  border-radius: 2px;
+}
+
+.list-preview .line:nth-child(2) {
+  width: 80%;
+}
+
+.list-preview .line:nth-child(3) {
+  width: 60%;
+}
+
+.grid-preview {
+  width: 50px;
+  height: 50px;
+  background: linear-gradient(135deg, #e9ecef 25%, transparent 25%, transparent 50%, #e9ecef 50%, #e9ecef 75%, transparent 75%);
+  background-size: 12px 12px;
+  border-radius: 4px;
+  border: 1px solid #dee2e6;
+}
+
+.carousel-preview {
+  width: 80px;
+  height: 50px;
+  position: relative;
+  overflow: hidden;
+  border-radius: 4px;
+}
+
+.carousel-track {
+  display: flex;
+  gap: 4px;
+  animation: none;
+}
+
+.carousel-item {
+  width: 20px;
+  height: 50px;
+  background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.variant-label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #495057;
+}
+
+.variant-option.active .variant-label {
+  color: #3B82F6;
 }
 </style>

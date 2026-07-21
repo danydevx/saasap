@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\ActivityController as AdminActivityController;
 use App\Http\Controllers\Admin\ApiKeyController as AdminApiKeyController;
 use App\Http\Controllers\Admin\AutomationController;
 use App\Http\Controllers\Public\BusinessController as PublicBusinessController;
+use App\Http\Controllers\Public\DirectoryController;
 use App\Http\Controllers\Public\MenuController;
 use App\Http\Controllers\Public\PromotionVerificationController;
 use Modules\Features\Http\Controllers\Public\FeatureController as PublicFeatureController;
@@ -110,9 +111,7 @@ use App\Services\SettingService;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
-Route::get('/', function () {
-    return redirect('/login');
-});
+Route::get('/', [DirectoryController::class, 'index']);
 
 Route::get('/health', HealthController::class)->name('health');
 
@@ -134,6 +133,11 @@ Route::post('/pricing/select/{plan}', [PricingController::class, 'select'])->nam
 Route::get('/plans', function () {
     return redirect('/pricing');
 })->name('plans');
+
+Route::get('/negocios', [DirectoryController::class, 'index'])->name('directory.index');
+Route::get('/negocios/{slug}', [DirectoryController::class, 'show'])->name('directory.show');
+Route::post('/negocios/{slug}/appointment', [DirectoryController::class, 'storeAppointment'])->name('directory.appointment.store');
+Route::post('/negocios/{slug}/contact', [DirectoryController::class, 'storeContact'])->name('directory.contact.store');
 
 Route::get('/b/{slug}', [PublicBusinessController::class, 'show'])->name('public.business.show');
 Route::get('/b/{slug}/locations', [PublicBusinessController::class, 'locations'])->name('public.business.locations');
@@ -1435,6 +1439,12 @@ Route::prefix('admin')->middleware(['auth', 'admin_or_user:1'])->group(function 
     Route::get('/minisite-themes', [MinisiteThemeController::class, 'index'])
         ->middleware(['auth', 'admin_or_user:1'])
         ->name('admin.minisite-themes.index');
+    Route::get('/minisite-themes/create', [MinisiteThemeController::class, 'create'])
+        ->middleware(['auth', 'admin_or_user:1'])
+        ->name('admin.minisite-themes.create');
+    Route::get('/minisite-themes/{theme}/edit', [MinisiteThemeController::class, 'edit'])
+        ->middleware(['auth', 'admin_or_user:1'])
+        ->name('admin.minisite-themes.edit');
     Route::post('/minisite-themes', [MinisiteThemeController::class, 'store'])
         ->middleware(['auth', 'admin_or_user:1'])
         ->name('admin.minisite-themes.store');

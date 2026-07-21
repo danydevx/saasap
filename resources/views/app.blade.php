@@ -5,7 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title inertia>{{ config('app.name', 'Mi SaaS') }}</title>
 
-    @vite(['resources/less/app.less', 'resources/js/app.js'])
+    @php($adminTheme = $page['props']['theme']['css_variables']['fonts'] ?? [])
+    @php($headingFont = $adminTheme['font_heading'] ?? null)
+    @php($bodyFont = $adminTheme['font_body'] ?? null)
+    @php($buttonsFont = $adminTheme['font_buttons'] ?? null)
+    @php($uniqueFonts = array_unique(array_filter([$headingFont, $bodyFont, $buttonsFont])))
+
+    @if(!empty($uniqueFonts))
+      @php($fontFamilies = collect($uniqueFonts)->map(fn($f) => urlencode($f) . ':wght@400;500;600;700')->join('&family='))
+      <link href="https://fonts.googleapis.com/css2?family={{ $fontFamilies }}&display=swap" rel="stylesheet">
+    @endif
+
+    @vite(['resources/less/admin.less', 'resources/js/app.js'])
     @inertiaHead
 </head>
 <body>

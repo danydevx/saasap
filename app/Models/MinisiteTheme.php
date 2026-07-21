@@ -14,12 +14,14 @@ class MinisiteTheme extends Model
         'preview_image',
         'css_variables',
         'layout_config',
+        'section_config',
         'is_active',
     ];
 
     protected $casts = [
         'css_variables' => 'array',
         'layout_config' => 'array',
+        'section_config' => 'array',
         'is_active' => 'boolean',
     ];
 

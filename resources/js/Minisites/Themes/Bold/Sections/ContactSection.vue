@@ -59,7 +59,7 @@
                 ></textarea>
               </div>
 
-              <button type="submit" class="btn btn-lg w-100" :class="buttonClass" :disabled="sending">
+              <button type="submit" class="btn btn-lg w-100 btn-scheme" :disabled="sending">
                 <span v-if="sending">
                   <i class="bi bi-hourglass-split me-2"></i>Enviando...
                 </span>
@@ -423,12 +423,12 @@ const submitForm = async () => {
 
 <style scoped>
 .contact-section {
-  font-family: 'Roboto Condensed', sans-serif;
+  font-family: var(--body-font);
 }
 
 .section-title {
-  font-family: 'Oswald', sans-serif;
-  font-size: 2.5rem;
+  font-family: var(--heading-font);
+  font-size: var(--font-size-h2, 2.5rem);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 2px;
@@ -442,7 +442,7 @@ const submitForm = async () => {
 
 .form-title,
 .info-title {
-  font-family: 'Oswald', sans-serif;
+  font-family: var(--heading-font);
   text-transform: uppercase;
   letter-spacing: 1px;
   font-weight: 600;
@@ -457,11 +457,11 @@ const submitForm = async () => {
   align-items: center;
   justify-content: center;
   color: white;
-  font-size: 1.2rem;
+  font-size: var(--font-size-h6, 1.2rem);
 }
 
 .contact-label {
-  font-size: 0.85rem;
+  font-size: var(--font-size-sm, 0.85rem);
   text-transform: uppercase;
   letter-spacing: 1px;
   opacity: 0.7;
@@ -471,7 +471,7 @@ const submitForm = async () => {
 .contact-value {
   color: inherit;
   text-decoration: none;
-  font-size: 1rem;
+  font-size: var(--font-size-base, 1rem);
 }
 
 a.contact-value:hover {
@@ -493,7 +493,7 @@ a.contact-value:hover {
   width: 42px;
   height: 42px;
   border-radius: 50%;
-  font-size: 1.25rem;
+  font-size: var(--font-size-h6, 1.25rem);
   transition: all 0.3s ease;
   text-decoration: none;
 }
@@ -510,7 +510,7 @@ a.contact-value:hover {
 
 @media (max-width: 768px) {
   .section-title {
-    font-size: 2rem;
+    font-size: var(--font-size-h3, 2rem);
   }
 }
 </style>

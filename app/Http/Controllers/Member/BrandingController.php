@@ -35,10 +35,18 @@ class BrandingController extends Controller
             'custom_font_url' => 'nullable|url|max:500',
             'dark_mode' => 'nullable|boolean',
             'buttons_style' => 'nullable|in:rounded,square,round',
+            'buttons_uppercase' => 'nullable|boolean',
+            'section_variants' => 'nullable|string',
+            'page_style' => 'nullable|string',
+            'section_style' => 'nullable|string',
+            'hero_style' => 'nullable|string',
+            'animations' => 'nullable|string',
         ]);
 
         $colors = $validated['colors'] ? json_decode($validated['colors'], true) : null;
         $fonts = $validated['fonts'] ? json_decode($validated['fonts'], true) : null;
+        $sectionVariants = $validated['section_variants'] ? json_decode($validated['section_variants'], true) : null;
+        $animations = $validated['animations'] ? json_decode($validated['animations'], true) : null;
 
         $branding = BusinessBrandingSetting::updateOrCreate(
             ['business_id' => $business->id],
@@ -48,6 +56,12 @@ class BrandingController extends Controller
                 'custom_font_url' => $validated['custom_font_url'] ?? null,
                 'dark_mode' => $validated['dark_mode'] ?? false,
                 'buttons_style' => $validated['buttons_style'] ?? 'round',
+                'buttons_uppercase' => $validated['buttons_uppercase'] ?? false,
+                'section_variants' => $sectionVariants,
+                'page_style' => $validated['page_style'] ?? null,
+                'section_style' => $validated['section_style'] ?? null,
+                'hero_style' => $validated['hero_style'] ?? null,
+                'animations' => $animations,
                 'generated_css' => null,
             ]
         );

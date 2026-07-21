@@ -11,7 +11,13 @@ use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
 {
-    protected $rootView = 'app';
+    public function rootView(Request $request): string
+    {
+        if ($request->is('b/*')) {
+            return 'minisite.minisite';
+        }
+        return 'app';
+    }
 
     public function version(Request $request): ?string
     {

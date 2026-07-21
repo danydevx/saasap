@@ -3,6 +3,7 @@
     :business="business"
     :theme="theme"
     :modules="modules"
+    :branding="branding"
   >
     <nav class="navbar navbar-expand-lg sticky-top" :style="navbarStyle">
       <div class="container">
@@ -69,7 +70,7 @@
       :email="business.email"
     />
 
-    <section v-if="about" id="about" class="py-5" style="background-color: #fff;">
+    <section v-if="about" id="about" class="py-5" :class="'section--' + (sectionSchemes.about || 'light')">
       <div class="container">
         <div class="row align-items-center">
           <div class="col-lg-6 mb-4 mb-lg-0">
@@ -77,8 +78,8 @@
           </div>
           <div class="col-lg-6">
             <h2 class="fw-bold mb-3">{{ about.title || 'Acerca de nosotros' }}</h2>
-            <p v-if="about.subtitle" class="text-muted mb-3">{{ about.subtitle }}</p>
-            <p v-if="about.description" class="text-muted">{{ about.description }}</p>
+            <p v-if="about.subtitle" class="text-site-muted mb-3">{{ about.subtitle }}</p>
+            <p v-if="about.description" class="text-site-muted">{{ about.description }}</p>
             <img v-if="about.logo_path" :src="about.logo_path" class="img-fluid mt-3" style="max-height: 80px;" :alt="business.name">
           </div>
         </div>
@@ -90,52 +91,54 @@
       v-if="isModuleEnabled('services') && services.length"
       :services="services"
       :business-slug="business.slug"
+      :variant="sectionVariants.services || 'cards'"
+      :scheme="sectionSchemes.services || 'neutral'"
     />
 
-    <section id="appointments" v-if="isModuleEnabled('appointments')" class="py-5 text-center" :style="{ backgroundColor: 'var(--minisite-primary)', color: 'white' }">
+    <section id="appointments" v-if="isModuleEnabled('appointments')" class="py-5 text-center" :class="'section--' + (sectionSchemes.appointments || 'primary')">
       <div class="container">
         <h2 class="fw-bold mb-3">¿Listo para tu cita?</h2>
         <p class="mb-4 lead">Reserva online de forma rápida y sencilla</p>
-        <Link :href="`/b/${business.slug}/book`" class="btn btn-lg btn-light">
+        <Link :href="`/b/${business.slug}/book`" class="btn-site btn-site-light btn-site-lg">
           <i class="bi bi-calendar-check me-2"></i>Reservar ahora
         </Link>
       </div>
     </section>
 
-    <section id="gallery" v-if="isModuleEnabled('gallery') && gallery.length" class="py-5" style="background-color: #f8f9fa;">
+    <section id="gallery" v-if="isModuleEnabled('gallery') && gallery.length" class="py-5" :class="'section--' + (sectionSchemes.gallery || 'dark')">
       <div class="container">
         <div class="text-center mb-5">
           <h2 class="fw-bold">Galería</h2>
-          <p class="text-muted">Mira nuestro trabajo</p>
+          <p class="text-site-muted">Mira nuestro trabajo</p>
         </div>
         <div class="row g-3" id="gallery-grid">
           <div v-for="(image, index) in gallery.slice(0, 8)" :key="image.id" class="col-6 col-md-4 col-lg-3" :class="animateClass">
-            <a href="#" class="gallery-item d-block overflow-hidden" :style="{ animationDelay: `${index * 0.1}s`, borderRadius: 'var(--minisite-border-radius)' }" @click.prevent="openGallery(index)">
-              <img :src="image.path" class="img-fluid w-100" :alt="image.title || 'Galería'" style="height: 150px; object-fit: cover; display: block;">
+            <a href="#" class="gallery-item d-block overflow-hidden" :style="{ animationDelay: `${index * 0.1}s` }" @click.prevent="openGallery(index)">
+              <img :src="image.path" class="img-fluid w-100 img-cover" :alt="image.title || 'Galería'" style="height: 150px;">
             </a>
           </div>
         </div>
         <div class="text-center mt-4">
-          <Link :href="`/b/${business.slug}/gallery`" class="btn btn-outline-primary">
+          <Link :href="`/b/${business.slug}/gallery`" class="btn-site btn-site-outline">
             Ver toda la galería <i class="bi bi-arrow-right ms-2"></i>
           </Link>
         </div>
       </div>
     </section>
 
-    <section id="products" v-if="isModuleEnabled('products') && products.length" class="py-5">
+    <section id="products" v-if="isModuleEnabled('products') && products.length" class="py-5" :class="'section--' + (sectionSchemes.products || 'light')">
       <div class="container">
         <div class="text-center mb-5">
           <h2 class="fw-bold">Productos</h2>
-          <p class="text-muted">Productos para tu cuidado personal</p>
+          <p class="text-site-muted">Productos para tu cuidado personal</p>
         </div>
         <div class="row g-4">
           <div v-for="product in products.slice(0, 8)" :key="product.id" class="col-6 col-md-4 col-lg-3">
             <div class="card h-100" :class="cardHoverClass">
               <div class="card-body">
-                <h5 class="card-title fw-bold" style="font-size: 1rem;">{{ product.name }}</h5>
-                <p v-if="product.description" class="card-text text-muted small">{{ product.description.substring(0, 60) }}...</p>
-                <div v-if="product.price" class="fw-bold" :style="{ color: 'var(--minisite-accent)' }">
+                <h5 class="card-title card-title-custom">{{ product.name }}</h5>
+                <p v-if="product.description" class="card-text text-site-muted small">{{ product.description.substring(0, 60) }}...</p>
+                <div v-if="product.price" class="fw-bold accent-color">
                   {{ formatPrice(product.price) }}
                 </div>
               </div>
@@ -143,18 +146,18 @@
           </div>
         </div>
         <div v-if="products.length > 8" class="text-center mt-4">
-          <Link :href="`/b/${business.slug}/products`" class="btn btn-outline-primary">
+          <Link :href="`/b/${business.slug}/products`" class="btn-site btn-site-outline">
             Ver todos los productos <i class="bi bi-arrow-right ms-2"></i>
           </Link>
         </div>
       </div>
     </section>
 
-    <section id="restaurant_menu" v-if="isModuleEnabled('restaurant_menu') && (menuCategories.length || menuProducts.length)" class="py-5" style="background-color: #f8f9fa;">
+    <section id="restaurant_menu" v-if="isModuleEnabled('restaurant_menu') && (menuCategories.length || menuProducts.length)" class="py-5" :class="'section--' + (sectionSchemes.menu || 'neutral')">
       <div class="container">
         <div class="text-center mb-5">
           <h2 class="fw-bold">Nuestro Menú</h2>
-          <p class="text-muted">Explora nuestras opciones</p>
+          <p class="text-site-muted">Explora nuestras opciones</p>
         </div>
         <div v-if="menuCategories.length" class="mb-4">
           <div v-for="category in menuCategories" :key="category.id" class="mb-4">
@@ -162,10 +165,10 @@
             <div class="row g-3">
               <div v-for="product in category.products?.slice(0, 4) || []" :key="product.id" class="col-6 col-md-3">
                 <div class="card h-100" :class="cardHoverClass">
-                  <img v-if="product.image" :src="product.image" class="card-img-top" :alt="product.title" style="height: 100px; object-fit: cover;">
+                  <img v-if="product.image" :src="product.image" class="card-img-top img-cover" :alt="product.title" style="height: 100px;">
                   <div class="card-body p-2">
-                    <h6 class="card-title mb-1" style="font-size: 0.9rem;">{{ product.title }}</h6>
-                    <div v-if="product.display_price" class="fw-bold small" :style="{ color: 'var(--minisite-accent)' }">
+                    <h6 class="card-title mb-1 card-title-sm">{{ product.title }}</h6>
+                    <div v-if="product.display_price" class="fw-bold small accent-color">
                       {{ product.display_price }}
                     </div>
                   </div>
@@ -177,10 +180,10 @@
         <div v-else-if="menuProducts.length" class="row g-3">
           <div v-for="product in menuProducts.slice(0, 8)" :key="product.id" class="col-6 col-md-4 col-lg-3">
             <div class="card h-100" :class="cardHoverClass">
-              <img v-if="product.image" :src="product.image" class="card-img-top" :alt="product.title" style="height: 100px; object-fit: cover;">
+              <img v-if="product.image" :src="product.image" class="card-img-top img-cover" :alt="product.title" style="height: 100px;">
               <div class="card-body p-2">
-                <h6 class="card-title mb-1" style="font-size: 0.9rem;">{{ product.title }}</h6>
-                <div v-if="product.display_price" class="fw-bold small" :style="{ color: 'var(--minisite-accent)' }">
+                <h6 class="card-title mb-1 card-title-sm">{{ product.title }}</h6>
+                <div v-if="product.display_price" class="fw-bold small accent-color">
                   {{ product.display_price }}
                 </div>
               </div>
@@ -188,31 +191,31 @@
           </div>
         </div>
         <div class="text-center mt-4">
-          <Link :href="`/b/${business.slug}/menu`" class="btn btn-outline-primary">
+          <Link :href="`/b/${business.slug}/menu`" class="btn-site btn-site-outline">
             Ver menú completo <i class="bi bi-arrow-right ms-2"></i>
           </Link>
         </div>
       </div>
     </section>
 
-    <section id="locations" v-if="isModuleEnabled('locations') && locations.length" class="py-5">
+    <section id="locations" v-if="isModuleEnabled('locations') && locations.length" class="py-5" :class="'section--' + (sectionSchemes.locations || 'neutral')">
       <div class="container">
         <div class="text-center mb-5">
           <h2 class="fw-bold">Ubicaciones</h2>
-          <p class="text-muted">Visitanos en nuestras sucursales</p>
+          <p class="text-site-muted">Visitanos en nuestras sucursales</p>
         </div>
         <div class="row g-4">
           <div v-for="location in locations" :key="location.id" class="col-md-6">
             <div class="card h-100">
               <div class="card-body">
                 <h5 class="card-title fw-bold">
-                  <i class="bi bi-geo-alt me-2" :style="{ color: 'var(--minisite-accent)' }"></i>{{ location.name }}
+                  <i class="bi bi-geo-alt me-2 accent-color"></i>{{ location.name }}
                 </h5>
-                <p class="card-text text-muted">
+                <p class="card-text text-site-muted">
                   {{ location.address_line_1 }}<br v-if="location.address_line_2">{{ location.address_line_2 }}<br>
                   {{ location.city }}
                 </p>
-                <a v-if="location.directions_url" :href="location.directions_url" target="_blank" class="btn btn-sm btn-outline-primary">
+                <a v-if="location.directions_url" :href="location.directions_url" target="_blank" class="btn-site btn-site-outline btn-site-sm">
                   <i class="bi bi-signpost-2 me-1"></i>Cómo llegar
                 </a>
               </div>
@@ -222,28 +225,28 @@
       </div>
     </section>
 
-    <section id="reviews" v-if="isModuleEnabled('reviews') && reviews.length" class="py-5" style="background-color: #f8f9fa;">
+    <section id="reviews" v-if="isModuleEnabled('reviews') && reviews.length" class="py-5" :class="'section--' + (sectionSchemes.reviews || 'light')">
       <div class="container">
         <div class="text-center mb-5">
           <h2 class="fw-bold">Reseñas</h2>
-          <p class="text-muted">Lo que dicen nuestros clientes</p>
+          <p class="text-site-muted">Lo que dicen nuestros clientes</p>
         </div>
         <div class="row g-4">
           <div v-for="review in reviews" :key="review.id" class="col-md-6 col-lg-4">
             <div class="card h-100">
               <div class="card-body">
                 <div class="d-flex align-items-center mb-3">
-                  <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center text-white fw-bold" style="width: 48px; height: 48px;">
+                  <div class="bg-site-primary rounded-circle d-flex align-items-center justify-content-center text-site-white fw-bold avatar-circle">
                     {{ review.customer_name?.charAt(0)?.toUpperCase() || 'A' }}
                   </div>
                   <div class="ms-3">
                     <h6 class="mb-0 fw-bold">{{ review.customer_name }}</h6>
-                    <div class="text-warning small">
+                    <div class="text-site-warning small">
                       <i v-for="i in (review.rating || 5)" :key="i" class="bi bi-star-fill"></i>
                     </div>
                   </div>
                 </div>
-                <p class="card-text text-muted">{{ review.comment }}</p>
+                <p class="card-text text-site-muted">{{ review.comment }}</p>
               </div>
             </div>
           </div>
@@ -251,7 +254,7 @@
       </div>
     </section>
 
-    <section id="promotions" v-if="isModuleEnabled('promotions') && promotions.length" class="py-5" :style="{ backgroundColor: 'var(--minisite-accent)', color: 'white' }">
+    <section id="promotions" v-if="isModuleEnabled('promotions') && promotions.length" class="py-5" :class="'section--' + (sectionSchemes.promotions || 'accent')">
       <div class="container">
         <div class="text-center mb-5">
           <h2 class="fw-bold">Promociones</h2>
@@ -259,14 +262,14 @@
         </div>
         <div class="row g-4">
           <div v-for="promo in promotions" :key="promo.id" class="col-md-6">
-            <div class="card h-100 text-dark">
+            <div class="card h-100 text-site-dark">
               <div class="card-body">
                 <h5 class="card-title fw-bold">{{ promo.name }}</h5>
                 <p class="card-text">{{ promo.description }}</p>
-                <div v-if="promo.regular_price && promo.promotion_price" class="display-6 fw-bold text-danger">
+                <div v-if="promo.regular_price && promo.promotion_price" class="display-6 fw-bold text-site-danger">
                   {{ Math.round(((promo.regular_price - promo.promotion_price) / promo.regular_price) * 100) }}% OFF
                 </div>
-                <small class="text-muted">
+                <small class="text-site-muted">
                   Válido hasta: {{ formatDate(promo.expires_at) }}
                 </small>
               </div>
@@ -302,6 +305,10 @@
         website: business.website
       }"
       :social-links="getFooterSocialLinks()"
+      :background-color="footerColors.bg"
+      :text-color="footerColors.text"
+      :link-color="footerColors.link"
+      :accent-color="footerColors.linkHover"
     />
   </MinisiteLayout>
 </template>
@@ -332,6 +339,61 @@ const products = computed(() => page.props.products || [])
 const menuCategories = computed(() => page.props.menuCategories || [])
 const menuProducts = computed(() => page.props.menuProducts || [])
 const socialNetworks = computed(() => page.props.socialNetworks || [])
+const about = computed(() => page.props.about || null)
+const branding = computed(() => page.props.branding || null)
+const sectionVariants = computed(() => page.props.sectionVariants || { services: 'cards' })
+const sectionSchemes = computed(() => page.props.sectionSchemes || {
+  hero: 'gradient',
+  about: 'light',
+  services: 'neutral',
+  products: 'light',
+  gallery: 'dark',
+  menu: 'neutral',
+  appointments: 'primary',
+  reviews: 'light',
+  locations: 'neutral',
+  contact: 'dark',
+  promotions: 'accent',
+})
+
+const schemePalettes = computed(() => theme.value?.scheme_palettes || [])
+
+const brandColors = computed(() => theme.value?.css_variables?.colors || {})
+
+const resolveColor = (colorKey) => {
+  if (!colorKey) return '#000000'
+  if (colorKey.startsWith('#') || colorKey.startsWith('rgba') || colorKey === 'transparent') return colorKey
+  return brandColors.value[colorKey] || colorKey
+}
+
+const headerColors = computed(() => {
+  const header = schemePalettes.value.header || {}
+  return {
+    bg: resolveColor(header.bg || 'white'),
+    text: resolveColor(header.text || 'brand_text'),
+    heading: resolveColor(header.heading || 'brand_primary'),
+    link: resolveColor(header.link || 'brand_primary'),
+    linkHover: resolveColor(header.link_hover || 'brand_accent'),
+    border: resolveColor(header.border || 'rgba(0,0,0,0.1)'),
+    navBg: resolveColor(header.nav_bg || 'white'),
+    navText: resolveColor(header.nav_text || 'brand_text'),
+    navLink: resolveColor(header.nav_link || 'brand_primary'),
+    navLinkHover: resolveColor(header.nav_link_hover || 'brand_accent'),
+    navBorder: resolveColor(header.nav_border || 'rgba(0,0,0,0.1)'),
+  }
+})
+
+const footerColors = computed(() => {
+  const footer = schemePalettes.value.footer || {}
+  return {
+    bg: resolveColor(footer.bg || 'brand_text'),
+    text: resolveColor(footer.text || 'white'),
+    heading: resolveColor(footer.heading || 'white'),
+    link: resolveColor(footer.link || 'white'),
+    linkHover: resolveColor(footer.link_hover || 'rgba(255,255,255,0.8)'),
+    border: resolveColor(footer.border || 'rgba(255,255,255,0.1)'),
+  }
+})
 
 const isModuleEnabled = (moduleKey) => {
   if (!moduleKey) return true
@@ -339,14 +401,15 @@ const isModuleEnabled = (moduleKey) => {
 }
 
 const navbarStyle = computed(() => {
-  if (!theme.value?.css_variables?.colors) return {}
-  const { primary, background, text } = theme.value.css_variables.colors
-  const isDark = isColorDark(background || '#ffffff')
   return {
-    backgroundColor: background || '#ffffff',
-    borderBottom: `1px solid ${primary}40`,
-    color: isDark ? '#ffffff' : (text || '#1a1a1a'),
+    backgroundColor: headerColors.value.navBg,
+    borderBottom: `1px solid ${headerColors.value.navBorder}`,
+    color: headerColors.value.navText,
   }
+})
+
+const navbarTextColor = computed(() => {
+  return headerColors.value.navText
 })
 
 const isColorDark = (hexColor) => {
@@ -360,16 +423,8 @@ const isColorDark = (hexColor) => {
   return luminance < 0.5
 }
 
-const navbarTextColor = computed(() => {
-  if (!theme.value?.css_variables?.colors) return '#1a1a1a'
-  const { background } = theme.value.css_variables.colors
-  return isColorDark(background || '#ffffff') ? '#ffffff' : '#1a1a1a'
-})
-
 const navbarTogglerIconFilter = computed(() => {
-  if (!theme.value?.css_variables?.colors) return 'invert(0%)'
-  const { background } = theme.value.css_variables.colors
-  return isColorDark(background || '#ffffff') ? 'invert(100%)' : 'invert(0%)'
+  return isColorDark(headerColors.value.navBg) ? 'invert(100%)' : 'invert(0%)'
 })
 
 const heroBackgroundStyles = computed(() => {
@@ -400,10 +455,10 @@ const heroTextAlignmentClass = computed(() => {
 })
 
 const getButtonClass = (style) => {
-  if (style === 'primary') return 'btn-primary'
-  if (style === 'secondary') return 'btn-secondary'
-  if (style === 'outline') return 'btn-outline-light'
-  return 'btn-primary'
+  if (style === 'primary') return 'btn-site btn-site-primary'
+  if (style === 'secondary') return 'btn-site btn-site-secondary'
+  if (style === 'outline') return 'btn-site btn-site-outline'
+  return 'btn-site btn-site-primary'
 }
 
 const heroBackgroundStyle = computed(() => {
@@ -412,7 +467,7 @@ const heroBackgroundStyle = computed(() => {
 
   if (heroStyle === 'fullbleed' || heroStyle === 'fullwidth') {
     return {
-      background: `linear-gradient(135deg, var(--minisite-primary) 0%, var(--minisite-secondary) 100%)`,
+      background: `linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-secondary) 100%)`,
     }
   }
 
@@ -427,29 +482,29 @@ const heroClass = computed(() => {
 })
 
 const buttonClasses = computed(() => {
-  if (!theme.value?.css_variables?.button_style) return 'btn-primary'
+  if (!theme.value?.css_variables?.button_style) return 'btn-site btn-site-primary'
 
   const style = theme.value.css_variables.button_style
-  if (style === 'rounded-pill') return 'btn-primary rounded-pill'
-  if (style === 'rounded-0') return 'btn-primary rounded-0'
-  if (style === 'rounded-20') return 'btn-primary rounded-20'
-  if (style === 'rounded-8') return 'btn-primary rounded-8'
-  return 'btn-primary'
+  if (style === 'rounded-pill') return 'btn-site btn-site-primary rounded-pill-site'
+  if (style === 'rounded-0') return 'btn-site btn-site-primary rounded-0'
+  if (style === 'rounded-20') return 'btn-site btn-site-primary rounded-20'
+  if (style === 'rounded-8') return 'btn-site btn-site-primary rounded-8'
+  return 'btn-site btn-site-primary'
 })
 
 const cardHoverClass = computed(() => {
-  if (!theme.value?.layout_config?.animations?.cards_hover) return 'animate-lift'
+  if (!theme.value?.layout_config?.animations?.cards_hover) return ''
 
   const animation = theme.value.layout_config.animations.cards_hover
   if (animation.includes('lift')) return 'animate-lift'
   if (animation.includes('glow')) return 'animate-glow'
   if (animation.includes('bounce')) return 'animate-bounce'
   if (animation.includes('neon')) return 'animate-neon-glow'
-  return 'animate-lift'
+  return ''
 })
 
 const animateClass = computed(() => {
-  if (!theme.value?.layout_config?.animations?.sections) return 'animate-fade-in-up'
+  if (!theme.value?.layout_config?.animations?.sections) return ''
   return ''
 })
 
@@ -527,11 +582,11 @@ onMounted(() => {
 
 .minisite-hero.hero-fullwidth,
 .minisite-hero.hero-fullbleed {
-  background: linear-gradient(135deg, var(--minisite-primary) 0%, var(--minisite-secondary) 100%);
+  background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-secondary) 100%);
 }
 
 .minisite-hero.hero-centered {
-  background: var(--minisite-primary);
+  background: var(--brand-primary);
   text-align: center;
 }
 
@@ -541,7 +596,7 @@ onMounted(() => {
 }
 
 .minisite-hero.hero-split {
-  background: var(--minisite-primary);
+  background: var(--brand-primary);
 }
 
 .minisite-hero.hero-split .hero-content {
@@ -584,10 +639,18 @@ onMounted(() => {
 
 .gallery-item {
   transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border-radius: var(--brand-card-radius, 12px);
 }
 
 .gallery-item:hover {
   transform: scale(1.05);
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
 }
+
+.card-title-custom { font-size: 1rem; font-weight: bold; }
+.card-title-sm { font-size: 0.9rem; }
+.accent-color { color: var(--scheme-accent, var(--brand-accent)); }
+.accent-bg { background-color: var(--scheme-accent, var(--brand-accent)); }
+.avatar-circle { width: 48px; height: 48px; }
+.img-cover { object-fit: cover; display: block; }
 </style>

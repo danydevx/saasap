@@ -46,6 +46,19 @@ class BusinessController extends Controller
 
         $theme = $business->minisiteTheme;
 
+        $brandingSetting = $business->brandingSetting;
+        $brandingCss = $brandingSetting?->generated_css;
+        $sectionVariants = $brandingSetting?->section_variants ?? ['services' => 'cards'];
+
+        $branding = [
+            'generated_css' => $brandingCss,
+            'page_style' => $brandingSetting?->page_style,
+            'section_style' => $brandingSetting?->section_style,
+            'hero_style' => $brandingSetting?->hero_style,
+            'buttons_uppercase' => $brandingSetting?->buttons_uppercase,
+            'dark_mode' => $brandingSetting?->dark_mode,
+        ];
+
         $services = [];
         if (in_array('services', $modules)) {
             $services = $business->services()
@@ -188,7 +201,49 @@ class BusinessController extends Controller
                 'css_variables' => $theme->css_variables,
                 'layout_config' => $theme->layout_config,
                 'section_config' => $theme->section_config,
+                'scheme_palettes' => $theme->section_config['scheme_palettes'] ?? [],
             ] : null,
+            'theme_css_variables' => $theme?->css_variables ? json_encode($theme->css_variables) : null,
+            'sectionSchemes' => $theme?->section_config['section_schemes'] ?? [
+                'hero' => 'gradient',
+                'about' => 'light',
+                'services' => 'neutral',
+                'products' => 'light',
+                'gallery' => 'dark',
+                'menu' => 'neutral',
+                'appointments' => 'primary',
+                'reviews' => 'light',
+                'locations' => 'neutral',
+                'contact' => 'dark',
+                'promotions' => 'accent',
+            ],
+            'schemePalettes' => $theme?->section_config['scheme_palettes'] ?? [],
+            'header_colors' => $theme?->section_config['header_colors'] ?? [
+                'bg' => 'white',
+                'text' => 'brand_text',
+                'heading' => 'brand_primary',
+                'link' => 'brand_primary',
+                'link_hover' => 'brand_accent',
+                'border' => 'rgba(0,0,0,0.1)',
+                'nav_bg' => 'white',
+                'nav_text' => 'brand_text',
+                'nav_link' => 'brand_primary',
+                'nav_link_hover' => 'brand_accent',
+                'nav_border' => 'rgba(0,0,0,0.1)',
+            ],
+            'footer_colors' => $theme?->section_config['footer_colors'] ?? [
+                'bg' => 'brand_text',
+                'text' => 'white',
+                'heading' => 'white',
+                'link' => 'white',
+                'link_hover' => 'rgba(255,255,255,0.8)',
+                'border' => 'rgba(255,255,255,0.1)',
+                'nav_bg' => 'brand_text',
+                'nav_text' => 'white',
+                'nav_link' => 'white',
+                'nav_link_hover' => 'rgba(255,255,255,0.8)',
+                'nav_border' => 'rgba(255,255,255,0.1)',
+            ],
             'themeSections' => $this->themeSections,
             'modules' => $modules,
             'services' => $services,
@@ -223,6 +278,8 @@ class BusinessController extends Controller
                 'image_path' => $about->image_path,
                 'logo_path' => $about->logo_path,
             ] : null,
+            'branding' => $branding,
+            'sectionVariants' => $sectionVariants,
         ]);
     }
 
@@ -245,14 +302,30 @@ class BusinessController extends Controller
             ->orderBy('sort_order')
             ->get(['id', 'name', 'description', 'price', 'duration_minutes', 'whatsapp_contact', 'image']);
 
+        $theme = $business->minisiteTheme;
+        $brandingSetting = $business->brandingSetting;
+        $socialNetworks = in_array('socialmedia', $modules)
+            ? $business->socialNetworks()->where('is_active', true)->orderBy('sort_order')->get(['id', 'platform', 'url', 'username', 'show_on_hero', 'show_on_footer', 'show_on_contact'])
+            : [];
+        $locations = $business->locations()->where('is_active', true)->orderBy('is_primary', 'desc')->get(['id', 'name', 'address_line_1', 'city']);
+
         return Inertia::render('Public/Business/Services', [
             'business' => [
                 'id' => $business->id,
                 'name' => $business->name,
                 'slug' => $business->slug,
                 'phone' => $business->phone,
+                'email' => $business->email,
+                'logo_path' => $business->logo_path,
+                'website' => $business->website,
             ],
             'services' => $services,
+            'theme' => $theme ? ['id' => $theme->id, 'name' => $theme->name, 'slug' => $theme->slug, 'css_variables' => $theme->css_variables, 'layout_config' => $theme->layout_config, 'section_config' => $theme->section_config] : null,
+            'theme_css_variables' => $theme?->css_variables ? json_encode($theme->css_variables) : null,
+            'modules' => $modules,
+            'branding' => ['generated_css' => $brandingSetting?->generated_css, 'page_style' => $brandingSetting?->page_style, 'section_style' => $brandingSetting?->section_style, 'hero_style' => $brandingSetting?->hero_style, 'buttons_uppercase' => $brandingSetting?->buttons_uppercase, 'dark_mode' => $brandingSetting?->dark_mode],
+            'socialNetworks' => $socialNetworks,
+            'locations' => $locations,
         ]);
     }
 
@@ -274,13 +347,30 @@ class BusinessController extends Controller
             ->orderBy('sort_order')
             ->get();
 
+        $theme = $business->minisiteTheme;
+        $brandingSetting = $business->brandingSetting;
+        $socialNetworks = in_array('socialmedia', $modules)
+            ? $business->socialNetworks()->where('is_active', true)->orderBy('sort_order')->get(['id', 'platform', 'url', 'username', 'show_on_hero', 'show_on_footer', 'show_on_contact'])
+            : [];
+        $locations = $business->locations()->where('is_active', true)->orderBy('is_primary', 'desc')->get(['id', 'name', 'address_line_1', 'city']);
+
         return Inertia::render('Public/Business/Gallery', [
             'business' => [
                 'id' => $business->id,
                 'name' => $business->name,
                 'slug' => $business->slug,
+                'phone' => $business->phone,
+                'email' => $business->email,
+                'logo_path' => $business->logo_path,
+                'website' => $business->website,
             ],
             'images' => $images,
+            'theme' => $theme ? ['id' => $theme->id, 'name' => $theme->name, 'slug' => $theme->slug, 'css_variables' => $theme->css_variables, 'layout_config' => $theme->layout_config, 'section_config' => $theme->section_config] : null,
+            'theme_css_variables' => $theme?->css_variables ? json_encode($theme->css_variables) : null,
+            'modules' => $modules,
+            'branding' => ['generated_css' => $brandingSetting?->generated_css, 'page_style' => $brandingSetting?->page_style, 'section_style' => $brandingSetting?->section_style, 'hero_style' => $brandingSetting?->hero_style, 'buttons_uppercase' => $brandingSetting?->buttons_uppercase, 'dark_mode' => $brandingSetting?->dark_mode],
+            'socialNetworks' => $socialNetworks,
+            'locations' => $locations,
         ]);
     }
 
@@ -302,14 +392,30 @@ class BusinessController extends Controller
             ->orderBy('sort_order')
             ->get(['id', 'name', 'description', 'price', 'sku', 'quantity', 'whatsapp_contact']);
 
+        $theme = $business->minisiteTheme;
+        $brandingSetting = $business->brandingSetting;
+        $socialNetworks = in_array('socialmedia', $modules)
+            ? $business->socialNetworks()->where('is_active', true)->orderBy('sort_order')->get(['id', 'platform', 'url', 'username', 'show_on_hero', 'show_on_footer', 'show_on_contact'])
+            : [];
+        $locations = $business->locations()->where('is_active', true)->orderBy('is_primary', 'desc')->get(['id', 'name', 'address_line_1', 'city']);
+
         return Inertia::render('Public/Business/Products', [
             'business' => [
                 'id' => $business->id,
                 'name' => $business->name,
                 'slug' => $business->slug,
                 'phone' => $business->phone,
+                'email' => $business->email,
+                'logo_path' => $business->logo_path,
+                'website' => $business->website,
             ],
             'products' => $products,
+            'theme' => $theme ? ['id' => $theme->id, 'name' => $theme->name, 'slug' => $theme->slug, 'css_variables' => $theme->css_variables, 'layout_config' => $theme->layout_config, 'section_config' => $theme->section_config] : null,
+            'theme_css_variables' => $theme?->css_variables ? json_encode($theme->css_variables) : null,
+            'modules' => $modules,
+            'branding' => ['generated_css' => $brandingSetting?->generated_css, 'page_style' => $brandingSetting?->page_style, 'section_style' => $brandingSetting?->section_style, 'hero_style' => $brandingSetting?->hero_style, 'buttons_uppercase' => $brandingSetting?->buttons_uppercase, 'dark_mode' => $brandingSetting?->dark_mode],
+            'socialNetworks' => $socialNetworks,
+            'locations' => $locations,
         ]);
     }
 
@@ -364,6 +470,10 @@ class BusinessController extends Controller
                 'id' => $business->id,
                 'name' => $business->name,
                 'slug' => $business->slug,
+                'phone' => $business->phone,
+                'email' => $business->email,
+                'logo_path' => $business->logo_path,
+                'website' => $business->website,
                 'timezone' => $business->timezone,
             ],
             'services' => $services,
@@ -371,6 +481,12 @@ class BusinessController extends Controller
             'selectedService' => $selectedService,
             'availableSlots' => $availableSlots,
             'selectedLocation' => $locationId ? $locations->firstWhere('id', (int) $locationId) : null,
+            'theme' => $business->minisiteTheme ? ['id' => $business->minisiteTheme->id, 'name' => $business->minisiteTheme->name, 'slug' => $business->minisiteTheme->slug, 'css_variables' => $business->minisiteTheme->css_variables, 'layout_config' => $business->minisiteTheme->layout_config, 'section_config' => $business->minisiteTheme->section_config] : null,
+            'theme_css_variables' => $business->minisiteTheme?->css_variables ? json_encode($business->minisiteTheme->css_variables) : null,
+            'modules' => $modules,
+            'branding' => ['generated_css' => $business->brandingSetting?->generated_css, 'page_style' => $business->brandingSetting?->page_style, 'section_style' => $business->brandingSetting?->section_style, 'hero_style' => $business->brandingSetting?->hero_style, 'buttons_uppercase' => $business->brandingSetting?->buttons_uppercase, 'dark_mode' => $business->brandingSetting?->dark_mode],
+            'socialNetworks' => [],
+            'allLocations' => $locations,
         ]);
     }
 
@@ -425,10 +541,30 @@ class BusinessController extends Controller
             ->where('is_active', true)
             ->firstOrFail();
 
+        $modules = $business->modules()->where('is_enabled', true)->get()->pluck('moduleDefinition.key')->toArray();
+        $theme = $business->minisiteTheme;
+        $brandingSetting = $business->brandingSetting;
+        $socialNetworks = in_array('socialmedia', $modules)
+            ? $business->socialNetworks()->where('is_active', true)->orderBy('sort_order')->get(['id', 'platform', 'url', 'username', 'show_on_hero', 'show_on_footer', 'show_on_contact'])
+            : [];
+        $locations = $business->locations()->where('is_active', true)->orderBy('is_primary', 'desc')->get(['id', 'name', 'address_line_1', 'city']);
+
         return Inertia::render('Public/Business/BookingSuccess', [
             'business' => [
+                'id' => $business->id,
                 'name' => $business->name,
+                'slug' => $business->slug,
+                'phone' => $business->phone,
+                'email' => $business->email,
+                'logo_path' => $business->logo_path,
+                'website' => $business->website,
             ],
+            'theme' => $theme ? ['id' => $theme->id, 'name' => $theme->name, 'slug' => $theme->slug, 'css_variables' => $theme->css_variables, 'layout_config' => $theme->layout_config, 'section_config' => $theme->section_config] : null,
+            'theme_css_variables' => $theme?->css_variables ? json_encode($theme->css_variables) : null,
+            'modules' => $modules,
+            'branding' => ['generated_css' => $brandingSetting?->generated_css, 'page_style' => $brandingSetting?->page_style, 'section_style' => $brandingSetting?->section_style, 'hero_style' => $brandingSetting?->hero_style, 'buttons_uppercase' => $brandingSetting?->buttons_uppercase, 'dark_mode' => $brandingSetting?->dark_mode],
+            'socialNetworks' => $socialNetworks,
+            'locations' => $locations,
         ]);
     }
 
@@ -451,7 +587,15 @@ class BusinessController extends Controller
                 'slug' => $business->slug,
                 'email' => $business->email,
                 'phone' => $business->phone,
+                'logo_path' => $business->logo_path,
+                'website' => $business->website,
             ],
+            'theme' => $business->minisiteTheme ? ['id' => $business->minisiteTheme->id, 'name' => $business->minisiteTheme->name, 'slug' => $business->minisiteTheme->slug, 'css_variables' => $business->minisiteTheme->css_variables, 'layout_config' => $business->minisiteTheme->layout_config, 'section_config' => $business->minisiteTheme->section_config] : null,
+            'theme_css_variables' => $business->minisiteTheme?->css_variables ? json_encode($business->minisiteTheme->css_variables) : null,
+            'modules' => $modules,
+            'branding' => ['generated_css' => $business->brandingSetting?->generated_css, 'page_style' => $business->brandingSetting?->page_style, 'section_style' => $business->brandingSetting?->section_style, 'hero_style' => $business->brandingSetting?->hero_style, 'buttons_uppercase' => $business->brandingSetting?->buttons_uppercase, 'dark_mode' => $business->brandingSetting?->dark_mode],
+            'socialNetworks' => [],
+            'locations' => [],
         ]);
     }
 
@@ -515,6 +659,13 @@ class BusinessController extends Controller
             'options' => $field->options ?? [],
         ]);
 
+        $theme = $business->minisiteTheme;
+        $brandingSetting = $business->brandingSetting;
+        $socialNetworks = in_array('socialmedia', $modules)
+            ? $business->socialNetworks()->where('is_active', true)->orderBy('sort_order')->get(['id', 'platform', 'url', 'username', 'show_on_hero', 'show_on_footer', 'show_on_contact'])
+            : [];
+        $locations = $business->locations()->where('is_active', true)->orderBy('is_primary', 'desc')->get(['id', 'name', 'address_line_1', 'city']);
+
         return Inertia::render('Public/Business/FormByShortcode', [
             'business' => [
                 'id' => $business->id,
@@ -522,16 +673,25 @@ class BusinessController extends Controller
                 'slug' => $business->slug,
                 'email' => $business->email,
                 'phone' => $business->phone,
+                'logo_path' => $business->logo_path,
+                'website' => $business->website,
             ],
             'form' => [
                 'id' => $form->id,
                 'name' => $form->name,
+                'description' => $form->description,
                 'shortcode' => $form->shortcode,
                 'success_message' => $form->success_message,
                 'show_phone' => $form->show_phone,
                 'show_email' => $form->show_email,
             ],
             'fields' => $fields,
+            'theme' => $theme ? ['id' => $theme->id, 'name' => $theme->name, 'slug' => $theme->slug, 'css_variables' => $theme->css_variables, 'layout_config' => $theme->layout_config, 'section_config' => $theme->section_config] : null,
+            'theme_css_variables' => $theme?->css_variables ? json_encode($theme->css_variables) : null,
+            'modules' => $modules,
+            'branding' => ['generated_css' => $brandingSetting?->generated_css, 'page_style' => $brandingSetting?->page_style, 'section_style' => $brandingSetting?->section_style, 'hero_style' => $brandingSetting?->hero_style, 'buttons_uppercase' => $brandingSetting?->buttons_uppercase, 'dark_mode' => $brandingSetting?->dark_mode],
+            'socialNetworks' => $socialNetworks,
+            'locations' => $locations,
         ]);
     }
 
@@ -615,5 +775,47 @@ class BusinessController extends Controller
         ]);
 
         return redirect()->back()->with('success', $form->success_message ?? 'Mensaje enviado correctamente.');
+    }
+
+    public function locations(string $slug)
+    {
+        $business = Business::where('slug', $slug)
+            ->where('is_active', true)
+            ->where('is_published', true)
+            ->firstOrFail();
+
+        $modules = $business->modules()->where('is_enabled', true)->get()->pluck('moduleDefinition.key')->toArray();
+        if (!in_array('locations', $modules)) {
+            abort(404);
+        }
+
+        $locations = $business->locations()
+            ->where('is_active', true)
+            ->orderBy('is_primary', 'desc')
+            ->get();
+
+        $theme = $business->minisiteTheme;
+        $brandingSetting = $business->brandingSetting;
+        $socialNetworks = in_array('socialmedia', $modules)
+            ? $business->socialNetworks()->where('is_active', true)->orderBy('sort_order')->get(['id', 'platform', 'url', 'username', 'show_on_hero', 'show_on_footer', 'show_on_contact'])
+            : [];
+
+        return Inertia::render('Public/Business/Locations', [
+            'business' => [
+                'id' => $business->id,
+                'name' => $business->name,
+                'slug' => $business->slug,
+                'phone' => $business->phone,
+                'email' => $business->email,
+                'logo_path' => $business->logo_path,
+                'website' => $business->website,
+            ],
+            'locations' => $locations,
+            'theme' => $theme ? ['id' => $theme->id, 'name' => $theme->name, 'slug' => $theme->slug, 'css_variables' => $theme->css_variables, 'layout_config' => $theme->layout_config, 'section_config' => $theme->section_config] : null,
+            'theme_css_variables' => $theme?->css_variables ? json_encode($theme->css_variables) : null,
+            'modules' => $modules,
+            'branding' => ['generated_css' => $brandingSetting?->generated_css, 'page_style' => $brandingSetting?->page_style, 'section_style' => $brandingSetting?->section_style, 'hero_style' => $brandingSetting?->hero_style, 'buttons_uppercase' => $brandingSetting?->buttons_uppercase, 'dark_mode' => $brandingSetting?->dark_mode],
+            'socialNetworks' => $socialNetworks,
+        ]);
     }
 }

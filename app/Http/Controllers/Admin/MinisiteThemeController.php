@@ -11,11 +11,23 @@ class MinisiteThemeController extends Controller
 {
     public function index()
     {
-        $themes = MinisiteTheme::orderBy('name')->get();
+        $themes = MinisiteTheme::withCount('businesses')->orderBy('name')->get();
 
         return inertia('Admin/MinisiteThemes/Index', [
             'themes' => $themes,
         ]);
+    }
+
+    public function edit(MinisiteTheme $theme)
+    {
+        return inertia('Admin/MinisiteThemes/Edit', [
+            'theme' => $theme,
+        ]);
+    }
+
+    public function create()
+    {
+        return inertia('Admin/MinisiteThemes/Create');
     }
 
     public function store(Request $request)
@@ -44,6 +56,7 @@ class MinisiteThemeController extends Controller
             'preview_image' => 'nullable|string',
             'css_variables' => 'sometimes|required|array',
             'layout_config' => 'sometimes|required|array',
+            'section_config' => 'sometimes|required|array',
             'is_active' => 'boolean',
         ]);
 
