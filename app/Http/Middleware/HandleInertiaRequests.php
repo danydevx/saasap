@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\PlanBusinessModule;
 use App\Services\FeatureService;
 use App\Services\ModuleService;
 use App\Services\SystemAnnouncementService;
@@ -57,7 +58,8 @@ class HandleInertiaRequests extends Middleware
 
         $businessMenu = [];
         if ($user && $user->hasRole('member')) {
-            $businessMenu = $this->buildBusinessMenu($user);
+            $planModules = $this->getPlanModulesForUser($user);
+            $businessMenu = $this->buildBusinessMenu($user, $planModules);
         }
 
         return [
@@ -85,7 +87,7 @@ class HandleInertiaRequests extends Middleware
         ];
     }
 
-    private function buildBusinessMenu($user): array
+    private function buildBusinessMenu($user, array $planModules = []): array
     {
         $businesses = Business::where('user_id', $user->id)
             ->with(['modules.moduleDefinition'])
@@ -95,11 +97,12 @@ class HandleInertiaRequests extends Middleware
                 'name' => $biz->name,
                 'slug' => $biz->slug,
                 'modules' => $biz->modules
-                    ->filter(fn ($m) => 
+                    ->filter(fn ($m) =>
                         $m->is_enabled &&
                         $m->moduleDefinition &&
                         $m->moduleDefinition->show_in_menu &&
-                        $m->moduleDefinition->menu_title
+                        $m->moduleDefinition->menu_title &&
+                        isset($planModules[$m->module_key])
                     )
                     ->map(fn ($m) => [
                         'key' => $m->module_key,
@@ -112,6 +115,31 @@ class HandleInertiaRequests extends Middleware
             ->toArray();
 
         return $businesses;
+    }
+
+    private function getPlanModulesForUser($user): array
+    {
+        $subscription = $user->subscriptions()
+            ->where('status', 'active')
+            ->where(function ($query) {
+                $query->where('ends_at', '>', now())
+                    ->orWhereNull('ends_at');
+            })
+            ->latest()
+            ->first();
+
+        if (!$subscription) {
+            return [];
+        }
+
+        return PlanBusinessModule::where('plan_id', $subscription->plan_id)
+            ->where('is_enabled', true)
+            ->whereHas('moduleDefinition', fn ($q) => $q->where('is_active', true))
+            ->get()
+            ->pluck('module_key')
+            ->flip()
+            ->map(fn () => true)
+            ->toArray();
     }
 
     private function getModulePath(string $moduleKey): string
