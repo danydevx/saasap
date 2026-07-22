@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Member;
 use App\Http\Controllers\Controller;
 use App\Services\ActivityService;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Modules\Businesses\Models\Business;
 use Modules\Locations\Models\BusinessLocation;
@@ -20,6 +21,7 @@ class ProductController extends Controller
         $search = $request->get('search', '');
         $sort = $request->get('sort', 'sort_order');
         $direction = $request->get('direction', 'asc');
+        $categoryId = $request->get('category');
 
         $allowedSorts = ['name', 'price', 'is_active', 'is_featured', 'sort_order', 'created_at'];
         if (!in_array($sort, $allowedSorts)) {
@@ -34,6 +36,13 @@ class ProductController extends Controller
                     $q->where('name', 'like', "%{$search}%")
                       ->orWhere('description', 'like', "%{$search}%");
                 });
+            })
+            ->when($categoryId, function ($q) use ($categoryId) {
+                if ($categoryId === 'uncategorized') {
+                    $q->whereNull('category_id');
+                } else {
+                    $q->where('category_id', $categoryId);
+                }
             })
             ->orderBy($sort, $direction)
             ->orderBy('name');
@@ -60,7 +69,7 @@ class ProductController extends Controller
             'to' => $products->lastItem(),
         ];
 
-        return Inertia::render('Member/Products/ProductsIndex', [
+        return Inertia::render('Member/Products/Index', [
             'business' => [
                 'id' => $business->id,
                 'name' => $business->name,
@@ -69,6 +78,7 @@ class ProductController extends Controller
             'locations' => $locations,
             'categories' => $categories,
             'dataTable' => $dataTable,
+            'selectedCategory' => $categoryId,
         ]);
     }
 
@@ -77,6 +87,7 @@ class ProductController extends Controller
         $this->authorize('create', [BusinessProduct::class, $business]);
 
         $locations = $business->locations()->where('is_active', true)->orderBy('name')->get(['id', 'name']);
+        $categories = $business->productCategories()->where('is_active', true)->orderBy('name')->get(['id', 'name']);
 
         return Inertia::render('Member/Products/Create', [
             'business' => [
@@ -84,6 +95,7 @@ class ProductController extends Controller
                 'name' => $business->name,
             ],
             'locations' => $locations,
+            'categories' => $categories,
         ]);
     }
 
@@ -93,7 +105,12 @@ class ProductController extends Controller
 
         $data = $request->validate([
             'name' => ['required', 'string', 'max:150'],
-            'slug' => ['required', 'string', 'max:150'],
+            'slug' => [
+                'required',
+                'string',
+                'max:150',
+                Rule::unique('business_products')->where('business_id', $business->id),
+            ],
             'description' => ['nullable', 'string'],
             'price' => ['nullable', 'numeric', 'min:0', 'max:99999999.99'],
             'compare_at_price' => ['nullable', 'numeric', 'min:0', 'max:99999999.99'],
@@ -164,7 +181,12 @@ class ProductController extends Controller
 
         $data = $request->validate([
             'name' => ['required', 'string', 'max:150'],
-            'slug' => ['required', 'string', 'max:150'],
+            'slug' => [
+                'required',
+                'string',
+                'max:150',
+                Rule::unique('business_products')->where('business_id', $business->id)->ignore($product->id),
+            ],
             'description' => ['nullable', 'string'],
             'price' => ['nullable', 'numeric', 'min:0', 'max:99999999.99'],
             'compare_at_price' => ['nullable', 'numeric', 'min:0', 'max:99999999.99'],
@@ -179,9 +201,7 @@ class ProductController extends Controller
             'category_id' => ['nullable', 'exists:business_product_categories,id'],
         ]);
 
-        if (isset($data['slug'])) {
-            $data['slug'] = \Illuminate\Support\Str::slug($data['slug']);
-        }
+        $data['slug'] = \Illuminate\Support\Str::slug($data['slug']);
 
         $product->update($data);
 
@@ -241,5 +261,33 @@ class ProductController extends Controller
         });
 
         return back(303);
+    }
+
+    public function bulkDelete(Request $request, Business $business)
+    {
+        $user = $request->user();
+
+        if ($user->hasAnyRole(['superadmin', 'admin'])) {
+        } else {
+            abort_unless($business->user_id === $user->id, 403);
+        }
+
+        $data = $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer', \Illuminate\Validation\Rule::exists('business_products', 'id')->where('business_id', $business->id)],
+        ]);
+
+        $count = count($data['ids']);
+
+        \Modules\Products\Models\BusinessProduct::where('business_id', $business->id)
+            ->whereIn('id', $data['ids'])
+            ->delete();
+
+        $message = $count === 1
+            ? "1 producto eliminado correctamente."
+            : "{$count} productos eliminados correctamente.";
+
+        return redirect()->back()
+            ->with('success', $message);
     }
 }

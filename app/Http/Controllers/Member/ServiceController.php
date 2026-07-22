@@ -212,6 +212,22 @@ class ServiceController extends Controller
             ->with('success', 'Servicio eliminado correctamente.');
     }
 
+    public function bulkDelete(Request $request, Business $business)
+    {
+        $this->authorize('deleteAny', [\Modules\Services\Models\BusinessService::class, $business]);
+
+        $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer', \Illuminate\Validation\Rule::exists('business_services', 'id')->where('business_id', $business->id)],
+        ]);
+
+        $count = \Modules\Services\Models\BusinessService::where('business_id', $business->id)
+            ->whereIn('id', $request->ids)
+            ->delete();
+
+        return redirect()->back()->with('success', $count . ' servicio(s) eliminado(s).');
+    }
+
     public function reorder(Request $request, Business $business)
     {
         $user = $request->user();

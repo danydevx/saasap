@@ -67,6 +67,21 @@
               />
             </div>
 
+            <div class="col-12 col-md-6" v-if="industries.length">
+              <label for="business-industry" class="form-label">Industria</label>
+              <select
+                id="business-industry"
+                class="form-select"
+                v-model="form.industry_id"
+              >
+                <option value="">Seleccionar industria...</option>
+                <option v-for="ind in industries" :key="ind.id" :value="ind.id">
+                  {{ ind.name }}
+                </option>
+              </select>
+              <div v-if="errors.industry_id" class="text-danger small mt-1">{{ errors.industry_id }}</div>
+            </div>
+
             <div class="col-12 col-md-6">
               <FieldText
                 id="business-email"
@@ -119,7 +134,7 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, inject } from 'vue'
 import { Head, Link, router, usePage } from '@inertiajs/vue3'
 import MemberLayout from '@/Layouts/MemberLayout.vue'
 import PageHeader from '@/Components/Admin/PageHeader.vue'
@@ -131,6 +146,10 @@ const props = defineProps({
     type: Object,
     required: true,
   },
+  industries: {
+    type: Array,
+    default: () => [],
+  },
 })
 
 const page = usePage()
@@ -138,16 +157,25 @@ const errors = computed(() => page.props.errors || {})
 const sending = ref(false)
 
 const business = computed(() => props.business)
+const industries = computed(() => props.industries || [])
 const removeLogoFlag = ref(false)
 const logoPreview = ref(null)
 
-const breadcrumbs = computed(() => [
-  { label: 'Mis Negocios', href: '/member/business-modules' },
-  { label: business.value.name, active: true },
-])
+const dynamicBreadcrumbs = inject('dynamicBreadcrumbs', null)
+
+const breadcrumbs = computed(() => {
+  if (dynamicBreadcrumbs?.value) {
+    return dynamicBreadcrumbs.value
+  }
+  return [
+    { label: 'Mis Negocios', href: '/member/business-modules' },
+    { label: business.value.name, active: true },
+  ]
+})
 
 const form = ref({
   name: props.business.name,
+  industry_id: props.business.industry_id || '',
   description: props.business.description || '',
   phone: props.business.phone || '',
   email: props.business.email || '',
@@ -171,6 +199,7 @@ const submit = () => {
   sending.value = true
   const data = new FormData()
   data.append('name', form.value.name)
+  data.append('industry_id', form.value.industry_id || '')
   data.append('description', form.value.description || '')
   data.append('phone', form.value.phone || '')
   data.append('email', form.value.email || '')

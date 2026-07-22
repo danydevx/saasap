@@ -34,47 +34,51 @@
         </Link>
       </div>
 
-      <div v-for="category in categories" :key="category.id" class="card mb-3">
-        <div class="card-header d-flex justify-content-between align-items-center">
-          <div>
-            <span :class="{ 'text-muted': !category.active }">
-              <strong>{{ category.title }}</strong>
-              <span v-if="!category.active" class="badge bg-secondary ms-2">Inactiva</span>
-            </span>
-            <small class="text-muted d-block">{{ category.children?.length || 0 }} subcategorias, {{ category.products?.length || 0 }} productos</small>
-            <Link :href="`/member/businesses/${business.id}/menu-products?category=${category.id}`" class="text-decoration-none small">
-              <i class="bi bi-box-seam me-1"></i>Ver productos
-            </Link>
-          </div>
-          <div class="btn-group">
-            <button @click="editCategory(category)" class="btn btn-sm btn-outline-primary">
-              <i class="bi bi-pencil"></i>
-            </button>
-            <button @click="deleteCategory(category)" class="btn btn-sm btn-outline-danger">
-              <i class="bi bi-trash"></i>
-            </button>
-          </div>
-        </div>
-        <div class="card-body">
-          <p v-if="category.description" class="text-muted mb-2">{{ category.description }}</p>
-
-          <div v-if="category.children && category.children.length > 0" class="ms-4 mt-3">
-            <div v-for="child in category.children" :key="child.id" class="border-start border-3 ps-3 mb-2">
-              <div class="d-flex justify-content-between align-items-center">
-                <span :class="{ 'text-muted': !child.active }">
-                  {{ child.title }}
-                  <span v-if="!child.active" class="badge bg-secondary ms-2">Inactiva</span>
-                  <Link :href="`/member/businesses/${business.id}/menu-products?category=${child.id}`" class="text-decoration-none small ms-2">
-                    <i class="bi bi-box-seam"></i> {{ child.products?.length || 0 }}
-                  </Link>
+      <div class="row g-3">
+        <div v-for="category in categories" :key="category.id" class="col-12 col-md-6 col-lg-4">
+          <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <div>
+                <span :class="{ 'text-muted': !category.active }">
+                  <strong>{{ category.title }}</strong>
+                  <span v-if="!category.active" class="badge bg-secondary ms-2">Inactiva</span>
                 </span>
-                <div class="btn-group btn-group-sm">
-                  <button @click="editCategory(child)" class="btn btn-outline-primary btn-sm">
-                    <i class="bi bi-pencil"></i>
-                  </button>
-                  <button @click="deleteCategory(child)" class="btn btn-outline-danger btn-sm">
-                    <i class="bi bi-trash"></i>
-                  </button>
+                <small class="text-muted d-block">{{ category.children?.length || 0 }} subcategorias, {{ category.products?.length || 0 }} productos</small>
+                <Link :href="`/member/businesses/${business.id}/menu-products?category=${category.id}`" class="text-decoration-none small">
+                  <i class="bi bi-box-seam me-1"></i>Ver productos
+                </Link>
+              </div>
+              <div class="btn-group">
+                <button @click="editCategory(category)" class="btn btn-sm btn-outline-primary">
+                  <i class="bi bi-pencil"></i>
+                </button>
+                <button @click="deleteCategory(category)" class="btn btn-sm btn-outline-danger">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </div>
+            </div>
+            <div class="card-body">
+              <p v-if="category.description" class="text-muted mb-2">{{ category.description }}</p>
+
+              <div v-if="category.children && category.children.length > 0" class="mt-3">
+                <div v-for="child in category.children" :key="child.id" class="border-start border-3 ps-3 mb-2">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <span :class="{ 'text-muted': !child.active }">
+                      {{ child.title }}
+                      <span v-if="!child.active" class="badge bg-secondary ms-2">Inactiva</span>
+                      <Link :href="`/member/businesses/${business.id}/menu-products?category=${child.id}`" class="text-decoration-none small ms-2">
+                        <i class="bi bi-box-seam"></i> {{ child.products?.length || 0 }}
+                      </Link>
+                    </span>
+                    <div class="btn-group btn-group-sm">
+                      <button @click="editCategory(child)" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-pencil"></i>
+                      </button>
+                      <button @click="deleteCategory(child)" class="btn btn-outline-danger btn-sm">
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -187,12 +191,29 @@ const props = defineProps({
   categories: Array,
 })
 
-const business = computed(() => props.business)
+const page = usePage()
+const business = computed(() => page.props.business)
+const businessMenu = computed(() => page.props.businessMenu || [])
 
-const breadcrumbs = computed(() => [
-  { label: 'Mis Negocios', href: '/member/business-modules' },
-  { label: 'Categorias del Menu', active: true },
-])
+const breadcrumbs = computed(() => {
+  const path = window.location.pathname
+  const businessMatch = path.match(/^\/member\/businesses\/(\d+)/)
+  if (businessMatch) {
+    const businessId = parseInt(businessMatch[1])
+    const biz = businessMenu.value.find(b => b.id === businessId)
+    if (biz) {
+      return [
+        { label: 'Mis Negocios', href: '/member/business-modules' },
+        { label: biz.name, href: `/member/businesses/${biz.id}/edit` },
+        { label: 'Categorias del Menu', active: true },
+      ]
+    }
+  }
+  return [
+    { label: 'Mis Negocios', href: '/member/business-modules' },
+    { label: 'Categorias del Menu', active: true },
+  ]
+})
 
 const modalElement = ref(null)
 let categoryModal = null

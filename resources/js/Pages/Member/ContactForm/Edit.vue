@@ -3,7 +3,7 @@
     <Head :title="`Form Builder - ${form?.name || 'Formulario'} - ${business?.name || ''}`" />
 
     <PageHeader
-      title="Form Builder"
+      title="Constructor de Formulario"
       :breadcrumbs="breadcrumbs"
       :backHref="`/member/businesses/${business?.id}/contact-forms`"
     >
@@ -36,7 +36,7 @@
               <div>
                 <h5 class="mb-0">{{ form?.name }}</h5>
                 <small class="text-muted">
-                  Shortcode: <code>{{ form?.shortcode }}</code>
+                  Código: <code>{{ form?.shortcode }}</code>
                   <button class="btn btn-sm p-0 ms-1" @click="copyShortcode" title="Copiar">
                     <i class="bi bi-clipboard"></i>
                   </button>
@@ -90,9 +90,9 @@
                         <div class="d-flex align-items-center gap-2">
                           <span class="badge bg-secondary">{{ field.field_config?.type || field.type }}</span>
                           <strong>{{ field.field_config?.label || field.label }}</strong>
-                          <span v-if="field.row" class="badge bg-info">Row {{ field.row }}</span>
+                          <span v-if="field.row" class="badge bg-info">Fila {{ field.row }}</span>
                           <span v-if="field.width && field.width !== 'full'" class="badge bg-dark">{{ field.width }}</span>
-                          <span v-if="field.field_config?.required || field.is_required" class="badge bg-danger">Required</span>
+                          <span v-if="field.field_config?.required || field.is_required" class="badge bg-danger">Requerido</span>
                           <span v-if="!field.is_active" class="badge bg-warning">Inactivo</span>
                         </div>
                         <p class="text-muted small mb-0 mt-1">
@@ -172,7 +172,7 @@
 
 <script setup>
 import { computed, ref, watch } from 'vue'
-import { Head, Link, router } from '@inertiajs/vue3'
+import { Head, Link, router, usePage } from '@inertiajs/vue3'
 import draggable from 'vuedraggable'
 import MemberLayout from '@/Layouts/MemberLayout.vue'
 import PageHeader from '@/Components/Admin/PageHeader.vue'
@@ -187,21 +187,38 @@ const props = defineProps({
   },
 })
 
-const business = computed(() => props.business)
+const page = usePage()
+const business = computed(() => page.props.business)
 const showFieldModal = ref(false)
 const editingField = ref(null)
 const isActive = ref(props.form?.is_active || false)
 const localFields = ref([...props.fields])
+const businessMenu = computed(() => page.props.businessMenu || [])
 
 watch(() => props.fields, (newFields) => {
   localFields.value = [...newFields]
 }, { deep: true })
 
-const breadcrumbs = computed(() => [
-  { label: 'Mis Negocios', href: '/member/business-modules' },
-  { label: 'Formularios', href: `/member/businesses/${business.value?.id}/contact-forms` },
-  { label: props.form?.name || 'Formulario', active: true },
-])
+const breadcrumbs = computed(() => {
+  const path = window.location.pathname
+  const businessMatch = path.match(/^\/member\/businesses\/(\d+)/)
+  if (businessMatch) {
+    const businessId = parseInt(businessMatch[1])
+    const biz = businessMenu.value.find(b => b.id === businessId)
+    if (biz) {
+      return [
+        { label: 'Mis Negocios', href: '/member/business-modules' },
+        { label: biz.name, href: `/member/businesses/${biz.id}/edit` },
+        { label: 'Formularios', href: `/member/businesses/${biz.id}/contact-forms` },
+        { label: 'Editar Formulario', active: true },
+      ]
+    }
+  }
+  return [
+    { label: 'Mis Negocios', href: '/member/business-modules' },
+    { label: 'Formularios', active: true },
+  ]
+})
 
 const copyShortcode = () => {
   if (props.form?.shortcode) {

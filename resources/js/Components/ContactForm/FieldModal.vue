@@ -2,286 +2,268 @@
   <dialog
     ref="dialogRef"
     class="border-0 rounded-3 p-0 shadow-lg"
-    style="width: 600px; max-width: 95vw;"
+    style="width: 900px; max-width: 95vw; max-height: 90vh;"
     @click="onBackdropClick"
     @cancel.prevent="close"
   >
-    <div class="p-4">
-      <div class="d-flex align-items-start justify-content-between mb-3">
+    <div class="d-flex flex-column h-100">
+      <div class="d-flex align-items-center justify-content-between px-4 py-3 border-bottom">
         <h5 class="mb-0">{{ field?.id ? 'Editar Campo' : 'Agregar Campo' }}</h5>
         <button type="button" class="btn-close" aria-label="Cerrar" @click="close"></button>
       </div>
 
-      <form @submit.prevent="save">
-        <div class="row g-3">
-          <div class="col-12 col-md-6">
-            <label class="form-label">Type <span class="text-danger">*</span></label>
-            <select v-model="config.type" class="form-select" required @change="onTypeChange">
-              <option value="text">Text</option>
-              <option value="email">Email</option>
-              <option value="phone">Phone</option>
-              <option value="number">Number</option>
-              <option value="password">Password</option>
-              <option value="url">URL</option>
-              <option value="textarea">Textarea</option>
-              <option value="select">Select</option>
-              <option value="checkbox">Checkbox</option>
-              <option value="radio">Radio</option>
-              <option value="date">Date</option>
-              <option value="file">File</option>
-              <option value="image">Image</option>
-            </select>
-          </div>
-
-          <div class="col-12 col-md-6">
-            <label class="form-label">Label <span class="text-danger">*</span></label>
-            <input
-              v-model="config.label"
-              type="text"
-              class="form-control"
-              placeholder="Field Label"
-              required
-              @input="autoGenerateName"
-            />
-          </div>
-
-          <div class="col-12">
-            <label class="form-label">Name <span class="text-danger">*</span></label>
-            <div class="input-group">
-              <input
-                v-model="config.name"
-                type="text"
-                class="form-control"
-                placeholder="field_name"
+      <form @submit.prevent="save" class="flex-grow-1 overflow-auto">
+        <div class="p-4">
+          <div class="row g-4">
+            <div class="col-12 col-md-4">
+              <FieldSelect
+                id="field-type"
+                label="Tipo"
+                v-model="config.type"
+                :options="typeOptions"
                 required
-                pattern="[a-zA-Z0-9_-]+"
+                @change="onTypeChange"
               />
-              <button type="button" class="btn btn-outline-secondary" @click="generateName" title="Generar nombre">
-                <i class="bi bi-arrow-clockwise"></i>
-              </button>
             </div>
-            <small class="text-muted">Identificador unico para el campo</small>
+
+            <div class="col-12 col-md-4">
+              <FieldText
+                id="field-label"
+                label="Etiqueta"
+                v-model="config.label"
+                placeholder="Ej: Nombre completo"
+                required
+                @input="autoGenerateName"
+              />
+            </div>
+
+            <div class="col-12 col-md-4">
+              <FieldTextGenerator
+                id="field-name"
+                label="Nombre"
+                v-model="config.name"
+                placeholder="nombre_campo"
+                generator-label="Generar"
+                required
+                @generate="generateName"
+              />
+            </div>
+
+            <div class="col-12 col-md-4">
+              <FieldText
+                id="field-placeholder"
+                label="Marcador de posición"
+                v-model="config.placeholder"
+                placeholder="Texto dentro del campo"
+              />
+            </div>
+
+            <div class="col-12 col-md-4">
+              <FieldText
+                id="field-description"
+                label="Texto de ayuda"
+                v-model="config.description"
+                placeholder="Texto debajo del campo"
+              />
+            </div>
+
+            <div class="col-12 col-md-4">
+              <FieldText
+                v-if="config.type !== 'select' && config.type !== 'checkbox' && config.type !== 'radio'"
+                id="field-value"
+                label="Valor por defecto"
+                v-model="config.value"
+                placeholder="Valor predeterminado"
+              />
+              <FieldSelect
+                v-else-if="config.type === 'checkbox'"
+                id="field-value"
+                label="Valor por defecto"
+                v-model="config.default_value"
+                :options="booleanOptions"
+              />
+              <FieldSelect
+                v-else
+                id="field-value"
+                label="Valor por defecto"
+                v-model="config.default_value"
+                :options="defaultValueOptions"
+              />
+            </div>
+
+            <div class="col-12 col-md-4" v-if="config.type === 'text' || config.type === 'textarea' || config.type === 'email' || config.type === 'phone' || config.type === 'number' || config.type === 'url'">
+              <FieldNumber
+                id="field-maxlength"
+                label="Longitud máxima"
+                v-model="config.maxlength"
+                placeholder="255"
+                :min="1"
+              />
+            </div>
+
+            <div class="col-12 col-md-4" v-if="config.type === 'date'">
+              <FieldSelect
+                id="field-min-date-type"
+                label="Fecha mínima"
+                v-model="config.min_date_type"
+                :options="dateTypeOptions"
+              />
+            </div>
+
+            <div class="col-12 col-md-4" v-if="config.type === 'date' && config.min_date_type === 'date'">
+              <FieldDate
+                id="field-min-date"
+                label="Fecha mínima"
+                v-model="config.min_date"
+              />
+            </div>
+
+            <div class="col-12 col-md-4" v-if="config.type === 'date'">
+              <FieldSelect
+                id="field-max-date-type"
+                label="Fecha máxima"
+                v-model="config.max_date_type"
+                :options="dateTypeOptions"
+              />
+            </div>
+
+            <div class="col-12 col-md-4" v-if="config.type === 'date' && config.max_date_type === 'date'">
+              <FieldDate
+                id="field-max-date"
+                label="Fecha máxima"
+                v-model="config.max_date"
+              />
+            </div>
+
+            <div class="col-12 col-md-4" v-if="config.type === 'file'">
+              <FieldMultiSelect
+                id="field-file-types"
+                label="Tipos de archivo"
+                v-model="config.file_types"
+                :options="fileTypeOptions"
+                :height="80"
+                hint="Seleccione los tipos permitidos"
+              />
+            </div>
+
+            <div class="col-12 col-md-4" v-if="config.type === 'image'">
+              <FieldMultiSelect
+                id="field-image-types"
+                label="Tipos de imagen"
+                v-model="config.file_types"
+                :options="imageTypeOptions"
+                :height="60"
+                hint="Por defecto: JPG, PNG, WebP"
+              />
+            </div>
+
+            <div class="col-12 col-md-4" v-if="config.type === 'file' || config.type === 'image'">
+              <FieldSelect
+                id="field-max-file-size"
+                label="Tamaño máximo"
+                v-model="config.max_file_size"
+                :options="fileSizeOptions"
+              />
+            </div>
+
+            <div class="col-12 col-md-4" v-if="config.type === 'select'">
+              <FieldSwitch
+                id="field-multiple"
+                label="Selección múltiple"
+                v-model="config.multiple"
+              />
+            </div>
+
+            <div class="col-12 col-md-4">
+              <FieldSelect
+                id="field-width"
+                label="Ancho en formulario"
+                v-model="config.width"
+                :options="widthOptions"
+              />
+            </div>
+
+            <div class="col-12 col-md-4">
+              <FieldNumber
+                id="field-row"
+                label="Fila"
+                v-model="config.row"
+                :min="1"
+                placeholder="1"
+              />
+            </div>
+
+            <div class="col-12 col-md-4">
+              <FieldText
+                id="field-class"
+                label="Clase CSS"
+                v-model="config.className"
+                placeholder="form-control"
+              />
+            </div>
+
+            <div class="col-12 col-md-4 d-flex align-items-center">
+              <FieldSwitch
+                id="field-required"
+                label="Campo requerido"
+                v-model="config.required"
+              />
+            </div>
           </div>
 
-          <div class="col-12">
-            <label class="form-label">Help Text</label>
-            <input
-              v-model="config.description"
-              type="text"
-              class="form-control"
-              placeholder="Texto de ayuda..."
-            />
-          </div>
-
-          <div class="col-12 col-md-6">
-            <label class="form-label">Placeholder</label>
-            <input
-              v-model="config.placeholder"
-              type="text"
-              class="form-control"
-              placeholder="Placeholder..."
-            />
-          </div>
-
-          <div class="col-12 col-md-6">
-            <label class="form-label">Class</label>
-            <input
-              v-model="config.className"
-              type="text"
-              class="form-control"
-              placeholder="form-control"
-            />
-          </div>
-
-          <div class="col-12 col-md-6" v-if="config.type === 'text' || config.type === 'textarea' || config.type === 'email' || config.type === 'phone' || config.type === 'number' || config.type === 'url'">
-            <label class="form-label">Max Length</label>
-            <input
-              v-model.number="config.maxlength"
-              type="number"
-              class="form-control"
-              placeholder="255"
-              min="1"
-            />
-          </div>
-
-          <div class="col-12 col-md-6" v-if="config.type === 'date'">
-            <label class="form-label">Min Date</label>
-            <select v-model="config.min_date_type" class="form-select mb-1">
-              <option value="none">None</option>
-              <option value="now">Desde ahora</option>
-              <option value="date">Fecha especifica</option>
-            </select>
-            <input
-              v-if="config.min_date_type === 'date'"
-              v-model="config.min_date"
-              type="date"
-              class="form-control"
-            />
-          </div>
-
-          <div class="col-12 col-md-6" v-if="config.type === 'date'">
-            <label class="form-label">Max Date</label>
-            <select v-model="config.max_date_type" class="form-select mb-1">
-              <option value="none">None</option>
-              <option value="now">Hasta ahora</option>
-              <option value="date">Fecha especifica</option>
-            </select>
-            <input
-              v-if="config.max_date_type === 'date'"
-              v-model="config.max_date"
-              type="date"
-              class="form-control"
-            />
-          </div>
-
-          <div class="col-12 col-md-6" v-if="config.type === 'file'">
-            <label class="form-label">File Types</label>
-            <select v-model="config.file_types" class="form-select" multiple style="height: 120px;">
-              <option value="pdf">PDF (.pdf)</option>
-              <option value="xlsx">Excel (.xlsx)</option>
-              <option value="docx">Word (.docx)</option>
-            </select>
-            <small class="text-muted">Solo se permiten estos tipos de archivo</small>
-          </div>
-
-          <div class="col-12 col-md-6" v-if="config.type === 'image'">
-            <label class="form-label">Image Types</label>
-            <select v-model="config.file_types" class="form-select" multiple style="height: 80px;" disabled>
-              <option value="jpg">JPG (.jpg)</option>
-              <option value="png">PNG (.png)</option>
-              <option value="webp">WebP (.webp)</option>
-            </select>
-            <small class="text-muted">Solo se permiten estos tipos de imagen</small>
-          </div>
-
-          <div class="col-12 col-md-6" v-if="config.type === 'file' || config.type === 'image'">
-            <label class="form-label">Max File Size</label>
-            <select v-model="config.max_file_size" class="form-select">
-              <option :value="1">1 MB</option>
-              <option :value="2">2 MB</option>
-              <option :value="5">5 MB</option>
-              <option v-if="config.type === 'file'" :value="10">10 MB</option>
-              <option v-if="config.type === 'file'" :value="20">20 MB</option>
-            </select>
-            <small class="text-muted">El usuario puede reducir pero no ampliar</small>
-          </div>
-
-          <div class="col-12 col-md-6" v-if="config.type !== 'file' && config.type !== 'image'">
-            <label class="form-label">Value</label>
-            <input
-              v-model="config.value"
-              type="text"
-              class="form-control"
-              placeholder="Valor por defecto..."
-            />
-          </div>
-
-          <div class="col-12" v-if="config.type === 'select' || config.type === 'radio' || config.type === 'checkbox'">
-            <label class="form-label">Options <span class="text-muted">(valor | label)</span></label>
-            <div class="options-builder border rounded p-2 mb-2" style="max-height: 200px; overflow-y: auto;">
-              <div v-for="(opt, index) in optionsArray" :key="index" class="d-flex gap-2 mb-2 align-items-center">
-                <input
+          <div v-if="config.type === 'select' || config.type === 'radio' || config.type === 'checkbox'" class="mt-4">
+            <label class="form-label fw-semibold">Opciones</label>
+            <div class="row g-2 mb-2">
+              <div class="col-6">
+                <small class="text-muted">Valor</small>
+              </div>
+              <div class="col-5">
+                <small class="text-muted">Etiqueta</small>
+              </div>
+              <div class="col-1"></div>
+            </div>
+            <div
+              v-for="(opt, index) in optionsArray"
+              :key="index"
+              class="row g-2 mb-2 align-items-center"
+            >
+              <div class="col-6">
+                <FieldText
                   v-model="opt.value"
-                  type="text"
-                  class="form-control form-control-sm"
-                  placeholder="Valor"
-                  style="width: 120px;"
+                  placeholder="valor"
                 />
-                <input
+              </div>
+              <div class="col-5">
+                <FieldText
                   v-model="opt.label"
-                  type="text"
-                  class="form-control form-control-sm"
-                  placeholder="Label"
-                  style="flex: 1;"
+                  placeholder="Etiqueta"
                 />
+              </div>
+              <div class="col-1">
                 <button
                   type="button"
-                  class="btn btn-outline-danger btn-sm"
+                  class="btn btn-outline-danger btn-sm w-100"
                   @click="removeOption(index)"
-                  title="Eliminar"
                 >
                   <i class="bi bi-trash"></i>
                 </button>
               </div>
-              <div v-if="optionsArray.length === 0" class="text-muted small text-center py-2">
-                Sin opciones. Agrega una abajo.
-              </div>
             </div>
-            <button type="button" class="btn btn-outline-primary btn-sm" @click="addOption">
-              <i class="bi bi-plus me-1"></i>Agregar Opcion
+            <div v-if="optionsArray.length === 0" class="text-muted small text-center py-2 border rounded">
+              Sin opciones. Agrega una abajo.
+            </div>
+            <button type="button" class="btn btn-outline-primary btn-sm mt-2" @click="addOption">
+              <i class="bi bi-plus me-1"></i>Agregar opción
             </button>
-          </div>
-
-          <div class="col-12 col-md-6" v-if="config.type === 'select'">
-            <label class="form-label">Selection Type</label>
-            <select v-model="config.multiple" class="form-select">
-              <option :value="false">Single Selection</option>
-              <option :value="true">Multiple Selection</option>
-            </select>
-          </div>
-
-          <div class="col-12 col-md-6" v-if="config.type === 'select' || config.type === 'checkbox' || config.type === 'radio'">
-            <label class="form-label">Default Value</label>
-            <select
-              v-if="config.multiple || config.type === 'checkbox'"
-              v-model="config.default_value"
-              class="form-select"
-              multiple
-              style="height: 100px;"
-            >
-              <option v-for="opt in optionsArray" :key="opt.value" :value="opt.value">{{ opt.label || opt.value }}</option>
-            </select>
-            <select
-              v-else
-              v-model="config.default_value"
-              class="form-select"
-            >
-              <option value="">-- Select --</option>
-              <option v-for="opt in optionsArray" :key="opt.value" :value="opt.value">{{ opt.label || opt.value }}</option>
-            </select>
-          </div>
-
-          <div class="col-12">
-            <div class="form-check">
-              <input
-                v-model="config.required"
-                type="checkbox"
-                class="form-check-input"
-                id="required"
-              />
-              <label class="form-check-label" for="required">
-                Required
-              </label>
-            </div>
-          </div>
-
-          <div class="col-12 col-md-6">
-            <label class="form-label">Width</label>
-            <select v-model="config.width" class="form-select">
-              <option value="full">Full (100%)</option>
-              <option value="half">Half (50%)</option>
-              <option value="third">Third (33%)</option>
-              <option value="quarter">Quarter (25%)</option>
-            </select>
-          </div>
-
-          <div class="col-12 col-md-6">
-            <label class="form-label">Row</label>
-            <input
-              v-model.number="config.row"
-              type="number"
-              class="form-control"
-              min="1"
-            />
           </div>
         </div>
 
-        <div class="d-flex justify-content-end gap-2 mt-4">
+        <div class="d-flex justify-content-end gap-2 px-4 py-3 border-top bg-light">
           <button type="button" class="btn btn-outline-secondary" @click="close">
-            Cancel
+            Cancelar
           </button>
           <button type="submit" class="btn btn-primary">
-            {{ field?.id ? 'Update' : 'Add Field' }}
+            {{ field?.id ? 'Actualizar' : 'Agregar' }}
           </button>
         </div>
       </form>
@@ -291,6 +273,13 @@
 
 <script setup>
 import { computed, ref, watch, onMounted } from 'vue'
+import FieldText from '@/Components/Fields/FieldText.vue'
+import FieldSelect from '@/Components/Fields/FieldSelect.vue'
+import FieldSwitch from '@/Components/Fields/FieldSwitch.vue'
+import FieldNumber from '@/Components/Fields/FieldNumber.vue'
+import FieldDate from '@/Components/Fields/FieldDate.vue'
+import FieldTextGenerator from '@/Components/Fields/FieldTextGenerator.vue'
+import FieldMultiSelect from '@/Components/Fields/FieldMultiSelect.vue'
 
 const props = defineProps({
   field: {
@@ -302,6 +291,66 @@ const props = defineProps({
 const emit = defineEmits(['close', 'save'])
 
 const dialogRef = ref(null)
+
+const typeOptions = [
+  { value: 'text', label: 'Texto' },
+  { value: 'email', label: 'Correo' },
+  { value: 'phone', label: 'Teléfono' },
+  { value: 'number', label: 'Número' },
+  { value: 'password', label: 'Contraseña' },
+  { value: 'url', label: 'URL' },
+  { value: 'textarea', label: 'Área texto' },
+  { value: 'select', label: 'Selección' },
+  { value: 'checkbox', label: 'Casilla' },
+  { value: 'radio', label: 'Opción' },
+  { value: 'date', label: 'Fecha' },
+  { value: 'file', label: 'Archivo' },
+  { value: 'image', label: 'Imagen' },
+]
+
+const booleanOptions = [
+  { value: true, label: 'Marcado' },
+  { value: false, label: 'Sin marcar' },
+]
+
+const dateTypeOptions = [
+  { value: 'none', label: 'Ninguna' },
+  { value: 'now', label: 'Actual' },
+  { value: 'date', label: 'Específica' },
+]
+
+const fileTypeOptions = [
+  { value: 'pdf', label: 'PDF' },
+  { value: 'xlsx', label: 'Excel' },
+  { value: 'docx', label: 'Word' },
+]
+
+const imageTypeOptions = [
+  { value: 'jpg', label: 'JPG' },
+  { value: 'png', label: 'PNG' },
+  { value: 'webp', label: 'WebP' },
+]
+
+const fileSizeOptions = [
+  { value: 1, label: '1 MB' },
+  { value: 2, label: '2 MB' },
+  { value: 5, label: '5 MB' },
+  { value: 10, label: '10 MB' },
+]
+
+const widthOptions = [
+  { value: 'full', label: 'Completo (100%)' },
+  { value: 'half', label: 'Mitad (50%)' },
+  { value: 'third', label: 'Tercio (33%)' },
+  { value: 'quarter', label: 'Cuarto (25%)' },
+]
+
+const defaultValueOptions = computed(() => {
+  return [
+    { value: '', label: '-- Ninguno --' },
+    ...optionsArray.value.map(opt => ({ value: opt.value, label: opt.label || opt.value }))
+  ]
+})
 
 onMounted(() => {
   if (dialogRef.value) {

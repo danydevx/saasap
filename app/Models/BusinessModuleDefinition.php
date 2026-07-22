@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class BusinessModuleDefinition extends Model
@@ -20,6 +21,7 @@ class BusinessModuleDefinition extends Model
         'image',
         'sort_order',
         'is_active',
+        'is_premium',
         'has_settings',
         'settings_url',
         'show_in_menu',
@@ -28,6 +30,7 @@ class BusinessModuleDefinition extends Model
 
     protected $casts = [
         'is_active' => 'boolean',
+        'is_premium' => 'boolean',
         'has_settings' => 'boolean',
         'show_in_menu' => 'boolean',
         'sort_order' => 'integer',
@@ -41,5 +44,15 @@ class BusinessModuleDefinition extends Model
     public function businessModules(): HasMany
     {
         return $this->hasMany(BusinessModule::class, 'module_definition_id');
+    }
+
+    public function industries(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Industry::class,
+            'industry_modules',
+            'module_definition_id',
+            'industry_id'
+        )->withTimestamps();
     }
 }

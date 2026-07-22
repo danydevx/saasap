@@ -18,6 +18,7 @@ class BusinessModuleDefinitionSeeder extends Seeder
                 'icon' => 'bi bi-geo-alt',
                 'sort_order' => 1,
                 'has_settings' => false,
+                'is_premium' => false,
             ],
             [
                 'key' => 'contact_form',
@@ -26,6 +27,7 @@ class BusinessModuleDefinitionSeeder extends Seeder
                 'icon' => 'bi bi-envelope',
                 'sort_order' => 2,
                 'has_settings' => false,
+                'is_premium' => false,
             ],
             [
                 'key' => 'gallery',
@@ -34,6 +36,7 @@ class BusinessModuleDefinitionSeeder extends Seeder
                 'icon' => 'bi bi-images',
                 'sort_order' => 3,
                 'has_settings' => true,
+                'is_premium' => false,
             ],
             [
                 'key' => 'leads',
@@ -42,6 +45,7 @@ class BusinessModuleDefinitionSeeder extends Seeder
                 'icon' => 'bi bi-person-plus',
                 'sort_order' => 4,
                 'has_settings' => true,
+                'is_premium' => true,
             ],
             [
                 'key' => 'services',
@@ -50,6 +54,7 @@ class BusinessModuleDefinitionSeeder extends Seeder
                 'icon' => 'bi bi-briefcase',
                 'sort_order' => 5,
                 'has_settings' => true,
+                'is_premium' => false,
             ],
             [
                 'key' => 'appointments',
@@ -58,6 +63,7 @@ class BusinessModuleDefinitionSeeder extends Seeder
                 'icon' => 'bi bi-calendar-check',
                 'sort_order' => 6,
                 'has_settings' => true,
+                'is_premium' => true,
             ],
             [
                 'key' => 'products',
@@ -66,6 +72,7 @@ class BusinessModuleDefinitionSeeder extends Seeder
                 'icon' => 'bi bi-box-seam',
                 'sort_order' => 7,
                 'has_settings' => true,
+                'is_premium' => false,
             ],
             [
                 'key' => 'ai_chatbot',
@@ -74,6 +81,7 @@ class BusinessModuleDefinitionSeeder extends Seeder
                 'icon' => 'bi bi-robot',
                 'sort_order' => 8,
                 'has_settings' => true,
+                'is_premium' => true,
             ],
             [
                 'key' => 'reviews',
@@ -82,6 +90,7 @@ class BusinessModuleDefinitionSeeder extends Seeder
                 'icon' => 'bi bi-star',
                 'sort_order' => 9,
                 'has_settings' => true,
+                'is_premium' => false,
             ],
             [
                 'key' => 'promotions',
@@ -90,6 +99,7 @@ class BusinessModuleDefinitionSeeder extends Seeder
                 'icon' => 'bi bi-tag',
                 'sort_order' => 10,
                 'has_settings' => true,
+                'is_premium' => true,
             ],
             [
                 'key' => 'faqs',
@@ -98,6 +108,7 @@ class BusinessModuleDefinitionSeeder extends Seeder
                 'icon' => 'bi bi-question-circle',
                 'sort_order' => 11,
                 'has_settings' => true,
+                'is_premium' => false,
             ],
             [
                 'key' => 'restaurant_menu',
@@ -106,6 +117,7 @@ class BusinessModuleDefinitionSeeder extends Seeder
                 'icon' => 'bi bi-list-ul',
                 'sort_order' => 12,
                 'has_settings' => false,
+                'is_premium' => false,
             ],
             [
                 'key' => 'about',
@@ -114,6 +126,7 @@ class BusinessModuleDefinitionSeeder extends Seeder
                 'icon' => 'bi bi-info-circle',
                 'sort_order' => 13,
                 'has_settings' => false,
+                'is_premium' => false,
             ],
             [
                 'key' => 'socialmedia',
@@ -122,6 +135,7 @@ class BusinessModuleDefinitionSeeder extends Seeder
                 'icon' => 'bi bi-share',
                 'sort_order' => 14,
                 'has_settings' => false,
+                'is_premium' => false,
             ],
             [
                 'key' => 'features',
@@ -131,6 +145,7 @@ class BusinessModuleDefinitionSeeder extends Seeder
                 'sort_order' => 15,
                 'has_settings' => true,
                 'settings_url' => '/admin/features',
+                'is_premium' => false,
             ],
             [
                 'key' => 'seo',
@@ -139,6 +154,7 @@ class BusinessModuleDefinitionSeeder extends Seeder
                 'icon' => 'bi bi-graph-up',
                 'sort_order' => 16,
                 'has_settings' => true,
+                'is_premium' => true,
             ],
             [
                 'key' => 'branding',
@@ -147,6 +163,16 @@ class BusinessModuleDefinitionSeeder extends Seeder
                 'icon' => 'bi bi-palette',
                 'sort_order' => 17,
                 'has_settings' => true,
+                'is_premium' => true,
+            ],
+            [
+                'key' => 'tasks',
+                'name' => 'Tareas',
+                'description' => 'Gestiona tus tareas con un tablero Kanban',
+                'icon' => 'bi bi-list-check',
+                'sort_order' => 18,
+                'has_settings' => false,
+                'is_premium' => false,
             ],
         ];
 

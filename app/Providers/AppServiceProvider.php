@@ -121,6 +121,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(\Modules\Faqs\Models\BusinessFaqCategory::class, BusinessFaqCategoryPolicy::class);
         Gate::policy(\Modules\Seo\Models\BusinessSeoSetting::class, BusinessSeoSettingPolicy::class);
         Gate::policy(\Modules\Branding\Models\BusinessBrandingSetting::class, BusinessBrandingSettingPolicy::class);
+        Gate::policy(\Modules\Tasks\Models\BusinessTask::class, \App\Policies\BusinessTaskPolicy::class);
 
         RateLimiter::for('login', function (Request $request) {
             $email = mb_strtolower((string) $request->input('email', ''));

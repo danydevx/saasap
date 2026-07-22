@@ -108,12 +108,28 @@ const page = usePage()
 const business = computed(() => page.props.business)
 const locations = computed(() => page.props.locations || [])
 const errors = computed(() => page.props.errors || {})
+const businessMenu = computed(() => page.props.businessMenu || [])
 
-const breadcrumbs = computed(() => [
-  { label: 'Mis Negocios', href: '/member/business-modules' },
-  { label: 'Contactos', href: `/member/businesses/${business.value.id}/leads` },
-  { label: 'Nuevo', active: true },
-])
+const breadcrumbs = computed(() => {
+  const path = window.location.pathname
+  const businessMatch = path.match(/^\/member\/businesses\/(\d+)/)
+  if (businessMatch) {
+    const businessId = parseInt(businessMatch[1])
+    const biz = businessMenu.value.find(b => b.id === businessId)
+    if (biz) {
+      return [
+        { label: 'Mis Negocios', href: '/member/business-modules' },
+        { label: biz.name, href: `/member/businesses/${biz.id}/edit` },
+        { label: 'Leads', href: `/member/businesses/${biz.id}/leads` },
+        { label: 'Nuevo Lead', active: true },
+      ]
+    }
+  }
+  return [
+    { label: 'Mis Negocios', href: '/member/business-modules' },
+    { label: 'Nuevo Lead', active: true },
+  ]
+})
 
 const sending = ref(false)
 

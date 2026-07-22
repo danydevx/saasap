@@ -7,9 +7,11 @@ use App\Http\Resources\Api\V1\BusinessListResource;
 use App\Http\Resources\Api\V1\BusinessResource;
 use App\Http\Resources\Api\V1\UserListResource;
 use App\Http\Resources\Api\V1\UserResource;
+use App\Http\Resources\Api\V1\IndustryResource;
 use Illuminate\Http\Request;
 use Modules\Businesses\Models\Business;
 use App\Models\User;
+use App\Models\Industry;
 use Modules\Gallery\Models\BusinessGalleryImage;
 use Modules\Locations\Models\BusinessLocation;
 use Modules\Faqs\Models\BusinessFaq;
@@ -59,6 +61,15 @@ class ApiExplorerController extends Controller
                     ['method' => 'GET', 'path' => '/api/v1/admin/businesses/{id}/leads', 'description' => 'Leads'],
                     ['method' => 'GET', 'path' => '/api/v1/admin/businesses/{id}/appointments', 'description' => 'Citas'],
                     ['method' => 'GET', 'path' => '/api/v1/admin/businesses/{id}/appointment-slots', 'description' => 'Horarios de citas'],
+                ],
+            ],
+            'industries' => [
+                'title' => 'Industries',
+                'description' => 'Industrias del sistema',
+                'endpoints' => [
+                    ['method' => 'GET', 'path' => '/api/v1/admin/industries', 'description' => 'Lista de industrias'],
+                    ['method' => 'GET', 'path' => '/api/v1/admin/industries/{id}', 'description' => 'Detalle de industria'],
+                    ['method' => 'GET', 'path' => '/api/v1/admin/industries/{id}/modules', 'description' => 'Modulos de la industria'],
                 ],
             ],
             'users' => [
@@ -115,7 +126,7 @@ class ApiExplorerController extends Controller
         $perPage = min((int) request()->get('per_page', 20), 100);
 
         if ($path === '/api/v1/admin/businesses') {
-            $businesses = Business::with(['user:id,name,email', 'subscriptions.plan:id,name', 'modules.moduleDefinition'])
+            $businesses = Business::with(['user:id,name,email', 'user.subscriptions.plan:id,name', 'modules.moduleDefinition', 'industry'])
                 ->orderBy('created_at', 'desc')
                 ->paginate($perPage);
             return [
@@ -130,7 +141,7 @@ class ApiExplorerController extends Controller
         }
 
         if ($path === '/api/v1/admin/businesses/' . $businessId) {
-            $business = Business::with(['user:id,name,email', 'subscriptions.plan:id,name,limits', 'modules.moduleDefinition'])->findOrFail($businessId);
+            $business = Business::with(['user:id,name,email', 'user.subscriptions.plan:id,name,limits', 'modules.moduleDefinition', 'industry'])->findOrFail($businessId);
             return ['data' => new BusinessResource($business)];
         }
 
@@ -302,6 +313,38 @@ class ApiExplorerController extends Controller
             $user = User::findOrFail($userId);
             $businesses = Business::where('user_id', $user->id)->with(['subscriptions.plan:id,name'])->orderBy('created_at', 'desc')->get(['id', 'name', 'slug', 'is_active', 'created_at']);
             return ['data' => $businesses, 'meta' => ['total' => $businesses->count()]];
+        }
+
+        if ($path === '/api/v1/admin/industries') {
+            $industries = Industry::with('moduleDefinitions')
+                ->orderBy('name')
+                ->get();
+            return [
+                'data' => IndustryResource::collection($industries),
+                'meta' => ['total' => $industries->count()],
+            ];
+        }
+
+        if ($path === '/api/v1/admin/industries/' . $businessId) {
+            $industry = Industry::with('moduleDefinitions')->findOrFail($businessId);
+            return ['data' => new IndustryResource($industry)];
+        }
+
+        if ($path === '/api/v1/admin/industries/' . $businessId . '/modules') {
+            $industry = Industry::findOrFail($businessId);
+            $modules = $industry->moduleDefinitions;
+            return [
+                'data' => $modules->map(function ($module) {
+                    return [
+                        'id' => $module->id,
+                        'module_key' => $module->key,
+                        'module_name' => $module->name,
+                        'icon' => $module->icon,
+                        'is_premium' => (bool) $module->is_premium,
+                    ];
+                }),
+                'meta' => ['total' => $modules->count()],
+            ];
         }
 
         throw new \Exception('Endpoint not found: ' . $path);

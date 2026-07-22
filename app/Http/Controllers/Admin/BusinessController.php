@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\MinisiteTheme;
+use App\Models\Industry;
 use Modules\Businesses\Models\Business;
 use App\Services\ActivityService;
 use Illuminate\Http\Request;
@@ -41,8 +42,11 @@ class BusinessController extends Controller
             ->orderBy('name')
             ->get(['id', 'name', 'email']);
 
+        $industries = Industry::orderBy('name')->get(['id', 'name']);
+
         return Inertia::render('Admin/Businesses/Create', [
             'users' => $users,
+            'industries' => $industries,
         ]);
     }
 
@@ -53,6 +57,7 @@ class BusinessController extends Controller
             'name' => ['required', 'string', 'max:150'],
             'slug' => ['required', 'string', 'max:150', 'unique:businesses,slug'],
             'business_type' => ['required', 'string'],
+            'industry_id' => ['nullable', 'exists:industries,id'],
             'description' => ['nullable', 'string', 'max:1000'],
             'phone' => ['nullable', 'string', 'max:50'],
             'email' => ['nullable', 'email', 'max:150'],
@@ -68,6 +73,7 @@ class BusinessController extends Controller
             'name' => trim($data['name']),
             'slug' => trim($data['slug']),
             'business_type' => $data['business_type'],
+            'industry_id' => $data['industry_id'] ?? null,
             'description' => $data['description'] ?? null,
             'phone' => $data['phone'] ?? null,
             'email' => $data['email'] ?? null,
@@ -96,6 +102,7 @@ class BusinessController extends Controller
             ->get(['id', 'name', 'email']);
 
         $themes = MinisiteTheme::where('is_active', true)->orderBy('name')->get(['id', 'name', 'slug']);
+        $industries = Industry::orderBy('name')->get(['id', 'name']);
 
         $business->load('user', 'minisiteTheme');
 
@@ -106,6 +113,7 @@ class BusinessController extends Controller
                 'name' => $business->name,
                 'slug' => $business->slug,
                 'business_type' => $business->business_type->value ?? $business->business_type,
+                'industry_id' => $business->industry_id,
                 'description' => $business->description,
                 'phone' => $business->phone,
                 'email' => $business->email,
@@ -123,6 +131,7 @@ class BusinessController extends Controller
             ],
             'users' => $users,
             'themes' => $themes,
+            'industries' => $industries,
         ]);
     }
 
@@ -133,6 +142,7 @@ class BusinessController extends Controller
             'name' => ['required', 'string', 'max:150'],
             'slug' => ['required', 'string', 'max:150', 'unique:businesses,slug,' . $business->id],
             'business_type' => ['required', 'string'],
+            'industry_id' => ['nullable', 'exists:industries,id'],
             'description' => ['nullable', 'string', 'max:1000'],
             'phone' => ['nullable', 'string', 'max:50'],
             'email' => ['nullable', 'email', 'max:150'],
@@ -149,6 +159,7 @@ class BusinessController extends Controller
             'name' => trim($data['name']),
             'slug' => trim($data['slug']),
             'business_type' => $data['business_type'],
+            'industry_id' => $data['industry_id'] ?? null,
             'description' => $data['description'] ?? null,
             'phone' => $data['phone'] ?? null,
             'email' => $data['email'] ?? null,

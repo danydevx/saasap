@@ -8,10 +8,19 @@
       :backHref="'/member/business-modules'"
     >
       <template #actions>
-        <button @click="openCreateModal" class="btn btn-primary btn-sm">
+        <button
+          v-if="selectedIds.length > 0"
+          class="btn btn-danger btn-sm"
+          @click="deleteSelected"
+          :disabled="deleting"
+        >
+          <i class="bi bi-trash me-1"></i>
+          Eliminar ({{ selectedIds.length }})
+        </button>
+        <Link :href="`/member/businesses/${business?.id}/appointments/create`" class="btn btn-primary btn-sm">
           <i class="bi bi-plus-lg me-1"></i>
           Nueva Cita
-        </button>
+        </Link>
       </template>
     </PageHeader>
 
@@ -25,6 +34,13 @@
       empty-text="Comienza creando tu primera cita."
       @updated="onDataTableUpdated"
     >
+      <template #cell-checkbox="{ row }">
+        <BulkSelectRowCheckbox
+          :id="row.id"
+          v-model:selectedIds="selectedIds"
+        />
+      </template>
+
       <template #cell-appointment_date="{ row }">
         {{ formatDate(row.appointment_date) }}
       </template>
@@ -72,135 +88,55 @@
           </button>
         </div>
       </template>
-    </BaseDataTable>
 
-    <div ref="modalElement" class="modal fade" tabindex="-1">
-      <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">Nueva Cita</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-          </div>
-          <form @submit.prevent="submitAppointment">
-            <div class="modal-body">
-              <div class="row g-3 mb-3">
-                <div class="col-md-6">
-                  <FieldText
-                    id="appointment-name"
-                    label="Nombre del cliente"
-                    v-model="form.customer_name"
-                    required
-                  />
-                </div>
-                <div class="col-md-6">
-                  <FieldEmail
-                    id="appointment-email"
-                    label="Email del cliente"
-                    v-model="form.customer_email"
-                    required
-                  />
-                </div>
-                <div class="col-md-6">
-                  <FieldPhone
-                    id="appointment-phone"
-                    label="Telefono"
-                    v-model="form.customer_phone"
-                  />
-                </div>
-                <div class="col-md-6">
-                  <FieldSelect
-                    id="appointment-service"
-                    label="Servicio"
-                    v-model="form.business_service_id"
-                    required
-                  >
-                    <option :value="null" disabled>Seleccionar servicio</option>
-                    <option v-for="svc in services" :key="svc.id" :value="svc.id">
-                      {{ svc.name }} ({{ svc.duration_minutes }} min)
-                    </option>
-                  </FieldSelect>
-                </div>
-                <div class="col-md-6">
-                  <FieldSelect
-                    id="appointment-location"
-                    label="Ubicacion"
-                    v-model="form.business_location_id"
-                  >
-                    <option :value="null">Sin ubicacion</option>
-                    <option v-for="loc in locations" :key="loc.id" :value="loc.id">
-                      {{ loc.name }}
-                    </option>
-                  </FieldSelect>
-                </div>
-                <div class="col-md-3">
-                  <FieldDate
-                    id="appointment-date"
-                    label="Fecha"
-                    v-model="form.appointment_date"
-                    :min="today"
-                    required
-                  />
-                </div>
-                <div class="col-md-3">
-                  <FieldTime
-                    id="appointment-time"
-                    label="Hora"
-                    v-model="form.start_time"
-                    required
-                  />
-                </div>
-                <div class="col-12">
-                  <FieldTextarea
-                    id="appointment-notes"
-                    label="Notas"
-                    v-model="form.notes"
-                    :rows="2"
-                    placeholder="Notas adicionales..."
-                  />
-                </div>
-              </div>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-              <button type="submit" class="btn btn-primary" :disabled="sending">
-                {{ sending ? 'Guardando...' : 'Crear Cita' }}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
+      <template #header-actions>
+        <BulkSelect
+          v-model:selectedIds="selectedIds"
+          :current-page-ids="currentPageIds"
+          :delete-endpoint="`/member/businesses/${business?.id}/appointments/bulk-delete`"
+          item-name="citas"
+          @deleted="onBulkDeleted"
+        />
+      </template>
+    </BaseDataTable>
   </MemberLayout>
 </template>
 
 <script setup>
-import { computed, ref, nextTick, onMounted } from 'vue'
+import { computed, ref } from 'vue'
 import { Head, Link, router, usePage } from '@inertiajs/vue3'
-import { Modal } from 'bootstrap'
 import MemberLayout from '@/Layouts/MemberLayout.vue'
 import PageHeader from '@/Components/Admin/PageHeader.vue'
 import BaseDataTable from '@/Components/DataTable/BaseDataTable.vue'
-import FieldText from '@/Components/Fields/FieldText.vue'
-import FieldEmail from '@/Components/Fields/FieldEmail.vue'
-import FieldPhone from '@/Components/Fields/FieldPhone.vue'
-import FieldSelect from '@/Components/Fields/FieldSelect.vue'
-import FieldDate from '@/Components/Fields/FieldDate.vue'
-import FieldTime from '@/Components/Fields/FieldTime.vue'
-import FieldTextarea from '@/Components/Fields/FieldTextarea.vue'
+import { BulkSelect, BulkSelectRowCheckbox } from '@/Components/BulkSelect'
 
 const page = usePage()
 const business = computed(() => page.props.business)
-const appointments = computed(() => page.props.appointments || { data: [], links: [] })
-const services = computed(() => page.props.services || [])
-const locations = computed(() => page.props.locations || [])
 const dataTable = computed(() => page.props.dataTable)
+const businessMenu = computed(() => page.props.businessMenu || [])
 
-const breadcrumbs = computed(() => [
-  { label: 'Mis Negocios', href: '/member/business-modules' },
-  { label: 'Citas', active: true },
-])
+const breadcrumbs = computed(() => {
+  const path = window.location.pathname
+  const businessMatch = path.match(/^\/member\/businesses\/(\d+)/)
+  if (businessMatch) {
+    const businessId = parseInt(businessMatch[1])
+    const biz = businessMenu.value.find(b => b.id === businessId)
+    if (biz) {
+      return [
+        { label: 'Mis Negocios', href: '/member/business-modules' },
+        { label: biz.name, href: `/member/businesses/${biz.id}/edit` },
+        { label: 'Citas', active: true },
+      ]
+    }
+  }
+  return [
+    { label: 'Mis Negocios', href: '/member/business-modules' },
+    { label: 'Citas', active: true },
+  ]
+})
 
 const columns = [
+  { key: 'checkbox', label: '', sortable: false, width: '40px' },
   { key: 'appointment_date', label: 'Fecha', sortable: true },
   { key: 'start_time', label: 'Hora', sortable: true },
   { key: 'customer_name', label: 'Cliente', sortable: true },
@@ -211,57 +147,22 @@ const columns = [
 ]
 
 const dataTableRef = ref(null)
-const modalElement = ref(null)
-let appointmentModal = null
-const sending = ref(false)
-const today = new Date().toISOString().split('T')[0]
+const deleting = ref(null)
+const selectedIds = ref([])
 
-const form = ref({
-  customer_name: '',
-  customer_email: '',
-  customer_phone: '',
-  business_service_id: null,
-  business_location_id: null,
-  appointment_date: '',
-  start_time: '',
-  notes: '',
+const currentPageIds = computed(() => {
+  if (!dataTable.value?.data) return []
+  return dataTable.value.data.map(row => row.id)
 })
 
 const onDataTableUpdated = (data) => {
-  // Optional: handle data update
+  selectedIds.value = []
 }
 
-const openCreateModal = () => {
-  form.value = {
-    customer_name: '',
-    customer_email: '',
-    customer_phone: '',
-    business_service_id: null,
-    business_location_id: null,
-    appointment_date: '',
-    start_time: '',
-    notes: '',
+const onBulkDeleted = () => {
+  if (dataTableRef.value) {
+    dataTableRef.value.reload()
   }
-  nextTick(() => {
-    appointmentModal.show()
-  })
-}
-
-const submitAppointment = () => {
-  sending.value = true
-  router.post(`/member/businesses/${business.value.id}/appointments`, form.value, {
-    preserveScroll: true,
-    onSuccess: () => {
-      sending.value = false
-      appointmentModal.hide()
-      if (dataTableRef.value) {
-        dataTableRef.value.reload()
-      }
-    },
-    onError: () => {
-      sending.value = false
-    },
-  })
 }
 
 const formatDate = (date) => {
@@ -299,9 +200,11 @@ const cancelAppointment = (apt) => {
 
 const deleteAppointment = (apt) => {
   if (confirm('Estas seguro de eliminar esta cita? Esta accion no se puede deshacer.')) {
+    deleting.value = apt.id
     router.delete(`/member/businesses/${business.value.id}/appointments/${apt.id}`, {
       preserveScroll: true,
-      onSuccess: () => {
+      onFinish: () => {
+        deleting.value = null
         if (dataTableRef.value) {
           dataTableRef.value.reload()
         }
@@ -310,19 +213,26 @@ const deleteAppointment = (apt) => {
   }
 }
 
-onMounted(() => {
-  appointmentModal = new Modal(modalElement.value)
-  appointmentModal._element.addEventListener('hidden.bs.modal', () => {
-    form.value = {
-      customer_name: '',
-      customer_email: '',
-      customer_phone: '',
-      business_service_id: null,
-      business_location_id: null,
-      appointment_date: '',
-      start_time: '',
-      notes: '',
-    }
-  })
-})
+const deleteSelected = () => {
+  if (selectedIds.value.length === 0) return
+
+  const count = selectedIds.value.length
+  if (confirm(`Eliminar ${count} cita${count > 1 ? 's' : ''} seleccionada${count > 1 ? 's' : ''}?`)) {
+    deleting.value = true
+    router.post(`/member/businesses/${business.value.id}/appointments/bulk-delete`, {
+      ids: selectedIds.value,
+    }, {
+      preserveScroll: true,
+      onSuccess: () => {
+        selectedIds.value = []
+        if (dataTableRef.value) {
+          dataTableRef.value.reload()
+        }
+      },
+      onFinish: () => {
+        deleting.value = false
+      },
+    })
+  }
+}
 </script>

@@ -38,6 +38,7 @@ class Business extends Model
         'name',
         'slug',
         'business_type',
+        'industry_id',
         'description',
         'logo_path',
         'cover_image_path',
@@ -88,6 +89,11 @@ class Business extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(\App\Models\User::class);
+    }
+
+    public function industry(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\Industry::class);
     }
 
     public function locations(): HasMany
@@ -198,6 +204,11 @@ class Business extends Model
     public function contactFormFields(): HasMany
     {
         return $this->hasMany(BusinessContactFormField::class);
+    }
+
+    public function tasks(): HasMany
+    {
+        return $this->hasMany(\Modules\Tasks\Models\BusinessTask::class);
     }
 
     public function getEnabledModules(): array

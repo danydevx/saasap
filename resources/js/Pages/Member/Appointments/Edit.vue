@@ -75,7 +75,10 @@
                 label="Fecha"
                 v-model="form.appointment_date"
                 :formError="errors.appointment_date"
+                :min="today"
                 required
+                :validateFunction="validateDate"
+                :showValidation="showDateValidation"
               />
             </div>
 
@@ -130,7 +133,7 @@
 </template>
 
 <script setup>
-import { computed, reactive, ref } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { Head, Link, router, usePage } from '@inertiajs/vue3'
 import MemberLayout from '@/Layouts/MemberLayout.vue'
 import PageHeader from '@/Components/Admin/PageHeader.vue'
@@ -147,15 +150,55 @@ const business = computed(() => page.props.business)
 const appointment = computed(() => page.props.appointment)
 const services = computed(() => page.props.services || [])
 const locations = computed(() => page.props.locations || [])
-const errors = computed(() => page.props.errors || {})
+const errors = computed(() => {
+  const errs = page.props.errors || {}
+  const normalized = {}
+  for (const [key, value] of Object.entries(errs)) {
+    normalized[key] = Array.isArray(value) ? value.join(', ') : value
+  }
+  return normalized
+})
 
-const breadcrumbs = computed(() => [
-  { label: 'Mis Negocios', href: '/member/business-modules' },
-  { label: 'Citas', href: `/member/businesses/${business.value.id}/appointments` },
-  { label: 'Editar', active: true },
-])
+watch(() => errors.value.appointment_date, (val) => {
+  if (val) showDateValidation.value = true
+})
+const businessMenu = computed(() => page.props.businessMenu || [])
+
+const breadcrumbs = computed(() => {
+  const path = window.location.pathname
+  const businessMatch = path.match(/^\/member\/businesses\/(\d+)/)
+  if (businessMatch) {
+    const businessId = parseInt(businessMatch[1])
+    const biz = businessMenu.value.find(b => b.id === businessId)
+    if (biz) {
+      return [
+        { label: 'Mis Negocios', href: '/member/business-modules' },
+        { label: biz.name, href: `/member/businesses/${biz.id}/edit` },
+        { label: 'Citas', href: `/member/businesses/${biz.id}/appointments` },
+        { label: 'Editar Cita', active: true },
+      ]
+    }
+  }
+  return [
+    { label: 'Mis Negocios', href: '/member/business-modules' },
+    { label: 'Editar Cita', active: true },
+  ]
+})
 
 const sending = ref(false)
+const showDateValidation = ref(false)
+const today = computed(() => new Date().toISOString().split('T')[0])
+
+const validateDate = () => {
+  if (!form.appointment_date) return ''
+  const selected = new Date(form.appointment_date)
+  const todayDate = new Date()
+  todayDate.setHours(0, 0, 0, 0)
+  if (selected < todayDate) {
+    return 'La fecha debe ser hoy o posterior'
+  }
+  return ''
+}
 
 const form = reactive({
   customer_name: appointment.value.customer_name,
@@ -173,6 +216,9 @@ const submit = () => {
   sending.value = true
   router.put(`/member/businesses/${business.value.id}/appointments/${appointment.value.id}`, form, {
     preserveScroll: true,
+    onError: (errs) => {
+      console.error('Validation errors:', errs)
+    },
     onFinish: () => {
       sending.value = false
     },

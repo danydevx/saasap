@@ -307,11 +307,27 @@ const business = computed(() => page.props.business)
 const dataTable = computed(() => page.props.dataTable)
 const services = computed(() => page.props.services || [])
 const locations = computed(() => page.props.locations || [])
+const businessMenu = computed(() => page.props.businessMenu || [])
 
-const breadcrumbs = computed(() => [
-  { label: 'Mis Negocios', href: '/member/business-modules' },
-  { label: 'Turnos', active: true },
-])
+const breadcrumbs = computed(() => {
+  const path = window.location.pathname
+  const businessMatch = path.match(/^\/member\/businesses\/(\d+)/)
+  if (businessMatch) {
+    const businessId = parseInt(businessMatch[1])
+    const biz = businessMenu.value.find(b => b.id === businessId)
+    if (biz) {
+      return [
+        { label: 'Mis Negocios', href: '/member/business-modules' },
+        { label: biz.name, href: `/member/businesses/${biz.id}/edit` },
+        { label: 'Horarios', active: true },
+      ]
+    }
+  }
+  return [
+    { label: 'Mis Negocios', href: '/member/business-modules' },
+    { label: 'Horarios', active: true },
+  ]
+})
 
 const columns = [
   { key: 'slot_date', label: 'Fecha', sortable: true },

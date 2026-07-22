@@ -52,6 +52,16 @@
               <div v-if="form.errors.business_type" class="invalid-feedback">{{ form.errors.business_type }}</div>
             </div>
 
+            <div class="col-12 col-md-6">
+              <label for="business-industry" class="form-label">Industria</label>
+              <select id="business-industry" class="form-select" v-model="form.industry_id">
+                <option :value="null">Sin industria</option>
+                <option v-for="industry in industries" :key="industry.id" :value="industry.id">
+                  {{ industry.name }}
+                </option>
+              </select>
+            </div>
+
             <div class="col-12">
               <FieldText
                 id="business-description"
@@ -154,6 +164,10 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  industries: {
+    type: Array,
+    default: () => [],
+  },
 })
 
 const businessTypes = {
@@ -176,6 +190,7 @@ const form = useForm({
   name: '',
   slug: '',
   business_type: '',
+  industry_id: null,
   description: '',
   phone: '',
   email: '',

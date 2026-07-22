@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Member;
 
 use App\Http\Controllers\Controller;
+use App\Models\Industry;
 use Modules\Businesses\Models\Business;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -18,8 +19,13 @@ class BusinessController extends Controller
         $user = Auth::user();
         abort_unless($business->user_id === $user->id, 403);
 
+        $industries = Industry::where('is_active', true)
+            ->orderBy('name')
+            ->get(['id', 'name', 'icon']);
+
         return inertia('Member/Businesses/Edit', [
             'business' => $business,
+            'industries' => $industries,
         ]);
     }
 
@@ -30,6 +36,7 @@ class BusinessController extends Controller
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:150'],
+            'industry_id' => ['nullable', 'exists:industries,id'],
             'description' => ['nullable', 'string', 'max:1000'],
             'phone' => ['nullable', 'string', 'max:50'],
             'email' => ['nullable', 'email', 'max:150'],

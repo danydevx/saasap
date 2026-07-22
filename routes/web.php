@@ -29,6 +29,7 @@ use App\Http\Controllers\Admin\ModuleSettingsController;
 use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\ExportController;
 use App\Http\Controllers\Admin\FeatureFlagController;
+use App\Http\Controllers\Admin\IndustryController;
 use App\Http\Controllers\Admin\HelpArticleController;
 use App\Http\Controllers\Admin\InvitationController;
 use App\Http\Controllers\Admin\InvoiceController as AdminInvoiceController;
@@ -104,6 +105,7 @@ use App\Http\Controllers\Member\PreferenceController as MemberPreferenceControll
 use App\Http\Controllers\Member\SessionController as MemberSessionController;
 use App\Http\Controllers\Member\SupportTicketController as MemberSupportTicketController;
 use App\Http\Controllers\Member\SystemAnnouncementController as MemberSystemAnnouncementController;
+use Modules\Tasks\Http\Controllers\Member\TaskController;
 use App\Http\Controllers\Member\WebhookController as MemberWebhookController;
 use App\Http\Controllers\PricingController;
 use App\Http\Controllers\StripeWebhookController;
@@ -252,6 +254,9 @@ Route::put('/member/businesses/{business}/locations/{location}', [LocationContro
 Route::delete('/member/businesses/{business}/locations/{location}', [LocationController::class, 'destroy'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.businesses.locations.destroy');
+Route::post('/member/businesses/{business}/locations/bulk-delete', [LocationController::class, 'bulkDelete'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.locations.bulk-delete');
 
 Route::get('/member/businesses/{business}/services', [ServiceController::class, 'index'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
@@ -274,6 +279,9 @@ Route::delete('/member/businesses/{business}/services/{service}', [ServiceContro
 Route::post('/member/businesses/{business}/services/reorder', [ServiceController::class, 'reorder'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.businesses.services.reorder');
+Route::post('/member/businesses/{business}/services/bulk-delete', [ServiceController::class, 'bulkDelete'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.services.bulk-delete');
 
 Route::get('/member/businesses/{business}/faqs', [FaqController::class, 'index'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
@@ -296,6 +304,9 @@ Route::delete('/member/businesses/{business}/faqs/{faq}', [FaqController::class,
 Route::post('/member/businesses/{business}/faqs/reorder', [FaqController::class, 'reorder'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.businesses.faqs.reorder');
+Route::post('/member/businesses/{business}/faqs/bulk-delete', [FaqController::class, 'bulkDelete'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.faqs.bulk-delete');
 
 Route::get('/member/businesses/{business}/faq-categories', [FaqCategoryController::class, 'index'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
@@ -350,6 +361,25 @@ Route::post('/member/businesses/{business}/social-networks/{socialNetwork}', [So
 Route::delete('/member/businesses/{business}/social-networks/{socialNetwork}', [SocialNetworkController::class, 'destroy'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.businesses.social-networks.destroy');
+Route::post('/member/businesses/{business}/social-networks/reorder', [SocialNetworkController::class, 'reorder'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.social-networks.reorder');
+
+Route::get('/member/businesses/{business}/tasks', [TaskController::class, 'index'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.tasks.index');
+Route::post('/member/businesses/{business}/tasks', [TaskController::class, 'store'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.tasks.store');
+Route::put('/member/businesses/{business}/tasks/{task}', [TaskController::class, 'update'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.tasks.update');
+Route::delete('/member/businesses/{business}/tasks/{task}', [TaskController::class, 'destroy'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.tasks.destroy');
+Route::post('/member/businesses/{business}/tasks/reorder', [TaskController::class, 'reorder'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.tasks.reorder');
 
 Route::get('/member/businesses/{business}/gallery', [GalleryController::class, 'index'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
@@ -366,6 +396,9 @@ Route::delete('/member/businesses/{business}/gallery/{image}', [GalleryControlle
 Route::post('/member/businesses/{business}/gallery/reorder', [GalleryController::class, 'reorder'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.businesses.gallery.reorder');
+Route::post('/member/businesses/{business}/gallery/bulk-delete', [GalleryController::class, 'bulkDelete'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.gallery.bulk-delete');
 
 Route::get('/member/businesses/{business}/products', [ProductController::class, 'index'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
@@ -388,6 +421,9 @@ Route::delete('/member/businesses/{business}/products/{product}', [ProductContro
 Route::post('/member/businesses/{business}/products/reorder', [ProductController::class, 'reorder'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.businesses.products.reorder');
+Route::post('/member/businesses/{business}/products/bulk-delete', [ProductController::class, 'bulkDelete'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.products.bulk-delete');
 
 Route::get('/member/businesses/{business}/appointments', [AppointmentController::class, 'index'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
@@ -413,6 +449,9 @@ Route::delete('/member/businesses/{business}/appointments/{appointment}', [Appoi
 Route::post('/member/businesses/{business}/appointments/{appointment}/cancel', [AppointmentController::class, 'cancel'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.businesses.appointments.cancel');
+Route::post('/member/businesses/{business}/appointments/bulk-delete', [AppointmentController::class, 'bulkDelete'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.appointments.bulk-delete');
 
 Route::get('/member/businesses/{business}/slots', [SlotController::class, 'index'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
@@ -451,6 +490,9 @@ Route::put('/member/businesses/{business}/leads/{lead}', [LeadController::class,
 Route::delete('/member/businesses/{business}/leads/{lead}', [LeadController::class, 'destroy'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.businesses.leads.destroy');
+Route::post('/member/businesses/{business}/leads/bulk-delete', [LeadController::class, 'bulkDelete'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.leads.bulk-delete');
 
 Route::get('/member/businesses/{business}/contact-forms', [ContactFormController::class, 'index'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
@@ -508,6 +550,9 @@ Route::post('/member/businesses/{business}/reviews', [ReviewController::class, '
 Route::post('/member/businesses/{business}/reviews/reorder', [ReviewController::class, 'reorder'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.businesses.reviews.reorder');
+Route::post('/member/businesses/{business}/reviews/bulk-delete', [ReviewController::class, 'bulkDelete'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.reviews.bulk-delete');
 Route::get('/member/businesses/{business}/reviews/{review}/edit', [ReviewController::class, 'edit'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.businesses.reviews.edit');
@@ -539,6 +584,9 @@ Route::delete('/member/businesses/{business}/promotions/{promotion}', [Promotion
 Route::post('/member/businesses/{business}/promotions/reorder', [PromotionController::class, 'reorder'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.businesses.promotions.reorder');
+Route::post('/member/businesses/{business}/promotions/bulk-delete', [PromotionController::class, 'bulkDelete'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.promotions.bulk-delete');
 Route::post('/member/businesses/{business}/promotions/{promotion}/regenerate-qr', [PromotionController::class, 'regenerateQrCode'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.businesses.promotions.regenerate-qr');
@@ -609,6 +657,9 @@ Route::post('/member/businesses/{business}/menu-products', [MemberMenuProductCon
 Route::post('/member/businesses/{business}/menu-products/reorder', [MemberMenuProductController::class, 'reorder'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.menu.products.reorder');
+Route::post('/member/businesses/{business}/menu-products/bulk-delete', [MemberMenuProductController::class, 'bulkDelete'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.menu.products.bulk-delete');
 Route::get('/member/businesses/{business}/menu-products/{product}/edit', [MemberMenuProductController::class, 'edit'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.menu.products.edit');
@@ -1313,6 +1364,25 @@ Route::prefix('admin')->middleware(['auth', 'admin_or_user:1'])->group(function 
     Route::delete('/business-module-definitions/{definition}', [BusinessModuleDefinitionController::class, 'destroy'])
         ->middleware(['auth', 'admin_or_user:1'])
         ->name('admin.business-module-definitions.destroy');
+
+    Route::get('/industries', [IndustryController::class, 'index'])
+        ->middleware(['auth', 'admin_or_user:1'])
+        ->name('admin.industries.index');
+    Route::get('/industries/create', [IndustryController::class, 'create'])
+        ->middleware(['auth', 'admin_or_user:1'])
+        ->name('admin.industries.create');
+    Route::post('/industries', [IndustryController::class, 'store'])
+        ->middleware(['auth', 'admin_or_user:1'])
+        ->name('admin.industries.store');
+    Route::get('/industries/{industry}/edit', [IndustryController::class, 'edit'])
+        ->middleware(['auth', 'admin_or_user:1'])
+        ->name('admin.industries.edit');
+    Route::put('/industries/{industry}', [IndustryController::class, 'update'])
+        ->middleware(['auth', 'admin_or_user:1'])
+        ->name('admin.industries.update');
+    Route::delete('/industries/{industry}', [IndustryController::class, 'destroy'])
+        ->middleware(['auth', 'admin_or_user:1'])
+        ->name('admin.industries.destroy');
 
     Route::get('/modules/{moduleKey}/settings', [ModuleSettingsController::class, 'show'])
         ->middleware(['auth', 'admin_or_user:1'])

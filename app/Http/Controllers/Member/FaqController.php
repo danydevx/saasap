@@ -203,6 +203,22 @@ class FaqController extends Controller
             ->with('success', 'Pregunta frecuente eliminada correctamente.');
     }
 
+    public function bulkDelete(Request $request, Business $business)
+    {
+        $this->authorize('deleteAny', [\Modules\Faqs\Models\BusinessFaq::class, $business]);
+
+        $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer', \Illuminate\Validation\Rule::exists('business_faqs', 'id')->where('business_id', $business->id)],
+        ]);
+
+        $count = \Modules\Faqs\Models\BusinessFaq::where('business_id', $business->id)
+            ->whereIn('id', $request->ids)
+            ->delete();
+
+        return redirect()->back()->with('success', $count . ' pregunta(s) eliminada(s).');
+    }
+
     public function reorder(Request $request, Business $business)
     {
         $user = $request->user();

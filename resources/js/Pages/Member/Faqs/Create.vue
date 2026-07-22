@@ -96,6 +96,7 @@ const props = defineProps({
 const page = usePage()
 const errors = computed(() => page.props.errors || {})
 const sending = ref(false)
+const businessMenu = computed(() => page.props.businessMenu || [])
 
 const categoryOptions = computed(() => [
   { value: '', label: 'Sin categoria' },
@@ -110,11 +111,26 @@ const form = ref({
   sort_order: 0,
 })
 
-const breadcrumbs = computed(() => [
-  { label: 'Mis Negocios', href: '/member/business-modules' },
-  { label: 'Preguntas Frecuentes', href: `/member/businesses/${props.business.id}/faqs` },
-  { label: 'Nueva', active: true },
-])
+const breadcrumbs = computed(() => {
+  const path = window.location.pathname
+  const businessMatch = path.match(/^\/member\/businesses\/(\d+)/)
+  if (businessMatch) {
+    const businessId = parseInt(businessMatch[1])
+    const biz = businessMenu.value.find(b => b.id === businessId)
+    if (biz) {
+      return [
+        { label: 'Mis Negocios', href: '/member/business-modules' },
+        { label: biz.name, href: `/member/businesses/${biz.id}/edit` },
+        { label: 'Preguntas Frecuentes', href: `/member/businesses/${biz.id}/faqs` },
+        { label: 'Nueva Pregunta', active: true },
+      ]
+    }
+  }
+  return [
+    { label: 'Mis Negocios', href: '/member/business-modules' },
+    { label: 'Nueva Pregunta', active: true },
+  ]
+})
 
 const submit = () => {
   sending.value = true

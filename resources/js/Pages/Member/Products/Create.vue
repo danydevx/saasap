@@ -1,25 +1,26 @@
 <template>
   <MemberLayout>
-    <Head :title="`Nuevo Producto - ${business.name}`" />
+    <Head :title="`Nuevo Producto - ${business?.name || ''}`" />
 
     <PageHeader
-      :title="'Nuevo Producto'"
+      title="Nuevo Producto"
       :breadcrumbs="breadcrumbs"
-      :backHref="`/member/businesses/${business.id}/products`"
+      :backHref="`/member/businesses/${business?.id}/products`"
     />
 
     <div class="card border-0 shadow-sm">
       <div class="card-body">
         <form @submit.prevent="submit">
-          <div class="row g-3">
+          <div class="row g-3 mb-3">
             <div class="col-12 col-md-8">
               <FieldText
                 id="product-name"
                 label="Nombre"
-                placeholder="Shampoo premium"
                 v-model="form.name"
-                :formError="form.errors.name"
+                :formError="errors.name"
+                placeholder="Nombre del producto"
                 required
+                @blur="generateSlug"
               />
             </div>
 
@@ -27,9 +28,9 @@
               <FieldText
                 id="product-slug"
                 label="Slug"
-                placeholder="shampoo-premium"
                 v-model="form.slug"
-                :formError="form.errors.slug"
+                :formError="errors.slug"
+                placeholder="nombre-producto"
               />
               <small class="text-muted">Se genera automaticamente si se deja vacio.</small>
             </div>
@@ -39,9 +40,21 @@
                 id="product-description"
                 label="Descripcion"
                 v-model="form.description"
-                :formError="form.errors.description"
+                :formError="errors.description"
                 :rows="3"
               />
+            </div>
+
+            <div class="col-12 col-md-6">
+              <FieldSelect
+                id="product-category"
+                label="Categoria"
+                v-model="form.category_id"
+                :formError="errors.category_id"
+              >
+                <option value="">Sin categoria</option>
+                <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
+              </FieldSelect>
             </div>
 
             <div class="col-12 col-md-6">
@@ -49,52 +62,30 @@
                 id="product-location"
                 label="Ubicacion"
                 v-model="form.business_location_id"
-                :formError="form.errors.business_location_id"
+                :formError="errors.business_location_id"
               >
                 <option value="">Todas las ubicaciones</option>
-                <option v-for="loc in locations" :key="loc.id" :value="loc.id">
-                  {{ loc.name }}
-                </option>
+                <option v-for="loc in locations" :key="loc.id" :value="loc.id">{{ loc.name }}</option>
               </FieldSelect>
             </div>
 
-            <div class="col-12 col-md-3">
+            <div class="col-12 col-md-4">
               <FieldNumber
                 id="product-price"
                 label="Precio"
-                placeholder="0.00"
                 v-model="form.price"
-                :formError="form.errors.price"
+                :formError="errors.price"
+                placeholder="0.00"
               />
             </div>
 
-            <div class="col-12 col-md-3">
+            <div class="col-12 col-md-4">
               <FieldNumber
                 id="product-compare-price"
                 label="Precio anterior"
-                placeholder="0.00"
                 v-model="form.compare_at_price"
-                :formError="form.errors.compare_at_price"
-              />
-            </div>
-
-            <div class="col-12 col-md-4">
-              <FieldText
-                id="product-sku"
-                label="SKU"
-                placeholder="SKU-001"
-                v-model="form.sku"
-                :formError="form.errors.sku"
-              />
-            </div>
-
-            <div class="col-12 col-md-4">
-              <FieldText
-                id="product-barcode"
-                label="Codigo de barras"
-                placeholder="123456789"
-                v-model="form.barcode"
-                :formError="form.errors.barcode"
+                :formError="errors.compare_at_price"
+                placeholder="0.00"
               />
             </div>
 
@@ -102,9 +93,29 @@
               <FieldNumber
                 id="product-quantity"
                 label="Cantidad en stock"
-                placeholder="0"
                 v-model="form.quantity"
-                :formError="form.errors.quantity"
+                :formError="errors.quantity"
+                placeholder="0"
+              />
+            </div>
+
+            <div class="col-12 col-md-6">
+              <FieldText
+                id="product-sku"
+                label="SKU"
+                v-model="form.sku"
+                :formError="errors.sku"
+                placeholder="SKU-001"
+              />
+            </div>
+
+            <div class="col-12 col-md-6">
+              <FieldText
+                id="product-barcode"
+                label="Codigo de barras"
+                v-model="form.barcode"
+                :formError="errors.barcode"
+                placeholder="123456789"
               />
             </div>
 
@@ -134,10 +145,12 @@
           </div>
 
           <div class="col-12 d-flex gap-2 mt-4">
-            <button type="submit" class="btn btn-primary" :disabled="form.processing">
-              {{ form.processing ? 'Creando...' : 'Crear Producto' }}
+            <button type="submit" class="btn btn-primary" :disabled="sending">
+              {{ sending ? 'Creando...' : 'Crear Producto' }}
             </button>
-            <Link :href="`/member/businesses/${business.id}/products`" class="btn btn-outline-secondary">Cancelar</Link>
+            <Link :href="`/member/businesses/${business?.id}/products`" class="btn btn-outline-secondary">
+              Cancelar
+            </Link>
           </div>
         </form>
       </div>
@@ -146,8 +159,8 @@
 </template>
 
 <script setup>
-import { computed, watch } from 'vue'
-import { Head, Link, useForm } from '@inertiajs/vue3'
+import { computed, reactive, ref } from 'vue'
+import { Head, Link, router, usePage } from '@inertiajs/vue3'
 import MemberLayout from '@/Layouts/MemberLayout.vue'
 import PageHeader from '@/Components/Admin/PageHeader.vue'
 import FieldText from '@/Components/Fields/FieldText.vue'
@@ -157,14 +170,43 @@ import FieldSelect from '@/Components/Fields/FieldSelect.vue'
 import FieldSwitch from '@/Components/Fields/FieldSwitch.vue'
 import FieldPhone from '@/Components/Fields/FieldPhone.vue'
 
-const props = defineProps({
-  business: { type: Object, required: true },
-  locations: { type: Array, default: () => [] },
+const page = usePage()
+const business = computed(() => page.props.business)
+const locations = computed(() => page.props.locations || [])
+const categories = computed(() => page.props.categories || [])
+const errors = computed(() => {
+  const errs = page.props.errors || {}
+  const normalized = {}
+  for (const [key, value] of Object.entries(errs)) {
+    normalized[key] = Array.isArray(value) ? value.join(', ') : value
+  }
+  return normalized
+})
+const sending = ref(false)
+const businessMenu = computed(() => page.props.businessMenu || [])
+
+const breadcrumbs = computed(() => {
+  const path = window.location.pathname
+  const businessMatch = path.match(/^\/member\/businesses\/(\d+)/)
+  if (businessMatch) {
+    const businessId = parseInt(businessMatch[1])
+    const biz = businessMenu.value.find(b => b.id === businessId)
+    if (biz) {
+      return [
+        { label: 'Mis Negocios', href: '/member/business-modules' },
+        { label: biz.name, href: `/member/businesses/${biz.id}/edit` },
+        { label: 'Productos', href: `/member/businesses/${biz.id}/products` },
+        { label: 'Nuevo Producto', active: true },
+      ]
+    }
+  }
+  return [
+    { label: 'Mis Negocios', href: '/member/business-modules' },
+    { label: 'Nuevo Producto', active: true },
+  ]
 })
 
-const business = computed(() => props.business)
-
-const form = useForm({
+const form = reactive({
   name: '',
   slug: '',
   description: '',
@@ -178,20 +220,25 @@ const form = useForm({
   whatsapp_contact: '',
   sort_order: 0,
   business_location_id: '',
+  category_id: '',
 })
 
-watch(() => form.name, (val) => {
-  if (val && !form.slug) {
-    form.slug = val.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+const generateSlug = () => {
+  if (form.name && !form.slug) {
+    form.slug = form.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
   }
-})
-
-const breadcrumbs = computed(() => [
-  { label: 'Mis Negocios', href: '/member/business-modules' },
-  { label: 'Nuevo Producto', active: true },
-])
+}
 
 const submit = () => {
-  form.post(`/member/businesses/${business.value.id}/products`)
+  sending.value = true
+  router.post(`/member/businesses/${business.value.id}/products`, form, {
+    preserveScroll: true,
+    onError: (errs) => {
+      console.error('Validation errors:', errs)
+    },
+    onFinish: () => {
+      sending.value = false
+    },
+  })
 }
 </script>

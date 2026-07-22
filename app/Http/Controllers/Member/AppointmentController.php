@@ -315,4 +315,27 @@ class AppointmentController extends Controller
 
         return redirect()->back()->with('success', 'Cita cancelada correctamente.');
     }
+
+    public function bulkDelete(Request $request, Business $business)
+    {
+        $this->authorize('deleteAny', [BusinessAppointment::class, $business]);
+
+        $data = $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer'],
+        ]);
+
+        $count = count($data['ids']);
+
+        $business->appointments()
+            ->whereIn('id', $data['ids'])
+            ->delete();
+
+        $message = $count === 1
+            ? "1 cita eliminada correctamente."
+            : "{$count} citas eliminadas correctamente.";
+
+        return redirect()->back()
+            ->with('success', $message);
+    }
 }

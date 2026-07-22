@@ -1,9 +1,9 @@
 <template>
   <MemberLayout>
-    <Head :title="`Galeria - ${business.name}`" />
+    <Head :title="`Galería - ${business.name}`" />
 
     <PageHeader
-      title="Galeria"
+      title="Galería"
       :breadcrumbs="breadcrumbs"
       :backHref="'/member/business-modules'"
     >
@@ -11,6 +11,15 @@
         <p class="text-muted mb-0">Gestiona las imagenes de tu galeria. Arrastra para reordenar.</p>
       </template>
       <template #actions>
+        <button
+          v-if="selectedIds.length > 0"
+          class="btn btn-danger btn-sm"
+          @click="deleteSelected"
+          :disabled="deleting"
+        >
+          <i class="bi bi-trash me-1"></i>
+          Eliminar ({{ selectedIds.length }})
+        </button>
         <button class="btn btn-primary btn-sm" @click="openUploadModal">
           <i class="bi bi-plus-lg me-1"></i>
           Subir imagen
@@ -21,6 +30,18 @@
     <div v-if="$page.props.flash?.success" class="alert alert-success alert-dismissible fade show" role="alert">
       {{ $page.props.flash.success }}
       <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <div class="row mb-3">
+      <div class="col-md-4">
+        <BulkSelect
+          v-model:selectedIds="selectedIds"
+          :current-page-ids="currentPageIds"
+          :delete-endpoint="`/member/businesses/${business?.id}/gallery/bulk-delete`"
+          item-name="imagenes"
+          @deleted="onBulkDeleted"
+        />
+      </div>
     </div>
 
     <SortableCards
@@ -43,6 +64,12 @@
       </template>
 
       <template #item="{ item: img }">
+        <div class="sortable-cards__checkbox">
+          <BulkSelectRowCheckbox
+            :id="img.id"
+            v-model:selectedIds="selectedIds"
+          />
+        </div>
         <div class="card-img-top ratio ratio-4x3 bg-light d-flex align-items-center justify-content-center overflow-hidden">
           <img v-if="img.path" :src="img.path" :alt="img.title || img.original_name" class="w-100 h-100" style="object-fit: cover;" />
           <i v-else class="bi bi-image text-muted fs-1"></i>
@@ -212,16 +239,33 @@ import FieldTextarea from '@/Components/Fields/FieldTextarea.vue'
 import FieldSelect from '@/Components/Fields/FieldSelect.vue'
 import FieldNumber from '@/Components/Fields/FieldNumber.vue'
 import FieldSwitch from '@/Components/Fields/FieldSwitch.vue'
+import { BulkSelect, BulkSelectRowCheckbox } from '@/Components/BulkSelect'
 
 const page = usePage()
 const business = computed(() => page.props.business)
 const images = computed(() => page.props.images || { data: [], links: [] })
 const locations = computed(() => page.props.locations || [])
+const businessMenu = computed(() => page.props.businessMenu || [])
 
-const breadcrumbs = computed(() => [
-  { label: 'Mis Negocios', href: '/member/business-modules' },
-  { label: 'Galeria', active: true },
-])
+const breadcrumbs = computed(() => {
+  const path = window.location.pathname
+  const businessMatch = path.match(/^\/member\/businesses\/(\d+)/)
+  if (businessMatch) {
+    const businessId = parseInt(businessMatch[1])
+    const biz = businessMenu.value.find(b => b.id === businessId)
+    if (biz) {
+      return [
+        { label: 'Mis Negocios', href: '/member/business-modules' },
+        { label: biz.name, href: `/member/businesses/${biz.id}/edit` },
+        { label: 'Galería', active: true },
+      ]
+    }
+  }
+  return [
+    { label: 'Mis Negocios', href: '/member/business-modules' },
+    { label: 'Galería', active: true },
+  ]
+})
 
 const sortableCardsRef = ref(null)
 const uploadModalElement = ref(null)
@@ -232,7 +276,13 @@ let editModal = null
 const loading = ref(false)
 const uploading = ref(false)
 const saving = ref(false)
+const deleting = ref(false)
 const formError = ref('')
+const selectedIds = ref([])
+
+const currentPageIds = computed(() => {
+  return images.value.data.map(img => img.id)
+})
 
 const uploadForm = reactive({
   file: null,
@@ -368,6 +418,35 @@ const deleteImage = (img) => {
   }
 }
 
+const deleteSelected = () => {
+  if (selectedIds.value.length === 0) return
+
+  const count = selectedIds.value.length
+  if (confirm(`Eliminar ${count} imagen${count > 1 ? 'es' : ''} seleccionada${count > 1 ? 's' : ''}?`)) {
+    deleting.value = true
+    router.post(`/member/businesses/${business.value.id}/gallery/bulk-delete`, {
+      ids: selectedIds.value,
+    }, {
+      preserveScroll: true,
+      onSuccess: () => {
+        selectedIds.value = []
+        if (sortableCardsRef.value) {
+          sortableCardsRef.value.reload()
+        }
+      },
+      onFinish: () => {
+        deleting.value = false
+      },
+    })
+  }
+}
+
+const onBulkDeleted = () => {
+  if (sortableCardsRef.value) {
+    sortableCardsRef.value.reload()
+  }
+}
+
 const onReordered = (ids) => {
   console.log('Reordered:', ids)
 }
@@ -377,3 +456,12 @@ onMounted(() => {
   editModal = new Modal(editModalElement.value)
 })
 </script>
+
+<style scoped>
+.sortable-cards__checkbox {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 20;
+}
+</style>

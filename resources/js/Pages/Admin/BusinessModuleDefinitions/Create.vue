@@ -72,6 +72,15 @@
                 v-model="form.has_settings"
               />
             </div>
+
+            <div class="col-12">
+              <FieldSwitch
+                id="def-premium"
+                label="Modulo premium"
+                v-model="form.is_premium"
+              />
+              <small class="text-muted d-block mb-2">Requiere plan especifico para acceder</small>
+            </div>
           </div>
 
           <div class="col-12 d-flex gap-2 mt-4">
@@ -101,6 +110,7 @@ const form = useForm({
   icon: '',
   sort_order: 0,
   has_settings: false,
+  is_premium: false,
 })
 
 const breadcrumbs = [

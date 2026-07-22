@@ -284,6 +284,31 @@ class PromotionController extends Controller
         return back(303);
     }
 
+    public function bulkDelete(Request $request, Business $business)
+    {
+        $this->authorize('deleteAny', [BusinessPromotion::class, $business]);
+
+        $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer', \Illuminate\Validation\Rule::exists('business_promotions', 'id')->where('business_id', $business->id)],
+        ]);
+
+        $promotions = \Modules\Promotions\Models\BusinessPromotion::where('business_id', $business->id)
+            ->whereIn('id', $request->ids)
+            ->get();
+
+        foreach ($promotions as $promotion) {
+            if ($promotion->image) {
+                $path = str_replace(url('/') . '/storage/', '', $promotion->image);
+                Storage::disk('public')->delete($path);
+            }
+            $promotion->images()->delete();
+            $promotion->delete();
+        }
+
+        return redirect()->back()->with('success', count($promotions) . ' promocion(es) eliminada(s).');
+    }
+
     public function regenerateQrCode(Request $request, Business $business, BusinessPromotion $promotion)
     {
         $this->authorize('update', [BusinessPromotion::class, $promotion]);

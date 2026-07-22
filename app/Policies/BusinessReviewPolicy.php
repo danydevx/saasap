@@ -43,4 +43,13 @@ class BusinessReviewPolicy
 
         return $user->id === $review->business->user_id;
     }
+
+    public function deleteAny(User $user, Business $business): bool
+    {
+        if ($user->hasAnyRole(['superadmin', 'admin'])) {
+            return true;
+        }
+
+        return $user->id === $business->user_id;
+    }
 }

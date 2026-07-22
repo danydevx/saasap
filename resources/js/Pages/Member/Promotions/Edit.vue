@@ -194,12 +194,28 @@ import FieldSwitch from '@/Components/Fields/FieldSwitch.vue'
 const page = usePage()
 const business = computed(() => page.props.business)
 const promotion = computed(() => page.props.promotion)
+const businessMenu = computed(() => page.props.businessMenu || [])
 
-const breadcrumbs = computed(() => [
-  { label: 'Mis Negocios', href: '/member/business-modules' },
-  { label: 'Promociones', href: `/member/businesses/${business.value.id}/promotions` },
-  { label: promotion.value?.name || 'Editar', active: true },
-])
+const breadcrumbs = computed(() => {
+  const path = window.location.pathname
+  const businessMatch = path.match(/^\/member\/businesses\/(\d+)/)
+  if (businessMatch) {
+    const businessId = parseInt(businessMatch[1])
+    const biz = businessMenu.value.find(b => b.id === businessId)
+    if (biz) {
+      return [
+        { label: 'Mis Negocios', href: '/member/business-modules' },
+        { label: biz.name, href: `/member/businesses/${biz.id}/edit` },
+        { label: 'Promociones', href: `/member/businesses/${biz.id}/promotions` },
+        { label: 'Editar Promocion', active: true },
+      ]
+    }
+  }
+  return [
+    { label: 'Mis Negocios', href: '/member/business-modules' },
+    { label: 'Editar Promocion', active: true },
+  ]
+})
 const locations = computed(() => page.props.locations || [])
 const errors = computed(() => page.props.errors || {})
 const sending = computed(() => false)
@@ -265,6 +281,7 @@ const submit = () => {
   formData.append('expires_at', form.expires_at || '')
   formData.append('sort_order', form.sort_order || 0)
   formData.append('is_active', form.is_active ? '1' : '0')
+  formData.append('_method', 'PUT')
 
   if (imageFile.value) {
     formData.append('image', imageFile.value)
@@ -273,9 +290,7 @@ const submit = () => {
     formData.append('remove_image', '1')
   }
 
-  router.post(`/member/businesses/${business.value.id}/promotions/${promotion.value.id}`, formData, {
-    _method: 'put',
-  })
+  router.post(`/member/businesses/${business.value.id}/promotions/${promotion.value.id}`, formData)
 }
 
 const regenerateQr = () => {

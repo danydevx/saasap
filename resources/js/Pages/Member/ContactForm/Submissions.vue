@@ -71,13 +71,27 @@ const page = usePage()
 const business = computed(() => page.props.business)
 const form = computed(() => page.props.form)
 const dataTable = computed(() => page.props.dataTable)
+const businessMenu = computed(() => page.props.businessMenu || [])
 
-const breadcrumbs = computed(() => [
-  { label: 'Mis Negocios', href: '/member/business-modules' },
-  { label: 'Formularios', href: `/member/businesses/${business.value?.id}/contact-forms` },
-  { label: form.value?.name || 'Formulario', href: `/member/businesses/${business.value?.id}/contact-forms/${form.value?.id}/edit` },
-  { label: 'Envios', active: true },
-])
+const breadcrumbs = computed(() => {
+  const path = window.location.pathname
+  const businessMatch = path.match(/^\/member\/businesses\/(\d+)/)
+  if (businessMatch) {
+    const businessId = parseInt(businessMatch[1])
+    const biz = businessMenu.value.find(b => b.id === businessId)
+    if (biz) {
+      return [
+        { label: 'Mis Negocios', href: '/member/business-modules' },
+        { label: biz.name, href: `/member/businesses/${biz.id}/edit` },
+        { label: 'Respuestas', active: true },
+      ]
+    }
+  }
+  return [
+    { label: 'Mis Negocios', href: '/member/business-modules' },
+    { label: 'Respuestas', active: true },
+  ]
+})
 
 const columns = [
   { key: 'name', label: 'Nombre', sortable: true },

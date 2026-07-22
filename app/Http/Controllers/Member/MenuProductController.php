@@ -14,7 +14,24 @@ class MenuProductController extends Controller
 {
     public function create(Request $request, Business $business)
     {
-        return redirect()->route('member.menu.products.index', ['business' => $business->id]);
+        $user = Auth::user();
+        abort_unless($business->user_id === $user->id, 403);
+
+        $categories = MenuCategory::where('business_id', $business->id)
+            ->where('active', true)
+            ->orderBy('sort_order')
+            ->get()
+            ->map(function ($cat) {
+                return [
+                    'id' => $cat->id,
+                    'title' => $cat->nested_title,
+                ];
+            });
+
+        return inertia('Member/MenuProducts/Create', [
+            'business' => $business,
+            'categories' => $categories,
+        ]);
     }
 
     public function index(Request $request, Business $business)
@@ -49,7 +66,7 @@ class MenuProductController extends Controller
                 ];
             });
 
-        return inertia('Member/Products/Index', [
+        return inertia('Member/MenuProducts/Index', [
             'business' => $business,
             'products' => $products,
             'categories' => $categories,
@@ -111,7 +128,8 @@ class MenuProductController extends Controller
             }
         }
 
-        return redirect()->back()->with('success', 'Producto creado exitosamente.');
+        return redirect()->route('member.menu.products.index', $business->id)
+            ->with('success', 'Producto creado exitosamente.');
     }
 
     public function update(Request $request, Business $business, MenuProduct $product)
@@ -203,7 +221,7 @@ class MenuProductController extends Controller
                 ];
             });
 
-        return inertia('Member/Products/Edit', [
+        return inertia('Member/MenuProducts/Edit', [
             'business' => $business,
             'product' => $product->load('variants', 'images'),
             'categories' => $categories,
@@ -235,5 +253,35 @@ class MenuProductController extends Controller
         });
 
         return back(303);
+    }
+
+    public function bulkDelete(Request $request, Business $business)
+    {
+        $user = Auth::user();
+        abort_unless($business->user_id === $user->id, 403);
+
+        $data = $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer', \Illuminate\Validation\Rule::exists('menu_products', 'id')->where('business_id', $business->id)],
+        ]);
+
+        $count = count($data['ids']);
+
+        $products = \Modules\RestaurantMenu\Entities\MenuProduct::where('business_id', $business->id)
+            ->whereIn('id', $data['ids'])
+            ->get();
+
+        foreach ($products as $product) {
+            $product->variants()->delete();
+            $product->images()->delete();
+            $product->delete();
+        }
+
+        $message = $count === 1
+            ? "1 producto eliminado correctamente."
+            : "{$count} productos eliminados correctamente.";
+
+        return redirect()->back()
+            ->with('success', $message);
     }
 }

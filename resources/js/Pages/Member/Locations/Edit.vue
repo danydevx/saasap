@@ -140,7 +140,7 @@
 
 <script setup>
 import { computed, ref } from 'vue'
-import { Head, Link, useForm } from '@inertiajs/vue3'
+import { Head, Link, useForm, usePage } from '@inertiajs/vue3'
 import MemberLayout from '@/Layouts/MemberLayout.vue'
 import PageHeader from '@/Components/Admin/PageHeader.vue'
 import FieldText from '@/Components/Fields/FieldText.vue'
@@ -160,7 +160,8 @@ const props = defineProps({
   },
 })
 
-const business = computed(() => props.business)
+const page = usePage()
+const business = computed(() => page.props.business)
 
 const locationData = ref({
   state_code: props.location.state_code || '',
@@ -186,11 +187,28 @@ const form = useForm({
   is_active: !!props.location.is_active,
 })
 
-const breadcrumbs = computed(() => [
-  { label: 'Mis Negocios', href: '/member/business-modules' },
-  { label: 'Ubicaciones', href: `/member/businesses/${business.value.id}/locations` },
-  { label: 'Editar', active: true },
-])
+const businessMenu = computed(() => page.props.businessMenu || [])
+
+const breadcrumbs = computed(() => {
+  const path = window.location.pathname
+  const businessMatch = path.match(/^\/member\/businesses\/(\d+)/)
+  if (businessMatch) {
+    const businessId = parseInt(businessMatch[1])
+    const biz = businessMenu.value.find(b => b.id === businessId)
+    if (biz) {
+      return [
+        { label: 'Mis Negocios', href: '/member/business-modules' },
+        { label: biz.name, href: `/member/businesses/${biz.id}/edit` },
+        { label: 'Ubicaciones', href: `/member/businesses/${biz.id}/locations` },
+        { label: 'Editar Ubicacion', active: true },
+      ]
+    }
+  }
+  return [
+    { label: 'Mis Negocios', href: '/member/business-modules' },
+    { label: 'Editar Ubicacion', active: true },
+  ]
+})
 
 const onStateChanged = ({ lat, lng }) => {
   if (lat && lng) {

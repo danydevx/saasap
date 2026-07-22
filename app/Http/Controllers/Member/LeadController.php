@@ -282,4 +282,27 @@ class LeadController extends Controller
 
         return response($content, 200, $headers);
     }
+
+    public function bulkDelete(Request $request, Business $business)
+    {
+        $this->authorize('deleteAny', [BusinessLead::class, $business]);
+
+        $data = $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer'],
+        ]);
+
+        $count = count($data['ids']);
+
+        $business->leads()
+            ->whereIn('id', $data['ids'])
+            ->delete();
+
+        $message = $count === 1
+            ? "1 contacto eliminado correctamente."
+            : "{$count} contactos eliminados correctamente.";
+
+        return redirect()->back()
+            ->with('success', $message);
+    }
 }

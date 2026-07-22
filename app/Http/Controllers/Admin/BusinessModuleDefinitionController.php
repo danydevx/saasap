@@ -55,6 +55,7 @@ class BusinessModuleDefinitionController extends Controller
             'sort_order' => ['nullable', 'integer', 'min:0'],
             'has_settings' => ['boolean'],
             'settings_url' => ['nullable', 'string', 'max:255'],
+            'is_premium' => ['boolean'],
         ]);
 
         BusinessModuleDefinition::create([
@@ -65,6 +66,7 @@ class BusinessModuleDefinitionController extends Controller
             'sort_order' => $data['sort_order'] ?? 0,
             'has_settings' => (bool) ($data['has_settings'] ?? false),
             'settings_url' => $data['settings_url'] ?? null,
+            'is_premium' => (bool) ($data['is_premium'] ?? false),
             'is_active' => true,
         ]);
 
@@ -96,6 +98,7 @@ class BusinessModuleDefinitionController extends Controller
                 'has_settings' => (bool) $definition->has_settings,
                 'settings_url' => $settingsUrl,
                 'is_active' => (bool) $definition->is_active,
+                'is_premium' => (bool) $definition->is_premium,
                 'show_in_menu' => (bool) $definition->show_in_menu,
                 'menu_title' => $definition->menu_title ?? '',
             ],
@@ -115,6 +118,7 @@ class BusinessModuleDefinitionController extends Controller
             'has_settings' => ['boolean'],
             'settings_url' => ['nullable', 'string', 'max:255'],
             'is_active' => ['boolean'],
+            'is_premium' => ['boolean'],
             'show_in_menu' => ['boolean'],
             'menu_title' => ['nullable', 'string', 'max:50'],
         ]);
@@ -141,6 +145,7 @@ class BusinessModuleDefinitionController extends Controller
             'has_settings' => (bool) ($data['has_settings'] ?? false),
             'settings_url' => $data['settings_url'] ?? null,
             'is_active' => (bool) ($data['is_active'] ?? false),
+            'is_premium' => (bool) ($data['is_premium'] ?? false),
             'show_in_menu' => (bool) ($data['show_in_menu'] ?? false),
             'menu_title' => $data['menu_title'] ?? null,
         ]);

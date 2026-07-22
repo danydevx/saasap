@@ -129,6 +129,15 @@
 
             <div class="col-12 col-md-6">
               <FieldSwitch
+                id="def-premium"
+                label="Modulo premium"
+                v-model="form.is_premium"
+              />
+              <small class="text-muted d-block mb-2">Requiere plan especifico para acceder</small>
+            </div>
+
+            <div class="col-12 col-md-6">
+              <FieldSwitch
                 id="def-show-menu"
                 label="Mostrar en menu lateral"
                 v-model="form.show_in_menu"
@@ -191,6 +200,7 @@ const form = reactive({
   has_settings: !!props.definition.has_settings,
   settings_url: props.definition.settings_url || '',
   is_active: !!props.definition.is_active,
+  is_premium: !!props.definition.is_premium,
   show_in_menu: !!props.definition.show_in_menu,
   menu_title: props.definition.menu_title || '',
   imageFile: null,
@@ -231,6 +241,7 @@ const submit = () => {
   data.append('has_settings', form.has_settings ? '1' : '0')
   data.append('settings_url', form.settings_url || '')
   data.append('is_active', form.is_active ? '1' : '0')
+  data.append('is_premium', form.is_premium ? '1' : '0')
   data.append('show_in_menu', form.show_in_menu ? '1' : '0')
   data.append('menu_title', form.menu_title || '')
   data.append('_method', 'PUT')

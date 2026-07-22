@@ -13,9 +13,18 @@ class BusinessResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'slug' => $this->slug,
+            'business_type' => $this->business_type?->value ?? $this->business_type,
+            'industry_id' => $this->industry_id,
             'logo_path' => $this->logo_path,
+            'cover_image_path' => $this->cover_image_path,
             'description' => $this->description,
+            'phone' => $this->phone,
+            'email' => $this->email,
+            'website' => $this->website,
+            'timezone' => $this->timezone,
+            'currency' => $this->currency,
             'is_active' => $this->is_active,
+            'is_published' => $this->is_published,
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
 
@@ -27,8 +36,16 @@ class BusinessResource extends JsonResource
                 ];
             }),
 
-            'plan' => $this->whenLoaded('subscriptions', function () {
-                $activeSubscription = $this->subscriptions?->where('status', 'active')->first();
+            'industry' => $this->whenLoaded('industry', function () {
+                return $this->industry ? [
+                    'id' => $this->industry->id,
+                    'name' => $this->industry->name,
+                    'slug' => $this->industry->slug,
+                ] : null;
+            }),
+
+            'plan' => $this->whenLoaded('user.subscriptions', function () {
+                $activeSubscription = $this->user?->subscriptions?->where('status', 'active')->first();
                 return $activeSubscription?->plan ? [
                     'id' => $activeSubscription->plan->id,
                     'name' => $activeSubscription->plan->name,

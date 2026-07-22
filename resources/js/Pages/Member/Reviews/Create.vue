@@ -2,14 +2,11 @@
   <MemberLayout>
     <Head :title="`Nueva Resena - ${business.name}`" />
 
-    <div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
-      <div>
-        <Link :href="`/member/businesses/${business.id}/reviews`" class="text-decoration-none text-muted small">
-          <i class="bi bi-arrow-left me-1"></i>Volver
-        </Link>
-        <h1 class="h4 mb-1 mt-1">Nueva Resena</h1>
-      </div>
-    </div>
+    <PageHeader
+      title="Nueva Resena"
+      :breadcrumbs="breadcrumbs"
+      :backHref="`/member/businesses/${business.id}/reviews`"
+    />
 
     <div class="card border-0 shadow-sm">
       <div class="card-body">
@@ -97,6 +94,7 @@
 import { computed, reactive, ref } from 'vue'
 import { Head, Link, router, usePage } from '@inertiajs/vue3'
 import MemberLayout from '@/Layouts/MemberLayout.vue'
+import PageHeader from '@/Components/Admin/PageHeader.vue'
 import FieldText from '@/Components/Fields/FieldText.vue'
 import FieldTextarea from '@/Components/Fields/FieldTextarea.vue'
 import FieldSelect from '@/Components/Fields/FieldSelect.vue'
@@ -105,8 +103,37 @@ import FieldSwitch from '@/Components/Fields/FieldSwitch.vue'
 
 const page = usePage()
 const business = computed(() => page.props.business)
-const errors = computed(() => page.props.errors || {})
-const sending = computed(() => false)
+const errors = computed(() => {
+  const errs = page.props.errors || {}
+  const normalized = {}
+  for (const [key, value] of Object.entries(errs)) {
+    normalized[key] = Array.isArray(value) ? value.join(', ') : value
+  }
+  return normalized
+})
+const sending = ref(false)
+const businessMenu = computed(() => page.props.businessMenu || [])
+
+const breadcrumbs = computed(() => {
+  const path = window.location.pathname
+  const businessMatch = path.match(/^\/member\/businesses\/(\d+)/)
+  if (businessMatch) {
+    const businessId = parseInt(businessMatch[1])
+    const biz = businessMenu.value.find(b => b.id === businessId)
+    if (biz) {
+      return [
+        { label: 'Mis Negocios', href: '/member/business-modules' },
+        { label: biz.name, href: `/member/businesses/${biz.id}/edit` },
+        { label: 'Resenas', href: `/member/businesses/${biz.id}/reviews` },
+        { label: 'Nueva Resena', active: true },
+      ]
+    }
+  }
+  return [
+    { label: 'Mis Negocios', href: '/member/business-modules' },
+    { label: 'Nueva Resena', active: true },
+  ]
+})
 
 const form = reactive({
   client_name: '',
@@ -118,6 +145,15 @@ const form = reactive({
 })
 
 const submit = () => {
-  router.post(`/member/businesses/${business.value.id}/reviews`, form)
+  sending.value = true
+  router.post(`/member/businesses/${business.value.id}/reviews`, form, {
+    preserveScroll: true,
+    onError: (errs) => {
+      console.error('Validation errors:', errs)
+    },
+    onFinish: () => {
+      sending.value = false
+    },
+  })
 }
 </script>

@@ -90,6 +90,7 @@ import PageHeader from '@/Components/Admin/PageHeader.vue'
 const page = usePage()
 const business = computed(() => page.props.business)
 const appointment = computed(() => page.props.appointment)
+const businessMenu = computed(() => page.props.businessMenu || [])
 
 const statusOptions = [
   { value: 'pending', label: 'Pendiente', color: 'warning' },
@@ -99,11 +100,25 @@ const statusOptions = [
   { value: 'cancelled', label: 'Cancelar', color: 'secondary' },
 ]
 
-const breadcrumbs = computed(() => [
-  { label: 'Mis Negocios', href: '/member/business-modules' },
-  { label: 'Citas', href: `/member/businesses/${business.value.id}/appointments` },
-  { label: 'Cita #' + appointment.value.id, active: true },
-])
+const breadcrumbs = computed(() => {
+  const path = window.location.pathname
+  const businessMatch = path.match(/^\/member\/businesses\/(\d+)/)
+  if (businessMatch) {
+    const businessId = parseInt(businessMatch[1])
+    const biz = businessMenu.value.find(b => b.id === businessId)
+    if (biz) {
+      return [
+        { label: 'Mis Negocios', href: '/member/business-modules' },
+        { label: biz.name, href: `/member/businesses/${biz.id}/edit` },
+        { label: 'Detalle de Cita', active: true },
+      ]
+    }
+  }
+  return [
+    { label: 'Mis Negocios', href: '/member/business-modules' },
+    { label: 'Detalle de Cita', active: true },
+  ]
+})
 
 const formatDate = (date) => {
   return new Date(date).toLocaleDateString('es-AR', {

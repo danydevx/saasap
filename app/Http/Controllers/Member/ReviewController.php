@@ -17,12 +17,12 @@ class ReviewController extends Controller
 
         $perPage = min((int) $request->get('per_page', 10), 100);
         $search = $request->get('search', '');
-        $sort = $request->get('sort', 'created_at');
-        $direction = $request->get('direction', 'desc');
+        $sort = $request->get('sort', 'sort_order');
+        $direction = $request->get('direction', 'asc');
 
-        $allowedSorts = ['client_name', 'rating', 'is_active', 'created_at'];
+        $allowedSorts = ['client_name', 'rating', 'is_active', 'created_at', 'sort_order'];
         if (!in_array($sort, $allowedSorts)) {
-            $sort = 'created_at';
+            $sort = 'sort_order';
         }
         $direction = strtolower($direction) === 'asc' ? 'asc' : 'desc';
 
@@ -43,6 +43,7 @@ class ReviewController extends Controller
             'data' => collect($reviews->items())->map(function ($review) {
                 return [
                     'id' => $review->id,
+                    'sort_order' => $review->sort_order,
                     'client_name' => $review->client_name,
                     'company' => $review->company,
                     'comment' => $review->comment,
@@ -209,5 +210,33 @@ class ReviewController extends Controller
         });
 
         return back(303);
+    }
+
+    public function bulkDelete(Request $request, Business $business)
+    {
+        $user = $request->user();
+
+        if ($user->hasAnyRole(['superadmin', 'admin'])) {
+        } else {
+            abort_unless($business->user_id === $user->id, 403);
+        }
+
+        $data = $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer'],
+        ]);
+
+        $count = count($data['ids']);
+
+        $business->reviews()
+            ->whereIn('id', $data['ids'])
+            ->delete();
+
+        $message = $count === 1
+            ? "1 resena eliminada correctamente."
+            : "{$count} resenas eliminadas correctamente.";
+
+        return redirect()->back()
+            ->with('success', $message);
     }
 }

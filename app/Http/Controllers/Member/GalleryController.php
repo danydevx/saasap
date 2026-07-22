@@ -171,6 +171,30 @@ class GalleryController extends Controller
         return redirect()->back()->with('success', 'Imagen eliminada correctamente.');
     }
 
+    public function bulkDelete(Request $request, Business $business)
+    {
+        $this->authorize('deleteAny', [BusinessGalleryImage::class, $business]);
+
+        $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer', \Illuminate\Validation\Rule::exists('business_gallery_images', 'id')->where('business_id', $business->id)],
+        ]);
+
+        $images = BusinessGalleryImage::where('business_id', $business->id)
+            ->whereIn('id', $request->ids)
+            ->get();
+
+        foreach ($images as $image) {
+            if ($image->path) {
+                $path = str_replace(url('/') . '/storage/', '', $image->path);
+                Storage::disk('public')->delete($path);
+            }
+            $image->delete();
+        }
+
+        return redirect()->back()->with('success', count($images) . ' imagen(es) eliminada(s).');
+    }
+
     public function reorder(Request $request, Business $business)
     {
         $user = $request->user();

@@ -36,6 +36,7 @@
               <ul class="dropdown-menu">
                 <li><Link href="/admin/businesses" class="dropdown-item" prefetch="hover">Negocios</Link></li>
                 <li><Link href="/admin/business-modules" class="dropdown-item" prefetch="hover">Modulos de Negocio</Link></li>
+                <li><Link href="/admin/industries" class="dropdown-item" prefetch="hover">Industrias</Link></li>
                 <li><Link href="/admin/minisite-themes" class="dropdown-item" prefetch="hover">Themes de Minisite</Link></li>
               </ul>
             </li>

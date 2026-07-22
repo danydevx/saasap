@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use App\Models\PlanBusinessModule;
 use App\Services\FeatureService;
 use App\Services\ModuleService;
+use App\Services\ModuleVisibilityService;
 use App\Services\SystemAnnouncementService;
 use App\Services\TemplateRenderService;
 use Illuminate\Http\Request;
@@ -58,8 +59,9 @@ class HandleInertiaRequests extends Middleware
 
         $businessMenu = [];
         if ($user && $user->hasRole('member')) {
-            $planModules = $this->getPlanModulesForUser($user);
-            $businessMenu = $this->buildBusinessMenu($user, $planModules);
+            $moduleVisibility = app(ModuleVisibilityService::class);
+            $planModuleKeys = $moduleVisibility->getPlanModuleKeysForUser($user);
+            $businessMenu = $this->buildBusinessMenu($user, $planModuleKeys, $moduleVisibility);
         }
 
         return [
@@ -87,10 +89,10 @@ class HandleInertiaRequests extends Middleware
         ];
     }
 
-    private function buildBusinessMenu($user, array $planModules = []): array
+    private function buildBusinessMenu($user, array $planModuleKeys = [], $moduleVisibility = null): array
     {
         $businesses = Business::where('user_id', $user->id)
-            ->with(['modules.moduleDefinition'])
+            ->with(['modules.moduleDefinition', 'industry'])
             ->get()
             ->map(fn ($biz) => [
                 'id' => $biz->id,
@@ -102,7 +104,7 @@ class HandleInertiaRequests extends Middleware
                         $m->moduleDefinition &&
                         $m->moduleDefinition->show_in_menu &&
                         $m->moduleDefinition->menu_title &&
-                        isset($planModules[$m->module_key])
+                        $this->canAccessModule($m, $planModuleKeys, $biz, $moduleVisibility)
                     )
                     ->map(fn ($m) => [
                         'key' => $m->module_key,
@@ -117,29 +119,21 @@ class HandleInertiaRequests extends Middleware
         return $businesses;
     }
 
-    private function getPlanModulesForUser($user): array
+    private function canAccessModule($module, array $planModuleKeys, $business, $moduleVisibility): bool
     {
-        $subscription = $user->subscriptions()
-            ->where('status', 'active')
-            ->where(function ($query) {
-                $query->where('ends_at', '>', now())
-                    ->orWhereNull('ends_at');
-            })
-            ->latest()
-            ->first();
+        $isPremium = $module->moduleDefinition->is_premium;
+        $planHasModule = in_array($module->module_key, $planModuleKeys);
 
-        if (!$subscription) {
-            return [];
+        if ($isPremium && !$planHasModule) {
+            return false;
         }
 
-        return PlanBusinessModule::where('plan_id', $subscription->plan_id)
-            ->where('is_enabled', true)
-            ->whereHas('moduleDefinition', fn ($q) => $q->where('is_active', true))
-            ->get()
-            ->pluck('module_key')
-            ->flip()
-            ->map(fn () => true)
-            ->toArray();
+        if ($business->industry && $moduleVisibility) {
+            $industryModuleKeys = $business->industry->moduleDefinitions->pluck('key')->toArray();
+            return in_array($module->module_key, $industryModuleKeys);
+        }
+
+        return true;
     }
 
     private function getModulePath(string $moduleKey): string
@@ -148,7 +142,7 @@ class HandleInertiaRequests extends Middleware
             'hero' => 'hero',
             'locations' => 'locations',
             'services' => 'services',
-            'products' => 'menu-products',
+            'products' => 'products',
             'gallery' => 'gallery',
             'appointments' => 'appointments',
             'slots' => 'slots',
@@ -156,7 +150,7 @@ class HandleInertiaRequests extends Middleware
             'contact_form' => 'contact-forms',
             'reviews' => 'reviews',
             'promotions' => 'promotions',
-            'restaurant_menu' => 'menu-categories',
+            'restaurant_menu' => 'menu-products',
             'socialmedia' => 'social-networks',
             'about' => 'about',
             'features' => 'features',
@@ -164,6 +158,7 @@ class HandleInertiaRequests extends Middleware
             'faqs' => 'faqs',
             'seo' => 'seo',
             'branding' => 'branding',
+            'tasks' => 'tasks',
         ];
 
         return $paths[$moduleKey] ?? $moduleKey;

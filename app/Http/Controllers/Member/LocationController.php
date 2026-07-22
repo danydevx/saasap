@@ -106,6 +106,10 @@ class LocationController extends Controller
 
         $location = $business->locations()->create($data);
 
+        if (isset($data['is_primary']) && $data['is_primary']) {
+            $business->locations()->where('id', '!=', $location->id)->update(['is_primary' => false]);
+        }
+
         $activity->log('location_created', [
             'actor' => $request->user(),
             'subject' => $location,
@@ -171,6 +175,10 @@ class LocationController extends Controller
             'is_active' => ['boolean'],
         ]);
 
+        if (isset($data['is_primary']) && $data['is_primary']) {
+            $business->locations()->where('id', '!=', $location->id)->update(['is_primary' => false]);
+        }
+
         $location->update($data);
 
         $activity->log('location_updated', [
@@ -182,6 +190,22 @@ class LocationController extends Controller
 
         return redirect()->route('member.businesses.locations.index', $business->id)
             ->with('success', 'Ubicacion actualizada correctamente.');
+    }
+
+    public function bulkDelete(Request $request, Business $business)
+    {
+        $this->authorize('deleteAny', [\Modules\Locations\Models\BusinessLocation::class, $business]);
+
+        $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer', \Illuminate\Validation\Rule::exists('business_locations', 'id')->where('business_id', $business->id)],
+        ]);
+
+        $count = \Modules\Locations\Models\BusinessLocation::where('business_id', $business->id)
+            ->whereIn('id', $request->ids)
+            ->delete();
+
+        return redirect()->back()->with('success', $count . ' ubicacion(es) eliminada(s).');
     }
 
     public function destroy(Request $request, Business $business, BusinessLocation $location, ActivityService $activity)

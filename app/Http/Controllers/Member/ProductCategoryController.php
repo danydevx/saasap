@@ -11,20 +11,61 @@ use Illuminate\Support\Facades\Auth;
 
 class ProductCategoryController extends Controller
 {
-    public function index(Business $business)
+    public function index(Request $request, Business $business)
     {
         $user = Auth::user();
         abort_unless($business->user_id === $user->id, 403);
 
-        $categories = BusinessProductCategory::where('business_id', $business->id)
+        $perPage = min((int) $request->get('per_page', 10), 100);
+        $search = $request->get('search', '');
+
+        $query = BusinessProductCategory::where('business_id', $business->id)
+            ->with('parent')
+            ->when($search, function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%");
+            })
+            ->orderBy('name');
+
+        $categories = $query->paginate($perPage);
+
+        $formattedCategories = $categories->getCollection()->map(function ($cat) {
+            return [
+                'id' => $cat->id,
+                'name' => $cat->name,
+                'description' => $cat->description,
+                'slug' => $cat->slug,
+                'is_active' => $cat->is_active,
+                'sort_order' => $cat->sort_order,
+                'parent_id' => $cat->parent_id,
+                'parent' => $cat->parent,
+                'products_count' => $cat->products()->count(),
+                'children_count' => $cat->children()->count(),
+            ];
+        });
+
+        $dataTable = [
+            'data' => $formattedCategories->toArray(),
+            'current_page' => $categories->currentPage(),
+            'last_page' => $categories->lastPage(),
+            'per_page' => $categories->perPage(),
+            'total' => $categories->total(),
+            'from' => $categories->firstItem(),
+            'to' => $categories->lastItem(),
+        ];
+
+        $allCategories = BusinessProductCategory::where('business_id', $business->id)
             ->whereNull('parent_id')
-            ->with('children', 'products')
-            ->orderBy('sort_order')
+            ->with('children')
+            ->orderBy('name')
             ->get();
 
         return Inertia::render('Member/Products/CategoriesIndex', [
-            'business' => $business,
-            'categories' => $categories,
+            'business' => [
+                'id' => $business->id,
+                'name' => $business->name,
+            ],
+            'categories' => $allCategories,
+            'dataTable' => $dataTable,
         ]);
     }
 

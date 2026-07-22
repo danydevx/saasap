@@ -106,7 +106,7 @@
 
 <script setup>
 import { computed, ref } from 'vue'
-import { Head, Link, router } from '@inertiajs/vue3'
+import { Head, Link, router, usePage } from '@inertiajs/vue3'
 import MemberLayout from '@/Layouts/MemberLayout.vue'
 import PageHeader from '@/Components/Admin/PageHeader.vue'
 
@@ -114,8 +114,10 @@ const props = defineProps({
   business: Object,
 })
 
-const business = computed(() => props.business)
+const page = usePage()
+const business = computed(() => page.props.business)
 const sending = ref(false)
+const businessMenu = computed(() => page.props.businessMenu || [])
 
 const form = ref({
   name: '',
@@ -126,11 +128,26 @@ const form = ref({
   show_email: true,
 })
 
-const breadcrumbs = computed(() => [
-  { label: 'Mis Negocios', href: '/member/business-modules' },
-  { label: 'Formularios de Contacto', href: `/member/businesses/${business.value?.id}/contact-forms` },
-  { label: 'Nuevo Formulario', active: true },
-])
+const breadcrumbs = computed(() => {
+  const path = window.location.pathname
+  const businessMatch = path.match(/^\/member\/businesses\/(\d+)/)
+  if (businessMatch) {
+    const businessId = parseInt(businessMatch[1])
+    const biz = businessMenu.value.find(b => b.id === businessId)
+    if (biz) {
+      return [
+        { label: 'Mis Negocios', href: '/member/business-modules' },
+        { label: biz.name, href: `/member/businesses/${biz.id}/edit` },
+        { label: 'Formularios', href: `/member/businesses/${biz.id}/contact-forms` },
+        { label: 'Nuevo Formulario', active: true },
+      ]
+    }
+  }
+  return [
+    { label: 'Mis Negocios', href: '/member/business-modules' },
+    { label: 'Nuevo Formulario', active: true },
+  ]
+})
 
 const submit = () => {
   sending.value = true

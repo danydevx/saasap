@@ -14,6 +14,18 @@
       </template>
     </PageHeader>
 
+    <div class="row mb-3">
+      <div class="col-md-4">
+        <BulkSelect
+          v-model:selectedIds="selectedIds"
+          :current-page-ids="currentPageIds"
+          :delete-endpoint="`/member/businesses/${business?.id}/services/bulk-delete`"
+          item-name="servicios"
+          @deleted="onBulkDeleted"
+        />
+      </div>
+    </div>
+
     <BaseDataTable
       ref="dataTableRef"
       :endpoint="`/member/businesses/${business?.id}/services`"
@@ -27,6 +39,13 @@
       empty-text="Comienza creando tu primer servicio."
       @updated="onDataTableUpdated"
     >
+      <template #cell-checkbox="{ row }">
+        <BulkSelectRowCheckbox
+          :id="row.id"
+          v-model:selectedIds="selectedIds"
+        />
+      </template>
+
       <template #cell-name="{ row }">
         <div class="d-flex align-items-center gap-2">
           <img
@@ -80,10 +99,11 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { Head, Link, router } from '@inertiajs/vue3'
+import { Head, Link, router, usePage } from '@inertiajs/vue3'
 import MemberLayout from '@/Layouts/MemberLayout.vue'
 import PageHeader from '@/Components/Admin/PageHeader.vue'
 import BaseDataTable from '@/Components/DataTable/BaseDataTable.vue'
+import { BulkSelect, BulkSelectRowCheckbox } from '@/Components/BulkSelect'
 
 const props = defineProps({
   business: Object,
@@ -92,16 +112,34 @@ const props = defineProps({
   dataTable: Object,
 })
 
-const business = computed(() => props.business)
+const page = usePage()
+const business = computed(() => page.props.business)
+const businessMenu = computed(() => page.props.businessMenu || [])
 
-const breadcrumbs = computed(() => [
-  { label: 'Mis Negocios', href: '/member/business-modules' },
-  { label: 'Servicios', active: true },
-])
+const breadcrumbs = computed(() => {
+  const path = window.location.pathname
+  const businessMatch = path.match(/^\/member\/businesses\/(\d+)/)
+  if (businessMatch) {
+    const businessId = parseInt(businessMatch[1])
+    const biz = businessMenu.value.find(b => b.id === businessId)
+    if (biz) {
+      return [
+        { label: 'Mis Negocios', href: '/member/business-modules' },
+        { label: biz.name, href: `/member/businesses/${biz.id}/edit` },
+        { label: 'Servicios', active: true },
+      ]
+    }
+  }
+  return [
+    { label: 'Mis Negocios', href: '/member/business-modules' },
+    { label: 'Servicios', active: true },
+  ]
+})
 
 const perPage = ref(10)
 
 const columns = [
+  { key: 'checkbox', label: '', sortable: false, width: '40px' },
   { key: 'name', label: 'Nombre', sortable: true },
   { key: 'price', label: 'Precio', sortable: true },
   { key: 'duration_minutes', label: 'Duracion', sortable: true },
@@ -111,9 +149,22 @@ const columns = [
 ]
 
 const dataTableRef = ref(null)
+const selectedIds = ref([])
+
+const currentPageIds = computed(() => {
+  if (!props.dataTable?.data) return []
+  return props.dataTable.data.map(row => row.id)
+})
 
 const onDataTableUpdated = (data) => {
   perPage.value = data.per_page
+  selectedIds.value = []
+}
+
+const onBulkDeleted = () => {
+  if (dataTableRef.value) {
+    dataTableRef.value.reload()
+  }
 }
 
 const deleteService = (service) => {
@@ -129,5 +180,24 @@ const deleteService = (service) => {
       }
     },
   })
+}
+
+const deleteSelected = () => {
+  if (selectedIds.value.length === 0) return
+
+  const count = selectedIds.value.length
+  if (confirm(`Eliminar ${count} servicio${count > 1 ? 's' : ''} seleccionado${count > 1 ? 's' : ''}?`)) {
+    router.post(`/member/businesses/${business.value.id}/services/bulk-delete`, {
+      ids: selectedIds.value,
+    }, {
+      preserveScroll: true,
+      onSuccess: () => {
+        selectedIds.value = []
+        if (dataTableRef.value) {
+          dataTableRef.value.reload()
+        }
+      },
+    })
+  }
 }
 </script>
