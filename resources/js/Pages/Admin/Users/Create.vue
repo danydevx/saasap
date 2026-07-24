@@ -29,43 +29,16 @@
             />
           </div>
 
-          <div class="col-12 col-md-6">
-            <div class="form-floating">
-              <input
-                id="user-password"
-                v-model="form.password"
-                type="password"
-                class="form-control"
-                placeholder="********"
-                autocomplete="new-password"
-                :class="{ 'is-invalid': form.errors.password }"
-                required
-              />
-              <label for="user-password">Password</label>
-              <div class="form-text">Minimo 8 caracteres, con letras y numeros.</div>
-              <div v-if="form.errors.password" class="invalid-feedback">
-                {{ form.errors.password }}
-              </div>
-            </div>
-          </div>
-
-          <div class="col-12 col-md-6">
-            <div class="form-floating">
-              <input
-                id="user-password-confirmation"
-                v-model="form.password_confirmation"
-                type="password"
-                class="form-control"
-                placeholder="********"
-                autocomplete="new-password"
-                :class="{ 'is-invalid': form.errors.password_confirmation }"
-                required
-              />
-              <label for="user-password-confirmation">Confirmar password</label>
-              <div v-if="form.errors.password_confirmation" class="invalid-feedback">
-                {{ form.errors.password_confirmation }}
-              </div>
-            </div>
+          <div class="col-12">
+            <FieldGeneratePass
+              id="user-password"
+              confirm-id="user-password-confirmation"
+              v-model="form.password"
+              v-model:confirmation="form.password_confirmation"
+              :form-error="form.errors.password"
+              :confirm-form-error="form.errors.password_confirmation"
+              required
+            />
           </div>
 
           <div class="col-12">
@@ -114,6 +87,7 @@ import AdminLayout from '@/Layouts/AdminLayout.vue'
 import PageHeader from '@/Components/Admin/PageHeader.vue'
 import FieldText from '@/Components/Fields/FieldText.vue'
 import FieldEmail from '@/Components/Fields/FieldEmail.vue'
+import FieldGeneratePass from '@/Components/Fields/FieldGeneratePass.vue'
 import FieldCheckboxes from '@/Components/Fields/FieldCheckboxes.vue'
 import FieldSwitch from '@/Components/Fields/FieldSwitch.vue'
 

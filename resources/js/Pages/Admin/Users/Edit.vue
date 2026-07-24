@@ -29,41 +29,16 @@
             />
           </div>
 
-          <div class="col-12 col-md-6">
-            <div class="form-floating">
-              <input
-                id="user-password"
-                v-model="form.password"
-                type="password"
-                class="form-control"
-                placeholder="********"
-                autocomplete="new-password"
-                :class="{ 'is-invalid': form.errors.password }"
-              />
-              <label for="user-password">Password (opcional)</label>
-              <div class="form-text">Minimo 8 caracteres, con letras y numeros.</div>
-              <div v-if="form.errors.password" class="invalid-feedback">
-                {{ form.errors.password }}
-              </div>
-            </div>
-          </div>
-
-          <div class="col-12 col-md-6">
-            <div class="form-floating">
-              <input
-                id="user-password-confirmation"
-                v-model="form.password_confirmation"
-                type="password"
-                class="form-control"
-                placeholder="********"
-                autocomplete="new-password"
-                :class="{ 'is-invalid': form.errors.password_confirmation }"
-              />
-              <label for="user-password-confirmation">Confirmar password</label>
-              <div v-if="form.errors.password_confirmation" class="invalid-feedback">
-                {{ form.errors.password_confirmation }}
-              </div>
-            </div>
+          <div class="col-12">
+            <FieldGeneratePass
+              id="user-password"
+              confirm-id="user-password-confirmation"
+              label="Password (opcional)"
+              v-model="form.password"
+              v-model:confirmation="form.password_confirmation"
+              :form-error="form.errors.password"
+              :confirm-form-error="form.errors.password_confirmation"
+            />
           </div>
 
           <div class="col-12">
@@ -101,14 +76,24 @@
                 <div class="text-muted">
                   Telefono: {{ user.phone || '-' }}
                 </div>
-                <button
-                  v-if="!user.email_verified_at"
-                  type="button"
-                  class="btn btn-sm btn-outline-warning mt-2"
-                  @click="resendVerification"
-                >
-                  Reenviar verificacion
-                </button>
+                <div class="d-flex flex-wrap gap-2 mt-2">
+                  <button
+                    v-if="!user.email_verified_at"
+                    type="button"
+                    class="btn btn-sm btn-outline-success"
+                    @click="verifyEmail"
+                  >
+                    Verificar usuario manualmente
+                  </button>
+                  <button
+                    v-if="!user.email_verified_at"
+                    type="button"
+                    class="btn btn-sm btn-outline-warning"
+                    @click="resendVerification"
+                  >
+                    Reenviar verificacion
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -209,6 +194,7 @@ import AdminLayout from '@/Layouts/AdminLayout.vue'
 import PageHeader from '@/Components/Admin/PageHeader.vue'
 import FieldText from '@/Components/Fields/FieldText.vue'
 import FieldEmail from '@/Components/Fields/FieldEmail.vue'
+import FieldGeneratePass from '@/Components/Fields/FieldGeneratePass.vue'
 import FieldCheckboxes from '@/Components/Fields/FieldCheckboxes.vue'
 import FieldSwitch from '@/Components/Fields/FieldSwitch.vue'
 
@@ -235,12 +221,14 @@ const props = defineProps({
   },
 })
 
+const visibleRoleIds = new Set(props.roles.map((role) => role.id))
+
 const form = useForm({
   name: props.user.name,
   email: props.user.email,
   password: '',
   password_confirmation: '',
-  roles: [...props.userRoles],
+  roles: props.userRoles.filter((roleId) => visibleRoleIds.has(roleId)),
   is_active: props.user.is_active ?? true,
   subscription: {
     plan_id: props.subscription?.plan_id ?? '',
@@ -264,6 +252,13 @@ const rolesError = computed(() => {
 
 const submit = () => {
   form.put(`/admin/users/${props.user.id}`)
+}
+
+const verifyEmail = () => {
+  router.put(`/admin/users/${props.user.id}/verify-email`, {}, {
+    preserveScroll: true,
+    onSuccess: () => router.reload({ only: ['user'] }),
+  })
 }
 
 const resendVerification = () => {

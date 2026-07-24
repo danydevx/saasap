@@ -1178,6 +1178,9 @@ Route::prefix('admin')->middleware(['auth', 'admin_or_user:1'])->group(function 
     Route::post('/users/{user}/resend-verification', [UserController::class, 'resendVerification'])
         ->middleware('permission_or_user:users.resend_verification,1')
         ->name('admin.users.resend-verification');
+    Route::put('/users/{user}/verify-email', [UserController::class, 'verifyEmail'])
+        ->middleware('permission_or_user:users.update,1')
+        ->name('admin.users.verify-email');
 
     Route::get('/invitations', [InvitationController::class, 'index'])
         ->middleware(['permission_or_user:invitations.view,1', 'module:invitations'])

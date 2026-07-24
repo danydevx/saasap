@@ -96,7 +96,7 @@ class UserController extends Controller
     {
         $roles = Role::query()
             ->where('blocked', false)
-            ->where('id', '!=', 2)
+            ->where('name', '!=', 'guest')
             ->orderBy('name')
             ->get(['id', 'name'])
             ->map(fn ($role) => [
@@ -128,17 +128,26 @@ class UserController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:150'],
             'email' => ['required', 'email', 'max:150', 'unique:users,email'],
-            'password' => ['required', 'string', 'min:8', 'regex:/^(?=.*[A-Za-z])(?=.*\d).+$/', 'confirmed'],
+            'password' => ['required', 'string', 'min:8', 'max:30', 'regex:/^(?=.*[A-Za-z])(?=.*\d).+$/', 'confirmed'],
             'is_active' => ['boolean'],
             'roles' => ['array'],
             'roles.*' => [
                 'integer',
-                Rule::exists($rolesTable, 'id')->where('blocked', false),
-                Rule::notIn([2]),
+                Rule::exists($rolesTable, 'id')->where(fn ($query) => $query
+                    ->where('blocked', false)
+                    ->where('name', '!=', 'guest')),
             ],
         ], [
             'password.regex' => 'Minimo 8 caracteres, con letras y numeros.',
         ]);
+
+        $roles = Role::query()->whereIn('id', $data['roles'] ?? [])->get();
+        $names = $roles->pluck('name')->all();
+        if (in_array('superadmin', $names, true) && ! $request->user()->hasRole('superadmin')) {
+            return back()->withErrors([
+                'roles' => 'Solo un superadmin puede asignar ese rol.',
+            ]);
+        }
 
         $user = User::create([
             'name' => trim($data['name']),
@@ -157,7 +166,6 @@ class UserController extends Controller
             'request' => $request,
         ]);
 
-        $roles = Role::query()->whereIn('id', $data['roles'] ?? [])->get();
         $user->syncRoles($roles);
 
         return redirect()->route('admin.users.index');
@@ -181,7 +189,7 @@ class UserController extends Controller
 
         $roles = Role::query()
             ->where('blocked', false)
-            ->where('id', '!=', 2)
+            ->where('name', '!=', 'guest')
             ->orderBy('name')
             ->get(['id', 'name'])
             ->map(fn ($role) => [
@@ -225,10 +233,15 @@ class UserController extends Controller
                 'max:150',
                 Rule::unique('users', 'email')->ignore($user->id),
             ],
-            'password' => ['nullable', 'string', 'min:8', 'regex:/^(?=.*[A-Za-z])(?=.*\d).+$/', 'confirmed'],
+            'password' => ['nullable', 'string', 'min:8', 'max:30', 'regex:/^(?=.*[A-Za-z])(?=.*\d).+$/', 'confirmed'],
             'is_active' => ['boolean'],
             'roles' => ['array'],
-            'roles.*' => ['integer', Rule::exists($rolesTable, 'id')->where('blocked', false)],
+            'roles.*' => [
+                'integer',
+                Rule::exists($rolesTable, 'id')->where(fn ($query) => $query
+                    ->where('blocked', false)
+                    ->where('name', '!=', 'guest')),
+            ],
             'subscription.plan_id' => ['nullable', 'integer', Rule::exists('plans', 'id')],
             'subscription.status' => ['nullable', 'string', Rule::in(['pending', 'trial', 'active', 'expired', 'canceled'])],
             'subscription.starts_at' => ['nullable', 'date'],
@@ -240,13 +253,6 @@ class UserController extends Controller
             'password.regex' => 'Minimo 8 caracteres, con letras y numeros.',
         ]);
 
-        if (in_array(2, $data['roles'] ?? [], true)) {
-            return back()->withErrors([
-                'roles' => 'No se puede asignar este rol.',
-            ]);
-        }
-
-        // Restringe la asignacion de roles criticos a superadmin.
         $rolesToAssign = Role::query()->whereIn('id', $data['roles'] ?? [])->get(['name']);
         $names = $rolesToAssign->pluck('name')->all();
         if (in_array('superadmin', $names, true) && ! $request->user()->hasRole('superadmin')) {
@@ -420,6 +426,33 @@ class UserController extends Controller
         );
 
         return back()->with('success', 'Usuario desactivado correctamente.');
+    }
+
+    public function verifyEmail(User $user, ActivityService $activity, UserNotificationService $notifications)
+    {
+        if ($user->hasVerifiedEmail()) {
+            return back()->with('error', 'El usuario ya tiene email verificado.');
+        }
+
+        $user->markEmailAsVerified();
+
+        $activity->log('user_verified_manually', [
+            'user' => $user,
+            'actor' => request()->user(),
+            'subject' => $user,
+            'description' => 'Email verificado manualmente por admin',
+            'request' => request(),
+        ]);
+
+        $notifications->create(
+            $user,
+            'product',
+            'Email verificado',
+            'Tu email fue verificado manualmente por un administrador.',
+            '/member'
+        );
+
+        return back()->with('success', 'Usuario verificado correctamente.');
     }
 
     public function resendVerification(User $user, ActivityService $activity)
