@@ -78,6 +78,7 @@ use App\Http\Controllers\Member\SocialNetworkController;
 use App\Http\Controllers\Member\ProductController;
 use App\Http\Controllers\Member\AppointmentController;
 use App\Http\Controllers\Member\SlotController;
+use App\Http\Controllers\Member\AvailabilityController;
 use App\Http\Controllers\Member\LeadController;
 use App\Http\Controllers\Member\ContactFormController;
 use App\Http\Controllers\Member\AiChatbotController;
@@ -158,6 +159,10 @@ Route::get('/b/{slug}/menu', [MenuController::class, 'show'])->name('public.menu
 Route::get('/b/{slug}/verify/{promotionId}/{couponCode}', [PromotionVerificationController::class, 'verify'])->name('public.promotion.verify');
 
 Route::post('/stripe/webhook', [StripeWebhookController::class, 'handle'])->name('stripe.webhook');
+
+Route::get('/dev/booking-test', function () {
+    return view('dev.booking-test');
+})->name('dev.booking-test');
 
 Route::get('/register', [RegisterController::class, 'showRegister'])
     ->middleware('guest')
@@ -434,6 +439,20 @@ Route::get('/member/businesses/{business}/appointments/create', [AppointmentCont
 Route::post('/member/businesses/{business}/appointments', [AppointmentController::class, 'store'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.businesses.appointments.store');
+
+Route::get('/member/businesses/{business}/appointments/availability', [AvailabilityController::class, 'index'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.appointments.availability');
+Route::put('/member/businesses/{business}/appointments/availability/weekly', [AvailabilityController::class, 'updateWeekly'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.appointments.availability.weekly');
+Route::post('/member/businesses/{business}/appointments/availability/exceptions', [AvailabilityController::class, 'storeException'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.appointments.availability.exceptions.store');
+Route::delete('/member/businesses/{business}/appointments/availability/exceptions/{exception}', [AvailabilityController::class, 'destroyException'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.appointments.availability.exceptions.destroy');
+
 Route::get('/member/businesses/{business}/appointments/{appointment}', [AppointmentController::class, 'show'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.businesses.appointments.show');
@@ -449,6 +468,9 @@ Route::delete('/member/businesses/{business}/appointments/{appointment}', [Appoi
 Route::post('/member/businesses/{business}/appointments/{appointment}/cancel', [AppointmentController::class, 'cancel'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.businesses.appointments.cancel');
+Route::put('/member/businesses/{business}/appointments/{appointment}/reschedule', [AppointmentController::class, 'reschedule'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.appointments.reschedule');
 Route::post('/member/businesses/{business}/appointments/bulk-delete', [AppointmentController::class, 'bulkDelete'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.businesses.appointments.bulk-delete');

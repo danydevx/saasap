@@ -16,6 +16,13 @@
         "vite": "^7.0.7"
     },
     "dependencies": {
+        "@fullcalendar/core": "^6.1.21",
+        "@fullcalendar/daygrid": "^6.1.21",
+        "@fullcalendar/interaction": "^6.1.21",
+        "@fullcalendar/list": "^6.1.21",
+        "@fullcalendar/react": "^6.1.21",
+        "@fullcalendar/timegrid": "^6.1.21",
+        "@fullcalendar/vue3": "^6.1.21",
         "@inertiajs/vue3": "^2.3.17",
         "@vitejs/plugin-vue": "^6.0.4",
         "@vue-leaflet/vue-leaflet": "^0.10.1",
@@ -24,6 +31,7 @@
         "glightbox": "^3.3.1",
         "leaflet": "^1.9.4",
         "pinia": "^3.0.4",
+        "qalendar": "^3.9.0",
         "vue": "^3.5.29",
         "vue3-toastify": "^0.2.9",
         "vuedraggable": "^4.1.0"

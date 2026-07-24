@@ -14,6 +14,7 @@ use App\Models\WebhookEndpoint;
 use App\Policies\ApiKeyPolicy;
 use App\Policies\BusinessAppointmentPolicy;
 use App\Policies\BusinessAppointmentSlotPolicy;
+use App\Policies\BusinessAvailabilityPolicy;
 use App\Policies\BusinessAboutPolicy;
 use App\Policies\BusinessGalleryImagePolicy;
 use App\Policies\BusinessHeroPolicy;
@@ -67,6 +68,11 @@ class AppServiceProvider extends ServiceProvider
             return Business::findOrFail($value);
         });
 
+        // Route model binding for Business by slug (for public booking widget)
+        $this->app->router->bind('businessSlug', function ($value) {
+            return Business::where('slug', $value)->firstOrFail();
+        });
+
         // Registra comandos del starter kit cuando se ejecuta en consola.
         if ($this->app->runningInConsole()) {
             $this->commands([
@@ -115,6 +121,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(\Modules\Leads\Models\BusinessLead::class, BusinessLeadPolicy::class);
         Gate::policy(\Modules\Appointments\Models\BusinessAppointment::class, BusinessAppointmentPolicy::class);
         Gate::policy(\Modules\Appointments\Models\BusinessAppointmentSlot::class, BusinessAppointmentSlotPolicy::class);
+        Gate::policy(\Modules\Appointments\Models\BusinessAvailability::class, BusinessAvailabilityPolicy::class);
         Gate::policy(\Modules\SocialMedia\Models\BusinessSocialNetwork::class, BusinessSocialNetworkPolicy::class);
         Gate::policy(\Modules\Reviews\Models\BusinessReview::class, BusinessReviewPolicy::class);
         Gate::policy(\Modules\Faqs\Models\BusinessFaq::class, BusinessFaqPolicy::class);

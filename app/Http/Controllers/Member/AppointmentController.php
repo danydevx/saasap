@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Member;
 
 use App\Http\Controllers\Controller;
 use App\Services\ActivityService;
+use App\Services\AvailabilityService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Modules\Businesses\Models\Business;
@@ -121,7 +122,7 @@ class AppointmentController extends Controller
         ]);
     }
 
-    public function store(Request $request, Business $business, ActivityService $activity)
+    public function store(Request $request, Business $business, ActivityService $activity, AvailabilityService $availability)
     {
         $this->authorize('create', [BusinessAppointment::class, $business]);
 
@@ -132,11 +133,29 @@ class AppointmentController extends Controller
             'business_service_id' => ['required', 'exists:business_services,id'],
             'business_location_id' => ['nullable', 'exists:business_locations,id'],
             'appointment_date' => ['required', 'date', 'after_or_equal:today'],
-            'start_time' => ['required', 'date_format:H:i'],
+            'start_time' => ['required', 'string'],
             'notes' => ['nullable', 'string'],
         ]);
 
+        $normalizedStartTime = $this->normalizeTime($data['start_time']);
+        if (!$normalizedStartTime) {
+            return back()->withErrors(['start_time' => 'Hora inválida.']);
+        }
+        $data['start_time'] = $normalizedStartTime;
+
         $service = BusinessService::findOrFail($data['business_service_id']);
+
+        $slotCheck = $availability->isSlotAvailable(
+            $business,
+            $data['appointment_date'],
+            $data['start_time'],
+            null,
+            $service->duration_minutes
+        );
+        if (!$slotCheck['available']) {
+            return back()->withErrors(['start_time' => $slotCheck['reason']]);
+        }
+
         $endTime = date('H:i', strtotime($data['start_time'] . ' + ' . $service->duration_minutes . ' minutes'));
 
         $appointment = $business->appointments()->create([
@@ -237,7 +256,7 @@ class AppointmentController extends Controller
         ]);
     }
 
-    public function update(Request $request, Business $business, BusinessAppointment $appointment, ActivityService $activity)
+    public function update(Request $request, Business $business, BusinessAppointment $appointment, ActivityService $activity, AvailabilityService $availability)
     {
         $this->authorize('update', [BusinessAppointment::class, $appointment]);
 
@@ -248,12 +267,30 @@ class AppointmentController extends Controller
             'business_service_id' => ['required', 'exists:business_services,id'],
             'business_location_id' => ['nullable', 'exists:business_locations,id'],
             'appointment_date' => ['required', 'date'],
-            'start_time' => ['required', 'date_format:H:i'],
+            'start_time' => ['required', 'string'],
             'status' => ['required', 'string', 'in:pending,confirmed,cancelled,completed,no_show'],
             'notes' => ['nullable', 'string'],
         ]);
 
+        $normalizedStartTime = $this->normalizeTime($data['start_time']);
+        if (!$normalizedStartTime) {
+            return back()->withErrors(['start_time' => 'Hora inválida.']);
+        }
+        $data['start_time'] = $normalizedStartTime;
+
         $service = BusinessService::findOrFail($data['business_service_id']);
+
+        $slotCheck = $availability->isSlotAvailable(
+            $business,
+            $data['appointment_date'],
+            $data['start_time'],
+            $appointment->id,
+            $service->duration_minutes
+        );
+        if (!$slotCheck['available']) {
+            return back()->withErrors(['start_time' => $slotCheck['reason']]);
+        }
+
         $endTime = date('H:i', strtotime($data['start_time'] . ' + ' . $service->duration_minutes . ' minutes'));
 
         $appointment->update([
@@ -337,5 +374,82 @@ class AppointmentController extends Controller
 
         return redirect()->back()
             ->with('success', $message);
+    }
+
+    public function reschedule(Request $request, Business $business, BusinessAppointment $appointment, ActivityService $activity, AvailabilityService $availability)
+    {
+        $this->authorize('update', [BusinessAppointment::class, $appointment]);
+
+        $data = $request->validate([
+            'appointment_date' => ['required', 'date'],
+            'start_time' => ['required', 'string'],
+        ]);
+
+        $normalizedStartTime = $this->normalizeTime($data['start_time']);
+        if (!$normalizedStartTime) {
+            return back()->withErrors(['start_time' => 'Hora inválida.']);
+        }
+        $data['start_time'] = $normalizedStartTime;
+
+        $service = $appointment->service;
+
+        $slotCheck = $availability->isSlotAvailable(
+            $business,
+            $data['appointment_date'],
+            $data['start_time'],
+            $appointment->id,
+            $service ? $service->duration_minutes : 0
+        );
+        if (!$slotCheck['available']) {
+            return back()->withErrors(['start_time' => $slotCheck['reason']]);
+        }
+
+        $endTime = date('H:i', strtotime($data['start_time'] . ' + ' . ($service ? $service->duration_minutes : 0) . ' minutes'));
+
+        $appointment->update([
+            'appointment_date' => $data['appointment_date'],
+            'start_time' => $data['start_time'],
+            'end_time' => $endTime,
+        ]);
+
+        $activity->log('appointment_rescheduled', [
+            'actor' => $request->user(),
+            'subject' => $appointment,
+            'description' => 'Cita reprogramada',
+            'request' => $request,
+        ]);
+
+        return back()->with('success', 'Cita reprogramada correctamente.');
+    }
+
+    private function normalizeTime(string $time): ?string
+    {
+        $time = trim($time);
+
+        if (preg_match('/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/', $time, $matches)) {
+            $h = (int) $matches[1];
+            $m = (int) $matches[2];
+            if ($h < 0 || $h > 23 || $m < 0 || $m > 59) {
+                return null;
+            }
+            return sprintf('%02d:%02d', $h, $m);
+        }
+
+        if (preg_match('/^(\d{1,2}):(\d{2}):(\d{2})$/', $time, $matches)) {
+            $h = (int) $matches[1];
+            $m = (int) $matches[2];
+            $s = (int) $matches[3];
+            if ($h < 0 || $h > 23 || $m < 0 || $m > 59 || $s < 0 || $s > 59) {
+                return null;
+            }
+            return sprintf('%02d:%02d', $h, $m);
+        }
+
+        $timestamp = strtotime('1970-01-01 ' . $time);
+        if ($timestamp !== false) {
+            return date('H:i', $timestamp);
+        }
+
+        return null;
     }
 }

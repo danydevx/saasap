@@ -8,8 +8,10 @@
         class="form-control"
         :readonly="readonly"
         :disabled="readonly"
+        step="60"
         :class="{ 'is-invalid': (showValidation && validationMessage) || formError }"
         @blur="onBlur"
+        @change="onChange"
       />
       <label :for="id">
         {{ label }} <strong v-if="required">*</strong>
@@ -29,7 +31,7 @@ export default {
   props: {
     id: { type: String, required: true },
     label: { type: String, required: true },
-    modelValue: { type: String, default: "" }, // formato esperado "HH:MM"
+    modelValue: { type: String, default: "" },
     required: { type: Boolean, default: false },
     showValidation: { type: Boolean, default: false },
     formError: { type: String, default: "" },
@@ -41,7 +43,7 @@ export default {
     readonly: { type: Boolean, default: false }
   },
 
-  emits: ["update:modelValue", "blur"],
+  emits: ["update:modelValue", "blur", "change"],
 
   computed: {
     inputValue: {
@@ -50,20 +52,20 @@ export default {
       },
       set(val) {
         if (this.readonly) return;
-        this.$emit("update:modelValue", val);
+        const normalized = this.normalize(val);
+        if (normalized !== this.modelValue) {
+          this.$emit("update:modelValue", normalized);
+        }
       }
     },
 
     validationMessage() {
-      // Validación personalizada
       if (this.validateFunction) return this.validateFunction();
 
-      // Validación mínima
       if (this.required && (!this.modelValue || !this.modelValue.trim())) {
         return "Este campo es requerido";
       }
 
-      // Validar formato HH:MM
       if (this.modelValue) {
         const regex = /^([01]\d|2[0-3]):([0-5]\d)$/;
         if (!regex.test(this.modelValue)) return "Hora inválida";
@@ -74,8 +76,33 @@ export default {
   },
 
   methods: {
+    normalize(time) {
+      if (!time) return "";
+      const trimmed = time.toString().trim();
+      const match = trimmed.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?/);
+      if (match) {
+        const h = match[1].padStart(2, '0');
+        const m = match[2];
+        return `${h}:${m}`;
+      }
+      return trimmed;
+    },
+
     onBlur() {
       this.$emit("blur");
+    },
+
+    onChange(e) {
+      const normalized = this.normalize(e.target.value);
+      this.$emit("change", normalized);
+    }
+  },
+
+  watch: {
+    modelValue(newVal) {
+      const normalized = this.normalize(newVal);
+      if (normalized !== newVal && normalized !== this.normalize(this.normalize(newVal))) {
+      }
     }
   }
 };

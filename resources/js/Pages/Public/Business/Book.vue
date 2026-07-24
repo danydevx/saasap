@@ -79,15 +79,17 @@
 
                     <div class="col-md-6">
                       <label class="form-label">Fecha *</label>
-                      <input type="date" v-model="form.appointment_date" class="form-control" required :min="minDate" />
+                      <input type="date" v-model="form.appointment_date" @change="onDateChange" class="form-control" required :min="minDate" />
                     </div>
 
                     <div class="col-md-6">
                       <label class="form-label">Horario disponible *</label>
-                      <select v-model="form.start_time" class="form-select" required>
-                        <option value="">Seleccionar horario...</option>
-                        <option v-for="slot in filteredSlots" :key="slot.id" :value="slot.start_time">
-                          {{ slot.start_time }} - {{ slot.end_time || '' }}
+                      <select v-model="form.start_time" class="form-select" required :disabled="loadingSlots || availableSlots.length === 0">
+                        <option value="">{{ loadingSlots ? 'Cargando horarios...' : (availableSlots.length === 0 ? 'No hay horarios disponibles' : 'Seleccionar horario...') }}</option>
+                        <option v-for="slot in availableSlots" :key="slot.start_time" :value="slot.start_time" :disabled="!slot.available">
+                          {{ slot.start_time }} - {{ slot.end_time }}
+                          <template v-if="slot.available && slot.remaining_capacity < 999">({{ slot.remaining_capacity }} cupo(s))</template>
+                          <template v-if="!slot.available">(ocupado)</template>
                         </option>
                       </select>
                     </div>
@@ -171,7 +173,7 @@
 </template>
 
 <script setup>
-import { computed, reactive } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { Link, usePage, router } from '@inertiajs/vue3'
 import MinisiteLayout from '@/Layouts/MinisiteLayout.vue'
 import FooterSection from '@/Minisites/Themes/Bold/Sections/FooterSection.vue'
@@ -188,7 +190,8 @@ const selectedService = computed(() => page.props.selectedService)
 const socialNetworks = computed(() => page.props.socialNetworks || [])
 const branding = computed(() => page.props.branding || null)
 
-const sending = computed(() => false)
+const sending = ref(false)
+const loadingSlots = ref(false)
 
 const minDate = computed(() => {
   return new Date().toISOString().split('T')[0]
@@ -197,22 +200,12 @@ const minDate = computed(() => {
 const form = reactive({
   service_id: selectedService.value?.id || '',
   location_id: page.props.selectedLocation?.id || '',
-  appointment_date: '',
+  appointment_date: page.props.selectedDate || '',
   start_time: '',
   customer_name: '',
   customer_email: '',
   customer_phone: '',
   notes: '',
-})
-
-const filteredSlots = computed(() => {
-  if (!form.appointment_date) return availableSlots.value
-  return availableSlots.value.filter(slot => {
-    if (slot.specific_date) {
-      return slot.specific_date === form.appointment_date
-    }
-    return true
-  })
 })
 
 const isModuleEnabled = (moduleKey) => {
@@ -270,10 +263,31 @@ const onServiceChange = () => {
   router.get(`/b/${business.value.slug}/book`, {
     service: form.service_id,
     location: form.location_id,
+    date: form.appointment_date,
   }, { preserveState: true })
 }
 
+const onDateChange = () => {
+  if (!form.service_id) return
+  loadingSlots.value = true
+  router.get(`/b/${business.value.slug}/book`, {
+    service: form.service_id,
+    location: form.location_id,
+    date: form.appointment_date,
+  }, {
+    preserveState: true,
+    onFinish: () => {
+      loadingSlots.value = false
+    },
+  })
+}
+
 const submit = () => {
-  router.post(`/b/${business.value.slug}/book`, form)
+  sending.value = true
+  router.post(`/b/${business.value.slug}/book`, form, {
+    onFinish: () => {
+      sending.value = false
+    },
+  })
 }
 </script>

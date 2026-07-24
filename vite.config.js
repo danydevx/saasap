@@ -6,7 +6,7 @@ import less from 'less'
 export default defineConfig({
     plugins: [
         laravel({
-            input: ['resources/less/admin.less', 'resources/less/minisite.less', 'resources/less/directory.less', 'resources/js/app.js', 'resources/js/minisite.js'],
+            input: ['resources/less/admin.less', 'resources/less/minisite.less', 'resources/less/directory.less', 'resources/js/app.js', 'resources/js/minisite.js', 'resources/js/booking-widget.js'],
             refresh: true,
         }),
         vue(),

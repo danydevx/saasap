@@ -8,8 +8,34 @@
       :backHref="'/member/business-modules'"
     >
       <template #actions>
+        <div class="btn-group" role="group">
+          <button
+            class="btn btn-sm"
+            :class="viewMode === 'list' ? 'btn-primary' : 'btn-outline-primary'"
+            @click="viewMode = 'list'"
+          >
+            <i class="bi bi-list"></i>
+          </button>
+          <button
+            class="btn btn-sm"
+            :class="viewMode === 'calendar' ? 'btn-primary' : 'btn-outline-primary'"
+            @click="viewMode = 'calendar'"
+          >
+            <i class="bi bi-calendar3"></i>
+          </button>
+        </div>
+
+        <Link
+          :href="`/member/businesses/${business?.id}/appointments/availability`"
+          class="btn btn-outline-primary btn-sm"
+          title="Configurar disponibilidad"
+        >
+          <i class="bi bi-clock-history me-1"></i>
+          Disponibilidad
+        </Link>
+
         <button
-          v-if="selectedIds.length > 0"
+          v-if="selectedIds.length > 0 && viewMode === 'list'"
           class="btn btn-danger btn-sm"
           @click="deleteSelected"
           :disabled="deleting"
@@ -24,96 +50,133 @@
       </template>
     </PageHeader>
 
-    <BaseDataTable
-      ref="dataTableRef"
-      :endpoint="`/member/businesses/${business?.id}/appointments`"
-      :columns="columns"
-      :initial-data="dataTable"
-      search-placeholder="Buscar citas..."
-      empty-title="No hay citas"
-      empty-text="Comienza creando tu primera cita."
-      @updated="onDataTableUpdated"
-    >
-      <template #cell-checkbox="{ row }">
-        <BulkSelectRowCheckbox
-          :id="row.id"
-          v-model:selectedIds="selectedIds"
-        />
-      </template>
+    <div :class="{ 'd-none': viewMode !== 'calendar' }">
+      <CalendarView
+        :appointments="calendarAppointments"
+        :services="services"
+        :locations="locations"
+        :businessId="business?.id"
+        @reschedule="handleReschedule"
+        @create="handleCreate"
+        @edit="handleEdit"
+      />
+    </div>
 
-      <template #cell-appointment_date="{ row }">
-        {{ formatDate(row.appointment_date) }}
-      </template>
+    <div :class="{ 'd-none': viewMode !== 'list' }">
+      <BaseDataTable
+        ref="dataTableRef"
+        :endpoint="`/member/businesses/${business?.id}/appointments`"
+        :columns="columns"
+        :initial-data="dataTable"
+        search-placeholder="Buscar citas..."
+        empty-title="No hay citas"
+        empty-text="Comienza creando tu primera cita."
+        @updated="onDataTableUpdated"
+      >
+        <template #cell-checkbox="{ row }">
+          <BulkSelectRowCheckbox
+            :id="row.id"
+            v-model:selectedIds="selectedIds"
+          />
+        </template>
 
-      <template #cell-start_time="{ row }">
-        {{ row.start_time }}
-      </template>
+        <template #cell-appointment_date="{ row }">
+          {{ formatDate(row.appointment_date) }}
+        </template>
 
-      <template #cell-customer_name="{ row }">
-        <div>{{ row.customer_name }}</div>
-        <small class="text-muted">{{ row.customer_email }}</small>
-      </template>
+        <template #cell-start_time="{ row }">
+          {{ row.start_time }}
+        </template>
 
-      <template #cell-service="{ row }">
-        {{ row.service?.name || '-' }}
-      </template>
+        <template #cell-customer_name="{ row }">
+          <div>{{ row.customer_name }}</div>
+          <small class="text-muted">{{ row.customer_email }}</small>
+        </template>
 
-      <template #cell-location="{ row }">
-        {{ row.location?.name || '-' }}
-      </template>
+        <template #cell-service="{ row }">
+          {{ row.service?.name || '-' }}
+        </template>
 
-      <template #cell-status="{ row }">
-        <span :class="statusClass(row.status)" class="badge">
-          {{ row.status_label }}
-        </span>
-      </template>
+        <template #cell-location="{ row }">
+          {{ row.location?.name || '-' }}
+        </template>
 
-      <template #cell-actions="{ row }">
-        <div class="actions">
-          <Link :href="`/member/businesses/${business?.id}/appointments/${row.id}/edit`" class="btn btn-sm btn-outline-primary">
-            <i class="bi bi-pencil"></i>
-          </Link>
-          <button
-            v-if="row.status !== 'cancelled'"
-            class="btn btn-sm btn-outline-warning"
-            @click="cancelAppointment(row)"
-          >
-            <i class="bi bi-x-lg"></i>
-          </button>
-          <button
-            class="btn btn-sm btn-outline-danger"
-            @click="deleteAppointment(row)"
-          >
-            <i class="bi bi-trash"></i>
-          </button>
-        </div>
-      </template>
+        <template #cell-status="{ row }">
+          <span :class="statusClass(row.status)" class="badge">
+            {{ row.status_label }}
+          </span>
+        </template>
 
-      <template #header-actions>
-        <BulkSelect
-          v-model:selectedIds="selectedIds"
-          :current-page-ids="currentPageIds"
-          :delete-endpoint="`/member/businesses/${business?.id}/appointments/bulk-delete`"
-          item-name="citas"
-          @deleted="onBulkDeleted"
-        />
-      </template>
-    </BaseDataTable>
+        <template #cell-actions="{ row }">
+          <div class="actions">
+            <Link :href="`/member/businesses/${business?.id}/appointments/${row.id}/edit`" class="btn btn-sm btn-outline-primary">
+              <i class="bi bi-pencil"></i>
+            </Link>
+            <button
+              v-if="row.status !== 'cancelled'"
+              class="btn btn-sm btn-outline-warning"
+              @click="cancelAppointment(row)"
+            >
+              <i class="bi bi-x-lg"></i>
+            </button>
+            <button
+              class="btn btn-sm btn-outline-danger"
+              @click="deleteAppointment(row)"
+            >
+              <i class="bi bi-trash"></i>
+            </button>
+          </div>
+        </template>
+
+        <template #header-actions>
+          <BulkSelect
+            v-model:selectedIds="selectedIds"
+            :current-page-ids="currentPageIds"
+            :delete-endpoint="`/member/businesses/${business?.id}/appointments/bulk-delete`"
+            item-name="citas"
+            @deleted="onBulkDeleted"
+          />
+        </template>
+      </BaseDataTable>
+    </div>
+
+    <AppointmentModal
+      ref="appointmentModal"
+      :services="services"
+      :locations="locations"
+      :businessId="business?.id"
+      @saved="handleModalSaved"
+    />
   </MemberLayout>
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { Head, Link, router, usePage } from '@inertiajs/vue3'
 import MemberLayout from '@/Layouts/MemberLayout.vue'
 import PageHeader from '@/Components/Admin/PageHeader.vue'
 import BaseDataTable from '@/Components/DataTable/BaseDataTable.vue'
 import { BulkSelect, BulkSelectRowCheckbox } from '@/Components/BulkSelect'
+import CalendarView from '@/Components/Appointments/CalendarView.vue'
+import AppointmentModal from '@/Components/Appointments/AppointmentModal.vue'
 
 const page = usePage()
 const business = computed(() => page.props.business)
 const dataTable = computed(() => page.props.dataTable)
+const services = computed(() => page.props.services || [])
+const locations = computed(() => page.props.locations || [])
 const businessMenu = computed(() => page.props.businessMenu || [])
+
+const viewMode = ref('calendar')
+
+const calendarAppointments = computed(() => {
+  if (!dataTable.value?.data) return []
+  return dataTable.value.data.map(apt => ({
+    ...apt,
+    business_service_id: apt.service?.id || null,
+    business_location_id: apt.location?.id || null,
+  }))
+})
 
 const breadcrumbs = computed(() => {
   const path = window.location.pathname
@@ -147,6 +210,7 @@ const columns = [
 ]
 
 const dataTableRef = ref(null)
+const appointmentModal = ref(null)
 const deleting = ref(null)
 const selectedIds = ref([])
 
@@ -233,6 +297,48 @@ const deleteSelected = () => {
         deleting.value = false
       },
     })
+  }
+}
+
+const handleReschedule = ({ appointment, newDate, newTime }) => {
+  router.put(`/member/businesses/${business.value.id}/appointments/${appointment.id}/reschedule`, {
+    appointment_date: newDate,
+    start_time: newTime,
+  }, {
+    preserveScroll: true,
+    onSuccess: () => {
+      if (dataTableRef.value) {
+        dataTableRef.value.reload()
+      }
+    },
+    onError: (errors) => {
+      alert(Object.values(errors).flat().join(', ') || 'Error al reprogramar la cita.')
+      if (dataTableRef.value) {
+        dataTableRef.value.reload()
+      }
+    },
+  })
+}
+
+const handleCreate = ({ date, time }) => {
+  if (appointmentModal.value) {
+    appointmentModal.value.openCreate({ date, time })
+  }
+}
+
+const handleEdit = (appointment) => {
+  console.log('handleEdit called with:', appointment)
+  console.log('appointmentModal ref:', appointmentModal.value)
+  if (appointmentModal.value) {
+    appointmentModal.value.openView(appointment)
+  } else {
+    console.error('appointmentModal ref is null')
+  }
+}
+
+const handleModalSaved = () => {
+  if (dataTableRef.value) {
+    dataTableRef.value.reload()
   }
 }
 </script>

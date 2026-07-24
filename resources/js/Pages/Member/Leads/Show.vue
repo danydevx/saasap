@@ -2,14 +2,11 @@
   <MemberLayout>
     <Head :title="`Contacto - ${business.name}`" />
 
-    <div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
-      <div>
-        <Link :href="`/member/businesses/${business.id}/leads`" class="text-decoration-none text-muted small">
-          <i class="bi bi-arrow-left me-1"></i>Volver
-        </Link>
-        <h1 class="h4 mb-1 mt-1">Detalle del Contacto</h1>
-      </div>
-    </div>
+    <PageHeader
+      title="Detalle del Contacto"
+      :breadcrumbs="breadcrumbs"
+      :backHref="`/member/businesses/${business.id}/leads`"
+    />
 
     <div class="card border-0 shadow-sm">
       <div class="card-body">
@@ -77,10 +74,33 @@
 import { computed } from 'vue'
 import { Head, Link, router, usePage } from '@inertiajs/vue3'
 import MemberLayout from '@/Layouts/MemberLayout.vue'
+import PageHeader from '@/Components/Admin/PageHeader.vue'
 
 const page = usePage()
 const business = computed(() => page.props.business)
 const lead = computed(() => page.props.lead)
+const businessMenu = computed(() => page.props.businessMenu || [])
+
+const breadcrumbs = computed(() => {
+  const path = window.location.pathname
+  const businessMatch = path.match(/^\/member\/businesses\/(\d+)/)
+  if (businessMatch) {
+    const businessId = parseInt(businessMatch[1])
+    const biz = businessMenu.value.find(b => b.id === businessId)
+    if (biz) {
+      return [
+        { label: 'Mis Negocios', href: '/member/business-modules' },
+        { label: biz.name, href: `/member/businesses/${biz.id}/edit` },
+        { label: 'Leads', href: `/member/businesses/${biz.id}/leads` },
+        { label: lead.value.name, active: true },
+      ]
+    }
+  }
+  return [
+    { label: 'Mis Negocios', href: '/member/business-modules' },
+    { label: 'Detalle del Contacto', active: true },
+  ]
+})
 
 const formatDate = (date) => {
   return new Date(date).toLocaleDateString('es-AR', {

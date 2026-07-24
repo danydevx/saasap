@@ -195,7 +195,7 @@ function clearGeolocation() {
 
 document.addEventListener('DOMContentLoaded', function() {
     @if($mapMarkers->isNotEmpty())
-        var map = L.map('directory-map', { scrollWheelZoom: false }).setView([{{ $mapMarkers->first()->latitude }}, {{ $mapMarkers->first()->longitude }}], 12);
+        var map = L.map('directory-map', { scrollWheelZoom: false }).setView([{{ $mapMarkers->first()['latitude'] }}, {{ $mapMarkers->first()['longitude'] }}], 12);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; OpenStreetMap contributors'

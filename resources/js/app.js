@@ -1,6 +1,7 @@
 import 'bootstrap/dist/css/bootstrap.min.css'
 import 'bootstrap-icons/font/bootstrap-icons.css'
 import 'leaflet/dist/leaflet.css'
+import 'qalendar/dist/style.css'
 import 'bootstrap'
 
 import { createApp, h } from 'vue'

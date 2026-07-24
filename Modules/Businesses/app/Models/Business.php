@@ -18,6 +18,8 @@ use Modules\Products\Models\BusinessProductCategory;
 use Modules\Services\Models\BusinessService;
 use Modules\Appointments\Models\BusinessAppointment;
 use Modules\Appointments\Models\BusinessAppointmentSlot;
+use Modules\Appointments\Models\BusinessAvailability;
+use Modules\Appointments\Models\BusinessAvailabilityException;
 use Modules\Reviews\Models\BusinessReview;
 use Modules\Promotions\Models\BusinessPromotion;
 use Modules\Hero\Models\BusinessHero;
@@ -134,6 +136,16 @@ class Business extends Model
     public function appointmentSlots(): HasMany
     {
         return $this->hasMany(BusinessAppointmentSlot::class);
+    }
+
+    public function availability(): HasMany
+    {
+        return $this->hasMany(BusinessAvailability::class);
+    }
+
+    public function availabilityExceptions(): HasMany
+    {
+        return $this->hasMany(BusinessAvailabilityException::class);
     }
 
     public function galleryImages(): HasMany

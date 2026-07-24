@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Public;
 
 use App\Http\Controllers\Controller;
+use App\Services\AvailabilityService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Modules\Businesses\Models\Business;
@@ -419,7 +420,7 @@ class BusinessController extends Controller
         ]);
     }
 
-    public function book(string $slug, Request $request)
+    public function book(string $slug, Request $request, AvailabilityService $availability)
     {
         $business = Business::where('slug', $slug)
             ->where('is_active', true)
@@ -433,6 +434,7 @@ class BusinessController extends Controller
 
         $serviceId = $request->input('service');
         $locationId = $request->input('location');
+        $date = $request->input('date', now()->toDateString());
 
         $services = $business->services()
             ->where('is_active', true)
@@ -451,18 +453,11 @@ class BusinessController extends Controller
 
         $availableSlots = [];
         if ($selectedService) {
-            $availableSlots = BusinessAppointmentSlot::where('business_id', $business->id)
-                ->where('business_service_id', $selectedService->id)
-                ->where('is_available', true)
-                ->where('slots_available', '>', 0)
-                ->where(function ($query) {
-                    $query->where('specific_date', '>=', now()->toDateString())
-                        ->orWhere('day_of_week', '>=', now()->dayOfWeek);
-                })
-                ->orderBy('specific_date')
-                ->orderBy('start_time')
-                ->limit(20)
-                ->get();
+            $availableSlots = $availability->getAvailableSlotsForDate(
+                $business,
+                $date,
+                $selectedService->duration_minutes
+            );
         }
 
         return Inertia::render('Public/Business/Book', [
@@ -480,6 +475,7 @@ class BusinessController extends Controller
             'locations' => $locations,
             'selectedService' => $selectedService,
             'availableSlots' => $availableSlots,
+            'selectedDate' => $date,
             'selectedLocation' => $locationId ? $locations->firstWhere('id', (int) $locationId) : null,
             'theme' => $business->minisiteTheme ? ['id' => $business->minisiteTheme->id, 'name' => $business->minisiteTheme->name, 'slug' => $business->minisiteTheme->slug, 'css_variables' => $business->minisiteTheme->css_variables, 'layout_config' => $business->minisiteTheme->layout_config, 'section_config' => $business->minisiteTheme->section_config] : null,
             'theme_css_variables' => $business->minisiteTheme?->css_variables ? json_encode($business->minisiteTheme->css_variables) : null,
@@ -490,7 +486,7 @@ class BusinessController extends Controller
         ]);
     }
 
-    public function storeBooking(string $slug, Request $request)
+    public function storeBooking(string $slug, Request $request, AvailabilityService $availability)
     {
         $business = Business::where('slug', $slug)
             ->where('is_active', true)
@@ -515,6 +511,22 @@ class BusinessController extends Controller
 
         $service = BusinessService::findOrFail($data['service_id']);
         $location = BusinessLocation::findOrFail($data['location_id']);
+
+        if (!$service->allows_online_booking) {
+            return back()->withErrors(['start_time' => 'Este servicio no permite reservas en línea.']);
+        }
+
+        $slotCheck = $availability->isSlotAvailable(
+            $business,
+            $data['appointment_date'],
+            $data['start_time'],
+            null,
+            $service->duration_minutes
+        );
+
+        if (!$slotCheck['available']) {
+            return back()->withErrors(['start_time' => $slotCheck['reason']]);
+        }
 
         $endTime = date('H:i', strtotime($data['start_time'] . ' + ' . $service->duration_minutes . ' minutes'));
 
