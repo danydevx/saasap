@@ -124,6 +124,17 @@
                   </div>
                   <div class="col-12 col-md-4">
                     <FieldNumber
+                      id="limit-max-businesses"
+                      label="Max negocios"
+                      placeholder="Ilimitado"
+                      v-model="form.limits.max_businesses"
+                      :formError="form.errors['limits.max_businesses']"
+                      :min="0"
+                    />
+                    <div class="form-text">Vacio: ilimitado. 0: no permite crear negocios.</div>
+                  </div>
+                  <div class="col-12 col-md-4">
+                    <FieldNumber
                       id="limit-max-requests"
                       label="Max requests/dia"
                       placeholder="0"
@@ -190,6 +201,7 @@ const form = useForm({
   stripe_price_id: '',
   limits: {
     max_items: '',
+    max_businesses: '',
     max_requests_per_day: '',
     can_use_ai: false,
     can_export: false,

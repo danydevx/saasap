@@ -3,38 +3,32 @@
 use App\Http\Controllers\Admin\ActivityController as AdminActivityController;
 use App\Http\Controllers\Admin\ApiKeyController as AdminApiKeyController;
 use App\Http\Controllers\Admin\AutomationController;
-use App\Http\Controllers\Public\BusinessController as PublicBusinessController;
-use App\Http\Controllers\Public\DirectoryController;
-use App\Http\Controllers\Public\MenuController;
-use App\Http\Controllers\Public\PromotionVerificationController;
-use Modules\Features\Http\Controllers\Public\FeatureController as PublicFeatureController;
-use App\Http\Controllers\Admin\BusinessController;
-use App\Http\Controllers\Admin\BusinessModuleController;
-use App\Http\Controllers\Admin\BusinessContentController;
-use App\Http\Controllers\Admin\BusinessLeadsController;
-use App\Http\Controllers\Admin\BusinessContactFormController;
 use App\Http\Controllers\Admin\BusinessAiChatbotController;
-use App\Http\Controllers\Admin\BusinessReviewController;
-use App\Http\Controllers\Admin\BusinessPromotionController;
-use App\Http\Controllers\Admin\SlotController as AdminSlotController;
-use App\Http\Controllers\Admin\MenuCategoryController;
-use App\Http\Controllers\Admin\MenuProductController;
-use App\Http\Controllers\Admin\MenuProductVariantController;
-use App\Http\Controllers\Admin\MenuProductImageController;
+use App\Http\Controllers\Admin\BusinessContactFormController;
+use App\Http\Controllers\Admin\BusinessContentController;
+use App\Http\Controllers\Admin\BusinessController;
 use App\Http\Controllers\Admin\BusinessHeroController;
-use App\Http\Controllers\Admin\BusinessSocialNetworkController;
+use App\Http\Controllers\Admin\BusinessLeadsController;
+use App\Http\Controllers\Admin\BusinessModuleController;
 use App\Http\Controllers\Admin\BusinessModuleDefinitionController;
-use App\Http\Controllers\Admin\MinisiteThemeController;
-use App\Http\Controllers\Admin\ModuleSettingsController;
+use App\Http\Controllers\Admin\BusinessPromotionController;
+use App\Http\Controllers\Admin\BusinessReviewController;
+use App\Http\Controllers\Admin\BusinessSocialNetworkController;
 use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\ExportController;
 use App\Http\Controllers\Admin\FeatureFlagController;
-use App\Http\Controllers\Admin\IndustryController;
 use App\Http\Controllers\Admin\HelpArticleController;
+use App\Http\Controllers\Admin\IndustryController;
 use App\Http\Controllers\Admin\InvitationController;
 use App\Http\Controllers\Admin\InvoiceController as AdminInvoiceController;
 use App\Http\Controllers\Admin\LegalDocumentController;
+use App\Http\Controllers\Admin\MenuCategoryController;
+use App\Http\Controllers\Admin\MenuProductController;
+use App\Http\Controllers\Admin\MenuProductImageController;
+use App\Http\Controllers\Admin\MenuProductVariantController;
 use App\Http\Controllers\Admin\MessageTemplateController;
+use App\Http\Controllers\Admin\MinisiteThemeController;
+use App\Http\Controllers\Admin\ModuleSettingsController;
 use App\Http\Controllers\Admin\PaymentController;
 use App\Http\Controllers\Admin\PermissionController;
 use App\Http\Controllers\Admin\PlanController;
@@ -44,11 +38,12 @@ use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\SecurityEventController;
 use App\Http\Controllers\Admin\SettingController;
+use App\Http\Controllers\Admin\SlotController as AdminSlotController;
 use App\Http\Controllers\Admin\SupportTicketController as AdminSupportTicketController;
 use App\Http\Controllers\Admin\SystemAnnouncementController as AdminSystemAnnouncementController;
 use App\Http\Controllers\Admin\SystemErrorController;
-use App\Http\Controllers\Admin\SystemMonitorController;
 use App\Http\Controllers\Admin\SystemModuleController;
+use App\Http\Controllers\Admin\SystemMonitorController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\UserProfileController;
 use App\Http\Controllers\Admin\WebhookController as AdminWebhookController;
@@ -60,42 +55,31 @@ use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\HealthController;
+use App\Http\Controllers\Member\AboutController;
 use App\Http\Controllers\Member\AccountController;
 use App\Http\Controllers\Member\ActivityController as MemberActivityController;
+use App\Http\Controllers\Member\AiChatbotController;
 use App\Http\Controllers\Member\ApiKeyController as MemberApiKeyController;
+use App\Http\Controllers\Member\AppointmentController;
+use App\Http\Controllers\Member\AvailabilityController;
 use App\Http\Controllers\Member\BillingController;
+use App\Http\Controllers\Member\BrandingController;
 use App\Http\Controllers\Member\CheckoutController;
+use App\Http\Controllers\Member\ClientController;
 use App\Http\Controllers\Member\DashboardController;
+use App\Http\Controllers\Member\GalleryController;
+use App\Http\Controllers\Member\GalleryGroupController;
 use App\Http\Controllers\Member\HelpArticleController as MemberHelpArticleController;
+use App\Http\Controllers\Member\HeroController;
 use App\Http\Controllers\Member\IntegrationController;
 use App\Http\Controllers\Member\InvoiceController as MemberInvoiceController;
-use App\Http\Controllers\Member\LocationController;
-use App\Http\Controllers\Member\ServiceController;
-use App\Http\Controllers\Member\GalleryController;
-use App\Http\Controllers\Member\HeroController;
-use App\Http\Controllers\Member\AboutController;
-use App\Http\Controllers\Member\SocialNetworkController;
-use App\Http\Controllers\Member\ProductController;
-use App\Http\Controllers\Member\AppointmentController;
-use App\Http\Controllers\Member\SlotController;
-use App\Http\Controllers\Member\AvailabilityController;
 use App\Http\Controllers\Member\LeadController;
-use App\Http\Controllers\Member\ContactFormController;
-use App\Http\Controllers\Member\AiChatbotController;
-use App\Http\Controllers\Member\ReviewController;
-use App\Http\Controllers\Member\PromotionController;
-use App\Http\Controllers\Member\FaqController;
-use App\Http\Controllers\Member\FaqCategoryController;
-use App\Http\Controllers\Member\SeoController;
-use App\Http\Controllers\Member\BrandingController;
-use Modules\Features\Http\Controllers\Member\FeatureController;
+use App\Http\Controllers\Member\LocationController;
+use App\Http\Controllers\Member\MediaFileController as MemberMediaFileController;
 use App\Http\Controllers\Member\MenuCategoryController as MemberMenuCategoryController;
 use App\Http\Controllers\Member\MenuProductController as MemberMenuProductController;
-use App\Http\Controllers\Member\MenuProductVariantController as MemberMenuProductVariantController;
 use App\Http\Controllers\Member\MenuProductImageController as MemberMenuProductImageController;
-use App\Http\Controllers\Member\ProductCategoryController as MemberProductCategoryController;
-use App\Http\Controllers\Member\MinisiteThemeController as MemberMinisiteThemeController;
-use App\Http\Controllers\Member\MediaFileController as MemberMediaFileController;
+use App\Http\Controllers\Member\MenuProductVariantController as MemberMenuProductVariantController;
 use App\Http\Controllers\Member\NotificationController;
 use App\Http\Controllers\Member\NotificationPreferenceController;
 use App\Http\Controllers\Member\OnboardingController;
@@ -103,16 +87,30 @@ use App\Http\Controllers\Member\PasswordController;
 use App\Http\Controllers\Member\PaymentController as MemberPaymentController;
 use App\Http\Controllers\Member\PlanSelectionController;
 use App\Http\Controllers\Member\PreferenceController as MemberPreferenceController;
+use App\Http\Controllers\Member\ProductCategoryController as MemberProductCategoryController;
+use App\Http\Controllers\Member\ProductController;
+use App\Http\Controllers\Member\PromotionController;
+use App\Http\Controllers\Member\ReviewController;
+use App\Http\Controllers\Member\SeoController;
+use App\Http\Controllers\Member\ServiceController;
 use App\Http\Controllers\Member\SessionController as MemberSessionController;
+use App\Http\Controllers\Member\SlotController;
+use App\Http\Controllers\Member\SocialNetworkController;
 use App\Http\Controllers\Member\SupportTicketController as MemberSupportTicketController;
 use App\Http\Controllers\Member\SystemAnnouncementController as MemberSystemAnnouncementController;
-use Modules\Tasks\Http\Controllers\Member\TaskController;
 use App\Http\Controllers\Member\WebhookController as MemberWebhookController;
 use App\Http\Controllers\PricingController;
+use App\Http\Controllers\Public\BusinessController as PublicBusinessController;
+use App\Http\Controllers\Public\DirectoryController;
+use App\Http\Controllers\Public\MenuController;
+use App\Http\Controllers\Public\PromotionVerificationController;
 use App\Http\Controllers\StripeWebhookController;
 use App\Services\SettingService;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use Modules\Features\Http\Controllers\Member\FeatureController;
+use Modules\Features\Http\Controllers\Public\FeatureController as PublicFeatureController;
+use Modules\Tasks\Http\Controllers\Member\TaskController;
 
 Route::get('/', [DirectoryController::class, 'index']);
 
@@ -225,9 +223,18 @@ Route::get('/member/dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.dashboard');
 
-Route::get('/member/business-modules', [App\Http\Controllers\Member\BusinessModuleController::class, 'index'])
+Route::get('/member/business-modules', fn () => redirect()->route('member.businesses.index'))
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.business-modules.index');
+Route::get('/member/businesses', [App\Http\Controllers\Member\BusinessModuleController::class, 'index'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.index');
+Route::get('/member/businesses/create', [App\Http\Controllers\Member\BusinessController::class, 'create'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.create');
+Route::post('/member/businesses', [App\Http\Controllers\Member\BusinessController::class, 'store'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.store');
 Route::get('/member/businesses/{business}/modules', [App\Http\Controllers\Member\BusinessModuleController::class, 'edit'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.business-modules.edit');
@@ -386,9 +393,64 @@ Route::post('/member/businesses/{business}/tasks/reorder', [TaskController::clas
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.businesses.tasks.reorder');
 
-Route::get('/member/businesses/{business}/gallery', [GalleryController::class, 'index'])
+Route::get('/member/businesses/{business}/clients', [ClientController::class, 'index'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
-    ->name('member.businesses.gallery.index');
+    ->name('member.businesses.clients.index');
+Route::get('/member/businesses/{business}/clients/create', [ClientController::class, 'create'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.clients.create');
+Route::post('/member/businesses/{business}/clients', [ClientController::class, 'store'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.clients.store');
+Route::get('/member/businesses/{business}/clients/{client}/edit', [ClientController::class, 'edit'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.clients.edit');
+Route::put('/member/businesses/{business}/clients/{client}', [ClientController::class, 'update'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.clients.update');
+Route::delete('/member/businesses/{business}/clients/{client}', [ClientController::class, 'destroy'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.clients.destroy');
+Route::post('/member/businesses/{business}/clients/bulk-delete', [ClientController::class, 'bulkDelete'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.clients.bulk-delete');
+
+Route::get('/member/businesses/{business}/galleries', [GalleryGroupController::class, 'index'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.galleries.index');
+Route::get('/member/businesses/{business}/galleries/create', [GalleryGroupController::class, 'create'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.galleries.create');
+Route::post('/member/businesses/{business}/galleries', [GalleryGroupController::class, 'store'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.galleries.store');
+Route::get('/member/businesses/{business}/galleries/{gallery}/edit', [GalleryGroupController::class, 'edit'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.galleries.edit');
+Route::put('/member/businesses/{business}/galleries/{gallery}', [GalleryGroupController::class, 'update'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.galleries.update');
+Route::delete('/member/businesses/{business}/galleries/{gallery}', [GalleryGroupController::class, 'destroy'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.galleries.destroy');
+Route::post('/member/businesses/{business}/galleries/{gallery}/set-primary', [GalleryGroupController::class, 'setPrimary'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.galleries.set-primary');
+
+Route::get('/member/businesses/{business}/gallery', [GalleryGroupController::class, 'index'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.gallery.index.legacy');
+Route::get('/member/businesses/{business}/gallery/{gallery}', [GalleryController::class, 'show'])
+    ->where('gallery', '[0-9]+')
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.gallery.show.legacy');
+Route::get('/member/businesses/{business}/gallery', [GalleryGroupController::class, 'index'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.gallery.index.legacy');
+Route::get('/member/businesses/{business}/gallery/{gallery}', [GalleryController::class, 'show'])
+    ->where('gallery', '[0-9]+')
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.gallery.show.legacy');
 Route::post('/member/businesses/{business}/gallery', [GalleryController::class, 'store'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.businesses.gallery.store');
@@ -1032,8 +1094,26 @@ Route::prefix('admin')->middleware(['auth', 'admin_or_user:1'])->group(function 
     Route::delete('/businesses/{business}/products/{product}', [BusinessContentController::class, 'productsDestroy'])
         ->name('admin.business.products.destroy');
 
+    Route::get('/businesses/{business}/galleries', [BusinessContentController::class, 'galleriesIndex'])
+        ->name('admin.business.galleries.index');
+    Route::get('/businesses/{business}/galleries/create', [BusinessContentController::class, 'galleriesCreate'])
+        ->name('admin.business.galleries.create');
+    Route::post('/businesses/{business}/galleries', [BusinessContentController::class, 'galleriesStore'])
+        ->name('admin.business.galleries.store');
+    Route::get('/businesses/{business}/galleries/{gallery}/edit', [BusinessContentController::class, 'galleriesEdit'])
+        ->name('admin.business.galleries.edit');
+    Route::put('/businesses/{business}/galleries/{gallery}', [BusinessContentController::class, 'galleriesUpdate'])
+        ->name('admin.business.galleries.update');
+    Route::delete('/businesses/{business}/galleries/{gallery}', [BusinessContentController::class, 'galleriesDestroy'])
+        ->name('admin.business.galleries.destroy');
+    Route::post('/businesses/{business}/galleries/{gallery}/set-primary', [BusinessContentController::class, 'galleriesSetPrimary'])
+        ->name('admin.business.galleries.set-primary');
+
     Route::get('/businesses/{business}/gallery', [BusinessContentController::class, 'galleryIndex'])
         ->name('admin.business.gallery.index');
+    Route::get('/businesses/{business}/gallery/{gallery}', [BusinessContentController::class, 'galleryIndex'])
+        ->where('gallery', '[0-9]+')
+        ->name('admin.business.gallery.show');
     Route::post('/businesses/{business}/gallery', [BusinessContentController::class, 'galleryStore'])
         ->name('admin.business.gallery.store');
     Route::put('/businesses/{business}/gallery/{image}', [BusinessContentController::class, 'galleryUpdate'])
@@ -1569,9 +1649,9 @@ Route::prefix('admin')->middleware(['auth', 'admin_or_user:1', 'permission_or_us
     Route::put('/permissions/{permission}', [PermissionController::class, 'update'])
         ->middleware('permission_or_user:permissions.edit,1')
         ->name('admin.permissions.update');
-Route::delete('/permissions/{permission}', [PermissionController::class, 'destroy'])
-    ->middleware('permission_or_user:permissions.delete,1')
-    ->name('admin.permissions.destroy');
+    Route::delete('/permissions/{permission}', [PermissionController::class, 'destroy'])
+        ->middleware('permission_or_user:permissions.delete,1')
+        ->name('admin.permissions.destroy');
 });
 
 Route::get('/ai/test', [App\Http\Controllers\AiTestController::class, 'test'])

@@ -9,7 +9,18 @@ class PlanLimits
 {
     public function currentPlan(User $user): ?Plan
     {
-        return $user->currentSubscription?->plan;
+        $subscription = $user->subscriptions()
+            ->with('plan')
+            ->where('status', 'active')
+            ->where(function ($query) {
+                $query->where('ends_at', '>', now())
+                    ->orWhereNull('ends_at');
+            })
+            ->latest()
+            ->first();
+
+        return $subscription?->plan
+            ?? Plan::query()->where('slug', 'free')->where('is_active', true)->first();
     }
 
     public function limits(User $user): array

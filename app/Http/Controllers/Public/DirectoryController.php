@@ -4,14 +4,12 @@ namespace App\Http\Controllers\Public;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Modules\Businesses\Models\Business;
+use Modules\Appointments\Models\BusinessAppointment;
 use Modules\Businesses\Enums\BusinessType;
+use Modules\Businesses\Models\Business;
+use Modules\Leads\Models\BusinessLead;
 use Modules\Locations\Models\BusinessLocation;
 use Modules\Services\Models\BusinessService;
-use Modules\Gallery\Models\BusinessGalleryImage;
-use Modules\Reviews\Models\BusinessReview;
-use Modules\Appointments\Models\BusinessAppointment;
-use Modules\Leads\Models\BusinessLead;
 
 class DirectoryController extends Controller
 {
@@ -60,7 +58,7 @@ class DirectoryController extends Controller
                 $q->whereNotNull('latitude')
                     ->whereNotNull('longitude')
                     ->selectRaw(
-                        "(6371 * acos(cos(radians(?)) * cos(radians(latitude)) * cos(radians(longitude) - radians(?)) + sin(radians(?)) * sin(radians(latitude)))) AS distance",
+                        '(6371 * acos(cos(radians(?)) * cos(radians(latitude)) * cos(radians(longitude) - radians(?)) + sin(radians(?)) * sin(radians(latitude)))) AS distance',
                         [$lat, $lng, $lat]
                     )
                     ->having('distance', '<=', $radius);
@@ -86,7 +84,7 @@ class DirectoryController extends Controller
                     'type' => $business->business_type->label(),
                     'latitude' => $location->latitude,
                     'longitude' => $location->longitude,
-                    'address' => $location->address_line_1 . ', ' . $location->city,
+                    'address' => $location->address_line_1.', '.$location->city,
                 ];
             });
         })->flatten(1)->values();
@@ -127,6 +125,9 @@ class DirectoryController extends Controller
 
         $galleryImages = $business->galleryImages()
             ->where('is_active', true)
+            ->whereHas('gallery', function ($query) {
+                $query->where('is_primary', true)->where('is_active', true);
+            })
             ->orderBy('sort_order')
             ->limit(12)
             ->get(['id', 'path', 'title']);
@@ -146,7 +147,7 @@ class DirectoryController extends Controller
         })->map(function ($location) {
             return [
                 'name' => $location->name,
-                'address' => $location->address_line_1 . ', ' . $location->city . ' ' . $location->postal_code,
+                'address' => $location->address_line_1.', '.$location->city.' '.$location->postal_code,
                 'phone' => $location->phone,
                 'latitude' => $location->latitude,
                 'longitude' => $location->longitude,
@@ -187,7 +188,7 @@ class DirectoryController extends Controller
         $service = BusinessService::findOrFail($data['service_id']);
         $location = BusinessLocation::findOrFail($data['location_id']);
 
-        $endTime = date('H:i', strtotime($data['start_time'] . ' + ' . $service->duration_minutes . ' minutes'));
+        $endTime = date('H:i', strtotime($data['start_time'].' + '.$service->duration_minutes.' minutes'));
 
         $appointment = BusinessAppointment::create([
             'business_id' => $business->id,

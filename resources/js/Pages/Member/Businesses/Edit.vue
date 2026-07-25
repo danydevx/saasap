@@ -5,7 +5,7 @@
     <PageHeader
       :title="'Editar Negocio'"
       :breadcrumbs="breadcrumbs"
-      :backHref="'/member/business-modules'"
+      :backHref="'/member/businesses'"
     />
 
     <div class="card border-0 shadow-sm">
@@ -125,7 +125,7 @@
             <button type="submit" class="btn btn-primary" :disabled="sending">
               {{ sending ? 'Guardando...' : 'Guardar Cambios' }}
             </button>
-            <Link href="/member/business-modules" class="btn btn-outline-secondary">Cancelar</Link>
+            <Link href="/member/businesses" class="btn btn-outline-secondary">Cancelar</Link>
           </div>
         </form>
       </div>
@@ -168,7 +168,7 @@ const breadcrumbs = computed(() => {
     return dynamicBreadcrumbs.value
   }
   return [
-    { label: 'Mis Negocios', href: '/member/business-modules' },
+    { label: 'Mis Negocios', href: '/member/businesses' },
     { label: business.value.name, active: true },
   ]
 })

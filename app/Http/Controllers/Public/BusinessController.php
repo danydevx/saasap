@@ -6,19 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Services\AvailabilityService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Modules\Appointments\Models\BusinessAppointment;
 use Modules\Businesses\Models\Business;
+use Modules\Gallery\Models\BusinessGallery;
+use Modules\Leads\Models\BusinessLead;
 use Modules\Locations\Models\BusinessLocation;
 use Modules\Services\Models\BusinessService;
-use Modules\Gallery\Models\BusinessGalleryImage;
-use Modules\Products\Models\BusinessProduct;
-use Modules\Appointments\Models\BusinessAppointment;
-use Modules\Appointments\Models\BusinessAppointmentSlot;
-use Modules\Leads\Models\BusinessLead;
-use Modules\Reviews\Models\BusinessReview;
-use Modules\Promotions\Models\BusinessPromotion;
-use Modules\Hero\Models\BusinessHero;
-use Modules\About\Models\BusinessAbout;
-use Modules\SocialMedia\Models\BusinessSocialNetwork;
 
 class BusinessController extends Controller
 {
@@ -79,11 +72,16 @@ class BusinessController extends Controller
 
         $gallery = [];
         if (in_array('gallery', $modules)) {
-            $gallery = $business->galleryImages()
-                ->where('is_active', true)
-                ->orderBy('sort_order')
-                ->limit(12)
-                ->get();
+            $primary = BusinessGallery::primaryFor($business->id);
+
+            $gallery = $primary
+                ? $business->galleryImages()
+                    ->where('is_active', true)
+                    ->where('business_gallery_id', $primary->id)
+                    ->orderBy('sort_order')
+                    ->limit(12)
+                    ->get()
+                : collect();
         }
 
         $reviews = [];
@@ -292,7 +290,7 @@ class BusinessController extends Controller
             ->firstOrFail();
 
         $modules = $business->modules()->where('is_enabled', true)->get()->pluck('moduleDefinition.key')->toArray();
-        if (!in_array('services', $modules)) {
+        if (! in_array('services', $modules)) {
             abort(404);
         }
 
@@ -338,7 +336,7 @@ class BusinessController extends Controller
             ->firstOrFail();
 
         $modules = $business->modules()->where('is_enabled', true)->get()->pluck('moduleDefinition.key')->toArray();
-        if (!in_array('gallery', $modules)) {
+        if (! in_array('gallery', $modules)) {
             abort(404);
         }
 
@@ -383,7 +381,7 @@ class BusinessController extends Controller
             ->firstOrFail();
 
         $modules = $business->modules()->where('is_enabled', true)->get()->pluck('moduleDefinition.key')->toArray();
-        if (!in_array('products', $modules)) {
+        if (! in_array('products', $modules)) {
             abort(404);
         }
 
@@ -428,7 +426,7 @@ class BusinessController extends Controller
             ->firstOrFail();
 
         $modules = $business->modules()->where('is_enabled', true)->get()->pluck('moduleDefinition.key')->toArray();
-        if (!in_array('appointments', $modules)) {
+        if (! in_array('appointments', $modules)) {
             abort(404);
         }
 
@@ -494,7 +492,7 @@ class BusinessController extends Controller
             ->firstOrFail();
 
         $modules = $business->modules()->where('is_enabled', true)->get()->pluck('moduleDefinition.key')->toArray();
-        if (!in_array('appointments', $modules)) {
+        if (! in_array('appointments', $modules)) {
             abort(404);
         }
 
@@ -512,7 +510,7 @@ class BusinessController extends Controller
         $service = BusinessService::findOrFail($data['service_id']);
         $location = BusinessLocation::findOrFail($data['location_id']);
 
-        if (!$service->allows_online_booking) {
+        if (! $service->allows_online_booking) {
             return back()->withErrors(['start_time' => 'Este servicio no permite reservas en línea.']);
         }
 
@@ -524,11 +522,11 @@ class BusinessController extends Controller
             $service->duration_minutes
         );
 
-        if (!$slotCheck['available']) {
+        if (! $slotCheck['available']) {
             return back()->withErrors(['start_time' => $slotCheck['reason']]);
         }
 
-        $endTime = date('H:i', strtotime($data['start_time'] . ' + ' . $service->duration_minutes . ' minutes'));
+        $endTime = date('H:i', strtotime($data['start_time'].' + '.$service->duration_minutes.' minutes'));
 
         $appointment = BusinessAppointment::create([
             'business_id' => $business->id,
@@ -588,7 +586,7 @@ class BusinessController extends Controller
             ->firstOrFail();
 
         $modules = $business->modules()->where('is_enabled', true)->get()->pluck('moduleDefinition.key')->toArray();
-        if (!in_array('contact_form', $modules)) {
+        if (! in_array('contact_form', $modules)) {
             abort(404);
         }
 
@@ -619,7 +617,7 @@ class BusinessController extends Controller
             ->firstOrFail();
 
         $modules = $business->modules()->where('is_enabled', true)->get()->pluck('moduleDefinition.key')->toArray();
-        if (!in_array('contact_form', $modules)) {
+        if (! in_array('contact_form', $modules)) {
             abort(404);
         }
 
@@ -651,13 +649,13 @@ class BusinessController extends Controller
             ->firstOrFail();
 
         $modules = $business->modules()->where('is_enabled', true)->get()->pluck('moduleDefinition.key')->toArray();
-        if (!in_array('contact_form', $modules)) {
+        if (! in_array('contact_form', $modules)) {
             abort(404);
         }
 
         $form = $business->contactForms()->where('shortcode', $shortcode)->first();
 
-        if (!$form) {
+        if (! $form) {
             abort(404);
         }
 
@@ -715,13 +713,13 @@ class BusinessController extends Controller
             ->firstOrFail();
 
         $modules = $business->modules()->where('is_enabled', true)->get()->pluck('moduleDefinition.key')->toArray();
-        if (!in_array('contact_form', $modules)) {
+        if (! in_array('contact_form', $modules)) {
             abort(404);
         }
 
         $form = $business->contactForms()->where('shortcode', $shortcode)->first();
 
-        if (!$form) {
+        if (! $form) {
             abort(404);
         }
 
@@ -736,7 +734,7 @@ class BusinessController extends Controller
             $fieldName = $field->field_name;
             $fieldRules = [];
 
-            if ($field->is_required && !in_array($field->field_type, ['checkbox'])) {
+            if ($field->is_required && ! in_array($field->field_type, ['checkbox'])) {
                 $fieldRules[] = 'required';
             } else {
                 $fieldRules[] = 'nullable';
@@ -781,7 +779,7 @@ class BusinessController extends Controller
             'phone' => $data['phone'] ?? null,
             'notes' => null,
             'metadata' => $metadata,
-            'source' => 'form:' . $form->shortcode,
+            'source' => 'form:'.$form->shortcode,
             'status' => 'new',
             'ip_address' => $request->ip(),
         ]);
@@ -797,7 +795,7 @@ class BusinessController extends Controller
             ->firstOrFail();
 
         $modules = $business->modules()->where('is_enabled', true)->get()->pluck('moduleDefinition.key')->toArray();
-        if (!in_array('locations', $modules)) {
+        if (! in_array('locations', $modules)) {
             abort(404);
         }
 

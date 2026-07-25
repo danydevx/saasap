@@ -174,6 +174,15 @@ class BusinessModuleDefinitionSeeder extends Seeder
                 'has_settings' => false,
                 'is_premium' => false,
             ],
+            [
+                'key' => 'clients',
+                'name' => 'Clientes',
+                'description' => 'Gestiona la informacion de tus clientes y citas',
+                'icon' => 'bi bi-people',
+                'sort_order' => 19,
+                'has_settings' => false,
+                'is_premium' => false,
+            ],
         ];
 
         foreach ($modules as $module) {

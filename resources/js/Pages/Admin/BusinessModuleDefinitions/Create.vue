@@ -81,6 +81,25 @@
               />
               <small class="text-muted d-block mb-2">Requiere plan especifico para acceder</small>
             </div>
+
+            <div class="col-12">
+              <FieldSwitch
+                id="def-show-menu"
+                label="Mostrar en menu lateral"
+                v-model="form.show_in_menu"
+              />
+              <small class="text-muted d-block mb-2">Aparecera en el sidebar de los miembros</small>
+            </div>
+
+            <div v-if="form.show_in_menu" class="col-12">
+              <FieldText
+                id="def-menu-title"
+                label="Titulo en el menu"
+                placeholder="Ej: Galeria, Citas, Clientes"
+                v-model="form.menu_title"
+                :formError="form.errors.menu_title"
+              />
+            </div>
           </div>
 
           <div class="col-12 d-flex gap-2 mt-4">
@@ -111,6 +130,8 @@ const form = useForm({
   sort_order: 0,
   has_settings: false,
   is_premium: false,
+  show_in_menu: true,
+  menu_title: '',
 })
 
 const breadcrumbs = [

@@ -11,6 +11,7 @@ use Inertia\Inertia;
 class BusinessModuleDefinitionController extends Controller
 {
     private const MAX_IMAGE_SIZE_KB = 2048;
+
     private const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 
     public function index(Request $request)
@@ -30,7 +31,8 @@ class BusinessModuleDefinitionController extends Controller
             ->withQueryString();
 
         $definitions->getCollection()->transform(function ($def) {
-            $def->settings_url = $def->settings_url ?? ($def->has_settings ? '/admin/modules/' . $def->key . '/settings' : null);
+            $def->settings_url = $def->settings_url ?? ($def->has_settings ? '/admin/modules/'.$def->key.'/settings' : null);
+
             return $def;
         });
 
@@ -56,6 +58,8 @@ class BusinessModuleDefinitionController extends Controller
             'has_settings' => ['boolean'],
             'settings_url' => ['nullable', 'string', 'max:255'],
             'is_premium' => ['boolean'],
+            'show_in_menu' => ['boolean'],
+            'menu_title' => ['nullable', 'string', 'max:50'],
         ]);
 
         BusinessModuleDefinition::create([
@@ -68,6 +72,8 @@ class BusinessModuleDefinitionController extends Controller
             'settings_url' => $data['settings_url'] ?? null,
             'is_premium' => (bool) ($data['is_premium'] ?? false),
             'is_active' => true,
+            'show_in_menu' => (bool) ($data['show_in_menu'] ?? true),
+            'menu_title' => $data['menu_title'] ?? null,
         ]);
 
         return redirect()->route('admin.business-module-definitions.index')
@@ -77,8 +83,8 @@ class BusinessModuleDefinitionController extends Controller
     public function edit(BusinessModuleDefinition $definition)
     {
         $settingsUrl = $definition->settings_url;
-        if (!$settingsUrl && $definition->has_settings) {
-            $settingsUrl = '/admin/modules/' . $definition->key . '/settings';
+        if (! $settingsUrl && $definition->has_settings) {
+            $settingsUrl = '/admin/modules/'.$definition->key.'/settings';
         }
 
         $imageUrl = null;
@@ -108,11 +114,11 @@ class BusinessModuleDefinitionController extends Controller
     public function update(Request $request, BusinessModuleDefinition $definition)
     {
         $data = $request->validate([
-            'key' => ['required', 'string', 'max:100', 'unique:business_module_definitions,key,' . $definition->id],
+            'key' => ['required', 'string', 'max:100', 'unique:business_module_definitions,key,'.$definition->id],
             'name' => ['required', 'string', 'max:150'],
             'description' => ['nullable', 'string', 'max:500'],
             'icon' => ['nullable', 'string', 'max:100'],
-            'image' => ['nullable', 'file', 'mimes:jpeg,png,gif,webp', 'max:' . self::MAX_IMAGE_SIZE_KB],
+            'image' => ['nullable', 'file', 'mimes:jpeg,png,gif,webp', 'max:'.self::MAX_IMAGE_SIZE_KB],
             'remove_image' => ['boolean'],
             'sort_order' => ['nullable', 'integer', 'min:0'],
             'has_settings' => ['boolean'],
@@ -132,7 +138,7 @@ class BusinessModuleDefinitionController extends Controller
             if ($definition->image) {
                 Storage::disk('public')->delete($definition->image);
             }
-            $path = $request->file('image')->store('module-definitions/' . $definition->id, ['disk' => 'public']);
+            $path = $request->file('image')->store('module-definitions/'.$definition->id, ['disk' => 'public']);
             $definition->image = $path;
         }
 

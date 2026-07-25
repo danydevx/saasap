@@ -3,35 +3,35 @@
 namespace Modules\Businesses\Models;
 
 use App\Models\BusinessModuleDefinition;
+use App\Models\MinisiteTheme;
 use App\Models\PlanBusinessModule;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use Modules\Businesses\Enums\BusinessType;
-use Modules\BusinessModules\Models\BusinessModule;
-use Modules\Gallery\Models\BusinessGalleryImage;
-use Modules\Leads\Models\BusinessLead;
-use Modules\Locations\Models\BusinessLocation;
-use Modules\Products\Models\BusinessProduct;
-use Modules\Products\Models\BusinessProductCategory;
-use Modules\Services\Models\BusinessService;
+use Modules\About\Models\BusinessAbout;
 use Modules\Appointments\Models\BusinessAppointment;
 use Modules\Appointments\Models\BusinessAppointmentSlot;
 use Modules\Appointments\Models\BusinessAvailability;
 use Modules\Appointments\Models\BusinessAvailabilityException;
-use Modules\Reviews\Models\BusinessReview;
-use Modules\Promotions\Models\BusinessPromotion;
-use Modules\Hero\Models\BusinessHero;
-use Modules\About\Models\BusinessAbout;
-use Modules\Features\Models\Feature;
-use Modules\Features\Models\BusinessFeature;
-use Modules\Faqs\Models\BusinessFaq;
-use Modules\Faqs\Models\BusinessFaqCategory;
-use Modules\Seo\Models\BusinessSeoSetting;
+use Modules\Businesses\Enums\BusinessType;
+use Modules\BusinessModules\Models\BusinessModule;
 use Modules\ContactForm\Models\BusinessContactForm;
 use Modules\ContactForm\Models\BusinessContactFormField;
-use App\Models\MinisiteTheme;
+use Modules\Faqs\Models\BusinessFaq;
+use Modules\Faqs\Models\BusinessFaqCategory;
+use Modules\Features\Models\BusinessFeature;
+use Modules\Features\Models\Feature;
+use Modules\Gallery\Models\BusinessGalleryImage;
+use Modules\Hero\Models\BusinessHero;
+use Modules\Leads\Models\BusinessLead;
+use Modules\Locations\Models\BusinessLocation;
+use Modules\Products\Models\BusinessProduct;
+use Modules\Products\Models\BusinessProductCategory;
+use Modules\Promotions\Models\BusinessPromotion;
+use Modules\Reviews\Models\BusinessReview;
+use Modules\Seo\Models\BusinessSeoSetting;
+use Modules\Services\Models\BusinessService;
 
 class Business extends Model
 {
@@ -80,7 +80,7 @@ class Business extends Model
 
     public function assignMinisiteTheme(): void
     {
-        if (!$this->minisite_theme_id) {
+        if (! $this->minisite_theme_id) {
             $theme = MinisiteTheme::getByBusinessType($this->business_type->value ?? 'generic');
             if ($theme) {
                 $this->update(['minisite_theme_id' => $theme->id]);
@@ -148,9 +148,14 @@ class Business extends Model
         return $this->hasMany(BusinessAvailabilityException::class);
     }
 
-    public function galleryImages(): HasMany
+public function galleryImages(): HasMany
     {
-        return $this->hasMany(BusinessGalleryImage::class);
+        return $this->hasMany(\Modules\Gallery\Models\BusinessGalleryImage::class);
+    }
+
+    public function galleries(): HasMany
+    {
+        return $this->hasMany(\Modules\Gallery\Models\BusinessGallery::class);
     }
 
     public function reviews(): HasMany
@@ -223,6 +228,11 @@ class Business extends Model
         return $this->hasMany(\Modules\Tasks\Models\BusinessTask::class);
     }
 
+    public function clients(): HasMany
+    {
+        return $this->hasMany(\Modules\Clients\Models\BusinessClient::class);
+    }
+
     public function getEnabledModules(): array
     {
         return $this->modules()->where('is_enabled', true)->pluck('module_key')->toArray();
@@ -255,7 +265,7 @@ class Business extends Model
     {
         $user = $this->user;
 
-        if (!$user) {
+        if (! $user) {
             return $this->getDefaultFreeModules();
         }
 
@@ -270,7 +280,7 @@ class Business extends Model
             ->latest()
             ->first();
 
-        if (!$subscription) {
+        if (! $subscription) {
             return $this->getDefaultFreeModules();
         }
 
@@ -291,7 +301,7 @@ class Business extends Model
     {
         $plan = \App\Models\Plan::where('slug', 'free')->first();
 
-        if (!$plan) {
+        if (! $plan) {
             return [];
         }
 

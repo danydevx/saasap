@@ -4,14 +4,14 @@ namespace App\Http\Controllers\Member;
 
 use App\Http\Controllers\Controller;
 use App\Models\PlanBusinessModule;
-use Modules\Businesses\Models\Business;
-use App\Services\ActivityService;
+use App\Services\PlanLimits;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Modules\Businesses\Models\Business;
 
 class BusinessModuleController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request, PlanLimits $planLimits)
     {
         $user = $request->user();
 
@@ -28,11 +28,19 @@ class BusinessModuleController extends Controller
                     'module_name' => $m->moduleDefinition?->name ?? $m->module_key,
                     'is_enabled' => $m->is_enabled,
                 ]);
+
             return $business;
         });
 
+        $businessCount = $businesses->total();
+        $maxBusinesses = $planLimits->max($user, 'max_businesses');
+
         return Inertia::render('Member/BusinessModules/Index', [
             'businesses' => $businesses,
+            'canCreate' => $maxBusinesses === null || $businessCount < $maxBusinesses,
+            'businessCount' => $businessCount,
+            'maxBusinesses' => $maxBusinesses,
+            'planName' => $planLimits->currentPlan($user)?->name ?? 'Sin plan',
         ]);
     }
 
@@ -90,11 +98,11 @@ class BusinessModuleController extends Controller
         foreach ($data['modules'] as $moduleData) {
             $module = $business->modules()->find($moduleData['id']);
 
-            if (!$module) {
+            if (! $module) {
                 continue;
             }
 
-            if ($moduleData['is_enabled'] && !($planModules[$module->moduleDefinition?->key] ?? false)) {
+            if ($moduleData['is_enabled'] && ! ($planModules[$module->moduleDefinition?->key] ?? false)) {
                 continue;
             }
 
@@ -108,7 +116,7 @@ class BusinessModuleController extends Controller
 
     private function getPlanModulesForUser($user): array
     {
-        if (!$user) {
+        if (! $user) {
             return [];
         }
 
@@ -121,7 +129,7 @@ class BusinessModuleController extends Controller
             ->latest()
             ->first();
 
-        if (!$subscription) {
+        if (! $subscription) {
             return [];
         }
 
@@ -138,7 +146,7 @@ class BusinessModuleController extends Controller
 
     private function getUserPlanName($user): string
     {
-        if (!$user) {
+        if (! $user) {
             return 'Sin plan';
         }
 
@@ -151,7 +159,7 @@ class BusinessModuleController extends Controller
             ->latest()
             ->first();
 
-        if (!$subscription || !$subscription->plan) {
+        if (! $subscription || ! $subscription->plan) {
             return 'Sin plan';
         }
 

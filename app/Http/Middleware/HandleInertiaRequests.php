@@ -2,7 +2,6 @@
 
 namespace App\Http\Middleware;
 
-use App\Models\PlanBusinessModule;
 use App\Services\FeatureService;
 use App\Services\ModuleService;
 use App\Services\ModuleVisibilityService;
@@ -19,6 +18,7 @@ class HandleInertiaRequests extends Middleware
         if ($request->is('b/*')) {
             return 'minisite.minisite';
         }
+
         return 'app';
     }
 
@@ -99,8 +99,7 @@ class HandleInertiaRequests extends Middleware
                 'name' => $biz->name,
                 'slug' => $biz->slug,
                 'modules' => $biz->modules
-                    ->filter(fn ($m) =>
-                        $m->is_enabled &&
+                    ->filter(fn ($m) => $m->is_enabled &&
                         $m->moduleDefinition &&
                         $m->moduleDefinition->show_in_menu &&
                         $m->moduleDefinition->menu_title &&
@@ -109,7 +108,7 @@ class HandleInertiaRequests extends Middleware
                     ->map(fn ($m) => [
                         'key' => $m->module_key,
                         'title' => $m->moduleDefinition->menu_title,
-                        'url' => '/member/businesses/' . $biz->id . '/' . $this->getModulePath($m->module_key),
+                        'url' => '/member/businesses/'.$biz->id.'/'.$this->getModulePath($m->module_key),
                     ])->values(),
             ])
             ->filter(fn ($biz) => count($biz['modules']) > 0)
@@ -124,12 +123,13 @@ class HandleInertiaRequests extends Middleware
         $isPremium = $module->moduleDefinition->is_premium;
         $planHasModule = in_array($module->module_key, $planModuleKeys);
 
-        if ($isPremium && !$planHasModule) {
+        if ($isPremium && ! $planHasModule) {
             return false;
         }
 
         if ($business->industry && $moduleVisibility) {
             $industryModuleKeys = $business->industry->moduleDefinitions->pluck('key')->toArray();
+
             return in_array($module->module_key, $industryModuleKeys);
         }
 
@@ -143,7 +143,7 @@ class HandleInertiaRequests extends Middleware
             'locations' => 'locations',
             'services' => 'services',
             'products' => 'products',
-            'gallery' => 'gallery',
+            'gallery' => 'galleries',
             'appointments' => 'appointments',
             'slots' => 'slots',
             'leads' => 'leads',
@@ -159,6 +159,7 @@ class HandleInertiaRequests extends Middleware
             'seo' => 'seo',
             'branding' => 'branding',
             'tasks' => 'tasks',
+            'clients' => 'clients',
         ];
 
         return $paths[$moduleKey] ?? $moduleKey;

@@ -5,48 +5,277 @@ namespace App\Http\Controllers\Member;
 use App\Http\Controllers\Controller;
 use App\Services\ActivityService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Modules\Businesses\Models\Business;
+use Modules\Gallery\Models\BusinessGallery;
 use Modules\Gallery\Models\BusinessGalleryImage;
 
 class GalleryController extends Controller
 {
-    private const MAX_FILE_SIZE_KB = 5120;
+    private const MAX_FILE_SIZE_KB = 10239;
+
+    private const MAX_FILES_PER_UPLOAD = 10;
+
     private const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 
-    public function index(Request $request, Business $business)
+    public function index(Request $request, Business $business, ?BusinessGallery $gallery = null)
     {
         $this->authorize('viewAny', [BusinessGalleryImage::class, $business]);
 
+        if (! $gallery) {
+            $gallery = BusinessGallery::primaryFor($business->id);
+        }
+
+        if (! $gallery || $gallery->business_id !== $business->id) {
+            return Inertia::render('Member/Galleries/Show', [
+                'business' => [
+                    'id' => $business->id,
+                    'name' => $business->name,
+                ],
+                'galleries' => $this->galleryOptions($business),
+                'currentGallery' => null,
+                'images' => ['data' => [], 'links' => null],
+                'locations' => $business->locations()->where('is_active', true)->orderBy('name')->get(['id', 'name']),
+                'maxSizeKb' => self::MAX_FILE_SIZE_KB,
+                'maxFilesPerUpload' => self::MAX_FILES_PER_UPLOAD,
+                'allowedTypes' => self::ALLOWED_MIME_TYPES,
+            ]);
+        }
+
+        return $this->renderGallery($request, $business, $gallery);
+    }
+
+    public function show(Request $request, Business $business, BusinessGallery $gallery)
+    {
+        abort_unless($gallery->business_id === $business->id, 404);
+        $this->authorize('viewAny', [BusinessGalleryImage::class, $business]);
+
+        return $this->renderGallery($request, $business, $gallery);
+    }
+
+    public function store(Request $request, Business $business, ActivityService $activity)
+    {
+        $this->authorize('create', [BusinessGalleryImage::class, $business]);
+
+        $data = $request->validate([
+            'files' => ['required_without:file', 'array', 'min:1', 'max:'.self::MAX_FILES_PER_UPLOAD],
+            'files.*' => ['required', 'file', 'max:'.self::MAX_FILE_SIZE_KB, 'mimetypes:'.implode(',', self::ALLOWED_MIME_TYPES)],
+            'file' => ['required_without:files', 'file', 'max:'.self::MAX_FILE_SIZE_KB, 'mimetypes:'.implode(',', self::ALLOWED_MIME_TYPES)],
+            'business_gallery_id' => [
+                'required',
+                Rule::exists('business_galleries', 'id')->where('business_id', $business->id),
+            ],
+            'title' => ['nullable', 'string', 'max:150'],
+            'description' => ['nullable', 'string'],
+            'business_location_id' => [
+                'nullable',
+                Rule::exists('business_locations', 'id')->where('business_id', $business->id),
+            ],
+        ], [
+            'files.max' => 'Solo puedes subir hasta 10 imágenes por vez.',
+            'files.*.max' => 'Cada imagen debe pesar menos de 10MB.',
+            'files.*.mimetypes' => 'Solo se permiten imágenes JPEG, PNG, WebP o GIF.',
+            'file.max' => 'La imagen debe pesar menos de 10MB.',
+            'file.mimetypes' => 'Solo se permiten imágenes JPEG, PNG, WebP o GIF.',
+        ]);
+
+        if ($request->hasFile('files') && $request->hasFile('file')) {
+            return back()->withErrors(['files' => 'Selecciona imágenes usando un solo campo de carga.']);
+        }
+
+        $files = $request->hasFile('files') ? $request->file('files') : [$request->file('file')];
+        $storedPaths = [];
+        $createdImages = [];
+
+        try {
+            DB::transaction(function () use ($files, $business, $request, $activity, $data, &$storedPaths, &$createdImages) {
+                foreach ($files as $file) {
+                    $disk = 'public';
+                    $path = $file->store('gallery/'.$business->id, ['disk' => $disk]);
+                    $storedPaths[] = $path;
+
+                    $image = $business->galleryImages()->create([
+                        'business_id' => $business->id,
+                        'business_gallery_id' => $data['business_gallery_id'],
+                        'path' => Storage::disk($disk)->url($path),
+                        'filename' => basename($path),
+                        'original_name' => $file->getClientOriginalName(),
+                        'extension' => $file->getClientOriginalExtension(),
+                        'mime_type' => $file->getMimeType(),
+                        'size' => $file->getSize(),
+                        'title' => $data['title'] ?? null,
+                        'description' => $data['description'] ?? null,
+                        'business_location_id' => $data['business_location_id'] ?? null,
+                        'is_active' => true,
+                        'sort_order' => 0,
+                    ]);
+                    $createdImages[] = $image;
+
+                    $activity->log('gallery_image_uploaded', [
+                        'actor' => $request->user(),
+                        'subject' => $image,
+                        'description' => 'Imagen subida a galeria',
+                        'request' => $request,
+                    ]);
+                }
+            });
+        } catch (\Throwable $exception) {
+            Storage::disk('public')->delete($storedPaths);
+
+            throw $exception;
+        }
+
+        $count = count($createdImages);
+
+        return redirect()->back()->with(
+            'success',
+            $count === 1 ? 'Imagen subida correctamente.' : $count.' imágenes subidas correctamente.'
+        );
+    }
+
+    public function update(Request $request, Business $business, BusinessGalleryImage $image, ActivityService $activity)
+    {
+        abort_unless($image->business_id === $business->id, 404);
+        $this->authorize('update', [BusinessGalleryImage::class, $image]);
+
+        $data = $request->validate([
+            'business_gallery_id' => [
+                'required',
+                Rule::exists('business_galleries', 'id')->where('business_id', $business->id),
+            ],
+            'title' => ['nullable', 'string', 'max:150'],
+            'description' => ['nullable', 'string'],
+            'sort_order' => ['nullable', 'integer', 'min:0'],
+            'is_active' => ['boolean'],
+            'business_location_id' => [
+                'nullable',
+                Rule::exists('business_locations', 'id')->where('business_id', $business->id),
+            ],
+        ]);
+
+        $image->update($data);
+
+        $activity->log('gallery_image_updated', [
+            'actor' => $request->user(),
+            'subject' => $image,
+            'description' => 'Imagen de galeria actualizada',
+            'request' => $request,
+        ]);
+
+        return redirect()->back()->with('success', 'Imagen actualizada correctamente.');
+    }
+
+    public function destroy(Request $request, Business $business, BusinessGalleryImage $image, ActivityService $activity)
+    {
+        abort_unless($image->business_id === $business->id, 404);
+        $this->authorize('delete', [BusinessGalleryImage::class, $image]);
+
+        if ($image->path) {
+            $path = str_replace(url('/').'/storage/', '', $image->path);
+            Storage::disk('public')->delete($path);
+        }
+
+        $activity->log('gallery_image_deleted', [
+            'actor' => $request->user(),
+            'subject' => $image,
+            'description' => 'Imagen de galeria eliminada',
+        ]);
+
+        $image->delete();
+
+        return redirect()->back()->with('success', 'Imagen eliminada correctamente.');
+    }
+
+    public function bulkDelete(Request $request, Business $business)
+    {
+        $this->authorize('deleteAny', [BusinessGalleryImage::class, $business]);
+
+        $data = $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => [
+                'integer',
+                Rule::exists('business_gallery_images', 'id')->where('business_id', $business->id),
+            ],
+        ]);
+
+        $images = BusinessGalleryImage::where('business_id', $business->id)
+            ->whereIn('id', $data['ids'])
+            ->get();
+
+        foreach ($images as $image) {
+            if ($image->path) {
+                $path = str_replace(url('/').'/storage/', '', $image->path);
+                Storage::disk('public')->delete($path);
+            }
+            $image->delete();
+        }
+
+        return redirect()->back()->with('success', count($images).' imagen(es) eliminada(s).');
+    }
+
+    public function reorder(Request $request, Business $business)
+    {
+        $user = $request->user();
+
+        if ($user->hasAnyRole(['superadmin', 'admin'])) {
+        } else {
+            abort_unless($business->user_id === $user->id, 403);
+        }
+
+        $data = $request->validate([
+            'ids' => ['required', 'array'],
+            'ids.*' => [
+                'integer',
+                Rule::exists('business_gallery_images', 'id')->where('business_id', $business->id),
+            ],
+            'page' => ['nullable', 'integer', 'min:1'],
+            'perPage' => ['nullable', 'integer', 'min:1'],
+        ]);
+
+        $page = $data['page'] ?? 1;
+        $perPage = $data['perPage'] ?? count($data['ids']);
+        $start = (($page - 1) * $perPage) + 1;
+
+        DB::transaction(function () use ($data, $business, $start) {
+            foreach ($data['ids'] as $index => $id) {
+                \Modules\Gallery\Models\BusinessGalleryImage::where('id', $id)
+                    ->where('business_id', $business->id)
+                    ->update(['sort_order' => $start + $index]);
+            }
+        });
+
+        return back(303);
+    }
+
+    private function renderGallery(Request $request, Business $business, BusinessGallery $gallery): \Inertia\Response
+    {
         $perPage = min((int) $request->get('per_page', 10), 100);
         $search = $request->get('search', '');
         $sort = $request->get('sort', 'sort_order');
-        $direction = $request->get('direction', 'asc');
+        $direction = strtolower((string) $request->get('direction', 'asc')) === 'asc' ? 'asc' : 'desc';
 
         $allowedSorts = ['title', 'sort_order', 'is_active', 'created_at'];
-        if (!in_array($sort, $allowedSorts)) {
+        if (! in_array($sort, $allowedSorts, true)) {
             $sort = 'sort_order';
         }
         $direction = strtolower($direction) === 'desc' ? 'desc' : 'asc';
 
         $query = $business->galleryImages()
+            ->where('business_gallery_id', $gallery->id)
             ->with('location')
             ->when($search, function ($q) use ($search) {
                 $q->where(function ($q) use ($search) {
                     $q->where('title', 'like', "%{$search}%")
-                      ->orWhere('description', 'like', "%{$search}%");
+                        ->orWhere('description', 'like', "%{$search}%");
                 });
             })
             ->orderBy($sort, $direction)
             ->orderByDesc('id');
 
         $images = $query->paginate($perPage);
-
-        $locations = $business->locations()
-            ->where('is_active', true)
-            ->orderBy('name')
-            ->get(['id', 'name']);
 
         $dataTable = [
             'data' => collect($images->items())->map(function ($img) {
@@ -71,158 +300,35 @@ class GalleryController extends Controller
             'to' => $images->lastItem(),
         ];
 
-        return Inertia::render('Member/Gallery/Index', [
+        return Inertia::render('Member/Galleries/Show', [
             'business' => [
                 'id' => $business->id,
                 'name' => $business->name,
             ],
+            'galleries' => $this->galleryOptions($business),
+            'currentGallery' => [
+                'id' => $gallery->id,
+                'name' => $gallery->name,
+                'description' => $gallery->description,
+                'is_primary' => (bool) $gallery->is_primary,
+                'is_active' => (bool) $gallery->is_active,
+                'sort_order' => (int) $gallery->sort_order,
+            ],
             'images' => $images,
-            'locations' => $locations,
-            'maxSizeKb' => self::MAX_FILE_SIZE_KB,
-            'allowedTypes' => self::ALLOWED_MIME_TYPES,
             'dataTable' => $dataTable,
+            'locations' => $business->locations()->where('is_active', true)->orderBy('name')->get(['id', 'name']),
+            'maxSizeKb' => self::MAX_FILE_SIZE_KB,
+            'maxFilesPerUpload' => self::MAX_FILES_PER_UPLOAD,
+            'allowedTypes' => self::ALLOWED_MIME_TYPES,
         ]);
     }
 
-    public function store(Request $request, Business $business, ActivityService $activity)
+    private function galleryOptions(Business $business)
     {
-        $this->authorize('create', [BusinessGalleryImage::class, $business]);
-
-        $request->validate([
-            'file' => ['required', 'file', 'max:' . self::MAX_FILE_SIZE_KB, 'mimetypes:' . implode(',', self::ALLOWED_MIME_TYPES)],
-            'title' => ['nullable', 'string', 'max:150'],
-            'description' => ['nullable', 'string'],
-            'business_location_id' => ['nullable', 'exists:business_locations,id'],
-        ], [
-            'file.max' => 'El archivo supera el tamaño máximo de 5MB.',
-            'file.mimetypes' => 'Solo se permiten imágenes (JPEG, PNG, WebP, GIF).',
-        ]);
-
-        $file = $request->file('file');
-        $disk = 'public';
-        $path = $file->store('gallery/' . $business->id, ['disk' => $disk]);
-
-        $image = $business->galleryImages()->create([
-            'business_id' => $business->id,
-            'path' => Storage::disk($disk)->url($path),
-            'filename' => basename($path),
-            'original_name' => $file->getClientOriginalName(),
-            'extension' => $file->getClientOriginalExtension(),
-            'mime_type' => $file->getClientMimeType(),
-            'size' => $file->getSize(),
-            'title' => $request->input('title'),
-            'description' => $request->input('description'),
-            'business_location_id' => $request->input('business_location_id'),
-            'is_active' => true,
-            'sort_order' => 0,
-        ]);
-
-        $activity->log('gallery_image_uploaded', [
-            'actor' => $request->user(),
-            'subject' => $image,
-            'description' => 'Imagen subida a galeria',
-            'request' => $request,
-        ]);
-
-        return redirect()->back()->with('success', 'Imagen subida correctamente.');
-    }
-
-    public function update(Request $request, Business $business, BusinessGalleryImage $image, ActivityService $activity)
-    {
-        $this->authorize('update', [BusinessGalleryImage::class, $image]);
-
-        $data = $request->validate([
-            'title' => ['nullable', 'string', 'max:150'],
-            'description' => ['nullable', 'string'],
-            'sort_order' => ['nullable', 'integer', 'min:0'],
-            'is_active' => ['boolean'],
-            'business_location_id' => ['nullable', 'exists:business_locations,id'],
-        ]);
-
-        $image->update($data);
-
-        $activity->log('gallery_image_updated', [
-            'actor' => $request->user(),
-            'subject' => $image,
-            'description' => 'Imagen de galeria actualizada',
-            'request' => $request,
-        ]);
-
-        return redirect()->back()->with('success', 'Imagen actualizada correctamente.');
-    }
-
-    public function destroy(Request $request, Business $business, BusinessGalleryImage $image, ActivityService $activity)
-    {
-        $this->authorize('delete', [BusinessGalleryImage::class, $image]);
-
-        if ($image->path) {
-            $path = str_replace(url('/') . '/storage/', '', $image->path);
-            Storage::disk('public')->delete($path);
-        }
-
-        $activity->log('gallery_image_deleted', [
-            'actor' => $request->user(),
-            'subject' => $image,
-            'description' => 'Imagen de galeria eliminada',
-        ]);
-
-        $image->delete();
-
-        return redirect()->back()->with('success', 'Imagen eliminada correctamente.');
-    }
-
-    public function bulkDelete(Request $request, Business $business)
-    {
-        $this->authorize('deleteAny', [BusinessGalleryImage::class, $business]);
-
-        $request->validate([
-            'ids' => ['required', 'array', 'min:1'],
-            'ids.*' => ['integer', \Illuminate\Validation\Rule::exists('business_gallery_images', 'id')->where('business_id', $business->id)],
-        ]);
-
-        $images = BusinessGalleryImage::where('business_id', $business->id)
-            ->whereIn('id', $request->ids)
-            ->get();
-
-        foreach ($images as $image) {
-            if ($image->path) {
-                $path = str_replace(url('/') . '/storage/', '', $image->path);
-                Storage::disk('public')->delete($path);
-            }
-            $image->delete();
-        }
-
-        return redirect()->back()->with('success', count($images) . ' imagen(es) eliminada(s).');
-    }
-
-    public function reorder(Request $request, Business $business)
-    {
-        $user = $request->user();
-
-        if ($user->hasAnyRole(['superadmin', 'admin'])) {
-        } else {
-            abort_unless($business->user_id === $user->id, 403);
-        }
-
-        $data = $request->validate([
-            'ids' => ['required', 'array'],
-            'ids.*' => ['integer', \Illuminate\Validation\Rule::exists('business_gallery_images', 'id')->where('business_id', $business->id)],
-            'page' => ['nullable', 'integer', 'min:1'],
-            'perPage' => ['nullable', 'integer', 'min:1'],
-        ]);
-
-        $page = $data['page'] ?? 1;
-        $perPage = $data['perPage'] ?? count($data['ids']);
-        $start = (($page - 1) * $perPage) + 1;
-
-        \DB::transaction(function () use ($data, $business, $start) {
-            foreach ($data['ids'] as $index => $id) {
-                \Modules\Gallery\Models\BusinessGalleryImage::where('id', $id)
-                    ->where('business_id', $business->id)
-                    ->update(['sort_order' => $start + $index]);
-            }
-        });
-
-        return back(303);
+        return $business->galleries()
+            ->orderByDesc('is_primary')
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get(['id', 'name', 'is_primary', 'is_active']);
     }
 }

@@ -5,22 +5,27 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Services\ActivityService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
-use Modules\Businesses\Models\Business;
-use Modules\Locations\Models\BusinessLocation;
-use Modules\Services\Models\BusinessService;
-use Modules\Products\Models\BusinessProduct;
-use Modules\Gallery\Models\BusinessGalleryImage;
-use Modules\Appointments\Models\BusinessAppointment;
 use Modules\Appointments\Enums\AppointmentStatus;
+use Modules\Appointments\Models\BusinessAppointment;
+use Modules\Businesses\Models\Business;
 use Modules\Faqs\Models\BusinessFaq;
 use Modules\Faqs\Models\BusinessFaqCategory;
+use Modules\Gallery\Models\BusinessGallery;
+use Modules\Gallery\Models\BusinessGalleryImage;
+use Modules\Locations\Models\BusinessLocation;
+use Modules\Products\Models\BusinessProduct;
+use Modules\Services\Models\BusinessService;
 
 class BusinessContentController extends Controller
 {
     private const MAX_FILE_SIZE_KB = 5120;
+
     private const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+
     public function locationsIndex(Request $request, Business $business)
     {
         $locations = $business->locations()
@@ -72,7 +77,7 @@ class BusinessContentController extends Controller
         $activity->log('admin_location_created', [
             'actor' => $request->user(),
             'subject' => $location,
-            'description' => 'Admin: Ubicacion creada para negocio ' . $business->name,
+            'description' => 'Admin: Ubicacion creada para negocio '.$business->name,
             'request' => $request,
         ]);
 
@@ -607,13 +612,29 @@ class BusinessContentController extends Controller
             ->with('success', 'Producto eliminado correctamente.');
     }
 
-    public function galleryIndex(Request $request, Business $business)
+    public function galleryIndex(Request $request, Business $business, ?BusinessGallery $gallery = null)
     {
-        $images = $business->galleryImages()
-            ->with('location')
+        $galleries = $business->galleries()
+            ->orderByDesc('is_primary')
             ->orderBy('sort_order')
-            ->orderByDesc('id')
-            ->paginate(20);
+            ->orderBy('id')
+            ->get(['id', 'name', 'is_primary', 'is_active']);
+
+        if (! $gallery) {
+            $gallery = BusinessGallery::primaryFor($business->id);
+        }
+
+        if (! $gallery || $gallery->business_id !== $business->id) {
+            $gallery = $galleries->firstWhere('is_primary', true) ? BusinessGallery::find($galleries->firstWhere('is_primary', true)['id']) : null;
+        }
+
+        $images = $gallery
+            ? $business->galleryImages()->where('business_gallery_id', $gallery->id)
+                ->with('location')
+                ->orderBy('sort_order')
+                ->orderByDesc('id')
+                ->paginate(20)
+            : collect();
 
         $locations = $business->locations()
             ->where('is_active', true)
@@ -627,6 +648,8 @@ class BusinessContentController extends Controller
                 'slug' => $business->slug,
             ],
             'images' => $images,
+            'galleries' => $galleries,
+            'currentGalleryId' => $gallery?->id,
             'locations' => $locations,
             'maxSizeKb' => self::MAX_FILE_SIZE_KB,
         ]);
@@ -634,8 +657,12 @@ class BusinessContentController extends Controller
 
     public function galleryStore(Request $request, Business $business, ActivityService $activity)
     {
-        $request->validate([
-            'file' => ['required', 'file', 'max:' . self::MAX_FILE_SIZE_KB, 'mimetypes:' . implode(',', self::ALLOWED_MIME_TYPES)],
+        $data = $request->validate([
+            'file' => ['required', 'file', 'max:'.self::MAX_FILE_SIZE_KB, 'mimetypes:'.implode(',', self::ALLOWED_MIME_TYPES)],
+            'business_gallery_id' => [
+                'required',
+                Rule::exists('business_galleries', 'id')->where('business_id', $business->id),
+            ],
             'title' => ['nullable', 'string', 'max:150'],
             'description' => ['nullable', 'string'],
             'business_location_id' => ['nullable', 'exists:business_locations,id'],
@@ -646,15 +673,16 @@ class BusinessContentController extends Controller
 
         $file = $request->file('file');
         $disk = 'public';
-        $path = $file->store('gallery/' . $business->id, ['disk' => $disk]);
+        $path = $file->store('gallery/'.$business->id, ['disk' => $disk]);
 
         $image = $business->galleryImages()->create([
             'business_id' => $business->id,
+            'business_gallery_id' => $data['business_gallery_id'],
             'path' => Storage::disk($disk)->url($path),
             'filename' => basename($path),
             'original_name' => $file->getClientOriginalName(),
             'extension' => $file->getClientOriginalExtension(),
-            'mime_type' => $file->getClientMimeType(),
+            'mime_type' => $file->getMimeType(),
             'size' => $file->getSize(),
             'title' => $request->input('title'),
             'description' => $request->input('description'),
@@ -676,6 +704,10 @@ class BusinessContentController extends Controller
     public function galleryUpdate(Request $request, Business $business, BusinessGalleryImage $image, ActivityService $activity)
     {
         $data = $request->validate([
+            'business_gallery_id' => [
+                'required',
+                Rule::exists('business_galleries', 'id')->where('business_id', $business->id),
+            ],
             'title' => ['nullable', 'string', 'max:150'],
             'description' => ['nullable', 'string'],
             'sort_order' => ['nullable', 'integer', 'min:0'],
@@ -698,7 +730,7 @@ class BusinessContentController extends Controller
     public function galleryDestroy(Request $request, Business $business, BusinessGalleryImage $image, ActivityService $activity)
     {
         if ($image->path) {
-            $path = str_replace(url('/') . '/storage/', '', $image->path);
+            $path = str_replace(url('/').'/storage/', '', $image->path);
             Storage::disk('public')->delete($path);
         }
 
@@ -711,6 +743,176 @@ class BusinessContentController extends Controller
         $image->delete();
 
         return redirect()->route('admin.business.gallery.index', $business->id)->with('success', 'Imagen eliminada correctamente.');
+    }
+
+    public function galleriesIndex(Request $request, Business $business)
+    {
+        $galleries = $business->galleries()
+            ->withCount('images')
+            ->orderByDesc('is_primary')
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get()
+            ->map(fn (BusinessGallery $gallery) => [
+                'id' => $gallery->id,
+                'name' => $gallery->name,
+                'description' => $gallery->description,
+                'is_primary' => (bool) $gallery->is_primary,
+                'is_active' => (bool) $gallery->is_active,
+                'sort_order' => (int) $gallery->sort_order,
+                'images_count' => (int) $gallery->images_count,
+            ]);
+
+        return Inertia::render('Admin/BusinessContent/GalleriesIndex', [
+            'business' => [
+                'id' => $business->id,
+                'name' => $business->name,
+                'slug' => $business->slug,
+            ],
+            'galleries' => $galleries,
+        ]);
+    }
+
+    public function galleriesCreate(Request $request, Business $business)
+    {
+        return Inertia::render('Admin/BusinessContent/GalleriesCreate', [
+            'business' => [
+                'id' => $business->id,
+                'name' => $business->name,
+            ],
+        ]);
+    }
+
+    public function galleriesStore(Request $request, Business $business, ActivityService $activity)
+    {
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:150'],
+            'description' => ['nullable', 'string', 'max:500'],
+            'is_primary' => ['boolean'],
+            'is_active' => ['boolean'],
+            'sort_order' => ['nullable', 'integer', 'min:0'],
+        ]);
+
+        $gallery = DB::transaction(function () use ($business, $data) {
+            if (! empty($data['is_primary'])) {
+                BusinessGallery::where('business_id', $business->id)->update(['is_primary' => false]);
+            }
+
+            return $business->galleries()->create([
+                'name' => $data['name'],
+                'description' => $data['description'] ?? null,
+                'is_primary' => (bool) ($data['is_primary'] ?? false),
+                'is_active' => (bool) ($data['is_active'] ?? true),
+                'sort_order' => (int) ($data['sort_order'] ?? 0),
+            ]);
+        });
+
+        $activity->log('gallery_created', [
+            'actor' => $request->user(),
+            'subject' => $gallery,
+            'description' => 'Galería creada (admin)',
+            'request' => $request,
+        ]);
+
+        return redirect()->route('admin.business.galleries.index', $business->id)->with('success', 'Galería creada correctamente.');
+    }
+
+    public function galleriesEdit(Request $request, Business $business, BusinessGallery $gallery)
+    {
+        abort_unless($gallery->business_id === $business->id, 404);
+
+        return Inertia::render('Admin/BusinessContent/GalleriesEdit', [
+            'business' => [
+                'id' => $business->id,
+                'name' => $business->name,
+            ],
+            'gallery' => [
+                'id' => $gallery->id,
+                'name' => $gallery->name,
+                'description' => $gallery->description,
+                'is_primary' => (bool) $gallery->is_primary,
+                'is_active' => (bool) $gallery->is_active,
+                'sort_order' => (int) $gallery->sort_order,
+            ],
+        ]);
+    }
+
+    public function galleriesUpdate(Request $request, Business $business, BusinessGallery $gallery, ActivityService $activity)
+    {
+        abort_unless($gallery->business_id === $business->id, 404);
+
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:150'],
+            'description' => ['nullable', 'string', 'max:500'],
+            'is_primary' => ['boolean'],
+            'is_active' => ['boolean'],
+            'sort_order' => ['nullable', 'integer', 'min:0'],
+        ]);
+
+        DB::transaction(function () use ($business, $gallery, $data) {
+            if (! empty($data['is_primary'])) {
+                BusinessGallery::where('business_id', $business->id)
+                    ->where('id', '!=', $gallery->id)
+                    ->update(['is_primary' => false]);
+            }
+
+            $gallery->update([
+                'name' => $data['name'],
+                'description' => $data['description'] ?? null,
+                'is_primary' => (bool) ($data['is_primary'] ?? $gallery->is_primary),
+                'is_active' => (bool) ($data['is_active'] ?? $gallery->is_active),
+                'sort_order' => (int) ($data['sort_order'] ?? $gallery->sort_order),
+            ]);
+        });
+
+        $activity->log('gallery_updated', [
+            'actor' => $request->user(),
+            'subject' => $gallery,
+            'description' => 'Galería actualizada (admin)',
+            'request' => $request,
+        ]);
+
+        return redirect()->route('admin.business.galleries.index', $business->id)->with('success', 'Galería actualizada correctamente.');
+    }
+
+    public function galleriesDestroy(Request $request, Business $business, BusinessGallery $gallery, ActivityService $activity)
+    {
+        abort_unless($gallery->business_id === $business->id, 404);
+
+        $activity->log('gallery_deleted', [
+            'actor' => $request->user(),
+            'subject' => $gallery,
+            'description' => 'Galería eliminada (admin)',
+        ]);
+
+        $gallery->delete();
+
+        return redirect()->route('admin.business.galleries.index', $business->id)->with('success', 'Galería eliminada correctamente.');
+    }
+
+    public function galleriesSetPrimary(Request $request, Business $business, BusinessGallery $gallery, ActivityService $activity)
+    {
+        abort_unless($gallery->business_id === $business->id, 404);
+
+        DB::transaction(function () use ($business, $gallery) {
+            BusinessGallery::where('business_id', $business->id)
+                ->where('id', '!=', $gallery->id)
+                ->update(['is_primary' => false]);
+
+            $gallery->update([
+                'is_primary' => true,
+                'is_active' => true,
+            ]);
+        });
+
+        $activity->log('gallery_set_primary', [
+            'actor' => $request->user(),
+            'subject' => $gallery,
+            'description' => 'Galería marcada como principal (admin)',
+            'request' => $request,
+        ]);
+
+        return redirect()->route('admin.business.galleries.index', $business->id)->with('success', 'Galería marcada como principal.');
     }
 
     public function appointmentsIndex(Request $request, Business $business)
@@ -768,7 +970,7 @@ class BusinessContentController extends Controller
         ]);
 
         $service = BusinessService::findOrFail($data['business_service_id']);
-        $endTime = date('H:i', strtotime($data['start_time'] . ' + ' . $service->duration_minutes . ' minutes'));
+        $endTime = date('H:i', strtotime($data['start_time'].' + '.$service->duration_minutes.' minutes'));
 
         $appointment = $business->appointments()->create([
             'business_id' => $business->id,
@@ -881,7 +1083,7 @@ class BusinessContentController extends Controller
         ]);
 
         $service = BusinessService::findOrFail($data['business_service_id']);
-        $endTime = date('H:i', strtotime($data['start_time'] . ' + ' . $service->duration_minutes . ' minutes'));
+        $endTime = date('H:i', strtotime($data['start_time'].' + '.$service->duration_minutes.' minutes'));
 
         $appointment->update([
             'customer_name' => $data['customer_name'],

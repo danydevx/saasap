@@ -19,5 +19,6 @@
     "Faqs": true,
     "Seo": true,
     "Branding": true,
-    "Tasks": true
+    "Tasks": true,
+    "Clients": true
 }

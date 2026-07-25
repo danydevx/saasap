@@ -74,9 +74,9 @@
 
           <Link 
             v-else
-            href="/member/business-modules" 
+            href="/member/businesses" 
             class="sidebar-link" 
-            :class="{ active: isActive('/member/business-modules') }"
+            :class="{ active: isActive('/member/businesses') }"
           >
             <i class="bi bi-building"></i>
             <span>Mis Negocios</span>
@@ -288,9 +288,9 @@
 
             <Link 
               v-else
-              href="/member/business-modules" 
+              href="/member/businesses" 
               class="sidebar-link" 
-              :class="{ active: isActive('/member/business-modules') }"
+              :class="{ active: isActive('/member/businesses') }"
             >
               <i class="bi bi-building"></i>
               <span>Mis Negocios</span>
@@ -422,7 +422,7 @@ const dynamicBreadcrumbs = computed(() => {
   const path = currentPath.value
   const result = []
 
-  result.push({ label: 'Mis Negocios', href: '/member/business-modules' })
+  result.push({ label: 'Mis Negocios', href: '/member/businesses' })
 
   const businessMatch = path.match(/^\/member\/businesses\/(\d+)/)
   if (businessMatch) {

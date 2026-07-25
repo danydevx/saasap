@@ -9,6 +9,7 @@ class BusinessGalleryImage extends Model
 {
     protected $fillable = [
         'business_id',
+        'business_gallery_id',
         'business_location_id',
         'path',
         'filename',
@@ -31,6 +32,11 @@ class BusinessGalleryImage extends Model
     public function business(): BelongsTo
     {
         return $this->belongsTo(\Modules\Businesses\Models\Business::class);
+    }
+
+    public function gallery(): BelongsTo
+    {
+        return $this->belongsTo(BusinessGallery::class, 'business_gallery_id');
     }
 
     public function location(): BelongsTo
