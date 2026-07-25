@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Modules\Appointments\Models\BusinessAppointment;
+use Modules\Businesses\Models\Business;
 use Modules\Leads\Models\BusinessLead;
 use Modules\Promotions\Models\BusinessPromotion;
 use Modules\Reviews\Models\BusinessReview;
@@ -16,7 +17,17 @@ class DashboardController extends Controller
     {
         $user = $request->user();
 
-        $businessIds = $user->businesses()->pluck('id');
+        $businesses = $user->businesses()
+            ->select('id', 'name', 'description')
+            ->orderBy('name')
+            ->get()
+            ->map(fn ($biz) => [
+                'id' => $biz->id,
+                'name' => $biz->name,
+                'description' => $biz->description,
+            ]);
+
+        $businessIds = $businesses->pluck('id');
         $businessCount = $businessIds->count();
 
         if ($businessCount === 0) {
@@ -37,8 +48,8 @@ class DashboardController extends Controller
 
         return Inertia::render('Member/Dashboard', [
             'businessCount' => $businessCount,
-            'hasBusinesses' => $businessCount > 0,
             'stats' => $counts,
+            'businesses' => $businesses,
         ]);
     }
 }

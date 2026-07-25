@@ -25,11 +25,11 @@
         :href="`/member/businesses/${business?.id}/faq-categories`"
         class="btn btn-outline-secondary btn-sm"
       >
-        <i class="bi bi-folder me-1"></i>Categorias
+        <i class="bi bi-folder me-1"></i>Categorías
       </Link>
     </div>
 
-    <div class="row mb-3">
+    <div class="row mb-3 align-items-center">
       <div class="col-md-4">
         <BulkSelect
           v-model:selectedIds="selectedIds"
@@ -38,6 +38,18 @@
           item-name="preguntas"
           @deleted="onBulkDeleted"
         />
+      </div>
+      <div class="col-md-4 ms-auto">
+        <select
+          v-model="selectedCategory"
+          class="form-select form-select-sm"
+          @change="filterByCategory"
+        >
+          <option :value="null">Todas las categorías</option>
+          <option v-for="cat in categories" :key="cat.id" :value="cat.id">
+            {{ cat.name }}
+          </option>
+        </select>
       </div>
     </div>
 
@@ -81,7 +93,12 @@
       </template>
 
       <template #cell-answer="{ value }">
-        <span class="text-muted small">{{ value.substring(0, 80) }}{{ value.length > 80 ? '...' : '' }}</span>
+        <span class="text-muted small">{{ value?.substring(0, 80) }}{{ value?.length > 80 ? '...' : '' }}</span>
+      </template>
+
+      <template #cell-category="{ row }">
+        <span v-if="row.category" class="badge bg-info">{{ row.category.name }}</span>
+        <span v-else class="text-muted">-</span>
       </template>
 
       <template #cell-is_active="{ value }">
@@ -104,23 +121,29 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { Head, Link, router, usePage } from '@inertiajs/vue3'
 import MemberLayout from '@/Layouts/MemberLayout.vue'
 import PageHeader from '@/Components/Admin/PageHeader.vue'
 import BaseDataTable from '@/Components/DataTable/BaseDataTable.vue'
 import { BulkSelect, BulkSelectRowCheckbox } from '@/Components/BulkSelect'
 
-const props = defineProps({
-  business: Object,
-  faqs: Object,
-  categories: { type: Array, default: () => [] },
-  dataTable: Object,
-})
-
 const page = usePage()
 const business = computed(() => page.props.business)
+const categories = computed(() => page.props.categories || [])
+const dataTable = computed(() => page.props.dataTable || { data: [] })
 const businessMenu = computed(() => page.props.businessMenu || [])
+
+const filters = computed(() => page.props.filters || {})
+const getInitialCategory = () => {
+  const params = new URLSearchParams(window.location.search)
+  return params.get('category') ? Number(params.get('category')) : null
+}
+const selectedCategory = ref(getInitialCategory())
+
+watch(filters, (newFilters) => {
+  selectedCategory.value = newFilters.category
+})
 
 const breadcrumbs = computed(() => {
   const path = window.location.pathname
@@ -148,6 +171,7 @@ const columns = [
   { key: 'checkbox', label: '', sortable: false, width: '40px' },
   { key: 'question', label: 'Pregunta', sortable: true },
   { key: 'answer', label: 'Respuesta', sortable: false },
+  { key: 'category', label: 'Categoría', sortable: false },
   { key: 'is_active', label: 'Estado', sortable: true },
   { key: 'actions', label: 'Acciones', sortable: false },
 ]
@@ -156,8 +180,8 @@ const dataTableRef = ref(null)
 const selectedIds = ref([])
 
 const currentPageIds = computed(() => {
-  if (!props.dataTable?.data) return []
-  return props.dataTable.data.map(row => row.id)
+  if (!dataTable.value?.data) return []
+  return dataTable.value.data.map(row => row.id)
 })
 
 const onDataTableUpdated = (data) => {
@@ -171,8 +195,18 @@ const onBulkDeleted = () => {
   }
 }
 
+const filterByCategory = () => {
+  const params = {}
+  if (selectedCategory.value) {
+    params.category = selectedCategory.value
+  }
+  router.get(`/member/businesses/${business.value.id}/faqs`, params, {
+    preserveScroll: true,
+  })
+}
+
 const deleteFaq = (faq) => {
-  if (!confirm(`¿Estas seguro de eliminar "${faq.question}"?`)) {
+  if (!confirm(`¿Estás seguro de eliminar "${faq.question}"?`)) {
     return
   }
 
@@ -184,24 +218,5 @@ const deleteFaq = (faq) => {
       }
     },
   })
-}
-
-const deleteSelected = () => {
-  if (selectedIds.value.length === 0) return
-
-  const count = selectedIds.value.length
-  if (confirm(`Eliminar ${count} pregunta${count > 1 ? 's' : ''} seleccionada${count > 1 ? 's' : ''}?`)) {
-    router.post(`/member/businesses/${business.value.id}/faqs/bulk-delete`, {
-      ids: selectedIds.value,
-    }, {
-      preserveScroll: true,
-      onSuccess: () => {
-        selectedIds.value = []
-        if (dataTableRef.value) {
-          dataTableRef.value.reload()
-        }
-      },
-    })
-  }
 }
 </script>

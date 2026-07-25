@@ -21,19 +21,29 @@
       </div>
     </div>
 
-    <div class="row g-3">
-      <div class="col-12 col-md-6 col-lg-4">
-        <div class="card border-0 shadow-sm h-100">
-          <div class="card-body d-flex flex-column">
-            <h2 class="h6 mb-1">Mis negocios</h2>
-            <p class="text-muted small mb-3">{{ businessSummary }}</p>
-            <Link href="/member/businesses" class="btn btn-primary mt-auto">
-              <i class="bi bi-buildings me-1"></i>Ir a mis negocios
-            </Link>
-          </div>
+    <div v-if="businesses.length" class="mb-4">
+      <h2 class="h6 text-muted text-uppercase small mb-3">Mis negocios</h2>
+      <div class="row g-3">
+        <div v-for="biz in businesses" :key="biz.id" class="col-12 col-md-6 col-lg-4">
+          <Link :href="`/member/businesses/${biz.id}/modules`" class="text-decoration-none">
+            <div class="card border-0 shadow-sm h-100">
+              <div class="card-body d-flex flex-column">
+                <div class="d-flex align-items-center mb-2">
+                  <i class="bi bi-building me-2 text-primary"></i>
+                  <h3 class="h6 mb-0 text-dark">{{ biz.name }}</h3>
+                </div>
+                <p class="text-muted small mb-2">{{ biz.description || 'Sin descripción' }}</p>
+                <span class="badge bg-light text-dark mt-auto">
+                  <i class="bi bi-grid me-1"></i>Ver módulos
+                </span>
+              </div>
+            </div>
+          </Link>
         </div>
       </div>
+    </div>
 
+    <div class="row g-3">
       <div class="col-12 col-md-6 col-lg-4">
         <div class="card border-0 shadow-sm h-100">
           <div class="card-body d-flex flex-column">
@@ -70,12 +80,7 @@ const page = usePage()
 const userName = computed(() => page.props.auth?.user?.name || 'Usuario')
 const businessCount = computed(() => Number(page.props.businessCount ?? 0))
 const stats = computed(() => page.props.stats || {})
-
-const businessSummary = computed(() => {
-  if (businessCount.value === 0) return 'Aun no tienes negocios registrados.'
-  if (businessCount.value === 1) return 'Tienes 1 negocio registrado.'
-  return `Tienes ${businessCount.value} negocios registrados.`
-})
+const businesses = computed(() => page.props.businesses || [])
 
 const statCards = computed(() => [
   { key: 'leads', label: 'Leads', count: Number(stats.value.leads ?? 0), icon: 'bi-people', tone: 'primary' },

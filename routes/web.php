@@ -66,7 +66,10 @@ use App\Http\Controllers\Member\BillingController;
 use App\Http\Controllers\Member\BrandingController;
 use App\Http\Controllers\Member\CheckoutController;
 use App\Http\Controllers\Member\ClientController;
+use App\Http\Controllers\Member\ContactFormController;
 use App\Http\Controllers\Member\DashboardController;
+use App\Http\Controllers\Member\FaqController;
+use App\Http\Controllers\Member\FaqCategoryController;
 use App\Http\Controllers\Member\GalleryController;
 use App\Http\Controllers\Member\GalleryGroupController;
 use App\Http\Controllers\Member\HelpArticleController as MemberHelpArticleController;
@@ -229,6 +232,9 @@ Route::get('/member/business-modules', fn () => redirect()->route('member.busine
 Route::get('/member/businesses', [App\Http\Controllers\Member\BusinessModuleController::class, 'index'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.businesses.index');
+Route::get('/member/businesses/{business}/modules', [BusinessModulesController::class, 'show'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.modules');
 Route::get('/member/businesses/create', [App\Http\Controllers\Member\BusinessController::class, 'create'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.businesses.create');

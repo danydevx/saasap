@@ -1,81 +1,68 @@
 <template>
   <MemberLayout>
-    <Head :title="`Categorias de FAQs - ${business.name}`" />
+    <Head :title="`Categorías - ${business?.name || ''}`" />
 
     <PageHeader
-      title="Categorias de Preguntas Frecuentes"
+      title="Categorías de Preguntas Frecuentes"
       :breadcrumbs="breadcrumbs"
-      :backHref="`/member/businesses/${business.id}/faqs`"
+      :backHref="`/member/businesses/${business?.id}/faqs`"
     >
       <template #actions>
-        <button class="btn btn-primary" @click="openCreateModal">
-          <i class="bi bi-plus me-1"></i>Nueva Categoria
+        <button class="btn btn-primary btn-sm" @click="openCreateModal">
+          <i class="bi bi-plus-lg me-1"></i>Nueva Categoría
         </button>
       </template>
     </PageHeader>
 
-    <div class="card border-0 shadow-sm">
-      <div class="card-body">
-        <div v-if="$page.props.flash?.success" class="alert alert-success alert-dismissible fade show" role="alert">
-          {{ $page.props.flash.success }}
-          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-        <div v-if="$page.props.flash?.error" class="alert alert-danger alert-dismissible fade show" role="alert">
-          {{ $page.props.flash.error }}
-          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
+    <BaseDataTable
+      ref="dataTableRef"
+      :endpoint="`/member/businesses/${business?.id}/faq-categories`"
+      :columns="columns"
+      :initial-data="dataTable"
+      :initial-per-page="perPage"
+      search-placeholder="Buscar categorías..."
+      empty-title="No hay categorías"
+      empty-text="Comienza creando tu primera categoría."
+      @updated="onDataTableUpdated"
+    >
+      <template #cell-name="{ row }">
+        <strong>{{ row.name }}</strong>
+        <p v-if="row.description" class="text-muted small mb-0">{{ row.description.substring(0, 60) }}...</p>
+      </template>
 
-        <div v-if="categories.length === 0" class="text-center text-muted py-5">
-          No hay categorias registradas.
-        </div>
+      <template #cell-faqs_count="{ row }">
+        <span class="badge bg-secondary">{{ row.faqs_count || 0 }}</span>
+      </template>
 
-        <div v-else class="table-responsive">
-          <table class="table table-hover align-middle">
-            <thead>
-              <tr>
-                <th>Nombre</th>
-                <th>Descripcion</th>
-                <th>Preguntas</th>
-                <th>Estado</th>
-                <th style="width: 120px;">Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="category in categories" :key="category.id">
-                <td>
-                  <strong>{{ category.name }}</strong>
-                </td>
-                <td class="text-muted small">
-                  {{ category.description || '-' }}
-                </td>
-                <td>
-                  <span class="badge bg-light text-dark">{{ category.faqs?.length || 0 }}</span>
-                </td>
-                <td>
-                  <span class="badge" :class="category.is_active ? 'bg-success' : 'bg-secondary'">
-                    {{ category.is_active ? 'Activa' : 'Inactiva' }}
-                  </span>
-                </td>
-                <td>
-                  <button class="btn btn-sm btn-outline-primary" @click="openEditModal(category)">
-                    <i class="bi bi-pencil"></i>
-                  </button>
-                  <button class="btn btn-sm btn-outline-danger ms-1" @click="deleteCategory(category)">
-                    <i class="bi bi-trash"></i>
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+      <template #cell-is_active="{ row }">
+        <span :class="row.is_active ? 'badge bg-success' : 'badge bg-secondary'">
+          {{ row.is_active ? 'Activa' : 'Inactiva' }}
+        </span>
+      </template>
+
+      <template #cell-actions="{ row }">
+        <div class="actions">
+          <button
+            class="btn btn-sm btn-outline-primary"
+            @click="openEditModal(row)"
+          >
+            <i class="bi bi-pencil"></i>
+          </button>
+          <button
+            class="btn btn-sm btn-outline-danger"
+            @click="deleteCategory(row)"
+          >
+            <i class="bi bi-trash"></i>
+          </button>
         </div>
-      </div>
-    </div>
+      </template>
+    </BaseDataTable>
 
     <div ref="modalElement" class="modal fade" tabindex="-1">
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title">{{ editingCategory ? 'Editar Categoria' : 'Nueva Categoria' }}</h5>
+            <h5 class="modal-title">{{ editingCategory ? 'Editar Categoría' : 'Nueva Categoría' }}</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
           </div>
           <form @submit.prevent="editingCategory ? updateCategory() : createCategory()">
@@ -91,7 +78,7 @@
               <div class="mb-3">
                 <FieldTextarea
                   id="category-description"
-                  label="Descripcion"
+                  label="Descripción"
                   v-model="form.description"
                   :rows="2"
                 />
@@ -107,7 +94,7 @@
             <div class="modal-footer">
               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
               <button type="submit" class="btn btn-primary" :disabled="sending">
-                {{ sending ? (editingCategory ? 'Guardando...' : 'Creando...') : (editingCategory ? 'Guardar Cambios' : 'Crear Categoria') }}
+                {{ sending ? (editingCategory ? 'Guardando...' : 'Creando...') : (editingCategory ? 'Guardar Cambios' : 'Crear Categoría') }}
               </button>
             </div>
           </form>
@@ -123,13 +110,15 @@ import { Head, router, usePage } from '@inertiajs/vue3'
 import { Modal } from 'bootstrap'
 import MemberLayout from '@/Layouts/MemberLayout.vue'
 import PageHeader from '@/Components/Admin/PageHeader.vue'
+import BaseDataTable from '@/Components/DataTable/BaseDataTable.vue'
 import FieldText from '@/Components/Fields/FieldText.vue'
 import FieldTextarea from '@/Components/Fields/FieldTextarea.vue'
 import FieldSwitch from '@/Components/Fields/FieldSwitch.vue'
 
 const page = usePage()
 const business = computed(() => page.props.business)
-const categories = page.props.categories || []
+const dataTable = computed(() => page.props.dataTable)
+const categories = computed(() => page.props.categories || [])
 const businessMenu = computed(() => page.props.businessMenu || [])
 
 const breadcrumbs = computed(() => {
@@ -142,16 +131,26 @@ const breadcrumbs = computed(() => {
       return [
         { label: 'Mis Negocios', href: '/member/business-modules' },
         { label: biz.name, href: `/member/businesses/${biz.id}/edit` },
-        { label: 'Categorias FAQ', active: true },
+        { label: 'FAQs', href: `/member/businesses/${biz.id}/faqs` },
+        { label: 'Categorías', active: true },
       ]
     }
   }
   return [
     { label: 'Mis Negocios', href: '/member/business-modules' },
-    { label: 'Categorias FAQ', active: true },
+    { label: 'Categorías', active: true },
   ]
 })
 
+const columns = [
+  { key: 'name', label: 'Nombre', sortable: true },
+  { key: 'faqs_count', label: 'Preguntas', sortable: true },
+  { key: 'is_active', label: 'Estado', sortable: true },
+  { key: 'actions', label: 'Acciones', sortable: false },
+]
+
+const dataTableRef = ref(null)
+const perPage = ref(10)
 const modalElement = ref(null)
 let categoryModal = null
 
@@ -163,6 +162,10 @@ const form = reactive({
   description: '',
   is_active: true,
 })
+
+const onDataTableUpdated = (data) => {
+  perPage.value = data.per_page
+}
 
 const openCreateModal = () => {
   editingCategory.value = null
@@ -186,28 +189,39 @@ const closeModal = () => {
 
 const createCategory = () => {
   sending.value = true
-  router.post(`/member/businesses/${business.id}/faq-categories`, form, {
+  router.post(`/member/businesses/${business.value.id}/faq-categories`, form, {
     onFinish: () => {
       sending.value = false
       closeModal()
+      if (dataTableRef.value) {
+        dataTableRef.value.reload()
+      }
     },
   })
 }
 
 const updateCategory = () => {
   sending.value = true
-  router.put(`/member/businesses/${business.id}/faq-categories/${editingCategory.value.id}`, form, {
+  router.put(`/member/businesses/${business.value.id}/faq-categories/${editingCategory.value.id}`, form, {
     onFinish: () => {
       sending.value = false
       closeModal()
+      if (dataTableRef.value) {
+        dataTableRef.value.reload()
+      }
     },
   })
 }
 
 const deleteCategory = (category) => {
-  if (confirm(`Eliminar la categoria "${category.name}"? Las preguntas seran desvinculadas.`)) {
-    router.delete(`/member/businesses/${business.id}/faq-categories/${category.id}`, {
+  if (confirm(`Eliminar la categoría "${category.name}"? Las preguntas serán desvinculadas.`)) {
+    router.delete(`/member/businesses/${business.value.id}/faq-categories/${category.id}`, {
       preserveScroll: true,
+      onSuccess: () => {
+        if (dataTableRef.value) {
+          dataTableRef.value.reload()
+        }
+      },
     })
   }
 }

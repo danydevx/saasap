@@ -19,6 +19,7 @@ class FaqController extends Controller
 
         $perPage = min((int) $request->get('per_page', 10), 100);
         $search = $request->get('search', '');
+        $categoryId = $request->get('category');
         $sort = $request->get('sort', 'sort_order');
         $direction = $request->get('direction', 'asc');
 
@@ -36,6 +37,9 @@ class FaqController extends Controller
                       ->orWhere('answer', 'like', "%{$search}%");
                 });
             })
+            ->when($categoryId, function ($q) use ($categoryId) {
+                $q->where('category_id', $categoryId);
+            })
             ->orderBy($sort, $direction)
             ->orderBy('question');
 
@@ -47,7 +51,21 @@ class FaqController extends Controller
             ->get(['id', 'name']);
 
         $dataTable = [
-            'data' => $faqs->items(),
+            'data' => collect($faqs->items())->map(function ($faq) {
+                return [
+                    'id' => $faq->id,
+                    'question' => $faq->question,
+                    'answer' => $faq->answer,
+                    'category_id' => $faq->category_id,
+                    'category' => $faq->category ? [
+                        'id' => $faq->category->id,
+                        'name' => $faq->category->name,
+                    ] : null,
+                    'is_active' => $faq->is_active,
+                    'sort_order' => $faq->sort_order,
+                    'created_at' => $faq->created_at,
+                ];
+            })->toArray(),
             'current_page' => $faqs->currentPage(),
             'last_page' => $faqs->lastPage(),
             'per_page' => $faqs->perPage(),
@@ -61,9 +79,11 @@ class FaqController extends Controller
                 'id' => $business->id,
                 'name' => $business->name,
             ],
-            'faqs' => $faqs,
             'categories' => $categories,
             'dataTable' => $dataTable,
+            'filters' => [
+                'category' => $categoryId,
+            ],
         ]);
     }
 
