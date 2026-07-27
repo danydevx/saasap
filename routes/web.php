@@ -28,6 +28,7 @@ use App\Http\Controllers\Admin\MenuProductImageController;
 use App\Http\Controllers\Admin\MenuProductVariantController;
 use App\Http\Controllers\Admin\MessageTemplateController;
 use App\Http\Controllers\Admin\MinisiteThemeController;
+use Modules\Minisite\Http\Controllers\Admin\MinisiteController as AdminMinisiteController;
 use App\Http\Controllers\Admin\ModuleSettingsController;
 use App\Http\Controllers\Admin\PaymentController;
 use App\Http\Controllers\Admin\PermissionController;
@@ -102,6 +103,8 @@ use App\Http\Controllers\Member\SocialNetworkController;
 use App\Http\Controllers\Member\SupportTicketController as MemberSupportTicketController;
 use App\Http\Controllers\Member\SystemAnnouncementController as MemberSystemAnnouncementController;
 use App\Http\Controllers\Member\WebhookController as MemberWebhookController;
+use Modules\Minisite\Http\Controllers\Member\MinisiteController;
+use Modules\Minisite\Http\Controllers\Member\MinisiteSectionController;
 use App\Http\Controllers\PricingController;
 use App\Http\Controllers\Public\BusinessController as PublicBusinessController;
 use App\Http\Controllers\Public\DirectoryController;
@@ -338,6 +341,38 @@ Route::put('/member/businesses/{business}/faq-categories/{category}', [FaqCatego
 Route::delete('/member/businesses/{business}/faq-categories/{category}', [FaqCategoryController::class, 'destroy'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.businesses.faq-categories.destroy');
+
+Route::get('/member/businesses/{business}/minisite', [MinisiteController::class, 'index'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.minisite.index');
+Route::post('/member/businesses/{business}/minisite', [MinisiteController::class, 'store'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.minisite.store');
+Route::put('/member/businesses/{business}/minisite', [MinisiteController::class, 'update'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.minisite.update');
+
+Route::get('/member/businesses/{business}/minisite/sections', [MinisiteSectionController::class, 'index'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.minisite.sections.index');
+Route::get('/member/businesses/{business}/minisite/sections/create', [MinisiteSectionController::class, 'create'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.minisite.sections.create');
+Route::post('/member/businesses/{business}/minisite/sections', [MinisiteSectionController::class, 'store'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.minisite.sections.store');
+Route::get('/member/businesses/{business}/minisite/sections/{section}/edit', [MinisiteSectionController::class, 'edit'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.minisite.sections.edit');
+Route::put('/member/businesses/{business}/minisite/sections/{section}', [MinisiteSectionController::class, 'update'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.minisite.sections.update');
+Route::delete('/member/businesses/{business}/minisite/sections/{section}', [MinisiteSectionController::class, 'destroy'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.minisite.sections.destroy');
+Route::post('/member/businesses/{business}/minisite/sections/reorder', [MinisiteSectionController::class, 'reorder'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.minisite.sections.reorder');
 
 Route::get('/member/businesses/{business}/seo', [SeoController::class, 'index'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
@@ -1475,6 +1510,11 @@ Route::prefix('admin')->middleware(['auth', 'admin_or_user:1'])->group(function 
     Route::delete('/business-module-definitions/{definition}', [BusinessModuleDefinitionController::class, 'destroy'])
         ->middleware(['auth', 'admin_or_user:1'])
         ->name('admin.business-module-definitions.destroy');
+
+    Route::get('/businesses/{business}/minisite', [AdminMinisiteController::class, 'index'])
+        ->name('admin.business.minisite.index');
+    Route::post('/businesses/{business}/minisite', [AdminMinisiteController::class, 'update'])
+        ->name('admin.business.minisite.update');
 
     Route::get('/industries', [IndustryController::class, 'index'])
         ->middleware(['auth', 'admin_or_user:1'])

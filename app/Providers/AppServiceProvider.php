@@ -48,6 +48,9 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Modules\Businesses\Models\Business;
+use Modules\Minisite\Models\BusinessMinisiteSection;
+use Modules\Minisite\Models\BusinessMinisiteSetting;
+use Modules\Minisite\Policies\MinisitePolicy;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -132,6 +135,9 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(\Modules\Seo\Models\BusinessSeoSetting::class, BusinessSeoSettingPolicy::class);
         Gate::policy(\Modules\Branding\Models\BusinessBrandingSetting::class, BusinessBrandingSettingPolicy::class);
         Gate::policy(\Modules\Tasks\Models\BusinessTask::class, \App\Policies\BusinessTaskPolicy::class);
+        Gate::policy(BusinessMinisiteSetting::class, MinisitePolicy::class);
+        Gate::policy(BusinessMinisiteSection::class, MinisitePolicy::class);
+        Gate::policy(Business::class, MinisitePolicy::class);
 
         RateLimiter::for('login', function (Request $request) {
             $email = mb_strtolower((string) $request->input('email', ''));

@@ -183,6 +183,15 @@ class BusinessModuleDefinitionSeeder extends Seeder
                 'has_settings' => false,
                 'is_premium' => false,
             ],
+            [
+                'key' => 'minisite',
+                'name' => 'Minisite',
+                'description' => 'Minisite publicitario mobile-first con secciones configurables',
+                'icon' => 'bi bi-laptop',
+                'sort_order' => 20,
+                'has_settings' => true,
+                'is_premium' => false,
+            ],
         ];
 
         foreach ($modules as $module) {

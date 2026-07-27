@@ -1,0 +1,82 @@
+<template>
+  <div class="hero hero--right" :style="backgroundStyle">
+    <div class="hero__inner">
+      <div class="hero__content">
+        <h1 class="hero__title">{{ title || business.name }}</h1>
+        <p v-if="subtitle" class="hero__subtitle">{{ subtitle }}</p>
+      </div>
+      <div class="hero__media">
+        <img v-if="business.logo" :src="business.logo" :alt="business.name" class="hero__logo" />
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { computed } from 'vue'
+
+const props = defineProps({
+  business: Object,
+  title: String,
+  subtitle: String,
+  backgroundImage: String,
+})
+
+const backgroundStyle = computed(() => {
+  if (props.backgroundImage) {
+    return {
+      '--hero-bg': `url(${props.backgroundImage})`,
+    }
+  }
+  return {}
+})
+</script>
+
+<style lang="less">
+.hero {
+  background-color: #f8f9fa;
+  background-image: var(--hero-bg, none);
+  background-size: cover;
+  background-position: center;
+
+  &--right {
+    .hero__inner {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      padding: 48px 16px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .hero__content {
+      flex: 1;
+      text-align: right;
+    }
+
+    .hero__media {
+      flex-shrink: 0;
+    }
+
+    .hero__logo {
+      width: 80px;
+      height: 80px;
+      object-fit: contain;
+      border-radius: 8px;
+    }
+
+    .hero__title {
+      font-size: 1.75rem;
+      font-weight: 700;
+      margin: 0 0 8px;
+      color: #212529;
+    }
+
+    .hero__subtitle {
+      font-size: 1rem;
+      margin: 0;
+      color: #6c757d;
+    }
+  }
+}
+</style>

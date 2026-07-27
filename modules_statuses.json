@@ -20,5 +20,6 @@
     "Seo": true,
     "Branding": true,
     "Tasks": true,
-    "Clients": true
+    "Clients": true,
+    "Minisite": true
 }
