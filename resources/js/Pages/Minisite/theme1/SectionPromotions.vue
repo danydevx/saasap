@@ -9,21 +9,32 @@
 
       <div v-else class="section-promotions__list">
         <div
-          v-for="item in items"
+          v-for="item in itemsWithDiscount"
           :key="item.id"
           class="section-promotions__item"
         >
           <div class="section-promotions__item-header">
             <h3 class="section-promotions__item-title">{{ item.title }}</h3>
-            <span v-if="item.discount" class="section-promotions__item-discount">
-              -{{ item.discount }}%
+            <span v-if="item.discountPercent" class="section-promotions__item-discount">
+              -{{ item.discountPercent }}%
             </span>
           </div>
           <p v-if="item.description" class="section-promotions__item-desc">
             {{ item.description }}
           </p>
-          <p v-if="item.valid_until" class="section-promotions__item-valid">
-            Válido hasta: {{ formatDate(item.valid_until) }}
+          <div class="section-promotions__item-prices">
+            <span v-if="item.regular_price" class="section-promotions__price-original">
+              ${{ item.regular_price }}
+            </span>
+            <span v-if="item.promotion_price" class="section-promotions__price-promotion">
+              ${{ item.promotion_price }}
+            </span>
+          </div>
+          <p v-if="item.expires_at" class="section-promotions__item-valid">
+            Válido hasta: {{ formatDate(item.expires_at) }}
+          </p>
+          <p v-if="item.coupon_code" class="section-promotions__item-coupon">
+            Código: {{ item.coupon_code }}
           </p>
         </div>
       </div>
@@ -32,7 +43,9 @@
 </template>
 
 <script setup>
-defineProps({
+import { computed } from 'vue'
+
+const props = defineProps({
   title: String,
   items: {
     type: Array,
@@ -52,6 +65,16 @@ const formatDate = (dateString) => {
     year: 'numeric',
   })
 }
+
+const itemsWithDiscount = computed(() => {
+  return props.items.map(item => {
+    let discountPercent = null
+    if (item.regular_price && item.promotion_price && item.regular_price > item.promotion_price) {
+      discountPercent = Math.round((1 - item.promotion_price / item.regular_price) * 100)
+    }
+    return { ...item, discountPercent }
+  })
+})
 </script>
 
 <style lang="less">
@@ -116,10 +139,36 @@ const formatDate = (dateString) => {
     margin: 0 0 8px;
   }
 
+  &__item-prices {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  &__price-original {
+    font-size: 0.875rem;
+    color: #6c757d;
+    text-decoration: line-through;
+  }
+
+  &__price-promotion {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #dc3545;
+  }
+
   &__item-valid {
     font-size: 0.75rem;
     color: #adb5bd;
+    margin: 0 0 4px;
+  }
+
+  &__item-coupon {
+    font-size: 0.75rem;
+    color: #0d6efd;
     margin: 0;
+    font-weight: 600;
   }
 }
 </style>

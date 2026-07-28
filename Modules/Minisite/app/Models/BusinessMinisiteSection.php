@@ -34,10 +34,17 @@ class BusinessMinisiteSection extends Model
     public static function getSectionTypes(): array
     {
         return [
+            'hero' => 'Encabezado (Hero)',
             'services' => 'Servicios',
             'gallery' => 'Galería',
             'promotions' => 'Promociones',
             'contact_form' => 'Formulario de Contacto',
+            'locations' => 'Ubicaciones',
+            'about' => 'Nosotros',
+            'features' => 'Características',
+            'faqs' => 'Preguntas Frecuentes',
+            'products' => 'Productos',
+            'footer' => 'Pie de Página (Footer)',
         ];
     }
 
@@ -61,6 +68,46 @@ class BusinessMinisiteSection extends Model
             ],
             'contact_form' => [
                 'form_id' => null,
+            ],
+            'locations' => [
+                'show_all' => true,
+                'location_ids' => [],
+                'show_address' => true,
+                'show_phone' => true,
+                'show_email' => true,
+                'show_hours' => true,
+            ],
+            'about' => [
+                'show_image' => true,
+                'show_description' => true,
+            ],
+            'features' => [
+                'show_all' => true,
+                'feature_ids' => [],
+                'show_icon' => true,
+                'show_title' => true,
+                'show_description' => true,
+            ],
+            'faqs' => [
+                'show_all' => true,
+                'faq_ids' => [],
+                'category_id' => null,
+                'show_questions' => true,
+            ],
+            'products' => [
+                'show_all' => true,
+                'product_ids' => [],
+                'show_image' => true,
+                'show_price' => true,
+                'show_compare_price' => true,
+                'show_add_to_cart' => false,
+                'view_mode' => 'grid',
+            ],
+            'hero' => [
+                'show' => true,
+            ],
+            'footer' => [
+                'show' => true,
             ],
             default => [],
         };

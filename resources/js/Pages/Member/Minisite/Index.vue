@@ -5,7 +5,7 @@
     <PageHeader
       title="Configuración del Minisite"
       :breadcrumbs="breadcrumbs"
-      :backHref="`/member/businesses/${business?.id}/modules`"
+      :backHref="`/member/businesses/${business?.id}/minisite/sections`"
     >
       <template #actions>
         <Link :href="`/member/businesses/${business?.id}/minisite/sections`" class="btn btn-outline-primary btn-sm">
@@ -145,8 +145,8 @@ const breadcrumbs = computed(() => {
     if (biz) {
       return [
         { label: 'Mis Negocios', href: '/member/business-modules' },
-        { label: biz.name, href: `/member/businesses/${biz.id}/edit` },
-        { label: 'Minisite', active: true },
+        { label: biz.name, href: `/member/businesses/${biz.id}/minisite/sections` },
+        { label: 'Configuración', active: true },
       ]
     }
   }

@@ -12,28 +12,17 @@
 
       <div class="minisite-preview__screen">
         <div class="minisite-preview__scroll-area">
-          <component
-            :is="heroComponent"
-            v-if="setting"
-            :business="business"
-            :title="setting.hero_title || business.name"
-            :subtitle="setting.hero_subtitle"
-            :backgroundImage="setting.hero_background_image"
-          />
-
           <div class="minisite-preview__sections">
             <template v-for="section in sections" :key="section.id">
               <div v-if="section.is_active" class="minisite-preview__section-wrapper">
-                <div v-if="hasContent(section)" class="minisite-preview__section">
-                  <component
-                    :is="sectionComponent(section.section_type)"
-                    v-if="section.section_type !== 'custom'"
-                    :title="section.title"
-                    :description="section.description"
-                    :buttons="section.buttons"
-                    v-bind="sectionProps(section)"
-                  />
-                </div>
+                <component
+                  :is="sectionComponent(section.section_type)"
+                  v-if="sectionComponent(section.section_type) && hasContent(section)"
+                  :title="section.title"
+                  :description="section.description"
+                  :buttons="section.buttons"
+                  v-bind="sectionProps(section)"
+                />
                 <div v-else class="minisite-preview__section minisite-preview__section--empty">
                   <div class="minisite-preview__empty-state">
                     <i :class="sectionIcon(section.section_type)"></i>
@@ -44,30 +33,30 @@
               </div>
             </template>
           </div>
-
-          <Footer
-            v-if="setting"
-            :business="business"
-            :text="setting.footer_text"
-            :showSocial="setting.footer_show_social"
-            :socialNetworks="socialNetworks"
-          />
         </div>
       </div>
+    </div>
+    <div class="minisite-preview__actions">
+      <a v-if="business?.slug" :href="`/b/${business.slug}`" target="_blank" class="btn btn-outline-primary btn-sm">
+        <i class="bi bi-box-arrow-up-right me-1"></i>Abrir en nueva pestaña
+      </a>
     </div>
   </div>
 </template>
 
 <script setup>
 import { computed } from 'vue'
-import HeroLeft from '@/Pages/Minisite/theme1/HeroLeft.vue'
-import HeroCenter from '@/Pages/Minisite/theme1/HeroCenter.vue'
-import HeroRight from '@/Pages/Minisite/theme1/HeroRight.vue'
 import SectionServices from '@/Pages/Minisite/theme1/SectionServices.vue'
 import SectionGallery from '@/Pages/Minisite/theme1/SectionGallery.vue'
 import SectionPromotions from '@/Pages/Minisite/theme1/SectionPromotions.vue'
 import SectionContactForm from '@/Pages/Minisite/theme1/SectionContactForm.vue'
-import Footer from '@/Pages/Minisite/theme1/Footer.vue'
+import SectionLocations from '@/Pages/Minisite/theme1/SectionLocations.vue'
+import SectionAbout from '@/Pages/Minisite/theme1/SectionAbout.vue'
+import SectionFeatures from '@/Pages/Minisite/theme1/SectionFeatures.vue'
+import SectionFaqs from '@/Pages/Minisite/theme1/SectionFaqs.vue'
+import SectionProducts from '@/Pages/Minisite/theme1/SectionProducts.vue'
+import SectionHero from '@/Pages/Minisite/theme1/SectionHero.vue'
+import SectionFooter from '@/Pages/Minisite/theme1/SectionFooter.vue'
 
 const props = defineProps({
   business: {
@@ -100,25 +89,42 @@ const heroComponent = computed(() => {
 
 const sectionComponent = (type) => {
   const components = {
+    hero: SectionHero,
     services: SectionServices,
     gallery: SectionGallery,
     promotions: SectionPromotions,
     contact_form: SectionContactForm,
+    locations: SectionLocations,
+    about: SectionAbout,
+    features: SectionFeatures,
+    faqs: SectionFaqs,
+    products: SectionProducts,
+    footer: SectionFooter,
   }
   return components[type] || null
 }
 
 const sectionIcon = (type) => {
   const icons = {
+    hero: 'bi bi-house',
     services: 'bi bi-briefcase',
     gallery: 'bi bi-images',
     promotions: 'bi bi-tag',
     contact_form: 'bi bi-envelope',
+    locations: 'bi bi-geo-alt',
+    about: 'bi bi-info-circle',
+    features: 'bi bi-star',
+    faqs: 'bi bi-question-circle',
+    products: 'bi bi-box-seam',
+    footer: 'bi bi-footer',
   }
   return icons[type] || 'bi bi-grid'
 }
 
 const hasContent = (section) => {
+  if (section.section_type === 'hero') {
+    return true
+  }
   if (section.section_type === 'services') {
     return section.items && section.items.length > 0
   }
@@ -131,10 +137,37 @@ const hasContent = (section) => {
   if (section.section_type === 'contact_form') {
     return section.form && section.form.id
   }
+  if (section.section_type === 'locations') {
+    return section.items && section.items.length > 0
+  }
+  if (section.section_type === 'about') {
+    return section.content && (section.content.name || section.content.description)
+  }
+  if (section.section_type === 'features') {
+    return section.items && section.items.length > 0
+  }
+  if (section.section_type === 'faqs') {
+    return section.items && section.items.length > 0
+  }
+  if (section.section_type === 'products') {
+    return section.items && section.items.length > 0
+  }
+  if (section.section_type === 'footer') {
+    return true
+  }
   return false
 }
 
 const sectionProps = (section) => {
+  if (section.section_type === 'hero') {
+    return {
+      business: props.business,
+      title: section.title || section.config?.layout === 'left' ? section.title : section.title,
+      subtitle: section.description,
+      backgroundImage: section.config?.background_image,
+      config: section.config || {},
+    }
+  }
   if (section.section_type === 'services') {
     return { items: section.items || [], config: section.config || {} }
   }
@@ -146,6 +179,30 @@ const sectionProps = (section) => {
   }
   if (section.section_type === 'contact_form') {
     return { form: section.form || {}, config: section.config || {} }
+  }
+  if (section.section_type === 'locations') {
+    return { items: section.items || [], config: section.config || {} }
+  }
+  if (section.section_type === 'about') {
+    return { content: section.content || {}, config: section.config || {} }
+  }
+  if (section.section_type === 'features') {
+    return { items: section.items || [], config: section.config || {} }
+  }
+  if (section.section_type === 'faqs') {
+    return { items: section.items || [], config: section.config || {} }
+  }
+  if (section.section_type === 'products') {
+    return { items: section.items || [], config: section.config || {} }
+  }
+  if (section.section_type === 'footer') {
+    return {
+      business: props.business,
+      text: section.config?.text || '',
+      showSocial: section.config?.show_social !== false,
+      socialNetworks: props.socialNetworks,
+      config: section.config || {},
+    }
   }
   return {}
 }
@@ -236,6 +293,11 @@ const sectionProps = (section) => {
     small {
       font-size: 12px;
     }
+  }
+
+  &__actions {
+    text-align: center;
+    margin-top: 16px;
   }
 }
 

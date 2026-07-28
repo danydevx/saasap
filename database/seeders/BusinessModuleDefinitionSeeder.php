@@ -191,6 +191,8 @@ class BusinessModuleDefinitionSeeder extends Seeder
                 'sort_order' => 20,
                 'has_settings' => true,
                 'is_premium' => false,
+                'show_in_menu' => true,
+                'menu_title' => 'Minisite',
             ],
         ];
 

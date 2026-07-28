@@ -8,6 +8,9 @@
       :backHref="`/member/businesses/${business?.id}/minisite`"
     >
       <template #actions>
+        <a v-if="business?.slug" :href="`/b/${business.slug}`" target="_blank" class="btn btn-outline-secondary btn-sm me-2">
+          <i class="bi bi-eye me-1"></i>Ver Minisite
+        </a>
         <Link :href="`/member/businesses/${business?.id}/minisite/sections/create`" class="btn btn-primary btn-sm">
           <i class="bi bi-plus-lg me-1"></i>Nueva Sección
         </Link>
@@ -49,10 +52,19 @@
                   </div>
                 </div>
                 <div class="minisite-sections__actions">
-                  <Link :href="`/member/businesses/${business?.id}/minisite/sections/${section.id}/edit`" class="btn btn-sm btn-outline-primary">
+                  <Link
+                    :href="section.id === 'hero' || section.id === 'footer'
+                      ? `/member/businesses/${business?.id}/minisite`
+                      : `/member/businesses/${business?.id}/minisite/sections/${section.id}/edit`"
+                    class="btn btn-sm btn-outline-primary"
+                  >
                     <i class="bi bi-pencil"></i>
                   </Link>
-                  <button class="btn btn-sm btn-outline-danger" @click="deleteSection(section)">
+                  <button
+                    v-if="section.id !== 'hero' && section.id !== 'footer'"
+                    class="btn btn-sm btn-outline-danger"
+                    @click="deleteSection(section)"
+                  >
                     <i class="bi bi-trash"></i>
                   </button>
                 </div>
@@ -68,6 +80,7 @@
             <i class="bi bi-phone me-1"></i>Vista Previa
           </h6>
           <MinisitePreview
+            :key="sectionsKey"
             :business="business"
             :setting="setting"
             :sections="localSections"
@@ -81,7 +94,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, nextTick } from 'vue'
+import { ref, computed, watchEffect, onMounted, nextTick } from 'vue'
 import { Head, Link, router, usePage } from '@inertiajs/vue3'
 import Sortable from 'sortablejs'
 import MemberLayout from '@/Layouts/MemberLayout.vue'
@@ -100,8 +113,12 @@ const localSections = ref([...sections.value])
 const sectionsList = ref(null)
 let sortableInstance = null
 
-watch(sections, (newSections) => {
-  localSections.value = [...newSections]
+watchEffect(() => {
+  localSections.value = [...sections.value]
+})
+
+const sectionsKey = computed(() => {
+  return sections.value.map(s => s.id).join(',')
 })
 
 const breadcrumbs = computed(() => {

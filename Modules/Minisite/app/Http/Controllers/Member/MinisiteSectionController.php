@@ -47,12 +47,63 @@ class MinisiteSectionController extends Controller
                     case 'contact_form':
                         $sectionData['form'] = $this->getContactFormData($business, $config);
                         break;
+                    case 'locations':
+                        $sectionData['items'] = $this->getLocationsData($business, $config);
+                        break;
+                    case 'about':
+                        $sectionData['content'] = $this->getAboutData($business, $config);
+                        break;
+                    case 'features':
+                        $sectionData['items'] = $this->getFeaturesData($business, $config);
+                        break;
+                    case 'faqs':
+                        $sectionData['items'] = $this->getFaqsData($business, $config);
+                        break;
+                    case 'products':
+                        $sectionData['items'] = $this->getProductsData($business, $config);
+                        break;
                 }
 
                 return $sectionData;
             });
 
         $setting = BusinessMinisiteSetting::where('business_id', $business->id)->first();
+
+        if ($setting) {
+            $heroSection = [
+                'id' => 'hero',
+                'section_type' => 'hero',
+                'section_key' => 'hero',
+                'title' => $setting->hero_title,
+                'description' => null,
+                'config' => [
+                    'layout' => $setting->hero_layout ?? 'left',
+                    'background_image' => $setting->hero_background_image,
+                    'show' => true,
+                ],
+                'buttons' => [],
+                'sort_order' => -2,
+                'is_active' => true,
+            ];
+
+            $footerSection = [
+                'id' => 'footer',
+                'section_type' => 'footer',
+                'section_key' => 'footer',
+                'title' => null,
+                'description' => null,
+                'config' => [
+                    'text' => $setting->footer_text,
+                    'show_social' => $setting->footer_show_social,
+                    'show' => true,
+                ],
+                'buttons' => [],
+                'sort_order' => 9999,
+                'is_active' => true,
+            ];
+
+            $sections = $sections->prepend($heroSection)->push($footerSection);
+        }
 
         $socialNetworks = [];
         if (class_exists('\Modules\SocialMedia\Models\BusinessSocialNetwork')) {
@@ -350,5 +401,125 @@ class MinisiteSectionController extends Controller
             'shortcode' => $form->shortcode,
             'fields' => $form->fields->map(fn($f) => $f->getConfig())->toArray(),
         ];
+    }
+
+    private function getLocationsData(Business $business, array $config): array
+    {
+        $query = $business->locations()
+            ->where('is_active', true);
+
+        if (!empty($config['location_ids'])) {
+            $query->whereIn('id', $config['location_ids']);
+        }
+
+        return $query
+            ->orderByDesc('is_primary')
+            ->orderBy('id')
+            ->get(['id', 'name', 'address_line_1', 'city', 'state', 'state_code', 'country', 'phone', 'email', 'latitude', 'longitude', 'directions_url'])
+            ->map(function ($location) {
+                $statePart = $location->state ?: $location->state_code;
+                return [
+                    'id' => $location->id,
+                    'name' => $location->name,
+                    'address' => $location->address_line_1,
+                    'city' => $location->city,
+                    'state' => $statePart,
+                    'country' => $location->country,
+                    'full_address' => trim("{$location->address_line_1}, {$location->city}, {$statePart}"),
+                    'phone' => $location->phone,
+                    'email' => $location->email,
+                    'latitude' => $location->latitude,
+                    'longitude' => $location->longitude,
+                    'directions_url' => $location->directions_url,
+                ];
+            })->toArray();
+    }
+
+    private function getAboutData(Business $business, array $config): ?array
+    {
+        return [
+            'name' => $business->name,
+            'description' => $business->description ?? '',
+            'logo' => $business->logo,
+            'image' => $business->image,
+        ];
+    }
+
+    private function getFeaturesData(Business $business, array $config): array
+    {
+        $query = $business->features()
+            ->where('is_active', true)
+            ->orderBy('sort_order');
+
+        if (!empty($config['feature_ids'])) {
+            $query->whereIn('id', $config['feature_ids']);
+        }
+
+        return $query
+            ->get(['id', 'title', 'description', 'icon'])
+            ->map(function ($feature) {
+                return [
+                    'id' => $feature->id,
+                    'title' => $feature->title,
+                    'description' => $feature->description,
+                    'icon' => $feature->icon ?? 'bi bi-check-circle',
+                ];
+            })->toArray();
+    }
+
+    private function getFaqsData(Business $business, array $config): array
+    {
+        $query = $business->faqs()
+            ->where('is_active', true)
+            ->whereNull('faq_category_id');
+
+        if (!empty($config['faq_ids'])) {
+            $query->whereIn('id', $config['faq_ids']);
+        }
+
+        if (!empty($config['category_id'])) {
+            $query->where('faq_category_id', $config['category_id']);
+        }
+
+            return $query
+                ->orderBy('sort_order')
+                ->get(['id', 'question', 'answer', 'faq_category_id'])
+                ->map(function ($faq) {
+                    return [
+                        'id' => $faq->id,
+                        'question' => $faq->question,
+                        'answer' => $faq->answer,
+                        'category_id' => $faq->faq_category_id,
+                    ];
+                })->toArray();
+    }
+
+    private function getProductsData(Business $business, array $config): array
+    {
+        $query = $business->products()
+            ->where('is_active', true)
+            ->orderBy('sort_order');
+
+        if (!empty($config['product_ids'])) {
+            $query->whereIn('id', $config['product_ids']);
+        }
+
+        return $query
+            ->with('images')
+            ->get(['id', 'name', 'description', 'price', 'compare_at_price'])
+            ->map(function ($product) {
+                $firstImage = $product->images && $product->images->isNotEmpty()
+                    ? $product->images->first()->path
+                    : null;
+
+                return [
+                    'id' => $product->id,
+                    'name' => $product->name,
+                    'description' => $product->description,
+                    'price' => $product->price,
+                    'compare_at_price' => $product->compare_at_price,
+                    'image' => $firstImage,
+                ];
+            })->toArray();
     }
 }

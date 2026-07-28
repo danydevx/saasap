@@ -8,23 +8,29 @@
       </div>
 
       <div v-else class="section-gallery__grid">
-        <div
+        <a
           v-for="item in items"
           :key="item.id"
-          class="section-gallery__item"
-          @click="openLightbox(item)"
+          :href="item.path"
+          class="section-gallery__item glightbox"
+          data-gallery="gallery"
+          :data-title="item.title || 'Imagen'"
         >
-          <img :src="item.path" :alt="item.title || 'Imagen'" class="section-gallery__image" />
+          <img :src="item.path" :alt="item.title || 'Imagen'" class="section-gallery__image" loading="lazy" />
           <div v-if="item.title" class="section-gallery__overlay">
             <span>{{ item.title }}</span>
           </div>
-        </div>
+        </a>
       </div>
     </div>
   </section>
 </template>
 
 <script setup>
+import { onMounted, nextTick } from 'vue'
+import GLightbox from 'glightbox'
+import 'glightbox/dist/css/glightbox.min.css'
+
 defineProps({
   title: String,
   items: {
@@ -37,10 +43,16 @@ defineProps({
   },
 })
 
-const openLightbox = (item) => {
-  // TODO: integrate glightbox
-  console.log('Open lightbox for:', item)
-}
+onMounted(() => {
+  nextTick(() => {
+    const lightbox = GLightbox({
+      touchNavigation: true,
+      loop: true,
+      autoplayVideos: true,
+      selector: '.section-gallery .glightbox',
+    })
+  })
+})
 </script>
 
 <style lang="less">
@@ -73,6 +85,15 @@ const openLightbox = (item) => {
     overflow: hidden;
     border-radius: 4px;
     cursor: pointer;
+    display: block;
+
+    &:hover .section-gallery__overlay {
+      opacity: 1;
+    }
+
+    &:hover .section-gallery__image {
+      transform: scale(1.05);
+    }
   }
 
   &__image {
@@ -98,14 +119,6 @@ const openLightbox = (item) => {
       text-align: center;
       padding: 8px;
     }
-  }
-
-  &__item:hover &__overlay {
-    opacity: 1;
-  }
-
-  &__item:hover &__image {
-    transform: scale(1.05);
   }
 }
 </style>

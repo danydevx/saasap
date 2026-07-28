@@ -64,7 +64,7 @@ class MinisiteController extends Controller
 
         $socialNetworks = $business->socialNetworks()
             ->where('is_active', true)
-            ->get(['platform', 'url', 'icon']);
+            ->get(['platform', 'url', 'icon_class']);
 
         return Inertia::render('Minisite/Show', [
             'business' => [
@@ -150,14 +150,16 @@ class MinisiteController extends Controller
 
         return $query
             ->orderBy('sort_order')
-            ->get(['id', 'title', 'description', 'discount', 'valid_until'])
+            ->get(['id', 'name', 'description', 'promotion_price', 'expires_at', 'regular_price', 'coupon_code'])
             ->map(function ($promo) {
                 return [
                     'id' => $promo->id,
-                    'title' => $promo->title,
+                    'title' => $promo->name,
                     'description' => $promo->description,
-                    'discount' => $promo->discount,
-                    'valid_until' => $promo->valid_until,
+                    'regular_price' => $promo->regular_price,
+                    'promotion_price' => $promo->promotion_price,
+                    'expires_at' => $promo->expires_at,
+                    'coupon_code' => $promo->coupon_code,
                 ];
             })->toArray();
     }

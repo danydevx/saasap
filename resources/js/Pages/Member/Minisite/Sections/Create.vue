@@ -189,6 +189,165 @@
                 </div>
               </div>
             </div>
+
+            <div v-if="form.section_type === 'locations'" class="border-top pt-4">
+              <h6 class="mb-3">Configuración de Ubicaciones</h6>
+              <div class="row g-3">
+                <div class="col-12">
+                  <FieldSwitch
+                    id="show-all-locations"
+                    label="Mostrar todas las ubicaciones"
+                    v-model="config.show_all"
+                  />
+                </div>
+                <div class="col-md-6">
+                  <FieldSwitch
+                    id="show-address"
+                    label="Mostrar dirección"
+                    v-model="config.show_address"
+                  />
+                </div>
+                <div class="col-md-6">
+                  <FieldSwitch
+                    id="show-phone"
+                    label="Mostrar teléfono"
+                    v-model="config.show_phone"
+                  />
+                </div>
+                <div class="col-md-6">
+                  <FieldSwitch
+                    id="show-email"
+                    label="Mostrar email"
+                    v-model="config.show_email"
+                  />
+                </div>
+                <div class="col-md-6">
+                  <FieldSwitch
+                    id="show-hours"
+                    label="Mostrar horarios"
+                    v-model="config.show_hours"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div v-if="form.section_type === 'about'" class="border-top pt-4">
+              <h6 class="mb-3">Configuración de Nosotros</h6>
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <FieldSwitch
+                    id="show-image"
+                    label="Mostrar imagen/logo"
+                    v-model="config.show_image"
+                  />
+                </div>
+                <div class="col-md-6">
+                  <FieldSwitch
+                    id="show-description"
+                    label="Mostrar descripción"
+                    v-model="config.show_description"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div v-if="form.section_type === 'features'" class="border-top pt-4">
+              <h6 class="mb-3">Configuración de Características</h6>
+              <div class="row g-3">
+                <div class="col-12">
+                  <FieldSwitch
+                    id="show-all-features"
+                    label="Mostrar todas las características"
+                    v-model="config.show_all"
+                  />
+                </div>
+                <div class="col-md-4">
+                  <FieldSwitch
+                    id="show-icon"
+                    label="Mostrar icono"
+                    v-model="config.show_icon"
+                  />
+                </div>
+                <div class="col-md-4">
+                  <FieldSwitch
+                    id="show-title"
+                    label="Mostrar título"
+                    v-model="config.show_title"
+                  />
+                </div>
+                <div class="col-md-4">
+                  <FieldSwitch
+                    id="show-description"
+                    label="Mostrar descripción"
+                    v-model="config.show_description"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div v-if="form.section_type === 'faqs'" class="border-top pt-4">
+              <h6 class="mb-3">Configuración de Preguntas Frecuentes</h6>
+              <div class="row g-3">
+                <div class="col-12">
+                  <FieldSwitch
+                    id="show-all-faqs"
+                    label="Mostrar todas las preguntas"
+                    v-model="config.show_all"
+                  />
+                </div>
+                <div class="col-12">
+                  <FieldSwitch
+                    id="show-questions"
+                    label="Mostrar respuestas"
+                    v-model="config.show_questions"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div v-if="form.section_type === 'products'" class="border-top pt-4">
+              <h6 class="mb-3">Configuración de Productos</h6>
+              <div class="row g-3">
+                <div class="col-12">
+                  <FieldSwitch
+                    id="show-all-products"
+                    label="Mostrar todos los productos"
+                    v-model="config.show_all"
+                  />
+                </div>
+                <div class="col-md-6">
+                  <FieldSelect
+                    id="view-mode"
+                    label="Vista"
+                    v-model="config.view_mode"
+                  >
+                    <option value="grid">Cuadrícula</option>
+                    <option value="carousel">Carrusel</option>
+                  </FieldSelect>
+                </div>
+                <div class="col-md-4">
+                  <FieldSwitch
+                    id="show-image"
+                    label="Mostrar imagen"
+                    v-model="config.show_image"
+                  />
+                </div>
+                <div class="col-md-4">
+                  <FieldSwitch
+                    id="show-price"
+                    label="Mostrar precio"
+                    v-model="config.show_price"
+                  />
+                </div>
+                <div class="col-md-4">
+                  <FieldSwitch
+                    id="show-compare-price"
+                    label="Mostrar precio anterior"
+                    v-model="config.show_compare_price"
+                  />
+                </div>
+              </div>
+            </div>
           </div>
 
           <div class="mt-4">
@@ -262,6 +421,14 @@ const config = reactive({
   images_limit: 10,
   show_all: true,
   form_id: null,
+  show_address: true,
+  show_phone: true,
+  show_email: true,
+  show_hours: true,
+  show_icon: true,
+  show_title: true,
+  show_questions: true,
+  show_compare_price: true,
 })
 
 const showAllServices = ref(true)
@@ -282,6 +449,16 @@ const getDefaultConfig = (type) => {
       return { show_all: true, promotion_ids: [] }
     case 'contact_form':
       return { form_id: null }
+    case 'locations':
+      return { show_all: true, location_ids: [], show_address: true, show_phone: true, show_email: true, show_hours: true }
+    case 'about':
+      return { show_image: true, show_description: true }
+    case 'features':
+      return { show_all: true, feature_ids: [], show_icon: true, show_title: true, show_description: true }
+    case 'faqs':
+      return { show_all: true, faq_ids: [], category_id: null, show_questions: true }
+    case 'products':
+      return { show_all: true, product_ids: [], show_image: true, show_price: true, show_compare_price: true, view_mode: 'grid' }
     default:
       return {}
   }

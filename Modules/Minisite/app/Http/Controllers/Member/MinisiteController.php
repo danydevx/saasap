@@ -66,14 +66,18 @@ class MinisiteController extends Controller
         return redirect()->back()->with('success', 'Configuración guardada.');
     }
 
-    public function update(Request $request, Business $business, BusinessMinisiteSetting $setting)
+    public function update(Request $request, Business $business)
     {
-        $this->authorize('update', $setting);
+        $this->authorize('viewAny', [BusinessMinisiteSetting::class, $business]);
 
-        abort_unless($setting->business_id === $business->id, 403);
+        $setting = BusinessMinisiteSetting::where('business_id', $business->id)->first();
+
+        if (!$setting) {
+            $setting = new BusinessMinisiteSetting(['business_id' => $business->id]);
+        }
 
         $data = $request->validate([
-            'hero_layout' => ['required', 'string', 'in:left,center,right'],
+            'hero_layout' => ['nullable', 'string', 'in:left,center,right'],
             'hero_title' => ['nullable', 'string', 'max:150'],
             'hero_subtitle' => ['nullable', 'string', 'max:255'],
             'hero_background_image' => ['nullable', 'image', 'mimes:jpeg,png,webp', 'max:5120'],
@@ -93,7 +97,8 @@ class MinisiteController extends Controller
             unset($data['hero_background_image']);
         }
 
-        $setting->update($data);
+        $setting->fill($data);
+        $setting->save();
 
         return redirect()->back()->with('success', 'Configuración guardada.');
     }

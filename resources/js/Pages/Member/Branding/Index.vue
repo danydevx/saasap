@@ -96,7 +96,7 @@
                   <FieldColorpicker
                     id="accent-light"
                     label="Color Acento"
-                    v-model="form.colors.accent.light"
+                    v-model="form.colors.brand_accent.light"
                     placeholder="#F59E0B"
                   />
                 </div>
@@ -105,7 +105,7 @@
                   <FieldColorpicker
                     id="hover-light"
                     label="Color Hover"
-                    v-model="form.colors.hover.light"
+                    v-model="form.colors.brand_hover.light"
                     placeholder="#1F2937"
                   />
                 </div>
@@ -185,7 +185,7 @@
                   <FieldColorpicker
                     id="accent-dark"
                     label="Color Acento"
-                    v-model="form.colors.accent.dark"
+                    v-model="form.colors.brand_accent.dark"
                     placeholder="#FBBF24"
                   />
                 </div>
@@ -194,7 +194,7 @@
                   <FieldColorpicker
                     id="hover-dark"
                     label="Color Hover"
-                    v-model="form.colors.hover.dark"
+                    v-model="form.colors.brand_hover.dark"
                     placeholder="#374151"
                   />
                 </div>
@@ -591,8 +591,8 @@
                       Conocer mas
                     </button>
                   </div>
-                  <div class="preview-section" :style="{ borderLeftColor: getColor('accent') }">
-                    <h3 :style="{ color: getColor('accent') }">Contactanos</h3>
+                  <div class="preview-section" :style="{ borderLeftColor: getColor('brand_accent') }">
+                    <h3 :style="{ color: getColor('brand_accent') }">Contactanos</h3>
                     <p>Estamos aqui para ayudarte.</p>
                     <a
                       href="#"
@@ -603,7 +603,7 @@
                     </a>
                     <a
                       href="#"
-                      :style="{ color: getColor('hover') }"
+                      :style="{ color: getColor('brand_hover') }"
                     >
                       Enviar mensaje (hover)
                     </a>
