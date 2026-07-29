@@ -142,6 +142,25 @@
                 v-model="form.is_active"
               />
             </div>
+
+            <div class="col-12">
+              <FieldImage
+                id="product-image"
+                label="Imagen principal"
+                v-model="productImages"
+                :maxFiles="1"
+                :maxSizeMb="2"
+                accept="image/jpeg"
+              />
+              <small class="text-muted">JPG, max 2MB</small>
+            </div>
+
+            <div class="col-12">
+              <div class="alert alert-info mb-0">
+                <i class="bi bi-info-circle me-1"></i>
+                La galería de imágenes estará disponible después de crear el producto.
+              </div>
+            </div>
           </div>
 
           <div class="col-12 d-flex gap-2 mt-4">
@@ -169,6 +188,8 @@ import FieldTextarea from '@/Components/Fields/FieldTextarea.vue'
 import FieldSelect from '@/Components/Fields/FieldSelect.vue'
 import FieldSwitch from '@/Components/Fields/FieldSwitch.vue'
 import FieldPhone from '@/Components/Fields/FieldPhone.vue'
+import FieldImage from '@/Components/Fields/FieldImage.vue'
+import ProductImageUpload from '@/Components/Fields/ProductImageUpload.vue'
 
 const page = usePage()
 const business = computed(() => page.props.business)
@@ -184,6 +205,7 @@ const errors = computed(() => {
 })
 const sending = ref(false)
 const businessMenu = computed(() => page.props.businessMenu || [])
+const productImages = ref([])
 
 const breadcrumbs = computed(() => {
   const path = window.location.pathname
@@ -231,7 +253,21 @@ const generateSlug = () => {
 
 const submit = () => {
   sending.value = true
-  router.post(`/member/businesses/${business.value.id}/products`, form, {
+  const formData = new FormData()
+  Object.keys(form).forEach(key => {
+    const val = form[key]
+    if (val !== null && val !== '') {
+      if (typeof val === 'boolean') {
+        formData.append(key, val ? '1' : '0')
+      } else {
+        formData.append(key, val)
+      }
+    }
+  })
+  if (productImages.value instanceof File) {
+    formData.append('image', productImages.value)
+  }
+  router.post(`/member/businesses/${business.value.id}/products`, formData, {
     preserveScroll: true,
     onError: (errs) => {
       console.error('Validation errors:', errs)

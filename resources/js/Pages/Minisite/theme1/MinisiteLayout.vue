@@ -82,6 +82,7 @@ defineProps({
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  padding-top: 64px;
 
   &__content {
     flex: 1;

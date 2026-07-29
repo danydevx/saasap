@@ -70,6 +70,18 @@
         />
       </template>
 
+      <template #cell-image="{ row }">
+        <img
+          v-if="row.image"
+          :src="row.image"
+          class="rounded"
+          style="width: 48px; height: 48px; object-fit: cover;"
+        />
+        <div v-else class="bg-light rounded d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+          <i class="bi bi-image text-muted"></i>
+        </div>
+      </template>
+
       <template #cell-name="{ row }">
         <strong>{{ row.name }}</strong>
         <p v-if="row.description" class="text-muted small mb-0">{{ row.description.substring(0, 60) }}...</p>
@@ -162,6 +174,7 @@ const breadcrumbs = computed(() => {
 
 const columns = [
   { key: 'checkbox', label: '', sortable: false, width: '40px' },
+  { key: 'image', label: '', sortable: false, width: '60px' },
   { key: 'name', label: 'Nombre', sortable: true },
   { key: 'category', label: 'Categoria', sortable: false },
   { key: 'price', label: 'Precio', sortable: true },

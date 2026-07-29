@@ -49,6 +49,13 @@ class ProductController extends Controller
 
         $products = $query->paginate($perPage);
 
+        $products->getCollection()->transform(function ($product) {
+            if ($product->image) {
+                $product->image = "/storage/{$product->image}";
+            }
+            return $product;
+        });
+
         $locations = $business->locations()
             ->where('is_active', true)
             ->orderBy('name')
@@ -112,6 +119,7 @@ class ProductController extends Controller
                 Rule::unique('business_products')->where('business_id', $business->id),
             ],
             'description' => ['nullable', 'string'],
+            'image' => ['nullable', 'image', 'mimes:jpeg,jpg', 'max:2048'],
             'price' => ['nullable', 'numeric', 'min:0', 'max:99999999.99'],
             'compare_at_price' => ['nullable', 'numeric', 'min:0', 'max:99999999.99'],
             'sku' => ['nullable', 'string', 'max:100'],
@@ -127,6 +135,11 @@ class ProductController extends Controller
 
         $data['business_id'] = $business->id;
         $data['slug'] = \Illuminate\Support\Str::slug($data['slug']);
+
+        if ($request->hasFile('image')) {
+            $path = $request->file('image')->store('products', 'public');
+            $data['image'] = $path;
+        }
 
         $product = $business->products()->create($data);
 
@@ -148,6 +161,8 @@ class ProductController extends Controller
         $locations = $business->locations()->where('is_active', true)->orderBy('name')->get(['id', 'name']);
         $categories = $business->productCategories()->where('is_active', true)->orderBy('name')->get(['id', 'name']);
 
+        $productImages = $product->images()->orderBy('sort_order')->get(['id', 'path', 'filename', 'is_primary']);
+
         return Inertia::render('Member/Products/Edit', [
             'business' => [
                 'id' => $business->id,
@@ -158,6 +173,7 @@ class ProductController extends Controller
                 'name' => $product->name,
                 'slug' => $product->slug,
                 'description' => $product->description,
+                'image' => $product->image,
                 'price' => $product->price,
                 'compare_at_price' => $product->compare_at_price,
                 'sku' => $product->sku,
@@ -172,12 +188,20 @@ class ProductController extends Controller
             ],
             'locations' => $locations,
             'categories' => $categories,
+            'productImages' => $productImages->map(fn($img) => [
+                'id' => $img->id,
+                'url' => $img->path ? "/storage/{$img->path}" : null,
+                'filename' => $img->filename,
+                'is_primary' => $img->is_primary,
+            ]),
         ]);
     }
 
     public function update(Request $request, Business $business, BusinessProduct $product, ActivityService $activity)
     {
         $this->authorize('update', [BusinessProduct::class, $product]);
+
+        \Log::info('Product update category_id received:', ['category_id' => $request->get('category_id')]);
 
         $data = $request->validate([
             'name' => ['required', 'string', 'max:150'],
@@ -188,6 +212,7 @@ class ProductController extends Controller
                 Rule::unique('business_products')->where('business_id', $business->id)->ignore($product->id),
             ],
             'description' => ['nullable', 'string'],
+            'image' => ['nullable', 'image', 'mimes:jpeg,jpg', 'max:2048'],
             'price' => ['nullable', 'numeric', 'min:0', 'max:99999999.99'],
             'compare_at_price' => ['nullable', 'numeric', 'min:0', 'max:99999999.99'],
             'sku' => ['nullable', 'string', 'max:100'],
@@ -202,6 +227,14 @@ class ProductController extends Controller
         ]);
 
         $data['slug'] = \Illuminate\Support\Str::slug($data['slug']);
+
+        if ($request->hasFile('image')) {
+            if ($product->image) {
+                \Storage::disk('public')->delete($product->image);
+            }
+            $path = $request->file('image')->store('products', 'public');
+            $data['image'] = $path;
+        }
 
         $product->update($data);
 

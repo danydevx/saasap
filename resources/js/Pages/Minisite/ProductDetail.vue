@@ -1,0 +1,488 @@
+<template>
+  <div class="minisite-page">
+    <NavigationMenu :business="business" :existingSections="existingSections" />
+
+    <section class="page-header">
+      <div class="page-header__inner">
+        <BreadcrumbNav
+          :baseSlug="business.slug"
+          :parentHref="`/m/${business.slug}/productos`"
+          parentLabel="Productos"
+          :currentLabel="product.name"
+        />
+      </div>
+    </section>
+
+    <section class="page-content">
+      <div class="page-content__inner">
+        <div class="product-detail">
+          <div class="product-detail__gallery">
+            <div class="product-gallery">
+              <div v-if="activeImage" class="product-gallery__main">
+                <a
+                  :href="activeImage"
+                  class="glightbox"
+                  data-gallery="product-detail-gallery"
+                >
+                  <img :src="activeImage" :alt="product.name" class="product-gallery__main-image" />
+                </a>
+                <span v-if="product.compare_at_price && product.price" class="product-gallery__discount-badge">
+                  -{{ discountPercent }}% OFF
+                </span>
+              </div>
+              <div v-else class="product-gallery__placeholder">
+                <i class="bi bi-image"></i>
+              </div>
+              <div v-if="product.gallery && product.gallery.length > 1" class="product-gallery__thumbs">
+                <button
+                  v-for="(img, index) in product.gallery"
+                  :key="img.id"
+                  class="product-gallery__thumb"
+                  :class="{ active: activeImage === img.path }"
+                  @click="activeImage = img.path"
+                >
+                  <img :src="img.path" :alt="img.title || product.name" />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="product-detail__info">
+            <h1 class="product-detail__name">{{ product.name }}</h1>
+
+            <div class="product-detail__prices">
+              <span v-if="product.price" class="product-detail__price">
+                {{ formatCurrency(product.price) }}
+              </span>
+              <span v-if="product.compare_at_price" class="product-detail__price-compare">
+                {{ formatCurrency(product.compare_at_price) }}
+              </span>
+            </div>
+
+            <div class="product-detail__meta">
+              <div v-if="product.sku" class="product-detail__meta-item">
+                <i class="bi bi-upc"></i>
+                <span><strong>SKU:</strong> {{ product.sku }}</span>
+              </div>
+              <div v-if="product.barcode" class="product-detail__meta-item">
+                <i class="bi bi-barcode"></i>
+                <span><strong>EAN:</strong> {{ product.barcode }}</span>
+              </div>
+              <div v-if="product.quantity !== null" class="product-detail__meta-item">
+                <i class="bi bi-box-seam"></i>
+                <span>
+                  <strong>Disponibilidad:</strong>
+                  <span v-if="product.quantity > 0" class="text-success">En stock ({{ product.quantity }} unidades)</span>
+                  <span v-else class="text-danger">Agotado</span>
+                </span>
+              </div>
+            </div>
+
+            <div v-if="product.description" class="product-detail__description">
+              <h3>Descripcion</h3>
+              <p>{{ product.description }}</p>
+            </div>
+
+            <div class="product-detail__actions">
+              <a
+                v-if="product.whatsapp_contact"
+                :href="`https://wa.me/${product.whatsapp_contact}?text=Hola, me interesa el producto: ${product.name}`"
+                target="_blank"
+                class="btn btn-success btn-lg"
+              >
+                <i class="bi bi-whatsapp me-2"></i>Contactar por WhatsApp
+              </a>
+              <Link :href="`/m/${business.slug}/productos`" class="btn btn-outline-secondary btn-lg">
+                <i class="bi bi-arrow-left me-2"></i>Volver a productos
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        <div v-if="relatedProducts && relatedProducts.length > 0" class="related-products">
+          <h2 class="related-products__title">Productos relacionados</h2>
+          <div class="related-products__grid">
+            <div
+              v-for="item in relatedProducts"
+              :key="item.id"
+              class="related-product-card"
+              @click="goToProduct(item.slug)"
+            >
+              <div class="related-product-card__image">
+                <img v-if="item.image" :src="item.image" :alt="item.name" />
+                <div v-else class="related-product-card__placeholder">
+                  <i class="bi bi-image"></i>
+                </div>
+              </div>
+              <div class="related-product-card__content">
+                <h4 class="related-product-card__name">{{ item.name }}</h4>
+                <span v-if="item.price" class="related-product-card__price">
+                  {{ formatCurrency(item.price) }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <Footer
+      :business="business"
+      :text="setting.footer_text"
+      :showSocial="setting.footer_show_social"
+      :socialNetworks="socialNetworks"
+    />
+  </div>
+</template>
+
+<script setup>
+import { ref, computed, onMounted, nextTick } from 'vue'
+import NavigationMenu from './theme1/NavigationMenu.vue'
+import Footer from './theme1/Footer.vue'
+import BreadcrumbNav from '@/Components/Minisite/BreadcrumbNav.vue'
+import { usePriceFormatter } from '@/Composables/usePriceFormatter'
+import GLightbox from 'glightbox'
+import 'glightbox/dist/css/glightbox.min.css'
+
+const props = defineProps({
+  business: Object,
+  setting: Object,
+  product: Object,
+  relatedProducts: {
+    type: Array,
+    default: () => [],
+  },
+  socialNetworks: Array,
+  existingSections: Array,
+})
+
+const { formatPrice } = usePriceFormatter({
+  locale: 'es-MX',
+  currency: '$',
+  decimals: 2,
+})
+
+const formatCurrency = (value) => {
+  if (value === null || value === undefined) return ''
+  return formatPrice(value) || ''
+}
+
+const activeImage = computed(() => {
+  if (props.product?.gallery && props.product.gallery.length > 0) {
+    return props.product.gallery[0].path
+  }
+  return props.product?.image || null
+})
+
+const discountPercent = computed(() => {
+  if (!props.product?.compare_at_price || !props.product?.price) return 0
+  return Math.round((1 - props.product.price / props.product.compare_at_price) * 100)
+})
+
+const goToProduct = (slug) => {
+  window.location.href = `/m/${props.business.slug}/productos/${slug}`
+}
+
+let lightbox = null
+
+onMounted(() => {
+  nextTick(() => {
+    lightbox = GLightbox({
+      touchNavigation: true,
+      loop: true,
+      autoplayVideos: false,
+      selector: '.glightbox',
+    })
+  })
+})
+</script>
+
+<style lang="less">
+.page-header {
+  padding: 16px 0;
+  margin-top: 64px;
+  background: transparent;
+
+  &__inner {
+    max-width: 1024px;
+    margin: 0 auto;
+    padding: 0 16px;
+  }
+}
+
+.page-content {
+  padding: 24px 16px 48px;
+  background: #f8f9fa;
+
+  &__inner {
+    max-width: 1024px;
+    margin: 0 auto;
+  }
+}
+
+.product-detail {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  background: #fff;
+  border-radius: 16px;
+  padding: 32px;
+  margin-bottom: 48px;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 24px;
+    padding: 20px;
+  }
+
+  &__gallery {
+    position: relative;
+  }
+
+  &__info {
+    display: flex;
+    flex-direction: column;
+  }
+
+  &__name {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0 0 20px;
+    color: #212529;
+    line-height: 1.2;
+  }
+
+  &__prices {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid #dee2e6;
+  }
+
+  &__price {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #198754;
+  }
+
+  &__price-compare {
+    font-size: 1.25rem;
+    color: #6c757d;
+    text-decoration: line-through;
+  }
+
+  &__meta {
+    margin-bottom: 24px;
+  }
+
+  &__meta-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    font-size: 0.9375rem;
+    color: #495057;
+
+    i {
+      color: #6c757d;
+      font-size: 1.125rem;
+      width: 24px;
+    }
+
+    strong {
+      color: #212529;
+      margin-right: 4px;
+    }
+  }
+
+  &__description {
+    flex: 1;
+    margin-bottom: 24px;
+
+    h3 {
+      font-size: 1.125rem;
+      font-weight: 600;
+      margin: 0 0 12px;
+      color: #212529;
+    }
+
+    p {
+      font-size: 0.9375rem;
+      line-height: 1.7;
+      color: #495057;
+      margin: 0;
+    }
+  }
+
+  &__actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+
+    .btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 14px 24px;
+      font-size: 1rem;
+      font-weight: 600;
+      border-radius: 8px;
+    }
+  }
+}
+
+.product-gallery {
+  &__main {
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #f8f9fa;
+    margin-bottom: 12px;
+
+    &.glightbox {
+      display: block;
+      cursor: zoom-in;
+    }
+  }
+
+  &__main-image {
+    width: 100%;
+    height: 400px;
+    object-fit: cover;
+
+    @media (max-width: 768px) {
+      height: 280px;
+    }
+  }
+
+  &__placeholder {
+    width: 100%;
+    height: 400px;
+    background: #f8f9fa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #adb5bd;
+    font-size: 4rem;
+    border-radius: 12px;
+  }
+
+  &__discount-badge {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    background: #dc3545;
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 700;
+    padding: 6px 12px;
+    border-radius: 6px;
+  }
+
+  &__thumbs {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+  }
+
+  &__thumb {
+    flex: 0 0 72px;
+    height: 72px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 2px solid transparent;
+    padding: 0;
+    background: none;
+    cursor: pointer;
+    transition: border-color 0.2s;
+
+    &.active,
+    &:hover {
+      border-color: #0d6efd;
+    }
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
+}
+
+.related-products {
+  &__title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0 0 24px;
+    text-align: center;
+    color: #212529;
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+  }
+}
+
+.related-product-card {
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  }
+
+  &__image {
+    width: 100%;
+    height: 160px;
+    background: #f8f9fa;
+    overflow: hidden;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
+
+  &__placeholder {
+    width: 100%;
+    height: 160px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #adb5bd;
+    font-size: 2.5rem;
+  }
+
+  &__content {
+    padding: 16px;
+  }
+
+  &__name {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 0 8px;
+    color: #212529;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__price {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #198754;
+  }
+}
+</style>

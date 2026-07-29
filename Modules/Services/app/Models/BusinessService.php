@@ -49,4 +49,9 @@ class BusinessService extends Model
     {
         return $this->hasMany(\Modules\Appointments\Models\BusinessAppointmentSlot::class);
     }
+
+    public function images(): HasMany
+    {
+        return $this->hasMany(BusinessServiceImage::class);
+    }
 }

@@ -140,6 +140,31 @@
                 v-model="form.is_active"
               />
             </div>
+
+            <div class="col-12">
+              <FieldImage
+                id="product-image"
+                label="Imagen principal"
+                v-model="productImages"
+                :initialPreview="initialPreview"
+                :maxFiles="1"
+                :maxSizeMb="2"
+                accept="image/jpeg"
+              />
+              <small class="text-muted">JPG, max 2MB</small>
+            </div>
+
+            <div class="col-12">
+              <ProductImageUpload
+                :businessId="business?.id"
+                :productId="product?.id"
+                :images="productImagesList"
+                :maxFiles="10"
+                :maxSizeMb="2"
+                label="Galería de imágenes"
+                @updated="reloadPage"
+              />
+            </div>
           </div>
 
           <div class="col-12 d-flex gap-2 mt-4">
@@ -167,6 +192,8 @@ import FieldTextarea from '@/Components/Fields/FieldTextarea.vue'
 import FieldSelect from '@/Components/Fields/FieldSelect.vue'
 import FieldSwitch from '@/Components/Fields/FieldSwitch.vue'
 import FieldPhone from '@/Components/Fields/FieldPhone.vue'
+import FieldImage from '@/Components/Fields/FieldImage.vue'
+import ProductImageUpload from '@/Components/Fields/ProductImageUpload.vue'
 
 const page = usePage()
 const business = computed(() => page.props.business)
@@ -183,6 +210,9 @@ const errors = computed(() => {
 })
 const sending = ref(false)
 const businessMenu = computed(() => page.props.businessMenu || [])
+const productImages = ref([])
+const initialPreview = computed(() => product.value.image ? `/storage/${product.value.image}` : '')
+const productImagesList = computed(() => page.props.productImages || [])
 
 const breadcrumbs = computed(() => {
   const path = window.location.pathname
@@ -224,7 +254,23 @@ const form = reactive({
 
 const submit = () => {
   sending.value = true
-  router.put(`/member/businesses/${business.value.id}/products/${product.value.id}`, form, {
+  const formData = new FormData()
+  formData.append('_method', 'PUT')
+  Object.keys(form).forEach(key => {
+    const val = form[key]
+    if (val !== null && val !== '') {
+      if (typeof val === 'boolean') {
+        formData.append(key, val ? '1' : '0')
+      } else {
+        formData.append(key, val)
+      }
+    }
+  })
+  console.log('Submitting category_id:', form.category_id, 'type:', typeof form.category_id)
+  if (productImages.value instanceof File) {
+    formData.append('image', productImages.value)
+  }
+  router.post(`/member/businesses/${business.value.id}/products/${product.value.id}`, formData, {
     preserveScroll: true,
     onError: (errs) => {
       console.error('Validation errors:', errs)
@@ -233,5 +279,9 @@ const submit = () => {
       sending.value = false
     },
   })
+}
+
+const reloadPage = () => {
+  router.reload({ preserveScroll: true })
 }
 </script>

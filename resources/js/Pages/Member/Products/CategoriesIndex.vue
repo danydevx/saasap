@@ -229,7 +229,12 @@ const closeModal = () => {
 
 const createCategory = () => {
   sending.value = true
-  router.post(`/member/businesses/${business.value.id}/product-categories`, form, {
+  const formData = new FormData()
+  formData.append('name', form.name)
+  formData.append('description', form.description || '')
+  formData.append('parent_id', form.parent_id ?? '')
+  formData.append('is_active', form.is_active ? '1' : '0')
+  router.post(`/member/businesses/${business.value.id}/product-categories`, formData, {
     onFinish: () => {
       sending.value = false
       closeModal()
@@ -242,7 +247,12 @@ const createCategory = () => {
 
 const updateCategory = () => {
   sending.value = true
-  router.put(`/member/businesses/${business.value.id}/product-categories/${editingCategory.value.id}`, form, {
+  const formData = new FormData()
+  formData.append('name', form.name)
+  formData.append('description', form.description || '')
+  formData.append('parent_id', form.parent_id ?? '')
+  formData.append('is_active', form.is_active ? '1' : '0')
+  router.put(`/member/businesses/${business.value.id}/product-categories/${editingCategory.value.id}`, formData, {
     onFinish: () => {
       sending.value = false
       closeModal()

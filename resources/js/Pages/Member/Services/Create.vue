@@ -129,6 +129,25 @@
               />
               <small class="text-muted">Menor numero aparece primero.</small>
             </div>
+
+            <div class="col-12">
+              <FieldImage
+                id="service-image"
+                label="Imagen principal"
+                v-model="mainImage"
+                :maxFiles="1"
+                :maxSizeMb="2"
+                accept="image/jpeg"
+              />
+              <small class="text-muted">JPG, max 2MB</small>
+            </div>
+
+            <div class="col-12">
+              <div class="alert alert-info mb-0">
+                <i class="bi bi-info-circle me-1"></i>
+                La galería de imágenes estará disponible después de crear el servicio.
+              </div>
+            </div>
           </div>
 
           <div class="col-12 d-flex gap-2 mt-4">
@@ -144,8 +163,8 @@
 </template>
 
 <script setup>
-import { computed, watch } from 'vue'
-import { Head, Link, useForm, usePage } from '@inertiajs/vue3'
+import { computed, ref, watch } from 'vue'
+import { Head, Link, router, usePage } from '@inertiajs/vue3'
 import MemberLayout from '@/Layouts/MemberLayout.vue'
 import PageHeader from '@/Components/Admin/PageHeader.vue'
 import FieldText from '@/Components/Fields/FieldText.vue'
@@ -154,6 +173,7 @@ import FieldTextarea from '@/Components/Fields/FieldTextarea.vue'
 import FieldSelect from '@/Components/Fields/FieldSelect.vue'
 import FieldSwitch from '@/Components/Fields/FieldSwitch.vue'
 import FieldPhone from '@/Components/Fields/FieldPhone.vue'
+import FieldImage from '@/Components/Fields/FieldImage.vue'
 
 const props = defineProps({
   business: { type: Object, required: true },
@@ -167,6 +187,8 @@ const locationOptions = computed(() => [
   { value: '', label: 'Todas las ubicaciones' },
   ...props.locations.map(l => ({ value: l.id, label: l.name }))
 ])
+
+const mainImage = ref(null)
 
 const form = useForm({
   name: '',
@@ -213,6 +235,25 @@ const breadcrumbs = computed(() => {
 })
 
 const submit = () => {
-  form.post(`/member/businesses/${business.value.id}/services`)
+  const formData = new FormData()
+
+  Object.keys(form).forEach(key => {
+    const val = form[key]
+    if (val !== null && val !== '') {
+      if (typeof val === 'boolean') {
+        formData.append(key, val ? '1' : '0')
+      } else {
+        formData.append(key, val)
+      }
+    }
+  })
+
+  if (mainImage.value instanceof File) {
+    formData.append('image', mainImage.value)
+  }
+
+  router.post(`/member/businesses/${business.value.id}/services`, formData, {
+    preserveScroll: true,
+  })
 }
 </script>

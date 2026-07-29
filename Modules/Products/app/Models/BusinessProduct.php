@@ -14,6 +14,7 @@ class BusinessProduct extends Model
         'name',
         'slug',
         'description',
+        'image',
         'price',
         'compare_at_price',
         'sku',

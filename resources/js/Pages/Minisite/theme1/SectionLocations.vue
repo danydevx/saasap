@@ -13,26 +13,37 @@
           :key="item.id"
           class="section-locations__item"
         >
-          <div class="section-locations__icon">
-            <i class="bi bi-geo-alt-fill"></i>
-          </div>
-          <div class="section-locations__content">
-            <h3 class="section-locations__name">{{ item.name }}</h3>
-            <p v-if="showAddress && item.full_address" class="section-locations__address">
-              {{ item.full_address }}
-            </p>
-            <div class="section-locations__contact">
-              <a v-if="showPhone && item.phone" :href="'tel:' + item.phone" class="section-locations__contact-item">
-                <i class="bi bi-telephone"></i> {{ item.phone }}
-              </a>
-              <a v-if="showEmail && item.email" :href="'mailto:' + item.email" class="section-locations__contact-item">
-                <i class="bi bi-envelope"></i> {{ item.email }}
-              </a>
-              <a v-if="item.directions_url" :href="item.directions_url" target="_blank" class="section-locations__contact-item">
-                <i class="bi bi-signpost"></i> Cómo llegar
-              </a>
+          <div class="section-locations__main">
+            <div class="section-locations__icon">
+              <i class="bi bi-geo-alt-fill"></i>
+            </div>
+            <div class="section-locations__content">
+              <h3 class="section-locations__name">{{ item.name }}</h3>
+              <p v-if="showAddress && item.full_address" class="section-locations__address">
+                {{ item.full_address }}
+              </p>
+              <div class="section-locations__contact">
+                <a v-if="showPhone && item.phone" :href="'tel:' + item.phone" class="section-locations__contact-item">
+                  <i class="bi bi-telephone"></i> {{ item.phone }}
+                </a>
+                <a v-if="showEmail && item.email" :href="'mailto:' + item.email" class="section-locations__contact-item">
+                  <i class="bi bi-envelope"></i> {{ item.email }}
+                </a>
+                <a v-if="item.directions_url" :href="item.directions_url" target="_blank" class="section-locations__contact-item">
+                  <i class="bi bi-signpost"></i> Cómo llegar
+                </a>
+                <a v-if="!item.directions_url && (item.latitude && item.longitude)" :href="`https://www.google.com/maps/search/?api=1&query=${item.latitude},${item.longitude}`" target="_blank" class="section-locations__contact-item">
+                  <i class="bi bi-signpost"></i> Cómo llegar
+                </a>
+              </div>
             </div>
           </div>
+          <LocationMap
+            v-if="item.latitude && item.longitude"
+            :lat="item.latitude"
+            :lng="item.longitude"
+            :address="item.full_address"
+          />
         </div>
       </div>
 
@@ -52,6 +63,9 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
+import LocationMap from '@/Components/Minisite/LocationMap.vue'
+
 const props = defineProps({
   title: String,
   items: {
@@ -76,7 +90,7 @@ const showHours = computed(() => props.config?.show_hours !== false)
 </script>
 
 <script>
-import { computed, defineComponent } from 'vue'
+import { defineComponent } from 'vue'
 export default defineComponent({ name: 'SectionLocations' })
 </script>
 
@@ -85,7 +99,7 @@ export default defineComponent({ name: 'SectionLocations' })
   padding: 48px 16px;
 
   &__inner {
-    max-width: 600px;
+    max-width: 1024px;
     margin: 0 auto;
   }
 
@@ -104,12 +118,15 @@ export default defineComponent({ name: 'SectionLocations' })
   }
 
   &__item {
+    padding: 20px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  }
+
+  &__main {
     display: flex;
     gap: 16px;
-    padding: 16px;
-    background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   }
 
   &__icon {
@@ -131,7 +148,7 @@ export default defineComponent({ name: 'SectionLocations' })
   }
 
   &__name {
-    font-size: 1rem;
+    font-size: 1.125rem;
     font-weight: 600;
     margin: 0 0 8px;
     color: #212529;
@@ -140,14 +157,13 @@ export default defineComponent({ name: 'SectionLocations' })
   &__address {
     font-size: 0.875rem;
     color: #6c757d;
-    margin: 0 0 8px;
+    margin: 0 0 12px;
   }
 
   &__contact {
     display: flex;
     flex-direction: column;
-    gap: 4px;
-    margin-bottom: 8px;
+    gap: 6px;
   }
 
   &__contact-item {
@@ -160,7 +176,7 @@ export default defineComponent({ name: 'SectionLocations' })
     }
 
     i {
-      margin-right: 4px;
+      margin-right: 6px;
     }
   }
 

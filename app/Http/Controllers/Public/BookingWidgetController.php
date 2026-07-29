@@ -62,34 +62,40 @@ class BookingWidgetController extends Controller
     {
         $validated = $request->validate([
             'date' => ['required', 'date', 'after_or_equal:today'],
-            'service_id' => ['required', 'integer', 'exists:business_services,id'],
+            'service_id' => ['nullable', 'integer', 'exists:business_services,id'],
         ]);
 
-        $service = BusinessService::where('business_id', $businessSlug->id)
-            ->where('id', $validated['service_id'])
-            ->where('is_active', true)
-            ->where('allows_online_booking', true)
-            ->first();
+        $service = null;
+        $duration = 30;
 
-        if (!$service) {
-            return response()->json([
-                'error' => 'Servicio no encontrado o no disponible para reservas.',
-            ], 422);
+        if (!empty($validated['service_id'])) {
+            $service = BusinessService::where('business_id', $businessSlug->id)
+                ->where('id', $validated['service_id'])
+                ->where('is_active', true)
+                ->where('allows_online_booking', true)
+                ->first();
+
+            if (!$service) {
+                return response()->json([
+                    'error' => 'Servicio no encontrado o no disponible para reservas.',
+                ], 422);
+            }
+            $duration = $service->duration_minutes;
         }
 
         $slots = $this->availability->getAvailableSlotsForDate(
             $businessSlug,
             $validated['date'],
-            $service->duration_minutes
+            $duration
         );
 
         return response()->json([
             'slots' => $slots,
-            'service' => [
+            'service' => $service ? [
                 'id' => $service->id,
                 'name' => $service->name,
                 'duration_minutes' => $service->duration_minutes,
-            ],
+            ] : null,
         ]);
     }
 
@@ -97,16 +103,22 @@ class BookingWidgetController extends Controller
     {
         $data = $request->validated();
 
-        $service = BusinessService::where('business_id', $businessSlug->id)
-            ->where('id', $data['service_id'])
-            ->where('is_active', true)
-            ->where('allows_online_booking', true)
-            ->first();
+        $service = null;
+        $serviceDuration = 30;
 
-        if (!$service) {
-            return response()->json([
-                'error' => 'Servicio no encontrado o no disponible para reservas.',
-            ], 422);
+        if (!empty($data['service_id'])) {
+            $service = BusinessService::where('business_id', $businessSlug->id)
+                ->where('id', $data['service_id'])
+                ->where('is_active', true)
+                ->where('allows_online_booking', true)
+                ->first();
+
+            if (!$service) {
+                return response()->json([
+                    'error' => 'Servicio no encontrado o no disponible para reservas.',
+                ], 422);
+            }
+            $serviceDuration = $service->duration_minutes;
         }
 
         if (!empty($data['location_id'])) {
@@ -127,7 +139,7 @@ class BookingWidgetController extends Controller
             $data['appointment_date'],
             $data['start_time'],
             null,
-            $service->duration_minutes
+            $serviceDuration
         );
 
         if (!$check['available']) {
@@ -136,11 +148,11 @@ class BookingWidgetController extends Controller
             ], 422);
         }
 
-        $endTime = date('H:i', strtotime($data['start_time'] . ' + ' . $service->duration_minutes . ' minutes'));
+        $endTime = date('H:i', strtotime($data['start_time'] . ' + ' . $serviceDuration . ' minutes'));
 
         $appointment = BusinessAppointment::create([
             'business_id' => $businessSlug->id,
-            'business_service_id' => $service->id,
+            'business_service_id' => $service?->id,
             'business_location_id' => $data['location_id'] ?? null,
             'customer_name' => $data['customer_name'],
             'customer_email' => $data['customer_email'],

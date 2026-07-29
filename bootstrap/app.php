@@ -38,6 +38,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->validateCsrfTokens(except: [
             'stripe/webhook',
+            'm/*/ai-chatbot/chat',
         ]);
 
         $middleware->alias([

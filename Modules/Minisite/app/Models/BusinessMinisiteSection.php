@@ -45,6 +45,10 @@ class BusinessMinisiteSection extends Model
             'faqs' => 'Preguntas Frecuentes',
             'products' => 'Productos',
             'footer' => 'Pie de Página (Footer)',
+            'appointments' => 'Citas y Reservas',
+            'reviews' => 'Reseñas',
+            'availability' => 'Horario de Atención',
+            'restaurant_menu' => 'Menú Restaurante',
         ];
     }
 
@@ -108,6 +112,28 @@ class BusinessMinisiteSection extends Model
             ],
             'footer' => [
                 'show' => true,
+            ],
+            'appointments' => [
+                'show_service_selector' => true,
+                'show_location_selector' => true,
+                'default_location_id' => null,
+            ],
+            'reviews' => [
+                'show_all' => true,
+                'review_ids' => [],
+                'show_rating' => true,
+                'show_comment' => true,
+                'show_client_name' => true,
+                'max_items' => 10,
+            ],
+            'availability' => [
+                'show_legend' => true,
+            ],
+            'restaurant_menu' => [
+                'show_all' => true,
+                'category_ids' => [],
+                'show_images' => true,
+                'show_prices' => true,
             ],
             default => [],
         };

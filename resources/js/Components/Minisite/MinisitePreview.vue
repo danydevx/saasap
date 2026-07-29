@@ -57,6 +57,7 @@ import SectionFaqs from '@/Pages/Minisite/theme1/SectionFaqs.vue'
 import SectionProducts from '@/Pages/Minisite/theme1/SectionProducts.vue'
 import SectionHero from '@/Pages/Minisite/theme1/SectionHero.vue'
 import SectionFooter from '@/Pages/Minisite/theme1/SectionFooter.vue'
+import SectionRestaurantMenu from '@/Pages/Minisite/theme1/SectionRestaurantMenu.vue'
 
 const props = defineProps({
   business: {
@@ -87,7 +88,7 @@ const heroComponent = computed(() => {
   return { left: HeroLeft, center: HeroCenter, right: HeroRight }[layout] || HeroLeft
 })
 
-const sectionComponent = (type) => {
+  const sectionComponent = (type) => {
   const components = {
     hero: SectionHero,
     services: SectionServices,
@@ -100,11 +101,12 @@ const sectionComponent = (type) => {
     faqs: SectionFaqs,
     products: SectionProducts,
     footer: SectionFooter,
+    restaurant_menu: SectionRestaurantMenu,
   }
   return components[type] || null
 }
 
-const sectionIcon = (type) => {
+  const sectionIcon = (type) => {
   const icons = {
     hero: 'bi bi-house',
     services: 'bi bi-briefcase',
@@ -117,6 +119,7 @@ const sectionIcon = (type) => {
     faqs: 'bi bi-question-circle',
     products: 'bi bi-box-seam',
     footer: 'bi bi-footer',
+    restaurant_menu: 'bi bi-cup-hot',
   }
   return icons[type] || 'bi bi-grid'
 }
@@ -154,6 +157,9 @@ const hasContent = (section) => {
   }
   if (section.section_type === 'footer') {
     return true
+  }
+  if (section.section_type === 'restaurant_menu') {
+    return section.items && section.items.length > 0
   }
   return false
 }
@@ -203,6 +209,9 @@ const sectionProps = (section) => {
       socialNetworks: props.socialNetworks,
       config: section.config || {},
     }
+  }
+  if (section.section_type === 'restaurant_menu') {
+    return { items: section.items || [], config: section.config || {} }
   }
   return {}
 }

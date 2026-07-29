@@ -41,6 +41,13 @@ class ServiceController extends Controller
 
         $services = $query->paginate($perPage);
 
+        $services->getCollection()->transform(function ($service) {
+            if ($service->image) {
+                $service->image = "/storage/{$service->image}";
+            }
+            return $service;
+        });
+
         $locations = $business->locations()
             ->where('is_active', true)
             ->orderBy('name')
@@ -89,7 +96,7 @@ class ServiceController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:150'],
             'description' => ['nullable', 'string'],
-            'image' => ['nullable', 'file', 'mimes:jpeg,png', 'max:10240'],
+            'image' => ['nullable', 'image', 'mimes:jpeg,jpg', 'max:2048'],
             'duration_minutes' => ['required', 'integer', 'min:1'],
             'price' => ['nullable', 'numeric', 'min:0'],
             'deposit_required' => ['boolean'],
@@ -105,8 +112,8 @@ class ServiceController extends Controller
         $data['slug'] = \Illuminate\Support\Str::slug($data['name']);
 
         if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('services/' . $business->id, ['disk' => 'public']);
-            $data['image'] = Storage::disk('public')->url($path);
+            $path = $request->file('image')->store('services', 'public');
+            $data['image'] = $path;
         }
 
         $service = $business->services()->create($data);
@@ -127,6 +134,7 @@ class ServiceController extends Controller
         $this->authorize('update', [BusinessService::class, $service]);
 
         $locations = $business->locations()->where('is_active', true)->orderBy('name')->get(['id', 'name']);
+        $serviceImages = $service->images()->orderBy('sort_order')->get(['id', 'path', 'filename', 'is_primary']);
 
         return Inertia::render('Member/Services/Edit', [
             'business' => [
@@ -150,6 +158,12 @@ class ServiceController extends Controller
                 'business_location_id' => $service->business_location_id,
             ],
             'locations' => $locations,
+            'serviceImages' => $serviceImages->map(fn($img) => [
+                'id' => $img->id,
+                'url' => $img->path ? "/storage/{$img->path}" : null,
+                'filename' => $img->filename,
+                'is_primary' => $img->is_primary,
+            ]),
         ]);
     }
 
@@ -160,7 +174,7 @@ class ServiceController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:150'],
             'description' => ['nullable', 'string'],
-            'image' => ['nullable', 'file', 'mimes:jpeg,png', 'max:10240'],
+            'image' => ['nullable', 'image', 'mimes:jpeg,jpg', 'max:2048'],
             'duration_minutes' => ['required', 'integer', 'min:1'],
             'price' => ['nullable', 'numeric', 'min:0'],
             'deposit_required' => ['boolean'],
@@ -177,8 +191,8 @@ class ServiceController extends Controller
         }
 
         if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('services/' . $business->id, ['disk' => 'public']);
-            $data['image'] = Storage::disk('public')->url($path);
+            $path = $request->file('image')->store('services', 'public');
+            $data['image'] = $path;
         } else {
             unset($data['image']);
         }

@@ -61,7 +61,7 @@ onMounted(() => {
   background: #fff;
 
   &__inner {
-    max-width: 600px;
+    max-width: 1024px;
     margin: 0 auto;
   }
 

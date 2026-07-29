@@ -59,7 +59,6 @@ use App\Http\Controllers\HealthController;
 use App\Http\Controllers\Member\AboutController;
 use App\Http\Controllers\Member\AccountController;
 use App\Http\Controllers\Member\ActivityController as MemberActivityController;
-use App\Http\Controllers\Member\AiChatbotController;
 use App\Http\Controllers\Member\ApiKeyController as MemberApiKeyController;
 use App\Http\Controllers\Member\AppointmentController;
 use App\Http\Controllers\Member\AvailabilityController;
@@ -93,10 +92,12 @@ use App\Http\Controllers\Member\PlanSelectionController;
 use App\Http\Controllers\Member\PreferenceController as MemberPreferenceController;
 use App\Http\Controllers\Member\ProductCategoryController as MemberProductCategoryController;
 use App\Http\Controllers\Member\ProductController;
+use Modules\Products\Http\Controllers\ProductImageController;
 use App\Http\Controllers\Member\PromotionController;
 use App\Http\Controllers\Member\ReviewController;
 use App\Http\Controllers\Member\SeoController;
 use App\Http\Controllers\Member\ServiceController;
+use Modules\Services\Http\Controllers\ServiceImageController;
 use App\Http\Controllers\Member\SessionController as MemberSessionController;
 use App\Http\Controllers\Member\SlotController;
 use App\Http\Controllers\Member\SocialNetworkController;
@@ -117,6 +118,9 @@ use Inertia\Inertia;
 use Modules\Features\Http\Controllers\Member\FeatureController;
 use Modules\Features\Http\Controllers\Public\FeatureController as PublicFeatureController;
 use Modules\Tasks\Http\Controllers\Member\TaskController;
+
+require __DIR__ . '/ai_chatbot.php';
+require __DIR__ . '/minisite_ai_chatbot.php';
 
 Route::get('/', [DirectoryController::class, 'index']);
 
@@ -303,6 +307,12 @@ Route::post('/member/businesses/{business}/services/reorder', [ServiceController
 Route::post('/member/businesses/{business}/services/bulk-delete', [ServiceController::class, 'bulkDelete'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.businesses.services.bulk-delete');
+Route::post('/member/businesses/{business}/services/{service}/images', [ServiceImageController::class, 'store'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.services.images.store');
+Route::delete('/member/businesses/{business}/services/{service}/images/{image}', [ServiceImageController::class, 'destroy'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.services.images.destroy');
 
 Route::get('/member/businesses/{business}/faqs', [FaqController::class, 'index'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
@@ -532,6 +542,12 @@ Route::post('/member/businesses/{business}/products/reorder', [ProductController
 Route::post('/member/businesses/{business}/products/bulk-delete', [ProductController::class, 'bulkDelete'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.businesses.products.bulk-delete');
+Route::post('/member/businesses/{business}/products/{product}/images', [ProductImageController::class, 'store'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.products.images.store');
+Route::delete('/member/businesses/{business}/products/{product}/images/{image}', [ProductImageController::class, 'destroy'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.products.images.destroy');
 
 Route::get('/member/businesses/{business}/appointments', [AppointmentController::class, 'index'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
@@ -658,10 +674,6 @@ Route::get('/member/businesses/{business}/contact-forms/export', [ContactFormCon
 Route::get('/member/businesses/{business}/contact-forms/{form}/preview', [ContactFormController::class, 'preview'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.business.contact-forms.preview');
-
-Route::get('/member/businesses/{business}/ai-chatbot', [AiChatbotController::class, 'index'])
-    ->middleware(['auth', 'verified', 'active', 'role:member'])
-    ->name('member.business.ai-chatbot.index');
 
 Route::get('/member/businesses/{business}/reviews', [ReviewController::class, 'index'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])

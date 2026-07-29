@@ -12,6 +12,7 @@
           v-for="item in itemsWithDiscount"
           :key="item.id"
           class="section-promotions__item"
+          @click="goToPromotion(item.slug)"
         >
           <div class="section-promotions__item-header">
             <h3 class="section-promotions__item-title">{{ item.title }}</h3>
@@ -20,7 +21,7 @@
             </span>
           </div>
           <p v-if="item.description" class="section-promotions__item-desc">
-            {{ item.description }}
+            {{ truncateText(item.description, 100) }}
           </p>
           <div class="section-promotions__item-prices">
             <span v-if="item.regular_price" class="section-promotions__price-original">
@@ -31,10 +32,10 @@
             </span>
           </div>
           <p v-if="item.expires_at" class="section-promotions__item-valid">
-            Válido hasta: {{ formatDate(item.expires_at) }}
+            Valido hasta: {{ formatDate(item.expires_at) }}
           </p>
           <p v-if="item.coupon_code" class="section-promotions__item-coupon">
-            Código: {{ item.coupon_code }}
+            Codigo: {{ item.coupon_code }}
           </p>
         </div>
       </div>
@@ -55,6 +56,10 @@ const props = defineProps({
     type: Object,
     default: () => ({}),
   },
+  businessSlug: {
+    type: String,
+    default: '',
+  },
 })
 
 const formatDate = (dateString) => {
@@ -66,6 +71,11 @@ const formatDate = (dateString) => {
   })
 }
 
+const truncateText = (text, length) => {
+  if (!text || text.length <= length) return text
+  return text.substring(0, length) + '...'
+}
+
 const itemsWithDiscount = computed(() => {
   return props.items.map(item => {
     let discountPercent = null
@@ -75,6 +85,10 @@ const itemsWithDiscount = computed(() => {
     return { ...item, discountPercent }
   })
 })
+
+const goToPromotion = (slug) => {
+  window.location.href = `/m/${props.businessSlug}/promociones/${slug}`
+}
 </script>
 
 <style lang="less">
@@ -83,7 +97,7 @@ const itemsWithDiscount = computed(() => {
   background: #f8f9fa;
 
   &__inner {
-    max-width: 600px;
+    max-width: 1024px;
     margin: 0 auto;
   }
 
@@ -106,6 +120,13 @@ const itemsWithDiscount = computed(() => {
     border-radius: 8px;
     padding: 16px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+
+    &:hover {
+      transform: translateX(4px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    }
   }
 
   &__item-header {

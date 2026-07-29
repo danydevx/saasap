@@ -99,7 +99,17 @@ watch(
 function onFileChange(event) {
   if (props.readonly) return;
   const selectedFiles = Array.from(event.target.files);
-  const validFiles = selectedFiles.filter(file => file.type.startsWith('image/'));
+  const maxSize = 2 * 1024 * 1024; // 2MB
+  const maxImages = props.multiple ? 6 : 1;
+
+  // Filter: JPG only and max 2MB
+  const validFiles = selectedFiles
+    .filter(file => {
+      const isJpg = file.type === 'image/jpeg' || file.type === 'image/jpg';
+      const isValidSize = file.size <= maxSize;
+      return isJpg && isValidSize;
+    })
+    .slice(0, maxImages);
 
   files.value = props.multiple ? validFiles : validFiles.slice(0, 1);
 

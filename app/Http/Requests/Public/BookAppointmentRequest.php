@@ -14,7 +14,7 @@ class BookAppointmentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'service_id' => ['required', 'integer', 'exists:business_services,id'],
+            'service_id' => ['nullable', 'integer', 'exists:business_services,id'],
             'location_id' => ['nullable', 'integer', 'exists:business_locations,id'],
             'appointment_date' => ['required', 'date', 'after_or_equal:today'],
             'start_time' => ['required', 'date_format:H:i'],
@@ -28,7 +28,6 @@ class BookAppointmentRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'service_id.required' => 'Debe seleccionar un servicio.',
             'service_id.exists' => 'El servicio seleccionado no existe.',
             'appointment_date.required' => 'Debe seleccionar una fecha.',
             'appointment_date.after_or_equal' => 'La fecha debe ser hoy o posterior.',

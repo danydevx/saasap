@@ -317,8 +317,8 @@
         --brand-bgcolor-footer: {{ $vars['colors']['brand_bgcolor_footer'] ?? '#F3F4F6' }};
         --heading-font: '{{ $vars['fonts']['font_heading'] ?? 'Poppins' }}', sans-serif;
         --body-font: '{{ $vars['fonts']['font_body'] ?? 'Open Sans' }}', sans-serif;
-        --brand-button-radius: {{ ['rounded' => '50px', 'square' => '0px', 'round' => '8px'][$vars['buttons_style']] ?? '8px' }};
-        --brand-card-radius: {{ ['rounded' => '50px', 'square' => '0px', 'round' => '12px'][$vars['card_style']] ?? '12px' }};
+        --brand-button-radius: {{ ['rounded' => '50px', 'square' => '0px', 'round' => '8px'][data_get($vars, 'buttons_style', 'round')] ?? '8px' }};
+        --brand-card-radius: {{ ['rounded' => '50px', 'square' => '0px', 'round' => '12px'][data_get($vars, 'card_style', 'round')] ?? '12px' }};
         --font-size-h1: 3rem;
         --font-size-h2: 2.5rem;
         --font-size-h3: 2rem;
