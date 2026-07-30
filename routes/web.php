@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\ActivityController as AdminActivityController;
 use App\Http\Controllers\Admin\ApiKeyController as AdminApiKeyController;
 use App\Http\Controllers\Admin\AutomationController;
 use App\Http\Controllers\Admin\BusinessAiChatbotController;
+use Modules\AiChatbot\Http\Controllers\Admin\ChatbotPresetController;
 use App\Http\Controllers\Admin\BusinessContactFormController;
 use App\Http\Controllers\Admin\BusinessContentController;
 use App\Http\Controllers\Admin\BusinessController;
@@ -1220,6 +1221,23 @@ Route::prefix('admin')->middleware(['auth', 'admin_or_user:1'])->group(function 
 
     Route::get('/businesses/{business}/ai-chatbot', [BusinessAiChatbotController::class, 'index'])
         ->name('admin.business.ai-chatbot.index');
+
+    Route::get('/chatbot-presets', [ChatbotPresetController::class, 'index'])
+        ->name('admin.chatbot-presets.index');
+    Route::get('/chatbot-presets/create', [ChatbotPresetController::class, 'create'])
+        ->name('admin.chatbot-presets.create');
+    Route::post('/chatbot-presets', [ChatbotPresetController::class, 'store'])
+        ->name('admin.chatbot-presets.store');
+    Route::get('/chatbot-presets/{preset}/edit', [ChatbotPresetController::class, 'edit'])
+        ->name('admin.chatbot-presets.edit');
+    Route::put('/chatbot-presets/{preset}', [ChatbotPresetController::class, 'update'])
+        ->name('admin.chatbot-presets.update');
+    Route::delete('/chatbot-presets/{preset}', [ChatbotPresetController::class, 'destroy'])
+        ->name('admin.chatbot-presets.destroy');
+    Route::post('/chatbot-presets/{preset}/toggle', [ChatbotPresetController::class, 'toggle'])
+        ->name('admin.chatbot-presets.toggle');
+    Route::post('/chatbot-presets/{preset}/duplicate', [ChatbotPresetController::class, 'duplicate'])
+        ->name('admin.chatbot-presets.duplicate');
 
     Route::get('/businesses/{business}/reviews', [BusinessReviewController::class, 'index'])
         ->name('admin.business.reviews.index');

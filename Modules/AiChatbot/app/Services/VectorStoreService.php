@@ -21,7 +21,7 @@ class VectorStoreService
         );
     }
 
-    public function storeEmbedding(string $sourceType, int $sourceId, string $text): void
+    public function storeEmbedding(string $sourceType, int|string $sourceId, string $text): void
     {
         $existing = AiEmbedding::where('business_id', $this->settings->business_id)
             ->where('source_type', $sourceType)
@@ -36,13 +36,26 @@ class VectorStoreService
         $this->createEmbedding($sourceType, $sourceId, $text);
     }
 
-    public function deleteEmbedding(string $sourceType, int $sourceId): void
+    public function deleteEmbedding(string $sourceType, int|string $sourceId): void
     {
-        AiEmbedding::where('business_id', $this->settings->business_id)
-            ->where('source_type', $sourceType)
-            ->where('source_id', $sourceId)
-            ->delete();
+        if (is_int($sourceId) || ctype_digit($sourceId)) {
+            AiEmbedding::where('business_id', $this->settings->business_id)
+                ->where('source_type', $sourceType)
+                ->where(function ($q) use ($sourceId) {
+                    $q->where('source_id', $sourceId)
+                      ->orWhere('source_id', 'like', $sourceId . '_%');
+                })
+                ->delete();
+        } else {
+            AiEmbedding::where('business_id', $this->settings->business_id)
+                ->where('source_type', $sourceType)
+                ->where('source_id', $sourceId)
+                ->delete();
+        }
     }
+
+    private const CHUNK_SIZE = 100;
+    private const MAX_PROCESS = 500;
 
     public function searchSimilar(string $query, int $limit = 5, float $minSimilarity = 0.5): array
     {
@@ -56,29 +69,36 @@ class VectorStoreService
             return [];
         }
 
-        $embeddings = AiEmbedding::where('business_id', $this->settings->business_id)
-            ->get();
-
         $results = [];
+        $processed = 0;
 
-        foreach ($embeddings as $embedding) {
-            $storedEmbedding = $embedding->getEmbeddingArray();
+        AiEmbedding::where('business_id', $this->settings->business_id)
+            ->select(['id', 'source_type', 'source_id', 'chunk_text', 'embedding'])
+            ->chunk(self::CHUNK_SIZE, function ($embeddings) use ($queryEmbedding, $minSimilarity, &$results, &$processed) {
+                foreach ($embeddings as $embedding) {
+                    $processed++;
+                    if ($processed > self::MAX_PROCESS) {
+                        return false;
+                    }
 
-            if (empty($storedEmbedding)) {
-                continue;
-            }
+                    $storedEmbedding = $embedding->getEmbeddingArray();
+                    if (empty($storedEmbedding)) {
+                        continue;
+                    }
 
-            $similarity = $this->embeddingService->cosineSimilarity($queryEmbedding, $storedEmbedding);
+                    $similarity = $this->embeddingService->cosineSimilarity($queryEmbedding, $storedEmbedding);
 
-            if ($similarity >= $minSimilarity) {
-                $results[] = [
-                    'source_type' => $embedding->source_type,
-                    'source_id' => $embedding->source_id,
-                    'chunk_text' => $embedding->chunk_text,
-                    'similarity' => round($similarity, 4),
-                ];
-            }
-        }
+                    if ($similarity >= $minSimilarity) {
+                        $results[] = [
+                            'source_type' => $embedding->source_type,
+                            'source_id' => $embedding->source_id,
+                            'chunk_text' => $embedding->chunk_text,
+                            'similarity' => round($similarity, 4),
+                        ];
+                    }
+                }
+                return true;
+            });
 
         usort($results, fn($a, $b) => $b['similarity'] <=> $a['similarity']);
 
@@ -100,6 +120,8 @@ class VectorStoreService
             'about' => 0,
             'custom' => 0,
             'restaurant_menu' => 0,
+            'social_networks' => 0,
+            'appointments' => 0,
         ];
 
         $stats['products'] = $this->indexProducts($businessId);
@@ -110,12 +132,37 @@ class VectorStoreService
         $stats['about'] = $this->indexAbout($businessId);
         $stats['custom'] = $this->indexCustomContexts($businessId);
         $stats['restaurant_menu'] = $this->indexRestaurantMenu($businessId);
+        $stats['social_networks'] = $this->indexSocialNetworks($businessId);
+        $stats['appointments'] = $this->indexAppointments($businessId);
 
         return $stats;
     }
 
-    private function createEmbedding(string $sourceType, int $sourceId, string $text): void
+    private function createEmbedding(string $sourceType, int|string $sourceId, string $text): void
     {
+        if (!$this->isValidContent($text)) {
+            Log::info('VectorStore skipped invalid content', [
+                'source_type' => $sourceType,
+                'source_id' => $sourceId,
+                'reason' => 'invalid_content',
+            ]);
+            return;
+        }
+
+        $contentHash = $this->getContentHash($text);
+        $existingWithHash = AiEmbedding::where('business_id', $this->settings->business_id)
+            ->where('content_hash', $contentHash)
+            ->first();
+
+        if ($existingWithHash) {
+            Log::info('VectorStore skipped duplicate content', [
+                'source_type' => $sourceType,
+                'source_id' => $sourceId,
+                'existing_id' => $existingWithHash->id,
+            ]);
+            return;
+        }
+
         try {
             $embeddingArray = $this->embeddingService->embed($text);
 
@@ -124,6 +171,7 @@ class VectorStoreService
                 'source_type' => $sourceType,
                 'source_id' => $sourceId,
                 'chunk_text' => $text,
+                'content_hash' => $contentHash,
                 'embedding' => json_encode($embeddingArray),
             ]);
         } catch (\Exception $e) {
@@ -137,10 +185,34 @@ class VectorStoreService
 
     private function updateEmbedding(AiEmbedding $embedding, string $text): void
     {
+        if (!$this->isValidContent($text)) {
+            $embedding->delete();
+            Log::info('VectorStore deleted invalid content', [
+                'id' => $embedding->id,
+            ]);
+            return;
+        }
+
+        $contentHash = $this->getContentHash($text);
+        $existingWithHash = AiEmbedding::where('business_id', $this->settings->business_id)
+            ->where('content_hash', $contentHash)
+            ->where('id', '!=', $embedding->id)
+            ->first();
+
+        if ($existingWithHash) {
+            $embedding->delete();
+            Log::info('VectorStore merged duplicate content', [
+                'deleted_id' => $embedding->id,
+                'kept_id' => $existingWithHash->id,
+            ]);
+            return;
+        }
+
         try {
             $embeddingArray = $this->embeddingService->embed($text);
             $embedding->update([
                 'chunk_text' => $text,
+                'content_hash' => $contentHash,
                 'embedding' => json_encode($embeddingArray),
             ]);
         } catch (\Exception $e) {
@@ -151,26 +223,132 @@ class VectorStoreService
         }
     }
 
+    private function isValidContent(string $text): bool
+    {
+        if (empty(trim($text))) {
+            return false;
+        }
+
+        $cleanText = trim($text);
+
+        if (strlen($cleanText) < 10) {
+            return false;
+        }
+
+        if (strlen($cleanText) > 10000) {
+            return false;
+        }
+
+        $placeholderPatterns = [
+            '/^null$/i',
+            '/^undefined$/i',
+            '/^\[object\]$/i',
+            '/^undefined|^null|^false$/i',
+            '/^(http|https):\/\//i',
+            '/^<[^>]+>$/',
+            '/^\s+$/',
+            '/^[\d\W]+$/',
+        ];
+
+        foreach ($placeholderPatterns as $pattern) {
+            if (preg_match($pattern, $cleanText)) {
+                return false;
+            }
+        }
+
+        if (preg_match('/^(.{0,5})\1{3,}$/u', $cleanText)) {
+            return false;
+        }
+
+        $placeholderStrings = [
+            'no disponible',
+            'no especificado',
+            'no definido',
+            'por definir',
+            'pending',
+            'sin descripcion',
+            'sin descripción',
+            'sin informacion',
+            'sin información',
+        ];
+
+        $lowerText = mb_strtolower($cleanText);
+        foreach ($placeholderStrings as $placeholder) {
+            if ($lowerText === mb_strtolower($placeholder)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private function getContentHash(string $text): string
+    {
+        $normalized = mb_strtolower(trim(preg_replace('/\s+/', ' ', $text)));
+        return md5($normalized);
+    }
+
+    private function chunkText(string $text, int $maxLength = 500): array
+    {
+        if (mb_strlen($text) <= $maxLength) {
+            return [$text];
+        }
+
+        $chunks = [];
+        $sentences = preg_split('/(?<=[.!?])\s+/', $text, -1, PREG_SPLIT_NO_EMPTY);
+
+        $currentChunk = '';
+        foreach ($sentences as $sentence) {
+            if (mb_strlen($currentChunk) + mb_strlen($sentence) <= $maxLength) {
+                $currentChunk .= ($currentChunk ? ' ' : '') . $sentence;
+            } else {
+                if ($currentChunk) {
+                    $chunks[] = trim($currentChunk);
+                }
+                $currentChunk = $sentence;
+            }
+        }
+
+        if ($currentChunk) {
+            $chunks[] = trim($currentChunk);
+        }
+
+        return $chunks;
+    }
+
     private function indexProducts(int $businessId): int
     {
         $products = \Modules\Products\Models\BusinessProduct::where('business_id', $businessId)
             ->where('is_active', true)
             ->get();
 
+        $count = 0;
         foreach ($products as $product) {
-            $text = implode('. ', array_filter([
+            AiEmbedding::where('business_id', $businessId)
+                ->where('source_type', 'product')
+                ->where('source_id', $product->id)
+                ->delete();
+
+            $baseText = implode('. ', array_filter([
                 $product->name,
-                $product->description,
                 $product->sku ? "SKU: {$product->sku}" : null,
                 $product->price ? "Precio: {$product->price}" : null,
             ]));
 
-            if ($text) {
-                $this->storeEmbedding('product', $product->id, $text);
+            if ($product->description) {
+                $chunks = $this->chunkText($product->description);
+                $chunks[0] = $baseText . '. ' . $chunks[0];
+                foreach ($chunks as $idx => $chunk) {
+                    $this->createEmbedding('product', $product->id . '_' . $idx, $chunk);
+                    $count++;
+                }
+            } elseif ($baseText) {
+                $this->storeEmbedding('product', $product->id, $baseText);
+                $count++;
             }
         }
 
-        return $products->count();
+        return $count;
     }
 
     private function indexServices(int $businessId): int
@@ -179,20 +357,33 @@ class VectorStoreService
             ->where('is_active', true)
             ->get();
 
+        $count = 0;
         foreach ($services as $service) {
-            $text = implode('. ', array_filter([
+            AiEmbedding::where('business_id', $businessId)
+                ->where('source_type', 'service')
+                ->where('source_id', $service->id)
+                ->delete();
+
+            $baseText = implode('. ', array_filter([
                 $service->name,
-                $service->description,
                 $service->duration ? "Duración: {$service->duration} minutos" : null,
                 $service->price ? "Precio: {$service->price}" : null,
             ]));
 
-            if ($text) {
-                $this->storeEmbedding('service', $service->id, $text);
+            if ($service->description) {
+                $chunks = $this->chunkText($service->description);
+                $chunks[0] = $baseText . '. ' . $chunks[0];
+                foreach ($chunks as $idx => $chunk) {
+                    $this->createEmbedding('service', $service->id . '_' . $idx, $chunk);
+                    $count++;
+                }
+            } elseif ($baseText) {
+                $this->storeEmbedding('service', $service->id, $baseText);
+                $count++;
             }
         }
 
-        return $services->count();
+        return $count;
     }
 
     private function indexPromotions(int $businessId): int
@@ -241,12 +432,25 @@ class VectorStoreService
             ->get();
 
         foreach ($locations as $location) {
+            $parts = array_filter([
+                $location->name,
+                $location->address_line_1,
+                $location->address_line_2,
+                $location->city,
+                $location->municipality,
+                $location->state ? "{$location->state} ({$location->state_code})" : null,
+                $location->postal_code ? "CP {$location->postal_code}" : null,
+                $location->country,
+            ]);
+
+            $address = implode(', ', $parts);
+
             $text = implode('. ', array_filter([
                 $location->name,
-                $location->address,
+                $address,
                 $location->phone ? "Teléfono: {$location->phone}" : null,
                 $location->email ? "Email: {$location->email}" : null,
-                $location->hours ? "Horarios: {$location->hours}" : null,
+                $location->directions_url ? "Google Maps: {$location->directions_url}" : null,
             ]));
 
             if ($text) {
@@ -368,6 +572,79 @@ class VectorStoreService
                     $count++;
                 }
             }
+        }
+
+        return $count;
+    }
+
+    private function indexSocialNetworks(int $businessId): int
+    {
+        if (!class_exists('\Modules\SocialMedia\Models\BusinessSocialNetwork')) {
+            return 0;
+        }
+
+        $socialNetworks = \Modules\SocialMedia\Models\BusinessSocialNetwork::where('business_id', $businessId)
+            ->where('is_active', true)
+            ->get();
+
+        foreach ($socialNetworks as $sn) {
+            $text = implode('. ', array_filter([
+                "Red social: {$sn->name}",
+                $sn->username ? "Usuario: {$sn->username}" : null,
+                $sn->url ? "URL: {$sn->url}" : null,
+            ]));
+
+            if ($text) {
+                $this->storeEmbedding('social_network', $sn->id, $text);
+            }
+        }
+
+        return $socialNetworks->count();
+    }
+
+    private function indexAppointments(int $businessId): int
+    {
+        if (!class_exists('\Modules\Appointments\Models\BusinessAvailability')) {
+            return 0;
+        }
+
+        $count = 0;
+
+        $availabilities = \Modules\Appointments\Models\BusinessAvailability::where('business_id', $businessId)
+            ->orderBy('day_of_week')
+            ->get();
+
+        $scheduleParts = [];
+        foreach ($availabilities as $avail) {
+            $dayName = \Modules\Appointments\Models\BusinessAvailability::dayName($avail->day_of_week);
+            if ($avail->is_available) {
+                $scheduleParts[] = "{$dayName}: de {$avail->start_time} a {$avail->end_time}, duración de cita {$avail->slot_duration_minutes} minutos";
+            } else {
+                $scheduleParts[] = "{$dayName}: cerrado";
+            }
+        }
+
+        if (!empty($scheduleParts)) {
+            $text = "Horarios de atención: " . implode('. ', $scheduleParts) . ".";
+            $this->storeEmbedding('appointment', $businessId, $text);
+            $count++;
+        }
+
+        $exceptions = \Modules\Appointments\Models\BusinessAvailabilityException::where('business_id', $businessId)
+            ->where('exception_date', '>=', now()->toDateString())
+            ->orderBy('exception_date')
+            ->limit(30)
+            ->get();
+
+        foreach ($exceptions as $exception) {
+            $date = $exception->exception_date->format('d/m/Y');
+            if ($exception->is_available) {
+                $text = "Día especial: {$date} - Horario especial: {$exception->start_time} a {$exception->end_time}. Razón: {$exception->reason}";
+            } else {
+                $text = "Día cerrado: {$date}. Razón: {$exception->reason}";
+            }
+            $this->storeEmbedding('appointment_exception', $exception->id, $text);
+            $count++;
         }
 
         return $count;

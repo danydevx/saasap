@@ -501,6 +501,9 @@ const alertClass = (type, priority) => {
   display: flex;
   flex-direction: column;
   overflow-y: auto;
+  position: sticky;
+  top: 0;
+  height: 100vh;
 }
 
 @media (max-width: 991.98px) {
@@ -578,6 +581,7 @@ const alertClass = (type, priority) => {
 .main-content {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .offcanvas {

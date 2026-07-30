@@ -79,6 +79,54 @@
               </div>
             </div>
 
+            <div class="col-12 col-md-6">
+              <div class="mb-3">
+                <label class="form-label">Preset de Chatbot</label>
+                <select v-model="form.preset_id" class="form-select">
+                  <option :value="null">Ninguno (personalizado)</option>
+                  <option v-for="preset in presets" :key="preset.id" :value="preset.id">
+                    {{ preset.name }}
+                  </option>
+                </select>
+                <small class="text-muted">Aplica una plantilla predefinida</small>
+              </div>
+            </div>
+
+            <div class="col-12 col-md-6">
+              <div class="mb-3">
+                <label class="form-label">Nombre del Chatbot</label>
+                <input
+                  type="text"
+                  v-model="form.chatbot_name"
+                  class="form-control"
+                  placeholder="Asistente Virtual"
+                  maxlength="100"
+                />
+                <small class="text-muted">Nombre que aparecerá en el chat</small>
+              </div>
+            </div>
+
+            <div class="col-12 col-md-6">
+              <div class="mb-3">
+                <label class="form-label">Logo del Chatbot</label>
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png"
+                  @change="onAvatarChange"
+                  class="form-control"
+                />
+                <small class="text-muted">JPG o PNG, máximo 1MB</small>
+                <div v-if="form.chatbot_avatar_preview || form.chatbot_avatar" class="mt-2">
+                  <img
+                    :src="form.chatbot_avatar_preview || form.chatbot_avatar"
+                    alt="Avatar"
+                    class="rounded"
+                    style="max-height: 60px; object-fit: contain;"
+                  />
+                </div>
+              </div>
+            </div>
+
             <div class="col-12 col-md-4">
               <div class="mb-3">
                 <label class="form-label">Color del Widget</label>
@@ -185,6 +233,104 @@
               </div>
             </div>
 
+            <div class="col-12 col-md-4">
+              <div class="mb-3">
+                <label class="form-label">
+                  Resultados RAG máx.
+                  <i class="bi bi-question-circle text-muted ms-1" style="cursor: help;" title="Cantidad de fragmentos de información que se usan como contexto. Más resultados = respuestas más informadas pero más costoso."></i>
+                </label>
+                <input
+                  type="number"
+                  v-model.number="form.rag_max_results"
+                  class="form-control"
+                  min="1"
+                  max="20"
+                />
+                <small class="text-muted">Fragmentos de contexto retrievalados</small>
+              </div>
+            </div>
+
+            <div class="col-12 col-md-4">
+              <div class="mb-3">
+                <label class="form-label">
+                  Similitud mínima RAG
+                  <i class="bi bi-question-circle text-muted ms-1" style="cursor: help;" title="Qué tan similar debe ser el contexto encontrado. 0 = cualquier cosa, 0.7+ = muy similar. Ajusta según la calidad de tus datos."></i>
+                </label>
+                <input
+                  type="number"
+                  v-model.number="form.rag_min_similarity"
+                  class="form-control"
+                  min="0"
+                  max="1"
+                  step="0.05"
+                />
+                <small class="text-muted">0 = cualquier cosa, 1 = idéntico</small>
+              </div>
+            </div>
+
+            <div class="col-12 col-md-4">
+              <div class="mb-3">
+                <label class="form-label">
+                  Personalidad
+                  <i class="bi bi-question-circle text-muted ms-1" style="cursor: help;" title="Afecta el tono y estilo de las respuestas. Profesional: formal y directo. Amigable: cálido y cercano. Formal: respetuoso y elaborado. Casual: relajado y conversacional."></i>
+                </label>
+                <select v-model="form.personality" class="form-select">
+                  <option value="professional">Profesional</option>
+                  <option value="friendly">Amigable</option>
+                  <option value="formal">Formal</option>
+                  <option value="casual">Casual</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="col-12 col-md-4">
+              <div class="mb-3">
+                <label class="form-label">
+                  Longitud de Respuesta
+                  <i class="bi bi-question-circle text-muted ms-1" style="cursor: help;" title="Controla qué tan detalladas son las respuestas. Corta: 1-3 oraciones. Media: 2-5 oraciones. Larga: respuestas detalladas con ejemplos."></i>
+                </label>
+                <select v-model="form.response_length" class="form-select">
+                  <option value="short">Corta</option>
+                  <option value="medium">Media</option>
+                  <option value="long">Larga</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="col-12 col-md-4">
+              <div class="mb-3">
+                <label class="form-label">&nbsp;</label>
+                <div class="form-check form-switch mt-2">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    v-model="form.expandable_responses"
+                    id="expandableResponses"
+                  />
+                  <label class="form-check-label" for="expandableResponses">
+                    Respuestas expandibles
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-12 col-md-4">
+              <div class="mb-3">
+                <label class="form-label">&nbsp;</label>
+                <div class="form-check form-switch mt-2">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    v-model="form.show_citations"
+                    id="showCitations"
+                  />
+                  <label class="form-check-label" for="showCitations">
+                    Mostrar fuentes
+                  </label>
+                </div>
+              </div>
+            </div>
+
             <div class="col-12">
               <div class="form-check form-switch mb-3">
                 <input
@@ -197,6 +343,211 @@
                   <strong>Chatbot habilitado</strong>
                   <small class="d-block text-muted">Cuando está desactivado, el chatbot no aparece en el minisite</small>
                 </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card mb-4">
+          <div class="card-header">
+            <h5 class="mb-0"><i class="bi bi-cursor-fill me-2"></i>Llamadas a la Accion (CTA)</h5>
+          </div>
+          <div class="card-body">
+            <div class="row g-4">
+              <div class="col-12">
+                <div class="form-check form-switch mb-3">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    v-model="form.cta_enabled"
+                    id="ctaEnabled"
+                  />
+                  <label class="form-check-label" for="ctaEnabled">
+                    Mostrar botones de accion despues de respuestas
+                  </label>
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label">Texto del boton principal</label>
+                  <input
+                    type="text"
+                    v-model="form.cta_primary_text"
+                    class="form-control"
+                    placeholder="Ej: Agendar cita"
+                    maxlength="50"
+                  />
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label">URL del boton principal</label>
+                  <input
+                    type="text"
+                    v-model="form.cta_primary_url"
+                    class="form-control"
+                    placeholder="Ej: /contacto o https://..."
+                  />
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label">Texto del boton secundario</label>
+                  <input
+                    type="text"
+                    v-model="form.cta_secondary_text"
+                    class="form-control"
+                    placeholder="Ej: Ver productos"
+                    maxlength="50"
+                  />
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label">URL del boton secundario</label>
+                  <input
+                    type="text"
+                    v-model="form.cta_secondary_url"
+                    class="form-control"
+                    placeholder="Ej: /productos"
+                  />
+                </div>
+              </div>
+
+              <div class="col-12">
+                <div class="alert alert-info small">
+                  <i class="bi bi-info-circle me-1"></i>
+                  Los botones CTA apareceran en respuestas relacionadas con: reservas, productos, precios, horarios y consultas generales.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card mb-4">
+          <div class="card-header">
+            <h5 class="mb-0"><i class="bi bi-link-45deg me-2"></i>CTA por Intencion</h5>
+          </div>
+          <div class="card-body">
+            <div class="alert alert-info small mb-3">
+              <i class="bi bi-info-circle me-1"></i>
+              Configura botones CTA específicos según la intención de la pregunta del usuario.
+            </div>
+            <div class="row g-4">
+              <div class="col-md-6">
+                <div class="intent-cta-item p-3 border rounded">
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="badge bg-primary">Reservas/Citas</span>
+                    <div class="form-check form-switch">
+                      <input class="form-check-input" type="checkbox" v-model="form.intent_appointment_enabled" id="intentAppointment" />
+                    </div>
+                  </div>
+                  <input type="text" v-model="form.intent_appointment_text" class="form-control form-control-sm mb-2" placeholder="Texto del botón" />
+                  <input type="text" v-model="form.intent_appointment_url" class="form-control form-control-sm" placeholder="URL (ej: /reservas)" />
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <div class="intent-cta-item p-3 border rounded">
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="badge bg-success"> Compras/Precios</span>
+                    <div class="form-check form-switch">
+                      <input class="form-check-input" type="checkbox" v-model="form.intent_purchase_enabled" id="intentPurchase" />
+                    </div>
+                  </div>
+                  <input type="text" v-model="form.intent_purchase_text" class="form-control form-control-sm mb-2" placeholder="Texto del botón" />
+                  <input type="text" v-model="form.intent_purchase_url" class="form-control form-control-sm" placeholder="URL (ej: /productos)" />
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <div class="intent-cta-item p-3 border rounded">
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="badge bg-info">Contacto</span>
+                    <div class="form-check form-switch">
+                      <input class="form-check-input" type="checkbox" v-model="form.intent_contact_enabled" id="intentContact" />
+                    </div>
+                  </div>
+                  <input type="text" v-model="form.intent_contact_text" class="form-control form-control-sm mb-2" placeholder="Texto del botón" />
+                  <input type="text" v-model="form.intent_contact_url" class="form-control form-control-sm" placeholder="URL (ej: /contacto)" />
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <div class="intent-cta-item p-3 border rounded">
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="badge bg-warning text-dark">Soporte/Ayuda</span>
+                    <div class="form-check form-switch">
+                      <input class="form-check-input" type="checkbox" v-model="form.intent_support_enabled" id="intentSupport" />
+                    </div>
+                  </div>
+                  <input type="text" v-model="form.intent_support_text" class="form-control form-control-sm mb-2" placeholder="Texto del botón" />
+                  <input type="text" v-model="form.intent_support_url" class="form-control form-control-sm" placeholder="URL (ej: /soporte)" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card mb-4">
+          <div class="card-header">
+            <h5 class="mb-0"><i class="bi bi-person-plus me-2"></i>Captura de Leads</h5>
+          </div>
+          <div class="card-body">
+            <div class="row g-4">
+              <div class="col-12">
+                <div class="form-check form-switch mb-3">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    v-model="form.lead_capture_enabled"
+                    id="leadCaptureEnabled"
+                  />
+                  <label class="form-check-label" for="leadCaptureEnabled">
+                    <strong>Captura de leads</strong>
+                    <small class="d-block text-muted">Muestra un formulario sutil para collects correos electrónicos</small>
+                  </label>
+                </div>
+              </div>
+
+              <div v-if="form.lead_capture_enabled" class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label">
+                    Titulo del mensaje
+                    <i class="bi bi-question-circle text-muted ms-1" style="cursor: help;" title="Titulo que aparecera en el popup de captura de email."></i>
+                  </label>
+                  <input
+                    type="text"
+                    v-model="form.lead_capture_title"
+                    class="form-control"
+                    placeholder="¿Te gustaría recibir noticias sobre nosotros?"
+                    maxlength="200"
+                  />
+                </div>
+              </div>
+
+              <div v-if="form.lead_capture_enabled" class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label">Descripcion</label>
+                  <input
+                    type="text"
+                    v-model="form.lead_capture_description"
+                    class="form-control"
+                    placeholder="Déjanos tu correo y te mantendremos informado."
+                    maxlength="500"
+                  />
+                </div>
+              </div>
+
+              <div v-if="form.lead_capture_enabled" class="col-12">
+                <div class="alert alert-info small">
+                  <i class="bi bi-info-circle me-1"></i>
+                  El formulario de captura aparecera automaticamente despues de 3 mensajes del usuario.
+                </div>
               </div>
             </div>
           </div>
@@ -219,6 +570,10 @@ import { router } from '@inertiajs/vue3'
 const props = defineProps({
   business: Object,
   settings: Object,
+  presets: {
+    type: Array,
+    default: () => [],
+  },
 })
 
 const emit = defineEmits(['saved'])
@@ -233,6 +588,14 @@ const defaultForm = {
   model: 'gpt-4o-mini',
   embedding_model: 'text-embedding-3-small',
   system_prompt: '',
+  chatbot_name: '',
+  chatbot_avatar: '',
+  chatbot_avatar_preview: '',
+  preset_id: null,
+  personality: 'friendly',
+  response_length: 'medium',
+  expandable_responses: true,
+  show_citations: true,
   max_conversations_month: 500,
   max_messages_conversation: 50,
   max_tokens_response: 500,
@@ -240,6 +603,29 @@ const defaultForm = {
   widget_theme: 'light',
   is_enabled: false,
   allow_reset_chat: false,
+  url_import_max_chars: 5000,
+  rag_min_similarity: 0.25,
+  rag_max_results: 5,
+  cta_enabled: false,
+  cta_primary_text: '',
+  cta_primary_url: '',
+  cta_secondary_text: '',
+  cta_secondary_url: '',
+  lead_capture_enabled: false,
+  lead_capture_title: '¿Te gustaría recibir noticias sobre nosotros?',
+  lead_capture_description: 'Déjanos tu correo y te mantendremos informado.',
+  intent_appointment_enabled: false,
+  intent_appointment_text: 'Agendar cita',
+  intent_appointment_url: '',
+  intent_purchase_enabled: false,
+  intent_purchase_text: 'Ver precios',
+  intent_purchase_url: '',
+  intent_contact_enabled: false,
+  intent_contact_text: 'Contactar',
+  intent_contact_url: '',
+  intent_support_enabled: false,
+  intent_support_text: 'Obtener ayuda',
+  intent_support_url: '',
 }
 
 const form = reactive({ ...defaultForm })
@@ -253,6 +639,14 @@ const form = reactive({ ...defaultForm })
       form.model = newSettings.model || 'gpt-4o-mini'
       form.embedding_model = newSettings.embedding_model || 'text-embedding-3-small'
       form.system_prompt = newSettings.system_prompt || ''
+      form.chatbot_name = newSettings.chatbot_name || ''
+      form.chatbot_avatar = newSettings.chatbot_avatar || ''
+      form.chatbot_avatar_preview = ''
+      form.preset_id = newSettings.preset_id || null
+      form.personality = newSettings.personality || 'friendly'
+      form.response_length = newSettings.response_length || 'medium'
+      form.expandable_responses = newSettings.expandable_responses ?? true
+      form.show_citations = newSettings.show_citations ?? true
       form.max_conversations_month = newSettings.max_conversations_month || 500
       form.max_messages_conversation = newSettings.max_messages_conversation || 50
       form.max_tokens_response = newSettings.max_tokens_response || 500
@@ -260,6 +654,34 @@ const form = reactive({ ...defaultForm })
       form.widget_theme = newSettings.widget_theme || 'light'
       form.is_enabled = newSettings.is_enabled || false
       form.allow_reset_chat = newSettings.allow_reset_chat || false
+      form.url_import_max_chars = newSettings.url_import_max_chars || 5000
+      form.rag_min_similarity = newSettings.rag_min_similarity ?? 0.25
+      form.rag_max_results = newSettings.rag_max_results || 5
+
+      const cta = newSettings.cta_settings || {}
+      form.cta_enabled = cta.enabled || false
+      form.cta_primary_text = cta.primary_text || ''
+      form.cta_primary_url = cta.primary_url || ''
+      form.cta_secondary_text = cta.secondary_text || ''
+      form.cta_secondary_url = cta.secondary_url || ''
+
+      const intentCta = cta.intent_cta || {}
+      form.intent_appointment_enabled = intentCta.appointment?.enabled || false
+      form.intent_appointment_text = intentCta.appointment?.text || 'Agendar cita'
+      form.intent_appointment_url = intentCta.appointment?.url || ''
+      form.intent_purchase_enabled = intentCta.purchase?.enabled || false
+      form.intent_purchase_text = intentCta.purchase?.text || 'Ver precios'
+      form.intent_purchase_url = intentCta.purchase?.url || ''
+      form.intent_contact_enabled = intentCta.contact?.enabled || false
+      form.intent_contact_text = intentCta.contact?.text || 'Contactar'
+      form.intent_contact_url = intentCta.contact?.url || ''
+      form.intent_support_enabled = intentCta.support?.enabled || false
+      form.intent_support_text = intentCta.support?.text || 'Obtener ayuda'
+      form.intent_support_url = intentCta.support?.url || ''
+
+      form.lead_capture_enabled = newSettings.lead_capture_enabled || false
+      form.lead_capture_title = newSettings.lead_capture_title || '¿Te gustaría recibir noticias sobre nosotros?'
+      form.lead_capture_description = newSettings.lead_capture_description || 'Déjanos tu correo y te mantendremos informado.'
     }
   },
   { immediate: true }
@@ -270,11 +692,62 @@ const saveSettings = () => {
   successMessage.value = null
   errorMessage.value = null
 
-  router.post(`/member/businesses/${props.business.id}/ai-chatbot/settings`, form, {
+  const formData = new FormData()
+  formData.append('provider', form.provider)
+  formData.append('api_key', form.api_key)
+  formData.append('model', form.model)
+  formData.append('embedding_model', form.embedding_model)
+  formData.append('system_prompt', form.system_prompt)
+  formData.append('chatbot_name', form.chatbot_name)
+  formData.append('preset_id', form.preset_id || '')
+  formData.append('personality', form.personality)
+  formData.append('response_length', form.response_length)
+  formData.append('expandable_responses', form.expandable_responses ? '1' : '0')
+  formData.append('show_citations', form.show_citations ? '1' : '0')
+  formData.append('max_conversations_month', form.max_conversations_month)
+  formData.append('max_messages_conversation', form.max_messages_conversation)
+  formData.append('max_tokens_response', form.max_tokens_response)
+  formData.append('widget_color', form.widget_color)
+  formData.append('widget_theme', form.widget_theme)
+  formData.append('is_enabled', form.is_enabled ? '1' : '0')
+  formData.append('allow_reset_chat', form.allow_reset_chat ? '1' : '0')
+  formData.append('url_import_max_chars', form.url_import_max_chars)
+  formData.append('rag_min_similarity', form.rag_min_similarity)
+  formData.append('rag_max_results', form.rag_max_results)
+
+  const ctaSettings = JSON.stringify({
+    enabled: form.cta_enabled,
+    primary_text: form.cta_primary_text,
+    primary_url: form.cta_primary_url,
+    secondary_text: form.cta_secondary_text,
+    secondary_url: form.cta_secondary_url,
+    intent_cta: {
+      appointment: { enabled: form.intent_appointment_enabled, text: form.intent_appointment_text, url: form.intent_appointment_url },
+      purchase: { enabled: form.intent_purchase_enabled, text: form.intent_purchase_text, url: form.intent_purchase_url },
+      contact: { enabled: form.intent_contact_enabled, text: form.intent_contact_text, url: form.intent_contact_url },
+      support: { enabled: form.intent_support_enabled, text: form.intent_support_text, url: form.intent_support_url },
+    },
+  })
+  formData.append('cta_settings', ctaSettings)
+
+  const leadCaptureSettings = JSON.stringify({
+    enabled: form.lead_capture_enabled,
+    title: form.lead_capture_title,
+    description: form.lead_capture_description,
+  })
+  formData.append('lead_capture_settings', leadCaptureSettings)
+
+  if (form.chatbot_avatar_file) {
+    formData.append('chatbot_avatar', form.chatbot_avatar_file)
+  }
+
+  router.post(`/member/businesses/${props.business.id}/ai-chatbot/settings`, formData, {
     preserveScroll: true,
     onSuccess: () => {
       successMessage.value = 'Configuración guardada correctamente.'
       emit('saved')
+      form.chatbot_avatar_preview = ''
+      delete form.chatbot_avatar_file
     },
     onError: (errors) => {
       errorMessage.value = Object.values(errors)[0] || 'Error al guardar.'
@@ -283,6 +756,24 @@ const saveSettings = () => {
       saving.value = false
     },
   })
+}
+
+const onAvatarChange = (event) => {
+  const file = event.target.files[0]
+  if (file) {
+    if (file.size > 1024 * 1024) {
+      alert('La imagen debe ser menor a 1MB')
+      event.target.value = ''
+      return
+    }
+    if (!['image/jpeg', 'image/png'].includes(file.type)) {
+      alert('Solo se permiten archivos JPG o PNG')
+      event.target.value = ''
+      return
+    }
+    form.chatbot_avatar_file = file
+    form.chatbot_avatar_preview = URL.createObjectURL(file)
+  }
 }
 </script>
 

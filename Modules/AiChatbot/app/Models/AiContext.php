@@ -13,6 +13,7 @@ class AiContext extends Model
         'business_id',
         'title',
         'content',
+        'content_for_editing',
         'is_active',
     ];
 

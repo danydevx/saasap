@@ -2,7 +2,8 @@
   <div v-if="isAvailable" class="ai-chat-widget" :class="[widgetTheme, { open: isOpen }]">
     <div v-if="!isOpen" class="chat-bubble" :style="{ backgroundColor: widgetColor }" @click="openChat">
       <div class="bubble-icon">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+        <img v-if="localChatbotAvatar" :src="localChatbotAvatar" alt="Avatar" class="bubble-avatar" />
+        <svg v-else width="28" height="28" viewBox="0 0 24 24" fill="none">
           <path d="M12 2C6.48 2 2 5.58 2 10c0 1.82.62 3.49 1.64 4.83L2 22l4.17-.64A9.93 9.93 0 0012 22c5.52 0 10-3.58 10-8s-4.48-12-10-12z" fill="white"/>
           <circle cx="8" cy="10" r="1.5" :fill="widgetColor"/>
           <circle cx="12" cy="10" r="1.5" :fill="widgetColor"/>
@@ -16,10 +17,11 @@
       <div class="chat-header" :style="{ backgroundColor: widgetColor }">
         <div class="chat-header-info">
           <div class="chat-avatar">
-            <i class="bi bi-robot"></i>
+            <img v-if="chatbotAvatar" :src="chatbotAvatar" alt="Avatar" class="chat-avatar-img" />
+            <i v-else class="bi bi-robot"></i>
           </div>
           <div>
-            <div class="chat-title">Asistente {{ businessName }}</div>
+            <div class="chat-title">{{ localChatbotName }}</div>
             <div class="chat-status">
               <span class="status-dot"></span> En línea
             </div>
@@ -38,7 +40,19 @@
       <div class="chat-messages" ref="messagesContainer">
         <div v-if="messages.length === 0" class="chat-empty">
           <i class="bi bi-chat-dots"></i>
-          <p>¡Hola! Soy el asistente virtual de {{ businessName }}. ¿En qué puedo ayudarte?</p>
+          <p v-if="!localSuggestions.length">¡Hola! Soy {{ localChatbotName }}. ¿En qué puedo ayudarte?</p>
+          <div v-else class="suggestions-container">
+            <p class="suggestions-title">Sugerencias:</p>
+            <button
+              v-for="(suggestion, idx) in localSuggestions"
+              :key="idx"
+              class="suggestion-btn"
+              :style="{ borderColor: widgetColor, color: widgetColor }"
+              @click="useSuggestion(suggestion)"
+            >
+              {{ suggestion }}
+            </button>
+          </div>
         </div>
 
         <div
@@ -47,9 +61,41 @@
           class="chat-message"
           :class="msg.role"
         >
-          <div class="message-content">
-            {{ msg.content }}
+          <div class="message-content" :class="{ expanded: msg.expanded || !msg.isLong }">
+            <template v-if="msg.isLong && localExpandableResponses && !msg.expanded">
+              {{ msg.preview }}
+              <button class="expand-btn" @click="msg.expanded = true">Ver más</button>
+            </template>
+            <template v-else>
+              {{ msg.content }}
+            </template>
           </div>
+
+          <div v-if="localShowCitations && msg.sources && msg.sources.length" class="message-sources">
+            <div class="sources-header" @click="msg.sourcesExpanded = !msg.sourcesExpanded">
+              <i class="bi bi-link-45deg"></i>
+              <span>Fuentes ({{ msg.sources.length }})</span>
+              <i :class="msg.sourcesExpanded ? 'bi bi-chevron-up' : 'bi bi-chevron-down'"></i>
+            </div>
+            <div v-if="msg.sourcesExpanded" class="sources-list">
+              <div v-for="(source, idx) in msg.sources" :key="idx" class="source-item">
+                <span class="source-type">{{ formatSourceType(source.type) }}</span>
+                <span class="source-text">{{ source.text }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div v-if="msg.showCta && msg.showCta.url" class="message-cta">
+            <a
+              :href="msg.showCta.url"
+              target="_blank"
+              class="cta-btn cta-primary"
+              :style="{ backgroundColor: widgetColor }"
+            >
+              {{ msg.showCta.text }}
+            </a>
+          </div>
+
           <div class="message-time" v-if="msg.timestamp">
             {{ formatTime(msg.timestamp) }}
           </div>
@@ -62,6 +108,46 @@
             <span></span>
           </div>
         </div>
+
+        <div v-if="showLeadCapture && !leadCaptureSubmitted" class="lead-capture">
+          <div class="lead-capture-icon">
+            <i class="bi bi-envelope-plus"></i>
+          </div>
+          <div class="lead-capture-content">
+            <p class="lead-capture-title">{{ leadCaptureTitle }}</p>
+            <p class="lead-capture-desc">{{ leadCaptureDescription }}</p>
+            <div class="lead-capture-form">
+              <input
+                type="text"
+                v-model="leadName"
+                placeholder="Tu nombre (opcional)"
+                class="lead-input"
+              />
+              <input
+                type="email"
+                v-model="leadEmail"
+                placeholder="tu@email.com"
+                class="lead-input"
+                @keypress.enter="submitLead"
+              />
+              <button
+                class="lead-submit"
+                :style="{ backgroundColor: widgetColor }"
+                @click="submitLead"
+              >
+                <i class="bi bi-send"></i>
+              </button>
+            </div>
+            <button class="lead-skip" @click="showLeadCapture = false">
+              Nah, mejor no
+            </button>
+          </div>
+        </div>
+
+        <div v-if="leadCaptureSubmitted" class="lead-capture-success">
+          <i class="bi bi-check-circle"></i>
+          <span>¡Gracias! Te mantendremos informado.</span>
+        </div>
       </div>
 
       <div class="chat-input">
@@ -69,10 +155,20 @@
           type="text"
           v-model="inputMessage"
           placeholder="Escribe un mensaje..."
-          :disabled="sending"
+          :disabled="sending && !isStreaming"
           @keypress.enter="sendMessage"
         />
         <button
+          v-if="isStreaming"
+          class="send-btn stop-btn"
+          style="background-color: #dc3545;"
+          @click="stopStreaming"
+          title="Detener respuesta"
+        >
+          <i class="bi bi-stop-fill"></i>
+        </button>
+        <button
+          v-else
           class="send-btn"
           :style="{ backgroundColor: widgetColor }"
           :disabled="!inputMessage.trim() || sending"
@@ -98,6 +194,14 @@ const props = defineProps({
     type: String,
     default: '',
   },
+  chatbotName: {
+    type: String,
+    default: 'Asistente Virtual',
+  },
+  chatbotAvatar: {
+    type: String,
+    default: '',
+  },
   widgetColor: {
     type: String,
     default: '#3B82F6',
@@ -110,6 +214,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  initialSuggestions: {
+    type: Array,
+    default: () => [],
+  },
 })
 
 const isOpen = ref(false)
@@ -120,8 +228,27 @@ const sending = ref(false)
 const isTyping = ref(false)
 const messagesContainer = ref(null)
 const unreadCount = ref(0)
-
 const sessionId = ref(localStorage.getItem(`chat_session_${props.businessSlug}`) || generateSessionId())
+const localChatbotName = ref(props.chatbotName)
+const localChatbotAvatar = ref(props.chatbotAvatar)
+const localSuggestions = ref([])
+const localExpandableResponses = ref(true)
+const localShowCitations = ref(true)
+const localCtaEnabled = ref(false)
+const localCtaPrimaryText = ref('')
+const localCtaPrimaryUrl = ref('')
+const localCtaSecondaryText = ref('')
+const localCtaSecondaryUrl = ref('')
+const localIntentCta = ref(null)
+const isStreaming = ref(false)
+let abortController = null
+const leadCaptureEnabled = ref(false)
+const leadCaptureTitle = ref('')
+const leadCaptureDescription = ref('')
+const showLeadCapture = ref(false)
+const leadCaptureSubmitted = ref(false)
+const leadEmail = ref('')
+const leadName = ref('')
 
 function generateSessionId() {
   const id = 'chat_' + Math.random().toString(36).substring(2) + Date.now().toString(36)
@@ -181,50 +308,160 @@ const sendMessage = () => {
 
   sending.value = true
   isTyping.value = true
+  isStreaming.value = false
 
-  fetch(`/m/${props.businessSlug}/ai-chatbot/chat`, {
+  const msgIndex = messages.value.length
+  messages.value.push({
+    role: 'assistant',
+    content: '',
+    preview: '',
+    isLong: false,
+    expanded: false,
+    sources: [],
+    sourcesExpanded: false,
+    showCta: false,
+    timestamp: new Date().toISOString(),
+  })
+
+  abortController = new AbortController()
+
+  fetch(`/m/${props.businessSlug}/ai-chatbot/stream-chat`, {
     method: 'POST',
+    signal: abortController.signal,
     headers: {
       'Content-Type': 'application/json',
       'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content,
+      'Accept': 'text/event-stream',
     },
     body: JSON.stringify({
       message: userMessage,
       session_id: sessionId.value,
     }),
   })
-    .then((res) => res.json())
-    .then((data) => {
-      isTyping.value = false
-      sending.value = false
+    .then(async (res) => {
+      isStreaming.value = true
+      const reader = res.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ''
 
-      if (data.success && data.message) {
-        messages.value.push({
-          role: 'assistant',
-          content: data.message,
-          timestamp: new Date().toISOString(),
-        })
-      } else {
-        messages.value.push({
-          role: 'assistant',
-          content: data.message || 'Disculpa, estoy teniendo problemas para responder.',
-          timestamp: new Date().toISOString(),
-        })
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split('\n')
+        buffer = lines.pop() || ''
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.slice(6))
+              if (data.type === 'token') {
+                messages.value[msgIndex].content += data.content
+                scrollToBottom()
+              } else if (data.type === 'done') {
+                messages.value[msgIndex].content = data.content
+                messages.value[msgIndex].preview = data.content.substring(0, 300)
+                messages.value[msgIndex].isLong = data.content.length > 300
+                messages.value[msgIndex].sources = data.sources || []
+                messages.value[msgIndex].expanded = !data.expandable_responses
+                messages.value[msgIndex].showCta = shouldShowCta(data.content)
+                saveMessages()
+              } else if (data.type === 'error') {
+                messages.value[msgIndex].content = 'Error: ' + data.error
+              } else if (data.success === false) {
+                messages.value[msgIndex].content = data.message || data.error || 'Disculpa, estoy teniendo problemas para responder.'
+              }
+            } catch (e) {
+              // Ignore parse errors for incomplete JSON
+            }
+          }
+        }
       }
-      saveMessages()
-      scrollToBottom()
     })
     .catch((err) => {
+      if (err.name === 'AbortError') {
+        messages.value[msgIndex].content += '\n[Respuesta detenida]'
+      } else {
+        messages.value[msgIndex].content = 'Disculpa, estoy teniendo problemas para responder. Intenta de nuevo.'
+      }
       isTyping.value = false
       sending.value = false
-      messages.value.push({
-        role: 'assistant',
-        content: 'Disculpa, estoy teniendo problemas para responder. Intenta de nuevo.',
-        timestamp: new Date().toISOString(),
-      })
+      isStreaming.value = false
+      saveMessages()
+    })
+    .finally(() => {
+      isTyping.value = false
+      sending.value = false
+      isStreaming.value = false
+      abortController = null
       saveMessages()
       scrollToBottom()
     })
+}
+
+const stopStreaming = () => {
+  if (abortController) {
+    abortController.abort()
+    isStreaming.value = false
+  }
+}
+
+const submitLead = () => {
+  if (!leadEmail.value.trim() || !leadEmail.value.includes('@')) {
+    return
+  }
+  fetch(`/m/${props.businessSlug}/ai-chatbot/capture-lead`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content,
+    },
+    body: JSON.stringify({
+      email: leadEmail.value,
+      name: leadName.value,
+      session_id: sessionId.value,
+    }),
+  })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        leadCaptureSubmitted.value = true
+        showLeadCapture.value = false
+      }
+    })
+    .catch(() => {})
+}
+
+const checkLeadCaptureTrigger = () => {
+  if (!leadCaptureEnabled.value || leadCaptureSubmitted.value || showLeadCapture.value) return
+  const userMessages = messages.value.filter(m => m.role === 'user').length
+  if (userMessages >= 3) {
+    showLeadCapture.value = true
+  }
+}
+
+const useSuggestion = (suggestion) => {
+  inputMessage.value = suggestion
+  sendMessage()
+}
+
+const formatSourceType = (type) => {
+  const types = {
+    product: 'Producto',
+    service: 'Servicio',
+    promotion: 'Promocion',
+    faq: 'FAQ',
+    location: 'Ubicacion',
+    about: 'Acerca de',
+    custom: 'Personalizado',
+    restaurant_category: 'Categoria',
+    restaurant_product: 'Producto',
+    social_network: 'Red Social',
+    appointment: 'Cita',
+    appointment_exception: 'Excepcion de Cita',
+  }
+  return types[type] || type
 }
 
 const scrollToBottom = () => {
@@ -240,11 +477,80 @@ const formatTime = (timestamp) => {
   return date.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })
 }
 
+const shouldShowCta = (content) => {
+  if (!localCtaEnabled.value) return null
+
+  const intentMap = [
+    { intent: 'appointment', keywords: ['reserva', 'agendar', 'cita', 'turno', 'horario', 'disponible', 'agenda'] },
+    { intent: 'purchase', keywords: ['precio', 'cost', 'comprar', 'venta', 'producto', 'cuanto cuesta', 'cuánto vale'] },
+    { intent: 'contact', keywords: ['contacto', 'telefono', 'email', 'correo', 'hablar', 'comunicar'] },
+    { intent: 'support', keywords: ['ayuda', 'soporte', 'problema', 'error', 'no funciona', 'ayudame'] },
+  ]
+
+  const lowerContent = content.toLowerCase()
+
+  if (localIntentCta.value) {
+    for (const item of intentMap) {
+      if (item.keywords.some(kw => lowerContent.includes(kw))) {
+        const intentConfig = localIntentCta.value[item.intent]
+        if (intentConfig && intentConfig.enabled && intentConfig.url) {
+          return intentConfig
+        }
+      }
+    }
+  }
+
+  if (localCtaPrimaryText.value) {
+    const hasGeneralKeywords = ['precio', 'cost', 'promocion', 'descuento', 'oferta', 'reserva', 'agendar', 'cita', 'turno', 'horario', 'producto', 'comprar', 'venta', 'contacto', 'ayuda', 'soporte', 'informacion'].some(kw => lowerContent.includes(kw))
+    if (hasGeneralKeywords) {
+      return { text: localCtaPrimaryText.value, url: localCtaPrimaryUrl.value }
+    }
+  }
+
+  return null
+}
+
+const openUrl = (url) => {
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    window.open(url, '_blank')
+  } else {
+    window.location.href = url
+  }
+}
+
 const checkAvailability = () => {
   fetch(`/m/${props.businessSlug}/ai-chatbot/settings`)
     .then((res) => res.json())
     .then((data) => {
       isAvailable.value = data.available === true
+      if (data.chatbot_name) {
+        localChatbotName.value = data.chatbot_name
+      }
+      if (data.chatbot_avatar) {
+        localChatbotAvatar.value = data.chatbot_avatar
+      }
+      if (data.initial_suggestions) {
+        localSuggestions.value = data.initial_suggestions
+      }
+      if (data.expandable_responses !== undefined) {
+        localExpandableResponses.value = data.expandable_responses
+      }
+      if (data.show_citations !== undefined) {
+        localShowCitations.value = data.show_citations
+      }
+      if (data.cta_settings) {
+        localCtaEnabled.value = data.cta_settings.enabled || false
+        localCtaPrimaryText.value = data.cta_settings.primary_text || ''
+        localCtaPrimaryUrl.value = data.cta_settings.primary_url || ''
+        localCtaSecondaryText.value = data.cta_settings.secondary_text || ''
+        localCtaSecondaryUrl.value = data.cta_settings.secondary_url || ''
+        localIntentCta.value = data.cta_settings.intent_cta || null
+      }
+      if (data.lead_capture && data.lead_capture.enabled) {
+        leadCaptureEnabled.value = true
+        leadCaptureTitle.value = data.lead_capture.title || '¿Te gustaría recibir noticias sobre nosotros?'
+        leadCaptureDescription.value = data.lead_capture.description || 'Déjanos tu correo y te mantendremos informado.'
+      }
     })
     .catch(() => {
       isAvailable.value = false
@@ -254,6 +560,12 @@ const checkAvailability = () => {
 watch(isOpen, (open) => {
   if (open) {
     loadHistory()
+  }
+})
+
+watch(() => messages.value.length, () => {
+  if (isOpen.value) {
+    checkLeadCaptureTrigger()
   }
 })
 
@@ -292,6 +604,13 @@ onMounted(() => {
     display: flex;
     align-items: center;
     justify-content: center;
+  }
+
+  .bubble-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    object-fit: cover;
   }
 
   .bubble-badge {
@@ -362,6 +681,13 @@ onMounted(() => {
     align-items: center;
     justify-content: center;
     font-size: 1.5rem;
+    overflow: hidden;
+  }
+
+  .chat-avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
   }
 
   .chat-title {
@@ -463,6 +789,31 @@ onMounted(() => {
       margin: 0;
       line-height: 1.5;
     }
+
+    .suggestions-container {
+      margin-top: 16px;
+
+      .suggestions-title {
+        font-size: 0.8rem;
+        margin-bottom: 10px;
+        color: #6c757d;
+      }
+
+      .suggestion-btn {
+        background: transparent;
+        border: 1px solid;
+        border-radius: 20px;
+        padding: 8px 16px;
+        margin: 4px;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: all 0.2s;
+
+        &:hover {
+          background: rgba(59, 130, 246, 0.1);
+        }
+      }
+    }
   }
 }
 
@@ -498,6 +849,8 @@ onMounted(() => {
     font-size: 0.9rem;
     line-height: 1.5;
     word-wrap: break-word;
+    white-space: pre-wrap;
+    word-break: break-word;
 
     &.typing {
       display: flex;
@@ -520,6 +873,20 @@ onMounted(() => {
         }
       }
     }
+
+    .expand-btn {
+      background: none;
+      border: none;
+      color: #0d6efd;
+      font-size: 0.85rem;
+      cursor: pointer;
+      padding: 4px 0;
+      margin-top: 4px;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
   }
 
   .message-time {
@@ -527,6 +894,178 @@ onMounted(() => {
     color: #adb5bd;
     margin-top: 4px;
     padding: 0 4px;
+  }
+
+  .message-sources {
+    margin-top: 8px;
+    max-width: 80%;
+    background: rgba(0, 0, 0, 0.03);
+    border-radius: 8px;
+    overflow: hidden;
+    font-size: 0.75rem;
+
+    .sources-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      cursor: pointer;
+      color: #6c757d;
+      background: rgba(0, 0, 0, 0.02);
+
+      &:hover {
+        background: rgba(0, 0, 0, 0.05);
+      }
+    }
+
+    .sources-list {
+      padding: 8px 12px;
+      border-top: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .source-item {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 6px;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+
+      .source-type {
+        background: #e9ecef;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-weight: 500;
+        flex-shrink: 0;
+      }
+
+      .source-text {
+        color: #6c757d;
+        line-height: 1.4;
+        word-break: break-word;
+      }
+    }
+  }
+
+  .message-cta {
+    margin-top: 10px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+
+    .cta-btn {
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      text-decoration: none;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.2s;
+      border: 2px solid transparent;
+
+      &:hover {
+        opacity: 0.9;
+        transform: translateY(-1px);
+      }
+    }
+
+    .cta-primary {
+      color: #fff;
+    }
+
+    .cta-secondary {
+      background: transparent;
+
+      &:hover {
+        background: rgba(0, 0, 0, 0.03);
+      }
+    }
+  }
+
+  .lead-capture {
+    margin: 12px 16px;
+    padding: 16px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 12px;
+    text-align: center;
+
+    .lead-capture-icon {
+      font-size: 2rem;
+      color: #0d6efd;
+      margin-bottom: 8px;
+    }
+
+    .lead-capture-title {
+      font-weight: 600;
+      font-size: 0.95rem;
+      margin-bottom: 4px;
+      color: #212529;
+    }
+
+    .lead-capture-desc {
+      font-size: 0.8rem;
+      color: #6c757d;
+      margin-bottom: 12px;
+    }
+
+    .lead-capture-form {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 8px;
+
+      .lead-input {
+        flex: 1;
+        padding: 8px 12px;
+        border: 1px solid #dee2e6;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        outline: none;
+
+        &:focus {
+          border-color: #0d6efd;
+        }
+      }
+
+      .lead-submit {
+        width: 36px;
+        height: 36px;
+        border: none;
+        border-radius: 50%;
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+      }
+    }
+
+    .lead-skip {
+      background: none;
+      border: none;
+      font-size: 0.75rem;
+      color: #6c757d;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+  }
+
+  .lead-capture-success {
+    margin: 12px 16px;
+    padding: 12px;
+    background: #d4edda;
+    border-radius: 8px;
+    text-align: center;
+    color: #155724;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+
+    i {
+      font-size: 1.2rem;
+    }
   }
 }
 

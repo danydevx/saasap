@@ -124,6 +124,8 @@
       v-if="aiChatbot && aiChatbot.is_enabled"
       :businessSlug="business.slug"
       :businessName="business.name"
+      :chatbotName="aiChatbot.chatbot_name || 'Asistente Virtual'"
+      :chatbotAvatar="aiChatbot.chatbot_avatar || ''"
       :widgetColor="aiChatbot.widget_color || '#3B82F6'"
       :widgetTheme="aiChatbot.widget_theme || 'light'"
       :allowReset="aiChatbot.allow_reset_chat"

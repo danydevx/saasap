@@ -9,7 +9,13 @@ export default defineConfig({
             input: ['resources/less/admin.less', 'resources/less/minisite.less', 'resources/less/directory.less', 'resources/js/app.js', 'resources/js/minisite.js', 'resources/js/booking-widget.js'],
             refresh: true,
         }),
-        vue(),
+        vue({
+            template: {
+                compilerOptions: {
+                    isCustomElement: (tag) => tag.startsWith('trix-')
+                }
+            }
+        }),
     ],
     css: {
         preprocessorOptions: {

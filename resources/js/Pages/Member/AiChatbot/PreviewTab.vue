@@ -381,6 +381,8 @@ const scrollToBottom = () => {
       padding: 10px 14px;
       font-size: 0.9rem;
       line-height: 1.4;
+      white-space: pre-wrap;
+      word-break: break-word;
     }
   }
 

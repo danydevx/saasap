@@ -1,6 +1,8 @@
 <?php
 
 use Modules\AiChatbot\Http\Controllers\Member\AiChatbotController;
+use Modules\AiChatbot\Http\Controllers\Member\ConversationHistoryController;
+use Modules\AiChatbot\Http\Controllers\Member\ChatbotAnalyticsController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'verified', 'active', 'role:member'])
@@ -13,4 +15,18 @@ Route::middleware(['auth', 'verified', 'active', 'role:member'])
         Route::put('/contexts/{contextId}', [AiChatbotController::class, 'updateContext'])->name('contexts.update');
         Route::delete('/contexts/{contextId}', [AiChatbotController::class, 'destroyContext'])->name('contexts.destroy');
         Route::post('/reindex', [AiChatbotController::class, 'reindex'])->name('reindex');
+        Route::post('/extract-url', [AiChatbotController::class, 'extractUrl'])->name('extract-url');
+        Route::get('/history', [ConversationHistoryController::class, 'index'])->name('history');
+        Route::get('/history/{sessionId}', [ConversationHistoryController::class, 'show'])->name('history.show');
+        Route::get('/analytics', [ChatbotAnalyticsController::class, 'index'])->name('analytics');
+        Route::get('/analytics-json', [ChatbotAnalyticsController::class, 'indexJson'])->name('analytics-json');
+    });
+
+Route::middleware(['auth', 'verified', 'active', 'role:member'])
+    ->prefix('member/businesses/{business}/ai-chatbot')
+    ->name('member.business.ai-chatbot.')
+    ->group(function () {
+        Route::get('/history-json', [ConversationHistoryController::class, 'indexJson'])->name('history-json');
+        Route::get('/history-json/{sessionId}', [ConversationHistoryController::class, 'showJson'])->name('history-json.show');
+        Route::get('/embeddings-json', [ConversationHistoryController::class, 'embeddingsJson'])->name('embeddings-json');
     });

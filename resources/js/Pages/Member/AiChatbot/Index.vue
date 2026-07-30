@@ -55,6 +55,24 @@
             <i class="bi bi-chat-left-dots me-2"></i>Vista Previa
           </button>
         </li>
+        <li class="nav-item" role="presentation">
+          <button
+            class="nav-link"
+            :class="{ active: activeTab === 'history' }"
+            @click="activeTab = 'history'"
+          >
+            <i class="bi bi-clock-history me-2"></i>Historial
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button
+            class="nav-link"
+            :class="{ active: activeTab === 'analytics' }"
+            @click="goToAnalytics"
+          >
+            <i class="bi bi-graph-up me-2"></i>Analytics
+          </button>
+        </li>
       </ul>
 
       <div class="tab-content">
@@ -62,6 +80,7 @@
           <ConfigTab
             :business="business"
             :settings="settings"
+            :presets="presets"
             @saved="onSettingsSaved"
           />
         </div>
@@ -90,13 +109,31 @@
             :settings="settings"
           />
         </div>
+
+        <div class="tab-pane fade" :class="{ 'show active': activeTab === 'history' }">
+          <HistoryTab :business="business" />
+        </div>
+
+        <div class="tab-pane fade" :class="{ 'show active': activeTab === 'analytics' }">
+          <AnalyticsTab
+            :business="business"
+            :totals="analyticsData.totals"
+            :daily-stats="analyticsData.dailyStats"
+            :top-questions="analyticsData.topQuestions"
+            :geo-stats="analyticsData.geoStats"
+            :device-stats="analyticsData.deviceStats"
+            :daily-conversations="analyticsData.dailyConversations"
+            :period="analyticsData.period"
+            @period-change="onPeriodChange"
+          />
+        </div>
       </div>
     </div>
   </MemberLayout>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { Head, router, usePage } from '@inertiajs/vue3'
 import MemberLayout from '@/Layouts/MemberLayout.vue'
 import PageHeader from '@/Components/Admin/PageHeader.vue'
@@ -104,15 +141,28 @@ import ConfigTab from './ConfigTab.vue'
 import ContextsTab from './ContextsTab.vue'
 import ReindexTab from './ReindexTab.vue'
 import PreviewTab from './PreviewTab.vue'
+import HistoryTab from './HistoryTab.vue'
+import AnalyticsTab from './AnalyticsTab.vue'
 
 const page = usePage()
 const business = computed(() => page.props.business)
 const businessMenu = computed(() => page.props.businessMenu || [])
 const settings = computed(() => page.props.settings)
+const presets = computed(() => page.props.presets || [])
 const contexts = computed(() => page.props.contexts || [])
 const embeddingCounts = computed(() => page.props.embeddingCounts || {})
 
 const activeTab = ref('config')
+
+const analyticsData = ref({
+  totals: { total_conversations: 0, total_messages: 0, total_tokens: 0, total_errors: 0 },
+  dailyStats: [],
+  topQuestions: [],
+  geoStats: [],
+  deviceStats: [],
+  dailyConversations: [],
+  period: '30days',
+})
 
 const breadcrumbs = computed(() => {
   const path = window.location.pathname
@@ -144,6 +194,30 @@ const onReindex = () => {
 
 const refreshPage = () => {
   router.reload({ preserveScroll: true })
+}
+
+const loadAnalyticsData = (period = '30days') => {
+  fetch(`/member/businesses/${business.value.id}/ai-chatbot/analytics-json?period=${period}`, {
+    headers: {
+      'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content,
+    },
+  })
+    .then(res => res.json())
+    .then(data => {
+      analyticsData.value = data
+    })
+    .catch(err => {
+      console.error('Error loading analytics:', err)
+    })
+}
+
+const goToAnalytics = () => {
+  activeTab.value = 'analytics'
+  loadAnalyticsData()
+}
+
+const onPeriodChange = (newPeriod) => {
+  loadAnalyticsData(newPeriod)
 }
 </script>
 

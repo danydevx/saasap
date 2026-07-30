@@ -137,6 +137,20 @@
               </div>
             </div>
 
+            <div class="col-12 col-md-4">
+              <div class="mb-3">
+                <label class="form-label">Límite import. URL (caracteres)</label>
+                <input
+                  type="number"
+                  v-model.number="form.url_import_max_chars"
+                  class="form-control"
+                  min="100"
+                  max="50000"
+                />
+                <small class="text-muted">Máximo de caracteres al importar contenido desde URLs</small>
+              </div>
+            </div>
+
             <div class="col-12">
               <div class="form-check form-switch mb-3">
                 <input
@@ -262,6 +276,7 @@ const defaultForm = {
   max_conversations_month: 500,
   max_messages_conversation: 50,
   max_tokens_response: 500,
+  url_import_max_chars: 5000,
   widget_color: '#3B82F6',
   is_enabled: false,
 }
@@ -280,6 +295,7 @@ watch(
       form.max_conversations_month = newSettings.max_conversations_month || 500
       form.max_messages_conversation = newSettings.max_messages_conversation || 50
       form.max_tokens_response = newSettings.max_tokens_response || 500
+      form.url_import_max_chars = newSettings.url_import_max_chars || 5000
       form.widget_color = newSettings.widget_color || '#3B82F6'
       form.is_enabled = newSettings.is_enabled || false
     }
