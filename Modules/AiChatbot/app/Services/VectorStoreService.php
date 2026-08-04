@@ -105,6 +105,77 @@ class VectorStoreService
         return array_slice($results, 0, $limit);
     }
 
+    public function searchSimilarInContexts(string $query, array $contextIds, int $limit = 5, float $minSimilarity = 0.5): array
+    {
+        if (empty($contextIds)) {
+            return [];
+        }
+
+        try {
+            $queryEmbedding = $this->embeddingService->embed($query);
+        } catch (\Exception $e) {
+            Log::error('VectorStore searchInContexts embedding error', [
+                'business_id' => $this->settings->business_id,
+                'context_ids' => $contextIds,
+                'error' => $e->getMessage(),
+            ]);
+            return [];
+        }
+
+        $results = [];
+        $processed = 0;
+
+        AiEmbedding::where('business_id', $this->settings->business_id)
+            ->where(function ($q) use ($contextIds) {
+                foreach ($contextIds as $contextId) {
+                    $parts = explode('_', $contextId);
+                    if (count($parts) >= 2) {
+                        $sourceType = $parts[0];
+                        $sourceId = implode('_', array_slice($parts, 1));
+                        $q->orWhere(function ($subQ) use ($sourceType, $sourceId) {
+                            $subQ->where('source_type', $sourceType)
+                                 ->where('source_id', $sourceId);
+                        });
+                    } else {
+                        $q->orWhere(function ($subQ) use ($contextId) {
+                            $subQ->where('source_type', 'custom')
+                                 ->where('source_id', $contextId);
+                        });
+                    }
+                }
+            })
+            ->select(['id', 'source_type', 'source_id', 'chunk_text', 'embedding'])
+            ->chunk(self::CHUNK_SIZE, function ($embeddings) use ($queryEmbedding, $minSimilarity, &$results, &$processed) {
+                foreach ($embeddings as $embedding) {
+                    $processed++;
+                    if ($processed > self::MAX_PROCESS) {
+                        return false;
+                    }
+
+                    $storedEmbedding = $embedding->getEmbeddingArray();
+                    if (empty($storedEmbedding)) {
+                        continue;
+                    }
+
+                    $similarity = $this->embeddingService->cosineSimilarity($queryEmbedding, $storedEmbedding);
+
+                    if ($similarity >= $minSimilarity) {
+                        $results[] = [
+                            'source_type' => $embedding->source_type,
+                            'source_id' => $embedding->source_id,
+                            'chunk_text' => $embedding->chunk_text,
+                            'similarity' => round($similarity, 4),
+                        ];
+                    }
+                }
+                return true;
+            });
+
+        usort($results, fn($a, $b) => $b['similarity'] <=> $a['similarity']);
+
+        return array_slice($results, 0, $limit);
+    }
+
     public function reindexBusiness(): array
     {
         $businessId = $this->settings->business_id;
@@ -366,7 +437,7 @@ class VectorStoreService
 
             $baseText = implode('. ', array_filter([
                 $service->name,
-                $service->duration ? "Duración: {$service->duration} minutos" : null,
+                $service->duration_minutes ? "Duración: {$service->duration_minutes} minutos" : null,
                 $service->price ? "Precio: {$service->price}" : null,
             ]));
 

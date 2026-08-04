@@ -177,8 +177,25 @@ class ChatController extends Controller
         }
 
         $initialSuggestions = [];
-        if ($settings->preset_id && $settings->preset) {
-            $initialSuggestions = $settings->preset->initial_suggestions ?? [];
+        $allPresets = $settings->getAllActivePresets();
+        if ($allPresets->isNotEmpty()) {
+            $mainSuggestions = $allPresets->first()->initial_suggestions ?? [];
+            if (is_string($mainSuggestions)) {
+                $mainSuggestions = json_decode($mainSuggestions, true) ?? [];
+            }
+            $initialSuggestions = is_array($mainSuggestions) ? $mainSuggestions : [];
+
+            if ($allPresets->count() > 1) {
+                foreach ($allPresets->skip(1) as $preset) {
+                    $additional = $preset->initial_suggestions ?? [];
+                    if (is_string($additional)) {
+                        $additional = json_decode($additional, true) ?? [];
+                    }
+                    if (is_array($additional)) {
+                        $initialSuggestions = array_merge($initialSuggestions, $additional);
+                    }
+                }
+            }
         }
 
         return response()->json([
@@ -197,7 +214,7 @@ class ChatController extends Controller
                 'primary_url' => $settings->cta_primary_url,
                 'secondary_text' => $settings->cta_secondary_text,
                 'secondary_url' => $settings->cta_secondary_url,
-                'intent_cta' => $settings->intent_cta ? json_decode($settings->intent_cta, true) : null,
+                'intent_cta' => $settings->intent_cta,
             ] : null,
             'lead_capture' => $settings->lead_capture_enabled ? [
                 'enabled' => true,

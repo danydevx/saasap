@@ -234,11 +234,6 @@ const localChatbotAvatar = ref(props.chatbotAvatar)
 const localSuggestions = ref([])
 const localExpandableResponses = ref(true)
 const localShowCitations = ref(true)
-const localCtaEnabled = ref(false)
-const localCtaPrimaryText = ref('')
-const localCtaPrimaryUrl = ref('')
-const localCtaSecondaryText = ref('')
-const localCtaSecondaryUrl = ref('')
 const localIntentCta = ref(null)
 const isStreaming = ref(false)
 let abortController = null
@@ -365,7 +360,14 @@ const sendMessage = () => {
                 messages.value[msgIndex].isLong = data.content.length > 300
                 messages.value[msgIndex].sources = data.sources || []
                 messages.value[msgIndex].expanded = !data.expandable_responses
-                messages.value[msgIndex].showCta = shouldShowCta(data.content)
+
+                if (data.cta_settings) {
+                  if (data.cta_settings.intent_cta) {
+                    localIntentCta.value = data.cta_settings.intent_cta
+                  }
+                }
+
+                messages.value[msgIndex].showCta = shouldShowCta(data.content, data.intent_cta)
                 saveMessages()
               } else if (data.type === 'error') {
                 messages.value[msgIndex].content = 'Error: ' + data.error
@@ -477,8 +479,12 @@ const formatTime = (timestamp) => {
   return date.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })
 }
 
-const shouldShowCta = (content) => {
-  if (!localCtaEnabled.value) return null
+const shouldShowCta = (content, serverIntentCta) => {
+  const intentCta = serverIntentCta || localIntentCta.value
+
+  if (!intentCta || typeof intentCta !== 'object') {
+    return null
+  }
 
   const intentMap = [
     { intent: 'appointment', keywords: ['reserva', 'agendar', 'cita', 'turno', 'horario', 'disponible', 'agenda'] },
@@ -489,21 +495,12 @@ const shouldShowCta = (content) => {
 
   const lowerContent = content.toLowerCase()
 
-  if (localIntentCta.value) {
-    for (const item of intentMap) {
-      if (item.keywords.some(kw => lowerContent.includes(kw))) {
-        const intentConfig = localIntentCta.value[item.intent]
-        if (intentConfig && intentConfig.enabled && intentConfig.url) {
-          return intentConfig
-        }
+  for (const item of intentMap) {
+    if (item.keywords.some(kw => lowerContent.includes(kw))) {
+      const intentConfig = intentCta[item.intent]
+      if (intentConfig && typeof intentConfig === 'object' && intentConfig.enabled && intentConfig.url) {
+        return intentConfig
       }
-    }
-  }
-
-  if (localCtaPrimaryText.value) {
-    const hasGeneralKeywords = ['precio', 'cost', 'promocion', 'descuento', 'oferta', 'reserva', 'agendar', 'cita', 'turno', 'horario', 'producto', 'comprar', 'venta', 'contacto', 'ayuda', 'soporte', 'informacion'].some(kw => lowerContent.includes(kw))
-    if (hasGeneralKeywords) {
-      return { text: localCtaPrimaryText.value, url: localCtaPrimaryUrl.value }
     }
   }
 
@@ -529,8 +526,10 @@ const checkAvailability = () => {
       if (data.chatbot_avatar) {
         localChatbotAvatar.value = data.chatbot_avatar
       }
-      if (data.initial_suggestions) {
+      if (data.initial_suggestions && Array.isArray(data.initial_suggestions)) {
         localSuggestions.value = data.initial_suggestions
+      } else {
+        localSuggestions.value = []
       }
       if (data.expandable_responses !== undefined) {
         localExpandableResponses.value = data.expandable_responses
@@ -539,12 +538,12 @@ const checkAvailability = () => {
         localShowCitations.value = data.show_citations
       }
       if (data.cta_settings) {
-        localCtaEnabled.value = data.cta_settings.enabled || false
-        localCtaPrimaryText.value = data.cta_settings.primary_text || ''
-        localCtaPrimaryUrl.value = data.cta_settings.primary_url || ''
-        localCtaSecondaryText.value = data.cta_settings.secondary_text || ''
-        localCtaSecondaryUrl.value = data.cta_settings.secondary_url || ''
-        localIntentCta.value = data.cta_settings.intent_cta || null
+        if (data.cta_settings.intent_cta && typeof data.cta_settings.intent_cta === 'object') {
+          localIntentCta.value = data.cta_settings.intent_cta
+        }
+      }
+      if (data.intent_cta && typeof data.intent_cta === 'object') {
+        localIntentCta.value = data.intent_cta
       }
       if (data.lead_capture && data.lead_capture.enabled) {
         leadCaptureEnabled.value = true

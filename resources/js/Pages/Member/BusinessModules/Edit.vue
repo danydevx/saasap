@@ -147,6 +147,7 @@ const moduleIcons = {
   seo: 'bi bi-graph-up',
   branding: 'bi bi-palette',
   clients: 'bi bi-people',
+  properties: 'bi bi-building',
 }
 
 const moduleUrls = {
@@ -170,6 +171,7 @@ const moduleUrls = {
   seo: 'seo',
   branding: 'branding',
   clients: 'clients',
+  properties: 'properties',
 }
 
 const getModuleIcon = (key) => moduleIcons[key] || 'bi bi-box'

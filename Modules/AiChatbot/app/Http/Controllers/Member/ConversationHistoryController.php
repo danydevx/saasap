@@ -164,8 +164,19 @@ class ConversationHistoryController extends Controller
 
         $type = $request->get('type');
 
-        $embeddings = \Modules\AiChatbot\Models\AiEmbedding::where('business_id', $business->id)
-            ->when($type, fn($q) => $q->where('source_type', $type))
+        $query = \Modules\AiChatbot\Models\AiEmbedding::where('business_id', $business->id);
+
+        if ($type) {
+            if ($type === 'restaurant_menu') {
+                $query->whereIn('source_type', ['restaurant_category', 'restaurant_product']);
+            } elseif ($type === 'appointments') {
+                $query->whereIn('source_type', ['appointment', 'appointment_exception']);
+            } else {
+                $query->where('source_type', $type);
+            }
+        }
+
+        $embeddings = $query
             ->orderBy('source_type')
             ->orderBy('id')
             ->limit(200)

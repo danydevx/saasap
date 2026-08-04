@@ -11,6 +11,9 @@ class AiChatbotDatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // $this->call([]);
+        $this->call([
+            PersonalitySeeder::class,
+            PresetSeeder::class,
+        ]);
     }
 }

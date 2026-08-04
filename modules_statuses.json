@@ -21,5 +21,6 @@
     "Branding": true,
     "Tasks": true,
     "Clients": true,
-    "Minisite": true
+    "Minisite": true,
+    "Properties": true
 }

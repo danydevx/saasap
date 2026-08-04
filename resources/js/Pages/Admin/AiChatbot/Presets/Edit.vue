@@ -8,7 +8,7 @@
           <h1 class="h4 mb-0">Editar Preset de Chatbot</h1>
           <small class="text-muted" v-if="preset">{{ preset.name }}</small>
         </div>
-        <Link href="/admin/chatbot-presets" class="btn btn-outline-secondary">
+        <Link href="/admin/modules/ai_chatbot/presets" class="btn btn-outline-secondary">
           <i class="bi bi-arrow-left me-1"></i>Volver
         </Link>
       </div>
@@ -69,8 +69,8 @@
                 <div class="mb-3">
                   <label class="form-label">Personalidad *</label>
                   <select v-model="form.personality" class="form-select" required>
-                    <option v-for="p in personalities" :key="p" :value="p">
-                      {{ p }}
+                    <option v-for="p in personalities" :key="p.key" :value="p.key">
+                      {{ p.display_name }}
                     </option>
                   </select>
                 </div>
@@ -226,7 +226,7 @@
             </button>
 
             <button
-              v-if="!preset.is_system"
+              v-if="preset && !preset.is_system"
               type="button"
               class="btn btn-outline-danger w-100 mt-2"
               :disabled="deleting"
@@ -243,7 +243,7 @@
 </template>
 
 <script setup>
-import { computed, reactive, ref } from 'vue'
+import { computed, reactive, ref, watchEffect } from 'vue'
 import { Head, Link, router, usePage } from '@inertiajs/vue3'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 
@@ -296,14 +296,28 @@ const initializeForm = () => {
       ...form.configuration,
       ...(preset.value.configuration || {}),
     }
-    form.initial_suggestions = preset.value.initial_suggestions?.length
-      ? [...preset.value.initial_suggestions]
-      : ['', '', '']
+    const suggestions = preset.value.initial_suggestions
+    if (Array.isArray(suggestions)) {
+      form.initial_suggestions = suggestions.filter(s => typeof s === 'string')
+    } else if (typeof suggestions === 'string') {
+      try {
+        const parsed = JSON.parse(suggestions)
+        form.initial_suggestions = Array.isArray(parsed) ? parsed.filter(s => typeof s === 'string') : ['', '', '']
+      } catch {
+        form.initial_suggestions = ['', '', '']
+      }
+    } else {
+      form.initial_suggestions = ['', '', '']
+    }
     form.is_active = preset.value.is_active ?? true
   }
 }
 
-initializeForm()
+watchEffect(() => {
+  if (preset.value) {
+    initializeForm()
+  }
+})
 
 const addSuggestion = () => {
   form.initial_suggestions.push('')
@@ -321,7 +335,7 @@ const submit = () => {
     initial_suggestions: form.initial_suggestions.filter(s => s.trim() !== ''),
   }
 
-  router.put(`/admin/chatbot-presets/${preset.value.id}`, data, {
+  router.put(`/admin/modules/ai_chatbot/presets/${preset.value.id}`, data, {
     onFinish: () => {
       saving.value = false
     },
@@ -331,7 +345,7 @@ const submit = () => {
 const deletePreset = () => {
   if (confirm('Estas seguro de eliminar este preset?')) {
     deleting.value = true
-    router.delete(`/admin/chatbot-presets/${preset.value.id}`, {
+    router.delete(`/admin/modules/ai_chatbot/presets/${preset.value.id}`, {
       onFinish: () => {
         deleting.value = false
       },

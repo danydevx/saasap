@@ -86,7 +86,7 @@ class ReindexOnContentChange
         return implode('. ', array_filter([
             $service->name,
             $service->description,
-            $service->duration ? "Duración: {$service->duration} minutos" : null,
+            $service->duration_minutes ? "Duración: {$service->duration_minutes} minutos" : null,
             $service->price ? "Precio: {$service->price}" : null,
         ]));
     }

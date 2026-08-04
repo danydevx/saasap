@@ -233,6 +233,11 @@ public function galleryImages(): HasMany
         return $this->hasMany(\Modules\Clients\Models\BusinessClient::class);
     }
 
+    public function properties(): HasMany
+    {
+        return $this->hasMany(\Modules\Properties\Models\Property::class);
+    }
+
     public function getEnabledModules(): array
     {
         return $this->modules()->where('is_enabled', true)->pluck('module_key')->toArray();

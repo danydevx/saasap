@@ -40,6 +40,16 @@
                 <li><Link href="/admin/minisite-themes" class="dropdown-item" prefetch="hover">Themes de Minisite</Link></li>
               </ul>
             </li>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                <i class="bi bi-robot me-1"></i>AI Chatbot
+              </a>
+              <ul class="dropdown-menu">
+                <li><Link href="/admin/modules/ai_chatbot/settings" class="dropdown-item" prefetch="hover">Configuración</Link></li>
+                <li><Link href="/admin/modules/ai_chatbot/presets" class="dropdown-item" prefetch="hover">Presets</Link></li>
+                <li><Link href="/admin/modules/ai_chatbot/personalities" class="dropdown-item" prefetch="hover">Personalidades</Link></li>
+              </ul>
+            </li>
             <li class="nav-item">
               <Link href="/admin/business-module-definitions" class="nav-link" prefetch="hover">
                 <i class="bi bi-grid me-1"></i>Modulos

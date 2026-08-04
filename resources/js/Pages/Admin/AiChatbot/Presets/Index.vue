@@ -8,7 +8,7 @@
           <h1 class="h4 mb-0">Presets de Chatbot</h1>
           <small class="text-muted">Plantillas configurables para el AI Chatbot</small>
         </div>
-        <Link href="/admin/chatbot-presets/create" class="btn btn-primary">
+        <Link href="/admin/modules/ai_chatbot/presets/create" class="btn btn-primary">
           <i class="bi bi-plus-lg me-1"></i>Nuevo Preset
         </Link>
       </div>
@@ -81,7 +81,7 @@
                 <td class="text-end">
                   <div class="btn-group btn-group-sm">
                     <Link
-                      :href="`/admin/chatbot-presets/${preset.id}/edit`"
+                      :href="`/admin/modules/ai_chatbot/presets/${preset.id}/edit`"
                       class="btn btn-outline-primary"
                       :class="{ disabled: preset.is_system }"
                     >
@@ -90,7 +90,6 @@
                     <button
                       type="button"
                       class="btn btn-outline-secondary"
-                      :disabled="preset.is_system"
                       @click="duplicatePreset(preset)"
                     >
                       <i class="bi bi-copy"></i>
@@ -102,6 +101,14 @@
                       @click="togglePreset(preset)"
                     >
                       <i :class="preset.is_active ? 'bi bi-x-lg' : 'bi bi-check-lg'"></i>
+                    </button>
+                    <button
+                      v-if="!preset.is_system"
+                      type="button"
+                      class="btn btn-outline-danger"
+                      @click="deletePreset(preset)"
+                    >
+                      <i class="bi bi-trash"></i>
                     </button>
                   </div>
                 </td>
@@ -121,7 +128,7 @@
 import { computed, ref } from 'vue'
 import { Head, Link, router, usePage } from '@inertiajs/vue3'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
-import Pagination from '@/Components/Ui/Pagination.vue'
+import Pagination from '@/Components/Admin/Pagination.vue'
 
 const page = usePage()
 const presets = computed(() => page.props.presets || { data: [] })
@@ -133,18 +140,26 @@ const filterSearch = () => {
   const params = {}
   if (search.value) params.search = search.value
   if (filterActive.value !== null) params.is_active = filterActive.value
-  router.get('/admin/chatbot-presets', params, { preserveScroll: true })
+  router.get('/admin/modules/ai_chatbot/presets', params, { preserveScroll: true })
 }
 
 const togglePreset = (preset) => {
-  router.post(`/admin/chatbot-presets/${preset.id}/toggle`, {}, {
+  router.post(`/admin/modules/ai_chatbot/presets/${preset.id}/toggle`, {}, {
     preserveScroll: true,
   })
 }
 
 const duplicatePreset = (preset) => {
-  router.post(`/admin/chatbot-presets/${preset.id}/duplicate`, {}, {
+  router.post(`/admin/modules/ai_chatbot/presets/${preset.id}/duplicate`, {}, {
     preserveScroll: true,
   })
+}
+
+const deletePreset = (preset) => {
+  if (confirm(`¿Eliminar el preset "${preset.name}"?`)) {
+    router.delete(`/admin/modules/ai_chatbot/presets/${preset.id}`, {
+      preserveScroll: true,
+    })
+  }
 }
 </script>

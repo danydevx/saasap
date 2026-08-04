@@ -82,6 +82,7 @@ class BusinessModuleDefinitionSeeder extends Seeder
                 'sort_order' => 8,
                 'has_settings' => true,
                 'is_premium' => true,
+                'settings_url' => '/admin/modules/ai_chatbot/settings',
             ],
             [
                 'key' => 'reviews',
@@ -193,6 +194,17 @@ class BusinessModuleDefinitionSeeder extends Seeder
                 'is_premium' => false,
                 'show_in_menu' => true,
                 'menu_title' => 'Minisite',
+            ],
+            [
+                'key' => 'properties',
+                'name' => 'Propiedades',
+                'description' => 'Gestión de propiedades inmobiliarias',
+                'icon' => 'bi bi-building',
+                'sort_order' => 21,
+                'has_settings' => true,
+                'is_premium' => true,
+                'show_in_menu' => true,
+                'menu_title' => 'Propiedades',
             ],
         ];
 

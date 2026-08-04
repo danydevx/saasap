@@ -33,6 +33,7 @@ class DatabaseSeeder extends Seeder
             BusinessModuleDefinitionSeeder::class,
             PlanBusinessModuleSeeder::class,
             ContactFormSubmissionSeeder::class,
+            \Modules\Properties\Database\Seeders\PropertiesDatabaseSeeder::class,
         ]);
     }
 }

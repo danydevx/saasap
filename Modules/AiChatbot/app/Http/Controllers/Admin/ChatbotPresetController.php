@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Modules\AiChatbot\Models\ChatbotPreset;
+use Modules\AiChatbot\Models\ChatbotPersonality;
 use Modules\Businesses\Models\Business;
 use Inertia\Inertia;
 
@@ -32,10 +33,10 @@ class ChatbotPresetController extends Controller
 
         $presets = $query->paginate(20)->withQueryString();
 
-        $businessTypes = Business::select('type')
+        $businessTypes = Business::select('business_type')
             ->distinct()
-            ->orderBy('type')
-            ->pluck('type');
+            ->orderBy('business_type')
+            ->pluck('business_type');
 
         return Inertia::render('Admin/AiChatbot/Presets/Index', [
             'presets' => $presets,
@@ -46,14 +47,16 @@ class ChatbotPresetController extends Controller
 
     public function create()
     {
-        $businessTypes = Business::select('type')
+        $businessTypes = Business::select('business_type')
             ->distinct()
-            ->orderBy('type')
-            ->pluck('type');
+            ->orderBy('business_type')
+            ->pluck('business_type');
+
+        $personalities = ChatbotPersonality::getActiveForSelect();
 
         return Inertia::render('Admin/AiChatbot/Presets/Create', [
             'businessTypes' => $businessTypes,
-            'personalities' => ['professional', 'friendly', 'formal', 'casual'],
+            'personalities' => $personalities,
             'languages' => ['es', 'en', 'pt', 'fr'],
         ]);
     }
@@ -65,7 +68,7 @@ class ChatbotPresetController extends Controller
             'slug' => 'required|string|max:100|unique:chatbot_presets,slug',
             'description' => 'nullable|string|max:500',
             'business_type' => 'nullable|string|max:50',
-            'personality' => 'required|in:professional,friendly,formal,casual',
+            'personality' => 'required|string|max:50',
             'language' => 'required|in:es,en,pt,fr',
             'system_prompt_template' => 'required|string',
             'chatbot_name_template' => 'nullable|string|max:100',
@@ -81,21 +84,23 @@ class ChatbotPresetController extends Controller
 
         ChatbotPreset::create($validated);
 
-        return redirect()->route('admin.chatbot-presets.index')
+        return redirect()->route('admin.modules.ai-chatbot.presets.index')
             ->with('success', 'Preset creado exitosamente.');
     }
 
     public function edit(ChatbotPreset $preset)
     {
-        $businessTypes = Business::select('type')
+        $businessTypes = Business::select('business_type')
             ->distinct()
-            ->orderBy('type')
-            ->pluck('type');
+            ->orderBy('business_type')
+            ->pluck('business_type');
+
+        $personalities = ChatbotPersonality::getActiveForSelect();
 
         return Inertia::render('Admin/AiChatbot/Presets/Edit', [
             'preset' => $preset,
             'businessTypes' => $businessTypes,
-            'personalities' => ['professional', 'friendly', 'formal', 'casual'],
+            'personalities' => $personalities,
             'languages' => ['es', 'en', 'pt', 'fr'],
         ]);
     }
@@ -111,7 +116,7 @@ class ChatbotPresetController extends Controller
             'slug' => 'required|string|max:100|unique:chatbot_presets,slug,' . $preset->id,
             'description' => 'nullable|string|max:500',
             'business_type' => 'nullable|string|max:50',
-            'personality' => 'required|in:professional,friendly,formal,casual',
+            'personality' => 'required|string|max:50',
             'language' => 'required|in:es,en,pt,fr',
             'system_prompt_template' => 'required|string',
             'chatbot_name_template' => 'nullable|string|max:100',
@@ -124,7 +129,7 @@ class ChatbotPresetController extends Controller
 
         $preset->update($validated);
 
-        return redirect()->route('admin.chatbot-presets.index')
+        return redirect()->route('admin.modules.ai-chatbot.presets.index')
             ->with('success', 'Preset actualizado exitosamente.');
     }
 
@@ -136,7 +141,7 @@ class ChatbotPresetController extends Controller
 
         $preset->delete();
 
-        return redirect()->route('admin.chatbot-presets.index')
+        return redirect()->route('admin.modules.ai-chatbot.presets.index')
             ->with('success', 'Preset eliminado exitosamente.');
     }
 
@@ -157,7 +162,7 @@ class ChatbotPresetController extends Controller
         $newPreset->created_by = auth()->id();
         $newPreset->save();
 
-        return redirect()->route('admin.chatbot-presets.edit', $newPreset)
+        return redirect()->route('admin.modules.ai-chatbot.presets.edit', $newPreset)
             ->with('success', 'Preset duplicado. Edítalo según sea necesario.');
     }
 }

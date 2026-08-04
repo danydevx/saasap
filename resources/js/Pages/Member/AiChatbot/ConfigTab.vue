@@ -81,14 +81,45 @@
 
             <div class="col-12 col-md-6">
               <div class="mb-3">
-                <label class="form-label">Preset de Chatbot</label>
+                <label class="form-label">Preset Principal</label>
                 <select v-model="form.preset_id" class="form-select">
                   <option :value="null">Ninguno (personalizado)</option>
                   <option v-for="preset in presets" :key="preset.id" :value="preset.id">
-                    {{ preset.name }}
+                    {{ preset.name }} {{ preset.business_id ? '(Propio)' : '' }}
                   </option>
                 </select>
-                <small class="text-muted">Aplica una plantilla predefinida</small>
+                <small class="text-muted">
+                  <a :href="`/member/businesses/${business.id}/ai-chatbot/presets`" target="_blank">
+                    Gestionar presets
+                  </a>
+                </small>
+              </div>
+            </div>
+
+            <div class="col-12">
+              <div class="mb-3">
+                <label class="form-label">Presets Adicionales (opcional)</label>
+                <div class="d-flex flex-wrap gap-2 mb-2">
+                  <div
+                    v-for="presetId in form.additional_preset_ids"
+                    :key="presetId"
+                    class="badge bg-primary d-flex align-items-center gap-1"
+                  >
+                    {{ getPresetName(presetId) }}
+                    <button type="button" class="btn-close btn-close-white" @click="removeAdditionalPreset(presetId)"></button>
+                  </div>
+                </div>
+                <select v-model="newAdditionalPreset" class="form-select" @change="addAdditionalPreset">
+                  <option :value="null">Agregar preset adicional...</option>
+                  <option
+                    v-for="preset in availableAdditionalPresets"
+                    :key="preset.id"
+                    :value="preset.id"
+                  >
+                    {{ preset.name }} {{ preset.business_id ? '(Propio)' : '' }}
+                  </option>
+                </select>
+                <small class="text-muted">Los presets adicionales se usan como contexto adicional en las conversaciones</small>
               </div>
             </div>
 
@@ -447,7 +478,8 @@
                     </div>
                   </div>
                   <input type="text" v-model="form.intent_appointment_text" class="form-control form-control-sm mb-2" placeholder="Texto del botón" />
-                  <input type="text" v-model="form.intent_appointment_url" class="form-control form-control-sm" placeholder="URL (ej: /reservas)" />
+                  <input type="text" v-model="form.intent_appointment_url" class="form-control form-control-sm mb-2" placeholder="URL (ej: /reservas)" />
+                  <input type="text" v-model="form.intent_appointment_keywords" class="form-control form-control-sm" placeholder="Keywords (separadas por coma): agendar, reserva, cita" />
                 </div>
               </div>
 
@@ -460,7 +492,8 @@
                     </div>
                   </div>
                   <input type="text" v-model="form.intent_purchase_text" class="form-control form-control-sm mb-2" placeholder="Texto del botón" />
-                  <input type="text" v-model="form.intent_purchase_url" class="form-control form-control-sm" placeholder="URL (ej: /productos)" />
+                  <input type="text" v-model="form.intent_purchase_url" class="form-control form-control-sm mb-2" placeholder="URL (ej: /productos)" />
+                  <input type="text" v-model="form.intent_purchase_keywords" class="form-control form-control-sm" placeholder="Keywords (separadas por coma): precio, comprar, producto" />
                 </div>
               </div>
 
@@ -473,7 +506,8 @@
                     </div>
                   </div>
                   <input type="text" v-model="form.intent_contact_text" class="form-control form-control-sm mb-2" placeholder="Texto del botón" />
-                  <input type="text" v-model="form.intent_contact_url" class="form-control form-control-sm" placeholder="URL (ej: /contacto)" />
+                  <input type="text" v-model="form.intent_contact_url" class="form-control form-control-sm mb-2" placeholder="URL (ej: /contacto)" />
+                  <input type="text" v-model="form.intent_contact_keywords" class="form-control form-control-sm" placeholder="Keywords (separadas por coma): contacto, telefono, email" />
                 </div>
               </div>
 
@@ -486,7 +520,8 @@
                     </div>
                   </div>
                   <input type="text" v-model="form.intent_support_text" class="form-control form-control-sm mb-2" placeholder="Texto del botón" />
-                  <input type="text" v-model="form.intent_support_url" class="form-control form-control-sm" placeholder="URL (ej: /soporte)" />
+                  <input type="text" v-model="form.intent_support_url" class="form-control form-control-sm mb-2" placeholder="URL (ej: /soporte)" />
+                  <input type="text" v-model="form.intent_support_keywords" class="form-control form-control-sm" placeholder="Keywords (separadas por coma): ayuda, soporte, problema" />
                 </div>
               </div>
             </div>
@@ -564,7 +599,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, watch } from 'vue'
+import { computed, ref, reactive, watch } from 'vue'
 import { router } from '@inertiajs/vue3'
 
 const props = defineProps({
@@ -592,6 +627,7 @@ const defaultForm = {
   chatbot_avatar: '',
   chatbot_avatar_preview: '',
   preset_id: null,
+  additional_preset_ids: [],
   personality: 'friendly',
   response_length: 'medium',
   expandable_responses: true,
@@ -617,15 +653,19 @@ const defaultForm = {
   intent_appointment_enabled: false,
   intent_appointment_text: 'Agendar cita',
   intent_appointment_url: '',
+  intent_appointment_keywords: 'agendar, reserva, cita, turno',
   intent_purchase_enabled: false,
   intent_purchase_text: 'Ver precios',
   intent_purchase_url: '',
+  intent_purchase_keywords: 'precio, comprar, producto',
   intent_contact_enabled: false,
   intent_contact_text: 'Contactar',
   intent_contact_url: '',
+  intent_contact_keywords: 'contacto, telefono, email',
   intent_support_enabled: false,
   intent_support_text: 'Obtener ayuda',
   intent_support_url: '',
+  intent_support_keywords: 'ayuda, soporte, problema',
 }
 
 const form = reactive({ ...defaultForm })
@@ -643,6 +683,7 @@ const form = reactive({ ...defaultForm })
       form.chatbot_avatar = newSettings.chatbot_avatar || ''
       form.chatbot_avatar_preview = ''
       form.preset_id = newSettings.preset_id || null
+      form.additional_preset_ids = newSettings.additional_preset_ids || []
       form.personality = newSettings.personality || 'friendly'
       form.response_length = newSettings.response_length || 'medium'
       form.expandable_responses = newSettings.expandable_responses ?? true
@@ -669,15 +710,19 @@ const form = reactive({ ...defaultForm })
       form.intent_appointment_enabled = intentCta.appointment?.enabled || false
       form.intent_appointment_text = intentCta.appointment?.text || 'Agendar cita'
       form.intent_appointment_url = intentCta.appointment?.url || ''
+      form.intent_appointment_keywords = intentCta.appointment?.keywords || 'agendar, reserva, cita, turno'
       form.intent_purchase_enabled = intentCta.purchase?.enabled || false
       form.intent_purchase_text = intentCta.purchase?.text || 'Ver precios'
       form.intent_purchase_url = intentCta.purchase?.url || ''
+      form.intent_purchase_keywords = intentCta.purchase?.keywords || 'precio, comprar, producto'
       form.intent_contact_enabled = intentCta.contact?.enabled || false
       form.intent_contact_text = intentCta.contact?.text || 'Contactar'
       form.intent_contact_url = intentCta.contact?.url || ''
+      form.intent_contact_keywords = intentCta.contact?.keywords || 'contacto, telefono, email'
       form.intent_support_enabled = intentCta.support?.enabled || false
       form.intent_support_text = intentCta.support?.text || 'Obtener ayuda'
       form.intent_support_url = intentCta.support?.url || ''
+      form.intent_support_keywords = intentCta.support?.keywords || 'ayuda, soporte, problema'
 
       form.lead_capture_enabled = newSettings.lead_capture_enabled || false
       form.lead_capture_title = newSettings.lead_capture_title || '¿Te gustaría recibir noticias sobre nosotros?'
@@ -686,6 +731,31 @@ const form = reactive({ ...defaultForm })
   },
   { immediate: true }
 )
+
+const newAdditionalPreset = ref(null)
+
+const availableAdditionalPresets = computed(() => {
+  return props.presets.filter(p =>
+    p.id !== form.preset_id &&
+    !form.additional_preset_ids.includes(p.id)
+  )
+})
+
+const getPresetName = (presetId) => {
+  const preset = props.presets.find(p => p.id === presetId)
+  return preset ? preset.name : 'Preset #' + presetId
+}
+
+const addAdditionalPreset = () => {
+  if (newAdditionalPreset.value && !form.additional_preset_ids.includes(newAdditionalPreset.value)) {
+    form.additional_preset_ids.push(newAdditionalPreset.value)
+  }
+  newAdditionalPreset.value = null
+}
+
+const removeAdditionalPreset = (presetId) => {
+  form.additional_preset_ids = form.additional_preset_ids.filter(id => id !== presetId)
+}
 
 const saveSettings = () => {
   saving.value = true
@@ -700,6 +770,9 @@ const saveSettings = () => {
   formData.append('system_prompt', form.system_prompt)
   formData.append('chatbot_name', form.chatbot_name)
   formData.append('preset_id', form.preset_id || '')
+  form.additional_preset_ids.forEach(id => {
+    formData.append('additional_preset_ids[]', id)
+  })
   formData.append('personality', form.personality)
   formData.append('response_length', form.response_length)
   formData.append('expandable_responses', form.expandable_responses ? '1' : '0')
@@ -722,10 +795,10 @@ const saveSettings = () => {
     secondary_text: form.cta_secondary_text,
     secondary_url: form.cta_secondary_url,
     intent_cta: {
-      appointment: { enabled: form.intent_appointment_enabled, text: form.intent_appointment_text, url: form.intent_appointment_url },
-      purchase: { enabled: form.intent_purchase_enabled, text: form.intent_purchase_text, url: form.intent_purchase_url },
-      contact: { enabled: form.intent_contact_enabled, text: form.intent_contact_text, url: form.intent_contact_url },
-      support: { enabled: form.intent_support_enabled, text: form.intent_support_text, url: form.intent_support_url },
+      appointment: { enabled: form.intent_appointment_enabled, text: form.intent_appointment_text, url: form.intent_appointment_url, keywords: form.intent_appointment_keywords },
+      purchase: { enabled: form.intent_purchase_enabled, text: form.intent_purchase_text, url: form.intent_purchase_url, keywords: form.intent_purchase_keywords },
+      contact: { enabled: form.intent_contact_enabled, text: form.intent_contact_text, url: form.intent_contact_url, keywords: form.intent_contact_keywords },
+      support: { enabled: form.intent_support_enabled, text: form.intent_support_text, url: form.intent_support_url, keywords: form.intent_support_keywords },
     },
   })
   formData.append('cta_settings', ctaSettings)

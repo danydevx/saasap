@@ -166,14 +166,194 @@
               </div>
             </div>
           </div>
+</div>
+      <div class="card-footer">
+        <button type="submit" class="btn btn-primary" :disabled="saving">
+          <span v-if="saving"><i class="bi bi-hourglass-split me-2"></i>Guardando...</span>
+          <span v-else><i class="bi bi-check-lg me-2"></i>Guardar Configuración</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-cursor-fill me-2"></i>Llamadas a la Acción (CTAs)</h5>
+      </div>
+      <div class="card-body">
+        <div class="alert alert-info mb-3">
+          <i class="bi bi-info-circle me-2"></i>
+          Los CTAs aparecen automáticamente cuando el chatbot detecta intención en sus respuestas. Por ejemplo, si menciona "agendar", muestra el CTA de reservas.
         </div>
-        <div class="card-footer">
-          <button type="submit" class="btn btn-primary" :disabled="saving">
-            <span v-if="saving"><i class="bi bi-hourglass-split me-2"></i>Guardando...</span>
-            <span v-else><i class="bi bi-check-lg me-2"></i>Guardar Configuración</span>
-          </button>
+
+        <div class="form-check form-switch mb-4">
+          <input
+            class="form-check-input"
+            type="checkbox"
+            v-model="form.cta_settings.enabled"
+            id="cta-enabled"
+          />
+          <label class="form-check-label" for="cta-enabled">
+            <strong>Habilitar CTAs</strong>
+          </label>
+        </div>
+
+        <div v-if="form.cta_settings.enabled" class="cta-config">
+          <div class="row g-3">
+            <div class="col-12 col-md-6 col-lg-3">
+              <div class="card h-100 border-primary">
+                <div class="card-body">
+                  <div class="form-check form-switch mb-2">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      v-model="form.cta_settings.intent_cta.appointment.enabled"
+                      id="cta-appointment"
+                    />
+                    <label class="form-check-label fw-bold" for="cta-appointment">
+                      <i class="bi bi-calendar-event me-1"></i>Reservas
+                    </label>
+                  </div>
+                  <small class="text-muted d-block mb-2">Se muestra cuando el bot menciona agendar, cita, horario</small>
+                  <input
+                    type="text"
+                    v-model="form.cta_settings.intent_cta.appointment.text"
+                    class="form-control form-control-sm mb-2"
+                    placeholder="Texto del botón"
+                  />
+                  <input
+                    type="text"
+                    v-model="form.cta_settings.intent_cta.appointment.url"
+                    class="form-control form-control-sm mb-2"
+                    placeholder="/url"
+                  />
+                  <small class="text-muted d-block mb-1">Keywords (separadas por coma):</small>
+                  <input
+                    type="text"
+                    v-model="form.cta_settings.intent_cta.appointment.keywords"
+                    class="form-control form-control-sm"
+                    placeholder="agendar, cita, reserva"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div class="col-12 col-md-6 col-lg-3">
+              <div class="card h-100 border-success">
+                <div class="card-body">
+                  <div class="form-check form-switch mb-2">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      v-model="form.cta_settings.intent_cta.purchase.enabled"
+                      id="cta-purchase"
+                    />
+                    <label class="form-check-label fw-bold" for="cta-purchase">
+                      <i class="bi bi-bag me-1"></i>Compras
+                    </label>
+                  </div>
+                  <small class="text-muted d-block mb-2">Se muestra cuando menciona precio, producto, comprar</small>
+                  <input
+                    type="text"
+                    v-model="form.cta_settings.intent_cta.purchase.text"
+                    class="form-control form-control-sm mb-2"
+                    placeholder="Texto del botón"
+                  />
+                  <input
+                    type="text"
+                    v-model="form.cta_settings.intent_cta.purchase.url"
+                    class="form-control form-control-sm mb-2"
+                    placeholder="/url"
+                  />
+                  <small class="text-muted d-block mb-1">Keywords (separadas por coma):</small>
+                  <input
+                    type="text"
+                    v-model="form.cta_settings.intent_cta.purchase.keywords"
+                    class="form-control form-control-sm"
+                    placeholder="precio, comprar, producto"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div class="col-12 col-md-6 col-lg-3">
+              <div class="card h-100 border-info">
+                <div class="card-body">
+                  <div class="form-check form-switch mb-2">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      v-model="form.cta_settings.intent_cta.contact.enabled"
+                      id="cta-contact"
+                    />
+                    <label class="form-check-label fw-bold" for="cta-contact">
+                      <i class="bi bi-telephone me-1"></i>Contacto
+                    </label>
+                  </div>
+                  <small class="text-muted d-block mb-2">Se muestra cuando menciona contacto, teléfono, email</small>
+                  <input
+                    type="text"
+                    v-model="form.cta_settings.intent_cta.contact.text"
+                    class="form-control form-control-sm mb-2"
+                    placeholder="Texto del botón"
+                  />
+                  <input
+                    type="text"
+                    v-model="form.cta_settings.intent_cta.contact.url"
+                    class="form-control form-control-sm mb-2"
+                    placeholder="/url"
+                  />
+                  <small class="text-muted d-block mb-1">Keywords (separadas por coma):</small>
+                  <input
+                    type="text"
+                    v-model="form.cta_settings.intent_cta.contact.keywords"
+                    class="form-control form-control-sm"
+                    placeholder="contacto, telefono, email"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div class="col-12 col-md-6 col-lg-3">
+              <div class="card h-100 border-warning">
+                <div class="card-body">
+                  <div class="form-check form-switch mb-2">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      v-model="form.cta_settings.intent_cta.support.enabled"
+                      id="cta-support"
+                    />
+                    <label class="form-check-label fw-bold" for="cta-support">
+                      <i class="bi bi-question-circle me-1"></i>Soporte
+                    </label>
+                  </div>
+                  <small class="text-muted d-block mb-2">Se muestra cuando menciona ayuda, problema, error</small>
+                  <input
+                    type="text"
+                    v-model="form.cta_settings.intent_cta.support.text"
+                    class="form-control form-control-sm mb-2"
+                    placeholder="Texto del botón"
+                  />
+                  <input
+                    type="text"
+                    v-model="form.cta_settings.intent_cta.support.url"
+                    class="form-control form-control-sm mb-2"
+                    placeholder="/url"
+                  />
+                  <small class="text-muted d-block mb-1">Keywords (separadas por coma):</small>
+                  <input
+                    type="text"
+                    v-model="form.cta_settings.intent_cta.support.keywords"
+                    class="form-control form-control-sm"
+                    placeholder="ayuda, soporte, problema"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
+    </div>
     </form>
 
     <div class="card">
@@ -279,6 +459,15 @@ const defaultForm = {
   url_import_max_chars: 5000,
   widget_color: '#3B82F6',
   is_enabled: false,
+  cta_settings: {
+    enabled: false,
+    intent_cta: {
+      appointment: { enabled: false, text: 'Agendar Cita', url: '/appointments', keywords: 'agendar, reserva, cita, turno' },
+      purchase: { enabled: false, text: 'Ver Productos', url: '/products', keywords: 'precio, comprar, producto' },
+      contact: { enabled: false, text: 'Contactar', url: '/contact', keywords: 'contacto, telefono, email' },
+      support: { enabled: false, text: 'Obtener Ayuda', url: '/support', keywords: 'ayuda, soporte, problema' },
+    },
+  },
 }
 
 const form = reactive({ ...defaultForm })
@@ -298,6 +487,29 @@ watch(
       form.url_import_max_chars = newSettings.url_import_max_chars || 5000
       form.widget_color = newSettings.widget_color || '#3B82F6'
       form.is_enabled = newSettings.is_enabled || false
+
+        if (newSettings.cta_enabled !== undefined) {
+          form.cta_settings = {
+            enabled: newSettings.cta_enabled || false,
+            intent_cta: {
+              appointment: { enabled: false, text: 'Agendar Cita', url: '/appointments', keywords: 'agendar, reserva, cita, turno' },
+              purchase: { enabled: false, text: 'Ver Productos', url: '/products', keywords: 'precio, comprar, producto' },
+              contact: { enabled: false, text: 'Contactar', url: '/contact', keywords: 'contacto, telefono, email' },
+              support: { enabled: false, text: 'Obtener Ayuda', url: '/support', keywords: 'ayuda, soporte, problema' },
+            },
+          }
+        if (newSettings.intent_cta) {
+          try {
+            const parsedIntent = typeof newSettings.intent_cta === 'string'
+              ? JSON.parse(newSettings.intent_cta)
+              : newSettings.intent_cta
+            if (parsedIntent.appointment) form.cta_settings.intent_cta.appointment = { ...form.cta_settings.intent_cta.appointment, ...parsedIntent.appointment }
+            if (parsedIntent.purchase) form.cta_settings.intent_cta.purchase = { ...form.cta_settings.intent_cta.purchase, ...parsedIntent.purchase }
+            if (parsedIntent.contact) form.cta_settings.intent_cta.contact = { ...form.cta_settings.intent_cta.contact, ...parsedIntent.contact }
+            if (parsedIntent.support) form.cta_settings.intent_cta.support = { ...form.cta_settings.intent_cta.support, ...parsedIntent.support }
+          } catch (e) {}
+        }
+      }
     }
   },
   { immediate: true }
@@ -308,7 +520,12 @@ const saveSettings = () => {
   successMessage.value = null
   errorMessage.value = null
 
-  router.post(`/member/businesses/${props.business.id}/ai-chatbot/settings`, form, {
+  const formData = {
+    ...form,
+    cta_settings: JSON.stringify(form.cta_settings),
+  }
+
+  router.post(`/member/businesses/${props.business.id}/ai-chatbot/settings`, formData, {
     preserveScroll: true,
     onSuccess: () => {
       successMessage.value = 'Configuración guardada correctamente.'

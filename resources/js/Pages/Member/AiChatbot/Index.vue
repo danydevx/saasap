@@ -73,6 +73,14 @@
             <i class="bi bi-graph-up me-2"></i>Analytics
           </button>
         </li>
+        <li class="nav-item" role="presentation">
+          <Link
+            :href="`/member/businesses/${business?.id}/ai-chatbot/presets`"
+            class="nav-link"
+          >
+            <i class="bi bi-robot me-2"></i>Presets
+          </Link>
+        </li>
       </ul>
 
       <div class="tab-content">
@@ -134,7 +142,7 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
-import { Head, router, usePage } from '@inertiajs/vue3'
+import { Head, Link, router, usePage } from '@inertiajs/vue3'
 import MemberLayout from '@/Layouts/MemberLayout.vue'
 import PageHeader from '@/Components/Admin/PageHeader.vue'
 import ConfigTab from './ConfigTab.vue'

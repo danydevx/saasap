@@ -8,7 +8,7 @@
           <h1 class="h4 mb-0">Crear Preset de Chatbot</h1>
           <small class="text-muted">Configura una nueva plantilla de chatbot</small>
         </div>
-        <Link href="/admin/chatbot-presets" class="btn btn-outline-secondary">
+        <Link href="/admin/modules/ai_chatbot/presets" class="btn btn-outline-secondary">
           <i class="bi bi-arrow-left me-1"></i>Volver
         </Link>
       </div>
@@ -66,8 +66,8 @@
                 <div class="mb-3">
                   <label class="form-label">Personalidad *</label>
                   <select v-model="form.personality" class="form-select" required>
-                    <option v-for="p in personalities" :key="p" :value="p">
-                      {{ p }}
+                    <option v-for="p in personalities" :key="p.key" :value="p.key">
+                      {{ p.display_name }}
                     </option>
                   </select>
                 </div>

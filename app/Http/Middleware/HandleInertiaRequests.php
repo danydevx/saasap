@@ -162,6 +162,7 @@ class HandleInertiaRequests extends Middleware
             'tasks' => 'tasks',
             'clients' => 'clients',
             'minisite' => 'minisite',
+            'properties' => 'properties',
         ];
 
         return $paths[$moduleKey] ?? $moduleKey;

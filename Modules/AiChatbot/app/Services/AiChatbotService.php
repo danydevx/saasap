@@ -58,11 +58,28 @@ class AiChatbotService
             ];
         }
 
-        $contextChunks = $this->vectorStore->searchSimilar(
-            $userMessage,
-            $this->settings->getRagMaxResults(),
-            $this->settings->getRagMinSimilarity()
-        );
+        $allPresets = $this->settings->getAllActivePresets();
+        $allContextIds = [];
+        foreach ($allPresets as $preset) {
+            if (!empty($preset->context_ids)) {
+                $allContextIds = array_merge($allContextIds, $preset->context_ids);
+            }
+        }
+
+        if (!empty($allContextIds)) {
+            $contextChunks = $this->vectorStore->searchSimilarInContexts(
+                $userMessage,
+                array_unique($allContextIds),
+                $this->settings->getRagMaxResults(),
+                $this->settings->getRagMinSimilarity()
+            );
+        } else {
+            $contextChunks = $this->vectorStore->searchSimilar(
+                $userMessage,
+                $this->settings->getRagMaxResults(),
+                $this->settings->getRagMinSimilarity()
+            );
+        }
 
         $conversationHistory = $this->getConversationHistory($conversation, 10);
 
@@ -197,15 +214,31 @@ class AiChatbotService
     private function buildSystemPrompt(array $contextChunks): string
     {
         $business = $this->settings->business;
-        $preset = $this->settings->preset;
+        $allPresets = $this->settings->getAllActivePresets();
+        $mainPreset = $allPresets->first();
 
-        if ($preset && $preset->system_prompt_template) {
-            $systemPrompt = $preset->system_prompt_template;
+        if ($mainPreset && $mainPreset->system_prompt_template) {
+            $systemPrompt = $mainPreset->system_prompt_template;
             $systemPrompt = str_replace('{business_name}', $business->name ?? 'este negocio', $systemPrompt);
             $systemPrompt = str_replace('{greeting_addition}', '', $systemPrompt);
         } else {
             $systemPrompt = $this->settings->system_prompt ?: $this->settings->getDefaultSystemPrompt();
             $systemPrompt = str_replace('{business_name}', $business->name ?? 'este negocio', $systemPrompt);
+        }
+
+        if ($allPresets->count() > 1) {
+            $additionalPrompts = [];
+            foreach ($allPresets->skip(1) as $preset) {
+                if ($preset->system_prompt_template) {
+                    $prompt = $preset->system_prompt_template;
+                    $prompt = str_replace('{business_name}', $business->name ?? 'este negocio', $prompt);
+                    $prompt = str_replace('{greeting_addition}', '', $prompt);
+                    $additionalPrompts[] = $prompt;
+                }
+            }
+            if (!empty($additionalPrompts)) {
+                $systemPrompt .= "\n\nInformación adicional del negocio:\n" . implode("\n\n---\n\n", $additionalPrompts);
+            }
         }
 
         $personalityInstructions = $this->getPersonalityInstructions();
@@ -307,7 +340,7 @@ class AiChatbotService
         return (int) (strlen($text) / 4);
     }
 
-    public function streamChat(string $userMessage, string $sessionId, ?string $ipAddress = null, ?string $userAgent = null, ?string $deviceType = null): \Illuminate\Http\StreamedResponse
+    public function streamChat(string $userMessage, string $sessionId, ?string $ipAddress = null, ?string $userAgent = null, ?string $deviceType = null): \Symfony\Component\HttpFoundation\StreamedResponse
     {
         if (!$this->settings->is_enabled) {
             return response()->stream(function () {
@@ -335,11 +368,28 @@ class AiChatbotService
             }, 200, ['Content-Type' => 'text/event-stream']);
         }
 
-        $contextChunks = $this->vectorStore->searchSimilar(
-            $userMessage,
-            $this->settings->getRagMaxResults(),
-            $this->settings->getRagMinSimilarity()
-        );
+        $allPresets = $this->settings->getAllActivePresets();
+        $allContextIds = [];
+        foreach ($allPresets as $preset) {
+            if (!empty($preset->context_ids)) {
+                $allContextIds = array_merge($allContextIds, $preset->context_ids);
+            }
+        }
+
+        if (!empty($allContextIds)) {
+            $contextChunks = $this->vectorStore->searchSimilarInContexts(
+                $userMessage,
+                array_unique($allContextIds),
+                $this->settings->getRagMaxResults(),
+                $this->settings->getRagMinSimilarity()
+            );
+        } else {
+            $contextChunks = $this->vectorStore->searchSimilar(
+                $userMessage,
+                $this->settings->getRagMaxResults(),
+                $this->settings->getRagMinSimilarity()
+            );
+        }
 
         $conversationHistory = $this->getConversationHistory($conversation, 10);
         $systemPrompt = $this->buildSystemPrompt($contextChunks);
@@ -366,6 +416,14 @@ class AiChatbotService
             $client = new \GuzzleHttp\Client();
 
             try {
+                Log::info('AI Chat Request', [
+                    'business_id' => $this->settings->business_id,
+                    'model' => $this->settings->model,
+                    'api_key_prefix' => $this->settings->api_key ? substr($this->settings->api_key, 0, 10) . '...' : 'EMPTY',
+                    'message_count' => count($messages),
+                    'system_prompt_length' => strlen($messages[0]['content'] ?? ''),
+                ]);
+
                 $response = $client->request('POST', 'https://api.openai.com/v1/chat/completions', [
                     'headers' => [
                         'Authorization' => 'Bearer ' . $this->settings->api_key,
@@ -383,21 +441,41 @@ class AiChatbotService
 
                 $body = $response->getBody();
 
+                Log::info('AI Chat Response Status', [
+                    'status' => $response->getStatusCode(),
+                ]);
+
+                $buffer = '';
                 while (!$body->eof()) {
-                    $line = $body->read(1024);
-                    if (preg_match('/^data: (.+)$/m', $line, $matches)) {
-                        $data = json_decode($matches[1], true);
-                        if (isset($data['choices'][0]['delta']['content'])) {
-                            $token = $data['choices'][0]['delta']['content'];
-                            $fullContent .= $token;
-                            echo "data: " . json_encode(['type' => 'token', 'content' => $token]) . "\n\n";
-                            flush();
+                    $chunk = $body->read(4096);
+                    $buffer .= $chunk;
+
+                    $lines = explode("\n", $buffer);
+                    $buffer = array_pop($lines);
+
+                    foreach ($lines as $line) {
+                        $line = trim($line);
+                        if (empty($line)) continue;
+
+                        if (str_starts_with($line, 'data: ')) {
+                            $dataStr = substr($line, 6);
+
+                            if ($dataStr === '[DONE]') {
+                                break 2;
+                            }
+
+                            $data = json_decode($dataStr, true);
+                            if (json_last_error() === JSON_ERROR_NONE && isset($data['choices'][0]['delta']['content'])) {
+                                $token = $data['choices'][0]['delta']['content'];
+                                $fullContent .= $token;
+                                echo "data: " . json_encode(['type' => 'token', 'content' => $token]) . "\n\n";
+                                @ob_flush();
+                                flush();
+                            }
+                            if (isset($data['usage'])) {
+                                $totalTokens = $data['usage']['total_tokens'] ?? 0;
+                            }
                         }
-                        if (isset($data['usage'])) {
-                            $totalTokens = $data['usage']['total_tokens'] ?? 0;
-                        }
-                    } elseif (trim($line) === 'data: [DONE]') {
-                        break;
                     }
                 }
             } catch (\Exception $e) {
@@ -432,14 +510,31 @@ class AiChatbotService
                 }
             }
 
-            echo "data: " . json_encode([
-                'type' => 'done',
-                'content' => $fullContent,
-                'tokens' => $totalTokens,
-                'sources' => $sources,
-                'expandable_responses' => $this->settings->expandable_responses ?? true,
-                'show_citations' => $this->settings->show_citations ?? true,
-            ]) . "\n\n";
+            $intentCta = null;
+        if ($this->settings->intent_cta) {
+            $intentCta = is_string($this->settings->intent_cta)
+                ? json_decode($this->settings->intent_cta, true)
+                : $this->settings->intent_cta;
+        }
+
+        $ctaSettings = null;
+        if ($this->settings->cta_enabled) {
+            $ctaSettings = [
+                'enabled' => true,
+                'intent_cta' => $intentCta,
+            ];
+        }
+
+        echo "data: " . json_encode([
+            'type' => 'done',
+            'content' => $fullContent,
+            'tokens' => $totalTokens,
+            'sources' => $sources,
+            'expandable_responses' => $this->settings->expandable_responses ?? true,
+            'show_citations' => $this->settings->show_citations ?? true,
+            'intent_cta' => $intentCta,
+            'cta_settings' => $ctaSettings,
+        ]) . "\n\n";
 
         }, 200, [
             'Content-Type' => 'text/event-stream',

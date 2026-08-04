@@ -44,6 +44,7 @@ class BusinessAiSetting extends Model
         'cta_secondary_text',
         'cta_secondary_url',
         'intent_cta',
+        'additional_preset_ids',
     ];
 
     protected $casts = [
@@ -59,6 +60,7 @@ class BusinessAiSetting extends Model
         'rag_max_results' => 'integer',
         'lead_capture_enabled' => 'boolean',
         'cta_enabled' => 'boolean',
+        'additional_preset_ids' => 'array',
     ];
 
     protected $hidden = [
@@ -106,5 +108,23 @@ class BusinessAiSetting extends Model
     public function getRagMaxResults(): int
     {
         return $this->rag_max_results ?? 5;
+    }
+
+    public function getAllActivePresets()
+    {
+        $presetIds = array_filter(array_merge(
+            [$this->preset_id],
+            $this->additional_preset_ids ?? []
+        ));
+
+        if (empty($presetIds)) {
+            return collect();
+        }
+
+        return ChatbotPreset::whereIn('id', $presetIds)
+            ->where('is_active', true)
+            ->orderBy('is_system', 'desc')
+            ->orderBy('name')
+            ->get();
     }
 }

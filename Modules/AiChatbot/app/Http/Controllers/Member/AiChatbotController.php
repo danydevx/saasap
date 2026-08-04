@@ -21,7 +21,7 @@ class AiChatbotController extends Controller
 
         $settings = BusinessAiSetting::where('business_id', $business->id)->first();
 
-        $presets = ChatbotPreset::getActivePresets();
+        $presets = ChatbotPreset::getActivePresets($business->id);
 
         $contexts = AiContext::where('business_id', $business->id)
             ->orderBy('created_at', 'desc')
@@ -56,6 +56,7 @@ class AiChatbotController extends Controller
             'settings' => $settings ? [
                 'id' => $settings->id,
                 'preset_id' => $settings->preset_id,
+                'additional_preset_ids' => $settings->additional_preset_ids ?? [],
                 'provider' => $settings->provider,
                 'api_key' => $settings->api_key ? '********' : '',
                 'model' => $settings->model,
@@ -77,7 +78,14 @@ class AiChatbotController extends Controller
                 'url_import_max_chars' => $settings->url_import_max_chars ?? 5000,
                 'rag_min_similarity' => $settings->rag_min_similarity ?? 0.250,
                 'rag_max_results' => $settings->rag_max_results ?? 5,
-                'cta_settings' => $settings->cta_settings ? json_decode($settings->cta_settings, true) : null,
+                'cta_settings' => [
+                    'enabled' => $settings->cta_enabled ?? false,
+                    'primary_text' => $settings->cta_primary_text ?? '',
+                    'primary_url' => $settings->cta_primary_url ?? '',
+                    'secondary_text' => $settings->cta_secondary_text ?? '',
+                    'secondary_url' => $settings->cta_secondary_url ?? '',
+                    'intent_cta' => $settings->intent_cta,
+                ],
                 'lead_capture_enabled' => $settings->lead_capture_enabled ?? false,
                 'lead_capture_title' => $settings->lead_capture_title ?? '¿Te gustaría recibir noticias sobre nosotros?',
                 'lead_capture_description' => $settings->lead_capture_description ?? 'Déjanos tu correo y te mantendremos informado.',
@@ -102,6 +110,8 @@ class AiChatbotController extends Controller
             'chatbot_name' => 'nullable|string|max:100',
             'chatbot_avatar' => 'nullable|image|max:1024|mimes:jpg,jpeg,png',
             'preset_id' => 'nullable|integer|exists:chatbot_presets,id',
+            'additional_preset_ids' => 'nullable|array',
+            'additional_preset_ids.*' => 'integer|exists:chatbot_presets,id',
             'personality' => 'nullable|in:professional,friendly,formal,casual',
             'response_length' => 'nullable|in:short,medium,long',
             'expandable_responses' => 'boolean',
@@ -127,6 +137,7 @@ class AiChatbotController extends Controller
             'system_prompt' => $data['system_prompt'] ?? null,
             'chatbot_name' => $data['chatbot_name'] ?? null,
             'preset_id' => $data['preset_id'] ?? null,
+            'additional_preset_ids' => $data['additional_preset_ids'] ?? [],
             'personality' => $data['personality'] ?? 'friendly',
             'response_length' => $data['response_length'] ?? 'medium',
             'expandable_responses' => $data['expandable_responses'] ?? true,
@@ -284,5 +295,91 @@ class AiChatbotController extends Controller
         $result = $extractor->extract($data['url'], $maxChars);
 
         return redirect()->back()->with('extractResult', $result);
+    }
+
+    public function widgetSettings(Request $request, \Modules\Businesses\Models\Business $business)
+    {
+        abort_unless($business->user_id === Auth::id() || Auth::user()->hasRole('superadmin'), 403);
+
+        $widget = \Modules\AiChatbot\Models\ChatbotWidget::where('business_id', $business->id)->first();
+
+        if (!$widget) {
+            $widget = \Modules\AiChatbot\Models\ChatbotWidget::generateForBusiness($business);
+        }
+
+        $stats = [
+            'loads' => \Modules\AiChatbot\Models\ChatbotWidgetAnalytics::where('public_key', $widget->public_key)->where('event_type', 'load')->count(),
+            'messages' => \Modules\AiChatbot\Models\ChatbotWidgetAnalytics::where('public_key', $widget->public_key)->where('event_type', 'message')->count(),
+            'opens' => \Modules\AiChatbot\Models\ChatbotWidgetAnalytics::where('public_key', $widget->public_key)->where('event_type', 'open')->count(),
+            'cta_clicks' => \Modules\AiChatbot\Models\ChatbotWidgetAnalytics::where('public_key', $widget->public_key)->where('event_type', 'cta_click')->count(),
+        ];
+
+        $aiSettings = $business->aiSetting;
+        $intentCta = null;
+        if ($aiSettings && $aiSettings->intent_cta) {
+            $intentCta = is_string($aiSettings->intent_cta)
+                ? json_decode($aiSettings->intent_cta, true)
+                : $aiSettings->intent_cta;
+        }
+
+        return response()->json([
+            'widget' => $widget,
+            'stats' => $stats,
+            'intent_cta' => $intentCta,
+        ]);
+    }
+
+    public function saveWidgetSettings(Request $request, \Modules\Businesses\Models\Business $business)
+    {
+        abort_unless($business->user_id === Auth::id() || Auth::user()->hasRole('superadmin'), 403);
+
+        $validated = $request->validate([
+            'is_enabled' => 'boolean',
+            'allowed_domain' => 'nullable|string|max:255',
+            'position' => 'in:right,left',
+            'show_intent_buttons' => 'boolean',
+            'intent_cta' => 'nullable|array',
+        ]);
+
+        $widget = \Modules\AiChatbot\Models\ChatbotWidget::where('business_id', $business->id)->first();
+
+        if (!$widget) {
+            $widget = \Modules\AiChatbot\Models\ChatbotWidget::generateForBusiness($business);
+        }
+
+        $widget->update([
+            'is_enabled' => $validated['is_enabled'] ?? false,
+            'allowed_domain' => $validated['allowed_domain'] ?? null,
+        ]);
+
+        if (isset($validated['intent_cta'])) {
+            $aiSettings = \Modules\AiChatbot\Models\BusinessAiSetting::where('business_id', $business->id)->first();
+            if (!$aiSettings) {
+                $aiSettings = new \Modules\AiChatbot\Models\BusinessAiSetting(['business_id' => $business->id]);
+            }
+            $aiSettings->intent_cta = $validated['intent_cta'];
+            $aiSettings->cta_enabled = !empty(array_filter($validated['intent_cta'], fn($i) => $i['enabled'] ?? false));
+            $aiSettings->save();
+        }
+
+        return redirect()->back()->with('success', 'Configuración del widget guardada.');
+    }
+
+    public function regenerateWidgetKey(Request $request, \Modules\Businesses\Models\Business $business)
+    {
+        abort_unless($business->user_id === Auth::id() || Auth::user()->hasRole('superadmin'), 403);
+
+        $widget = \Modules\AiChatbot\Models\ChatbotWidget::where('business_id', $business->id)->first();
+
+        if (!$widget) {
+            $widget = \Modules\AiChatbot\Models\ChatbotWidget::generateForBusiness($business);
+        }
+
+        $widget->regeneratePublicKey();
+
+        return response()->json([
+            'success' => true,
+            'widget' => $widget,
+        ]);
     }
 }

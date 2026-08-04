@@ -46,6 +46,15 @@
             <i class="bi bi-chat-left-dots me-2"></i>Vista Previa
           </button>
         </li>
+        <li class="nav-item" role="presentation">
+          <button
+            class="nav-link"
+            :class="{ active: activeTab === 'widget' }"
+            @click="activeTab = 'widget'; loadWidgetData()"
+          >
+            <i class="bi bi-code-square me-2"></i>Widget
+          </button>
+        </li>
       </ul>
 
       <div class="tab-content">
@@ -74,6 +83,16 @@
             :settings="settings"
           />
         </div>
+
+        <div class="tab-pane fade" :class="{ 'show active': activeTab === 'widget' }">
+          <WidgetTab
+            :business="business"
+            :widget="widgetData"
+            :stats="widgetStats"
+            :intent-cta="widgetIntentCta"
+            @saved="loadWidgetData"
+          />
+        </div>
       </div>
     </div>
   </MemberLayout>
@@ -87,6 +106,7 @@ import PageHeader from '@/Components/Admin/PageHeader.vue'
 import ConfigTab from './ConfigTab.vue'
 import ContextsTab from './ContextsTab.vue'
 import PreviewTab from './PreviewTab.vue'
+import WidgetTab from './WidgetTab.vue'
 
 const page = usePage()
 const business = computed(() => page.props.business)
@@ -96,6 +116,9 @@ const contexts = computed(() => page.props.contexts || [])
 const embeddingCounts = computed(() => page.props.embeddingCounts || {})
 
 const activeTab = ref('config')
+const widgetData = ref(null)
+const widgetStats = ref({})
+const widgetIntentCta = ref(null)
 
 const breadcrumbs = computed(() => {
   const path = window.location.pathname
@@ -127,6 +150,20 @@ const onReindex = () => {
 
 const refreshPage = () => {
   router.reload({ preserveScroll: true })
+}
+
+const loadWidgetData = () => {
+  if (!widgetData.value) {
+    axios.get(`/member/businesses/${business.value.id}/ai-chatbot/widget/settings`)
+      .then(response => {
+        widgetData.value = response.data.widget
+        widgetStats.value = response.data.stats
+        widgetIntentCta.value = response.data.intent_cta
+      })
+      .catch(error => {
+        console.error('Error loading widget data:', error)
+      })
+  }
 }
 </script>
 
