@@ -1,17 +1,16 @@
 <template>
   <MemberLayout>
     <Head :title="`${business.name} - Editar Preset`" />
-
-    <div class="container-fluid py-4">
-      <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-          <h1 class="h4 mb-0">Editar Preset</h1>
-          <small class="text-muted">{{ preset?.name }}</small>
-        </div>
+    <PageHeader
+      title="Editar Preset"
+      :breadcrumbs="breadcrumbs"
+    >
+      <template #actions>
         <Link :href="`/member/businesses/${business.id}/ai-chatbot/presets`" class="btn btn-outline-secondary">
           <i class="bi bi-arrow-left me-1"></i>Volver
         </Link>
-      </div>
+      </template>
+    </PageHeader>
 
       <div v-if="$page.props.flash?.success" class="alert alert-success alert-dismissible fade show" role="alert">
         {{ $page.props.flash.success }}
@@ -180,7 +179,6 @@
           </div>
         </div>
       </form>
-    </div>
   </MemberLayout>
 </template>
 
@@ -188,6 +186,7 @@
 import { computed, reactive, ref, watchEffect } from 'vue'
 import { Head, Link, router, usePage } from '@inertiajs/vue3'
 import MemberLayout from '@/Layouts/MemberLayout.vue'
+import PageHeader from '@/Components/Admin/PageHeader.vue'
 
 const page = usePage()
 const business = page.props.business
@@ -195,6 +194,14 @@ const preset = computed(() => page.props.preset)
 const personalities = page.props.personalities || []
 const languages = page.props.languages || ['es', 'en', 'pt', 'fr']
 const contexts = page.props.contexts || []
+
+const breadcrumbs = computed(() => [
+  { label: 'Mis Negocios', href: '/member/business-modules' },
+  { label: business?.name || 'Negocio', href: `/member/businesses/${business?.id}/edit` },
+  { label: 'AI Chatbot', href: `/member/businesses/${business?.id}/ai-chatbot` },
+  { label: 'Presets', href: `/member/businesses/${business?.id}/ai-chatbot/presets` },
+  { label: preset.value?.name || 'Editar Preset', active: true },
+])
 
 const saving = ref(false)
 

@@ -11,7 +11,7 @@ class PropertyFieldController extends Controller
 {
     public function index(PropertyType $propertyType)
     {
-        $propertyType->load(['sections.fields.options', 'fields.options']);
+        $propertyType->load(['sections.activeFields.fieldOptions', 'activeFields.fieldOptions']);
 
         return Inertia::render('Admin/Properties/Fields/Index', [
             'propertyType' => [
@@ -77,24 +77,47 @@ class PropertyFieldController extends Controller
 
     public function update(Request $request, PropertyType $propertyType, \Modules\Properties\Models\PropertyField $field)
     {
-        $data = $request->validate([
-            'section_id' => ['nullable', 'exists:property_field_sections,id'],
-            'label' => ['sometimes', 'required', 'string', 'max:100'],
-            'field_type' => ['sometimes', 'required', 'in:text,textarea,number,decimal,price,select,multiselect,radio,checkbox,date,url,email,phone,image,gallery,address,boolean'],
-            'description' => ['nullable', 'string'],
-            'help_text' => ['nullable', 'string'],
-            'placeholder' => ['nullable', 'string'],
-            'default_value' => ['nullable', 'string'],
-            'options' => ['nullable', 'array'],
-            'validation_rules' => ['nullable', 'array'],
-            'is_required' => ['boolean'],
-            'is_active' => ['boolean'],
-            'is_listable' => ['boolean'],
-            'is_public' => ['boolean'],
-            'is_filterable' => ['boolean'],
-            'is_searchable' => ['boolean'],
-            'sort_order' => ['nullable', 'integer', 'min:0'],
-        ]);
+        $field->load('section.generalFieldSection');
+        $section = $field->section;
+        $isLockedSection = $section && $section->generalFieldSection && $section->generalFieldSection->is_locked;
+
+        if ($isLockedSection) {
+            $data = $request->validate([
+                'label' => ['sometimes', 'required', 'string', 'max:100'],
+                'field_type' => ['sometimes', 'required', 'in:text,textarea,number,decimal,price,select,multiselect,radio,checkbox,date,url,email,phone,image,gallery,address,boolean'],
+                'description' => ['nullable', 'string'],
+                'help_text' => ['nullable', 'string'],
+                'placeholder' => ['nullable', 'string'],
+                'default_value' => ['nullable', 'string'],
+                'options' => ['nullable', 'array'],
+                'validation_rules' => ['nullable', 'array'],
+                'is_required' => ['boolean'],
+                'sort_order' => ['nullable', 'integer', 'min:0'],
+            ]);
+        } else {
+            $data = $request->validate([
+                'section_id' => ['nullable', 'exists:property_field_sections,id'],
+                'label' => ['sometimes', 'required', 'string', 'max:100'],
+                'field_type' => ['sometimes', 'required', 'in:text,textarea,number,decimal,price,select,multiselect,radio,checkbox,date,url,email,phone,image,gallery,address,boolean'],
+                'description' => ['nullable', 'string'],
+                'help_text' => ['nullable', 'string'],
+                'placeholder' => ['nullable', 'string'],
+                'default_value' => ['nullable', 'string'],
+                'options' => ['nullable', 'array'],
+                'validation_rules' => ['nullable', 'array'],
+                'is_required' => ['boolean'],
+                'is_active' => ['boolean'],
+                'is_listable' => ['boolean'],
+                'is_public' => ['boolean'],
+                'is_filterable' => ['boolean'],
+                'is_searchable' => ['boolean'],
+                'sort_order' => ['nullable', 'integer', 'min:0'],
+            ]);
+        }
+
+        if ($isLockedSection && isset($data['is_active']) && !$data['is_active']) {
+            return redirect()->back()->with('error', 'No se puede desactivar un campo de una sección bloqueada.');
+        }
 
         if (isset($data['options']) && is_array($data['options'])) {
             $data['options'] = json_encode($data['options']);
@@ -111,7 +134,15 @@ class PropertyFieldController extends Controller
 
     public function destroy(PropertyType $propertyType, \Modules\Properties\Models\PropertyField $field)
     {
-        $field->options()->delete();
+        $field->load('section.generalFieldSection');
+        $section = $field->section;
+        $isLockedSection = $section && $section->generalFieldSection && $section->generalFieldSection->is_locked;
+
+        if ($isLockedSection) {
+            return redirect()->back()->with('error', 'No se puede eliminar un campo de una sección bloqueada.');
+        }
+
+        $field->fieldOptions()->delete();
         $field->delete();
 
         return redirect()->back()->with('success', 'Campo eliminado.');

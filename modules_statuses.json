@@ -22,5 +22,6 @@
     "Tasks": true,
     "Clients": true,
     "Minisite": true,
-    "Properties": true
+    "Properties": true,
+    "OfficeHours": true
 }

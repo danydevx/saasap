@@ -51,6 +51,10 @@ use Modules\Businesses\Models\Business;
 use Modules\Minisite\Models\BusinessMinisiteSection;
 use Modules\Minisite\Models\BusinessMinisiteSetting;
 use Modules\Minisite\Policies\MinisitePolicy;
+use Modules\OfficeHours\Models\BusinessSchedule;
+use Modules\OfficeHours\Policies\BusinessSchedulePolicy;
+use Modules\Properties\Models\PropertyType;
+use Modules\Properties\Observers\PropertyTypeObserver;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -77,11 +81,22 @@ class AppServiceProvider extends ServiceProvider
             return Business::where('slug', $value)->firstOrFail();
         });
 
+        // Route model binding for BusinessLocation
+        $this->app->router->bind('location', function ($value) {
+            return \Modules\Locations\Models\BusinessLocation::findOrFail($value);
+        });
+
+        // Route model binding for BusinessSchedule
+        $this->app->router->bind('schedule', function ($value) {
+            return \Modules\OfficeHours\Models\BusinessSchedule::findOrFail($value);
+        });
+
         // Registra comandos del starter kit cuando se ejecuta en consola.
         if ($this->app->runningInConsole()) {
             $this->commands([
                 CreateSuperAdmin::class,
                 InstallSaas::class,
+                \Modules\Properties\Console\Commands\AssignLockedSections::class,
             ]);
         }
 
@@ -140,6 +155,9 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Business::class, MinisitePolicy::class);
         Gate::policy(\Modules\Properties\Models\Property::class, \App\Policies\PropertyPolicy::class);
         Gate::policy(\Modules\Properties\Models\PropertyType::class, \App\Policies\PropertyTypePolicy::class);
+        Gate::policy(BusinessSchedule::class, BusinessSchedulePolicy::class);
+
+        PropertyType::observe(PropertyTypeObserver::class);
 
         RateLimiter::for('login', function (Request $request) {
             $email = mb_strtolower((string) $request->input('email', ''));

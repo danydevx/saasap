@@ -1,5 +1,10 @@
 <template>
-  <div class="conversation-detail">
+  <MemberLayout>
+    <Head title="Detalle de Conversación" />
+    <PageHeader
+      title="Detalle de Conversación"
+      :breadcrumbs="breadcrumbs"
+    />
     <div class="d-flex justify-content-between align-items-center mb-4">
       <div>
         <h4 class="mb-1">Detalle de Conversación</h4>
@@ -62,23 +67,35 @@
           </small>
         </div>
         <div class="message-content card mt-2">
-          <div class="card-body">
+            <div class="card-body">
             {{ msg.content }}
           </div>
         </div>
       </div>
     </div>
-  </div>
+  </MemberLayout>
 </template>
 
 <script setup>
-import { Link } from '@inertiajs/vue3'
+import { computed } from 'vue'
+import { Head, Link, usePage } from '@inertiajs/vue3'
+import MemberLayout from '@/Layouts/MemberLayout.vue'
+import PageHeader from '@/Components/Admin/PageHeader.vue'
 
+const page = usePage()
 const props = defineProps({
   business: Object,
   conversation: Object,
   messages: Array,
 })
+
+const breadcrumbs = computed(() => [
+  { label: 'Mis Negocios', href: '/member/business-modules' },
+  { label: props.business?.name || 'Negocio', href: `/member/businesses/${props.business?.id}/edit` },
+  { label: 'AI Chatbot', href: `/member/businesses/${props.business?.id}/ai-chatbot` },
+  { label: 'Historial', href: `/member/businesses/${props.business?.id}/ai-chatbot/history` },
+  { label: props.conversation?.session_id?.substring(0, 8) || 'Detalle', active: true },
+])
 
 const formatDate = (dateStr) => {
   if (!dateStr) return ''

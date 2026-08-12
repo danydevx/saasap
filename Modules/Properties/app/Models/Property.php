@@ -78,6 +78,20 @@ class Property extends Model
         'is_featured',
         'is_public',
         'published_at',
+        'country',
+        'state',
+        'state_code',
+        'city',
+        'municipality',
+        'colony',
+        'postal_code',
+        'street',
+        'exterior_number',
+        'interior_number',
+        'references',
+        'latitude',
+        'longitude',
+        'show_exact_location',
     ];
 
     protected $casts = [
@@ -85,6 +99,9 @@ class Property extends Model
         'is_featured' => 'boolean',
         'is_public' => 'boolean',
         'published_at' => 'datetime',
+        'latitude' => 'decimal:7',
+        'longitude' => 'decimal:7',
+        'show_exact_location' => 'boolean',
     ];
 
     public function business(): BelongsTo
@@ -110,6 +127,11 @@ class Property extends Model
     public function mainImage(): HasMany
     {
         return $this->hasMany(PropertyImage::class)->where('is_main', true);
+    }
+
+    public function amenities(): HasMany
+    {
+        return $this->hasMany(PropertyAmenityProperty::class);
     }
 
     public function scopeActive($query)
@@ -142,6 +164,22 @@ class Property extends Model
     public function scopeOfOperation($query, string $operation)
     {
         return $query->where('operation_type', $operation);
+    }
+
+    public function scopeInCity($query, ?string $city)
+    {
+        if ($city) {
+            return $query->where('city', $city);
+        }
+        return $query;
+    }
+
+    public function scopeInState($query, ?string $state)
+    {
+        if ($state) {
+            return $query->where('state_code', $state);
+        }
+        return $query;
     }
 
     public function scopePriceRange($query, $min, $max)

@@ -1,17 +1,16 @@
 <template>
   <MemberLayout>
     <Head :title="`${business.name} - Nuevo Preset`" />
-
-    <div class="container-fluid py-4">
-      <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-          <h1 class="h4 mb-0">Nuevo Preset</h1>
-          <small class="text-muted">{{ business.name }}</small>
-        </div>
+    <PageHeader
+      title="Nuevo Preset"
+      :breadcrumbs="breadcrumbs"
+    >
+      <template #actions>
         <Link :href="`/member/businesses/${business.id}/ai-chatbot/presets`" class="btn btn-outline-secondary">
           <i class="bi bi-arrow-left me-1"></i>Volver
         </Link>
-      </div>
+      </template>
+    </PageHeader>
 
       <div v-if="$page.props.errors && Object.keys($page.props.errors).length" class="alert alert-danger">
         <ul class="mb-0">
@@ -175,20 +174,28 @@
           </div>
         </div>
       </form>
-    </div>
   </MemberLayout>
 </template>
 
 <script setup>
-import { reactive, ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { Head, Link, router, usePage } from '@inertiajs/vue3'
 import MemberLayout from '@/Layouts/MemberLayout.vue'
+import PageHeader from '@/Components/Admin/PageHeader.vue'
 
 const page = usePage()
 const business = page.props.business
 const personalities = page.props.personalities || []
 const languages = page.props.languages || ['es', 'en', 'pt', 'fr']
 const contexts = page.props.contexts || []
+
+const breadcrumbs = computed(() => [
+  { label: 'Mis Negocios', href: '/member/business-modules' },
+  { label: business?.name || 'Negocio', href: `/member/businesses/${business?.id}/edit` },
+  { label: 'AI Chatbot', href: `/member/businesses/${business?.id}/ai-chatbot` },
+  { label: 'Presets', href: `/member/businesses/${business?.id}/ai-chatbot/presets` },
+  { label: 'Nuevo Preset', active: true },
+])
 
 const saving = ref(false)
 

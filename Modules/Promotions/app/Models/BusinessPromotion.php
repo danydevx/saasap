@@ -68,7 +68,14 @@ class BusinessPromotion extends Model
 
     public function getFirstImageAttribute(): ?string
     {
-        return $this->images->first()?->path;
+        $path = $this->images->first()?->path;
+        if (!$path) {
+            return null;
+        }
+        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+            return $path;
+        }
+        return '/storage/' . $path;
     }
 
     public function isValid(): bool

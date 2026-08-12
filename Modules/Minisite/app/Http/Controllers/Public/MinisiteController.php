@@ -1014,6 +1014,17 @@ class MinisiteController extends Controller
             ->get(['id', 'name', 'address_line_1', 'city', 'state', 'state_code', 'country', 'phone', 'email', 'latitude', 'longitude', 'directions_url'])
             ->map(function ($location) {
                 $statePart = $location->state ?: $location->state_code;
+                $schedules = $location->schedules()
+                    ->where('is_active', true)
+                    ->get(['id', 'name', 'days_of_week', 'opening_time', 'closing_time', 'lunch_start_time', 'lunch_end_time'])
+                    ->map(function ($schedule) {
+                        return [
+                            'id' => $schedule->id,
+                            'name' => $schedule->name,
+                            'days_display' => $schedule->days_display,
+                            'time_display' => $schedule->time_display,
+                        ];
+                    })->toArray();
                 return [
                     'id' => $location->id,
                     'name' => $location->name,
@@ -1027,6 +1038,7 @@ class MinisiteController extends Controller
                     'latitude' => $location->latitude,
                     'longitude' => $location->longitude,
                     'directions_url' => $location->directions_url,
+                    'schedules' => $schedules,
                 ];
             })->toArray();
     }

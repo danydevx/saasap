@@ -39,6 +39,10 @@ class PropertyImageService
             return '';
         }
 
+        if (str_starts_with($path, '/tmp/') || str_starts_with($path, 'tmp/')) {
+            return '';
+        }
+
         return "/storage/{$path}";
     }
 

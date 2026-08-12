@@ -14,11 +14,7 @@ class BusinessSocialNetworkPolicy
             return true;
         }
 
-        if (!$business->is_published || !$business->is_active) {
-            return $user->id === $business->user_id;
-        }
-
-        return true;
+        return $user->id === $business->user_id;
     }
 
     public function create(User $user, Business $business): bool

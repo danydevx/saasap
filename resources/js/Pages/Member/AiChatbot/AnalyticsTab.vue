@@ -1,19 +1,24 @@
 <template>
-  <div class="analytics-tab">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <h4 class="mb-0">Estadisticas del Chatbot</h4>
-      <div class="btn-group">
-        <button
-          v-for="p in periods"
-          :key="p.value"
-          class="btn"
-          :class="period === p.value ? 'btn-primary' : 'btn-outline-primary'"
-          @click="changePeriod(p.value)"
-        >
-          {{ p.label }}
-        </button>
-      </div>
-    </div>
+  <MemberLayout>
+    <Head title="Estadísticas del Chatbot" />
+    <PageHeader
+      title="Estadísticas del Chatbot"
+      :breadcrumbs="breadcrumbs"
+    >
+      <template #actions>
+        <div class="btn-group">
+          <button
+            v-for="p in periods"
+            :key="p.value"
+            class="btn"
+            :class="period === p.value ? 'btn-primary' : 'btn-outline-primary'"
+            @click="changePeriod(p.value)"
+          >
+            {{ p.label }}
+          </button>
+        </div>
+      </template>
+    </PageHeader>
 
     <div class="row g-4 mb-4">
       <div class="col-6 col-md-3">
@@ -185,52 +190,33 @@
         </div>
       </div>
     </div>
-  </div>
+  </MemberLayout>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { router } from '@inertiajs/vue3'
+import { computed, ref } from 'vue'
+import { Head, usePage } from '@inertiajs/vue3'
+import MemberLayout from '@/Layouts/MemberLayout.vue'
+import PageHeader from '@/Components/Admin/PageHeader.vue'
 
+const page = usePage()
 const props = defineProps({
-  business: {
-    type: Object,
-    default: () => ({}),
-  },
-  totals: {
-    type: Object,
-    default: () => ({
-      total_conversations: 0,
-      total_messages: 0,
-      total_tokens: 0,
-      total_errors: 0,
-    }),
-  },
-  dailyStats: {
-    type: Array,
-    default: () => [],
-  },
-  topQuestions: {
-    type: Array,
-    default: () => [],
-  },
-  geoStats: {
-    type: Array,
-    default: () => [],
-  },
-  deviceStats: {
-    type: Array,
-    default: () => [],
-  },
-  dailyConversations: {
-    type: Array,
-    default: () => [],
-  },
-  period: {
-    type: String,
-    default: '30days',
-  },
+  business: Object,
+  totals: Object,
+  dailyStats: Array,
+  topQuestions: Array,
+  geoStats: Array,
+  deviceStats: Array,
+  dailyConversations: Array,
+  period: String,
 })
+
+const breadcrumbs = computed(() => [
+  { label: 'Mis Negocios', href: '/member/business-modules' },
+  { label: props.business?.name || 'Negocio', href: `/member/businesses/${props.business?.id}/edit` },
+  { label: 'AI Chatbot', href: `/member/businesses/${props.business?.id}/ai-chatbot` },
+  { label: 'Estadísticas', active: true },
+])
 
 const emit = defineEmits(['period-change'])
 

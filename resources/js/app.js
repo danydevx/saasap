@@ -10,6 +10,8 @@ import { createPinia } from 'pinia'
 import Toastify from 'vue3-toastify'
 import 'vue3-toastify/dist/index.css'
 
+import './@core/vee-validate'
+
 createInertiaApp({
     resolve: async (name) => {
         const pages = import.meta.glob('./Pages/**/*.vue')

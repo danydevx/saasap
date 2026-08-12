@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Storage;
 use Modules\Properties\Models\Property;
 use Modules\Properties\Models\PropertyField;
 use Modules\Properties\Models\PropertyValue;
+use Modules\Properties\Models\PropertyAmenityProperty;
 
 class PropertyService
 {
@@ -48,6 +49,14 @@ class PropertyService
             $query->where('price', '<=', $filters['max_price']);
         }
 
+        if (! empty($filters['city'])) {
+            $query->where('city', $filters['city']);
+        }
+
+        if (! empty($filters['state'])) {
+            $query->where('state_code', $filters['state']);
+        }
+
         $sort = $filters['sort'] ?? 'created_at';
         $direction = $filters['direction'] ?? 'desc';
         $allowedSorts = ['title', 'price', 'status', 'created_at', 'operation_type'];
@@ -79,7 +88,14 @@ class PropertyService
             }
 
             if (! empty($data['dynamic_values'])) {
-                $this->valueService->saveValues($property, $data['dynamic_values']);
+                $dynamicValues = is_string($data['dynamic_values'])
+                    ? json_decode($data['dynamic_values'], true)
+                    : $data['dynamic_values'];
+                $this->valueService->saveValues($property, $dynamicValues);
+            }
+
+            if (isset($data['amenity_ids'])) {
+                $this->saveAmenities($property, $data['amenity_ids']);
             }
 
             return $property;
@@ -112,11 +128,31 @@ class PropertyService
             $property->update($propertyData);
 
             if (! empty($data['dynamic_values'])) {
-                $this->valueService->saveValues($property, $data['dynamic_values']);
+                $dynamicValues = is_string($data['dynamic_values'])
+                    ? json_decode($data['dynamic_values'], true)
+                    : $data['dynamic_values'];
+                $this->valueService->saveValues($property, $dynamicValues);
+            }
+
+            if (isset($data['amenity_ids'])) {
+                $this->saveAmenities($property, $data['amenity_ids']);
             }
 
             return $property;
         });
+    }
+
+    protected function saveAmenities(Property $property, array $amenityIds): void
+    {
+        PropertyAmenityProperty::where('property_id', $property->id)->delete();
+
+        foreach ($amenityIds as $amenityId) {
+            PropertyAmenityProperty::create([
+                'property_id' => $property->id,
+                'property_amenity_id' => $amenityId,
+                'value' => true,
+            ]);
+        }
     }
 
     public function deleteProperty(Property $property): void
@@ -128,6 +164,7 @@ class PropertyService
 
             $property->values()->delete();
             $property->images()->delete();
+            $property->amenities()->delete();
             $property->delete();
         });
     }
@@ -178,6 +215,20 @@ class PropertyService
             'status',
             'is_featured',
             'is_public',
+            'country',
+            'state',
+            'state_code',
+            'city',
+            'municipality',
+            'colony',
+            'postal_code',
+            'street',
+            'exterior_number',
+            'interior_number',
+            'references',
+            'latitude',
+            'longitude',
+            'show_exact_location',
         ];
 
         $result = [];
@@ -193,6 +244,10 @@ class PropertyService
 
         if (isset($result['is_public'])) {
             $result['is_public'] = (bool) $result['is_public'];
+        }
+
+        if (isset($result['show_exact_location'])) {
+            $result['show_exact_location'] = (bool) $result['show_exact_location'];
         }
 
         return $result;

@@ -23,6 +23,22 @@
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
       </div>
 
+      <div v-if="links && links.length > 0" class="mb-4">
+        <div class="card border-0 shadow-sm">
+          <div class="card-body">
+            <h6 class="text-muted mb-3"><i class="bi bi-link-45deg me-1"></i>Accesos directos</h6>
+            <div class="row g-2">
+              <div v-for="link in links" :key="link.href" class="col-auto">
+                <Link :href="link.href" class="btn btn-outline-primary btn-sm">
+                  <i :class="link.icon" class="me-1"></i>
+                  {{ link.label }}
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="card border-0 shadow-sm">
         <div class="card-body">
           <form @submit.prevent="submit">
@@ -115,6 +131,7 @@ const props = defineProps({
   moduleIcon: String,
   settings: Object,
   schema: Array,
+  links: Array,
 })
 
 const sending = ref(false)

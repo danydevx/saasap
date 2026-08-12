@@ -1,5 +1,10 @@
 <template>
-  <div class="conversation-history">
+  <MemberLayout>
+    <Head title="Historial de Conversaciones" />
+    <PageHeader
+      title="Historial de Conversaciones"
+      :breadcrumbs="breadcrumbs"
+    />
     <div class="d-flex justify-content-between align-items-center mb-4">
       <div>
         <h4 class="mb-1">Historial de Conversaciones</h4>
@@ -50,16 +55,27 @@
         </div>
       </div>
     </div>
-  </div>
+  </MemberLayout>
 </template>
 
 <script setup>
-import { Link } from '@inertiajs/vue3'
+import { computed } from 'vue'
+import { Head, Link, usePage } from '@inertiajs/vue3'
+import MemberLayout from '@/Layouts/MemberLayout.vue'
+import PageHeader from '@/Components/Admin/PageHeader.vue'
 
+const page = usePage()
 const props = defineProps({
   business: Object,
   conversations: Array,
 })
+
+const breadcrumbs = computed(() => [
+  { label: 'Mis Negocios', href: '/member/business-modules' },
+  { label: props.business?.name || 'Negocio', href: `/member/businesses/${props.business?.id}/edit` },
+  { label: 'AI Chatbot', href: `/member/businesses/${props.business?.id}/ai-chatbot` },
+  { label: 'Historial', active: true },
+])
 
 const viewConversation = (sessionId) => {
   window.location.href = `/member/businesses/${props.business.id}/ai-chatbot/history/${sessionId}`

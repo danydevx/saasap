@@ -4,12 +4,14 @@ namespace App\Services\Properties;
 
 use Modules\Properties\Models\PropertyType;
 use Modules\Properties\Models\PropertyField;
+use Modules\Properties\Models\GeneralFieldTypeAssignment;
 
 class PropertyFormSchemaService
 {
     public function getFormSchema(PropertyType $propertyType, ?int $excludeFieldId = null): array
     {
-        $sections = [];
+        $lockedSectionsData = [];
+        $regularSections = [];
 
         foreach ($propertyType->activeSections as $section) {
             $fields = $section->activeFields;
@@ -18,21 +20,63 @@ class PropertyFormSchemaService
                 $fields = $fields->where('id', '!=', $excludeFieldId);
             }
 
+            $customizations = $this->getSectionCustomizations($propertyType, $section);
+
+            $sectionFields = [];
+            foreach ($fields as $field) {
+                $fieldCustomizations = $this->getFieldCustomizations($field, $customizations);
+                $sectionFields[] = $this->formatField($field, $fieldCustomizations);
+            }
+
+            if (empty($sectionFields)) {
+                continue;
+            }
+
             $sectionData = [
                 'id' => $section->id,
                 'name' => $section->name,
                 'description' => $section->description,
                 'sort_order' => $section->sort_order,
-                'fields' => [],
+                'is_general' => $section->is_general,
+                'is_locked' => $section->is_locked,
+                'general_field_section_id' => $section->general_field_section_id,
+                'general_field_section_slug' => $section->generalFieldSection?->slug,
+                'fields' => $sectionFields,
             ];
 
-            foreach ($fields as $field) {
-                $sectionData['fields'][] = $this->formatField($field);
+            if ($section->is_locked) {
+                $lockedSectionsData[] = $sectionData;
+            } else {
+                $regularSections[] = $sectionData;
             }
+        }
 
-            if (! empty($sectionData['fields'])) {
-                $sections[] = $sectionData;
-            }
+        $sections = [];
+
+        if (!empty($lockedSectionsData)) {
+            $mergedLockedFields = collect($lockedSectionsData)
+                ->sortBy('sort_order')
+                ->pluck('fields')
+                ->flatten(1)
+                ->values()
+                ->all();
+
+            $sections[] = [
+                'id' => 'locked-merged',
+                'name' => 'Información del inmueble',
+                'description' => null,
+                'sort_order' => 1,
+                'is_general' => true,
+                'is_locked' => true,
+                'general_field_section_id' => null,
+                'general_field_section_slug' => null,
+                'fields' => $mergedLockedFields,
+            ];
+        }
+
+        foreach ($regularSections as $section) {
+            $section['sort_order'] = $section['sort_order'] + 1;
+            $sections[] = $section;
         }
 
         $standaloneFields = $propertyType->activeFields()
@@ -45,7 +89,10 @@ class PropertyFormSchemaService
                 'id' => null,
                 'name' => 'Información general',
                 'description' => null,
-                'sort_order' => 0,
+                'sort_order' => count($sections) + 1,
+                'is_general' => false,
+                'is_locked' => false,
+                'general_field_section_id' => null,
                 'fields' => $standaloneFields->map(fn($f) => $this->formatField($f))->toArray(),
             ];
         }
@@ -62,24 +109,61 @@ class PropertyFormSchemaService
         ];
     }
 
-    public function formatField(PropertyField $field): array
+    protected function getSectionCustomizations(PropertyType $propertyType, $section): ?array
     {
+        if (!$section->general_field_section_id) {
+            return null;
+        }
+
+        $assignment = GeneralFieldTypeAssignment::where('property_type_id', $propertyType->id)
+            ->where('general_field_section_id', $section->general_field_section_id)
+            ->first();
+
+        return $assignment?->custom_settings;
+    }
+
+    protected function getFieldCustomizations(PropertyField $field, ?array $sectionCustomizations): ?array
+    {
+        if (!$field->general_field_id || !$sectionCustomizations) {
+            return null;
+        }
+
+        return $sectionCustomizations['fields'][$field->general_field_id] ?? null;
+    }
+
+    public function formatField(PropertyField $field, ?array $customizations = null): array
+    {
+        $label = $field->label;
+        $helpText = $field->help_text;
+        $placeholder = $field->placeholder;
+        $isRequired = $field->is_required;
+
+        if ($customizations) {
+            $label = $customizations['label'] ?? $label;
+            $helpText = $customizations['help_text'] ?? $helpText;
+            $placeholder = $customizations['placeholder'] ?? $placeholder;
+            $isRequired = $customizations['is_required'] ?? $isRequired;
+        }
+
         $data = [
             'id' => $field->id,
             'field_key' => $field->field_key,
             'field_type' => $field->field_type,
-            'label' => $field->label,
+            'label' => $label,
             'description' => $field->description,
-            'help_text' => $field->help_text,
-            'placeholder' => $field->placeholder,
+            'help_text' => $helpText,
+            'placeholder' => $placeholder,
             'default_value' => $field->default_value,
-            'is_required' => $field->is_required,
+            'is_required' => $isRequired,
+            'is_active' => $field->is_active,
             'sort_order' => $field->sort_order,
+            'is_inherited' => $field->is_inherited,
+            'general_field_id' => $field->general_field_id,
             'options' => null,
         ];
 
         if (in_array($field->field_type, ['select', 'multiselect', 'radio', 'checkbox'])) {
-            $data['options'] = $field->activeOptions->map(fn($opt) => [
+            $data['options'] = $field->activeFieldOptions->map(fn($opt) => [
                 'value' => $opt->value,
                 'label' => $opt->label,
             ])->toArray();

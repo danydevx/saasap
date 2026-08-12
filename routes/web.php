@@ -101,6 +101,7 @@ use App\Http\Controllers\Member\ReviewController;
 use App\Http\Controllers\Member\SeoController;
 use App\Http\Controllers\Member\ServiceController;
 use Modules\Services\Http\Controllers\ServiceImageController;
+use Modules\Properties\Http\Controllers\Member\PropertyImageController;
 use App\Http\Controllers\Member\SessionController as MemberSessionController;
 use App\Http\Controllers\Member\SlotController;
 use App\Http\Controllers\Member\SocialNetworkController;
@@ -316,6 +317,12 @@ Route::post('/member/businesses/{business}/services/{service}/images', [ServiceI
 Route::delete('/member/businesses/{business}/services/{service}/images/{image}', [ServiceImageController::class, 'destroy'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.businesses.services.images.destroy');
+Route::post('/member/businesses/{business}/properties/{property}/images', [PropertyImageController::class, 'store'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.properties.images.store');
+Route::delete('/member/businesses/{business}/properties/{property}/images/{image}', [PropertyImageController::class, 'destroy'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.properties.images.destroy');
 
 Route::get('/member/businesses/{business}/faqs', [FaqController::class, 'index'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])

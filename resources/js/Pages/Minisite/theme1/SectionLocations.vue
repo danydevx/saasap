@@ -36,6 +36,11 @@
                   <i class="bi bi-signpost"></i> Cómo llegar
                 </a>
               </div>
+              <div v-if="showHours && item.schedules && item.schedules.length" class="section-locations__schedules">
+                <div v-for="schedule in item.schedules" :key="schedule.id" class="section-locations__schedule">
+                  <strong>{{ schedule.name }}:</strong> {{ schedule.days_display }} {{ schedule.time_display }}
+                </div>
+              </div>
             </div>
           </div>
           <LocationMap
@@ -177,6 +182,22 @@ export default defineComponent({ name: 'SectionLocations' })
 
     i {
       margin-right: 6px;
+    }
+  }
+
+  &__schedules {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #e9ecef;
+  }
+
+  &__schedule {
+    font-size: 0.875rem;
+    color: #495057;
+    margin-bottom: 4px;
+
+    &:last-child {
+      margin-bottom: 0;
     }
   }
 

@@ -4,6 +4,10 @@
 
     <PageHeader title="Tipos de Propiedad" :breadcrumbs="breadcrumbs">
       <template #actions>
+        <Link href="/admin/modules/properties/general-sections" class="btn btn-outline-secondary btn-sm me-2">
+          <i class="bi bi-folder-plus me-1"></i>
+          Campos Generales
+        </Link>
         <button class="btn btn-primary btn-sm" @click="showCreateModal = true">
           <i class="bi bi-plus-lg me-1"></i>
           Nuevo Tipo
@@ -38,7 +42,7 @@
               <td>
                 <div class="actions">
                   <Link
-                    :href="`/admin/property-types/${type.id}/fields`"
+                    :href="`/admin/modules/properties/types/${type.id}/fields-edit`"
                     class="btn btn-sm btn-outline-secondary"
                     title="Configurar campos"
                   >
@@ -132,7 +136,7 @@ const props = defineProps({
 
 const breadcrumbs = [
   { label: 'Admin', href: '/admin' },
-  { label: 'Propiedades', href: '/admin/property-types' },
+  { label: 'Propiedades', href: '/admin/modules/properties/types' },
   { label: 'Tipos', active: true },
 ]
 
@@ -178,14 +182,14 @@ const saveType = () => {
   saving.value = true
 
   if (editingType.value) {
-    router.put(`/admin/property-types/${editingType.value.id}`, typeForm, {
+    router.put(`/admin/modules/properties/types/${editingType.value.id}`, typeForm, {
       onFinish: () => {
         saving.value = false
         closeModals()
       },
     })
   } else {
-    router.post('/admin/property-types', typeForm, {
+    router.post('/admin/modules/properties/types', typeForm, {
       onFinish: () => {
         saving.value = false
         closeModals()
@@ -197,7 +201,7 @@ const saveType = () => {
 const deleteType = (type) => {
   if (confirm(`Eliminar el tipo "${type.name}"? Esta acción no se puede deshacer.`)) {
     deleting.value = type.id
-    router.delete(`/admin/property-types/${type.id}`, {
+    router.delete(`/admin/modules/properties/types/${type.id}`, {
       onFinish: () => {
         deleting.value = null
       },

@@ -8,131 +8,79 @@
       :backHref="`/member/businesses/${business?.id}/properties`"
     />
 
+    <div v-if="$page.props.flash?.success" class="alert alert-success alert-dismissible fade show" role="alert">
+      {{ $page.props.flash.success }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    <div v-if="$page.props.flash?.error" class="alert alert-danger alert-dismissible fade show" role="alert">
+      {{ $page.props.flash.error }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
     <div class="card border-0 shadow-sm">
       <div class="card-body">
+        <div v-if="Object.keys(errors).length" class="alert alert-danger">
+          <ul class="mb-0">
+            <li v-for="(error, key) in errors" :key="key">{{ error }}</li>
+          </ul>
+        </div>
         <form @submit.prevent="submit">
-          <div v-if="formSchema" class="row g-3">
-            <template v-for="section in formSchema.sections" :key="section.id">
-              <div class="col-12">
-                <h5 class="border-bottom pb-2 mb-3">{{ section.name }}</h5>
-              </div>
+          <div class="row g-3">
+            <div v-if="formSchema && lockedSection" class="col-12">
+              <FormSection
+                :section="lockedSection"
+                :form="form"
+                :errors="errors"
+                :mainImageFile="mainImageFile"
+                :initialMainImageUrl="property?.main_image_url"
+                @update:keep="keepMainImage = $event"
+                @image-removed="removeMainImage"
+              />
+            </div>
 
-              <template v-for="field in section.fields" :key="field.id">
-                <div class="col-12" :class="getFieldColClass(field.field_type)">
-                  <FieldText
-                    v-if="field.field_type === 'text'"
-                    :id="`field-${field.field_key}`"
-                    :label="field.label"
-                    v-model="form[field.field_key]"
-                    :formError="errors[field.field_key]"
-                    :placeholder="field.placeholder"
-                    :helpText="field.help_text"
-                    :required="field.is_required"
-                  />
+            <PropertyLocationSection
+              v-model="locationData"
+              :errors="errors"
+            />
 
-                  <FieldTextarea
-                    v-else-if="field.field_type === 'textarea'"
-                    :id="`field-${field.field_key}`"
-                    :label="field.label"
-                    v-model="form[field.field_key]"
-                    :formError="errors[field.field_key]"
-                    :placeholder="field.placeholder"
-                    :helpText="field.help_text"
-                    :required="field.is_required"
-                    :rows="4"
-                  />
+            <div v-if="formSchema" class="row g-3">
+              <FormSection
+                v-for="section in nonLockedSections"
+                :key="section.id"
+                :section="section"
+                :form="form"
+                :errors="errors"
+                :mainImageFile="mainImageFile"
+                :initialMainImageUrl="property?.main_image_url"
+                @update:keep="keepMainImage = $event"
+                @image-removed="removeMainImage"
+              />
+            </div>
+          </div>
 
-                  <FieldNumber
-                    v-else-if="field.field_type === 'number' || field.field_type === 'decimal'"
-                    :id="`field-${field.field_key}`"
-                    :label="field.label"
-                    v-model="form[field.field_key]"
-                    :formError="errors[field.field_key]"
-                    :placeholder="field.placeholder"
-                    :helpText="field.help_text"
-                    :required="field.is_required"
-                  />
+          <div v-if="hasGalleryFields" class="col-12 mt-4">
+            <h5 class="border-bottom pb-2 mb-3">
+              <i class="bi bi-images me-2"></i>Galería de imágenes
+            </h5>
+            <PropertyImageUpload
+              :businessId="business?.id"
+              :propertyId="property?.id"
+              :images="propertyImages || []"
+              :maxFiles="10"
+              :maxSizeMb="5"
+              label="Galería de imágenes"
+              @updated="reloadImages"
+            />
+          </div>
 
-                  <FieldPrice
-                    v-else-if="field.field_type === 'price'"
-                    :id="`field-${field.field_key}`"
-                    :label="field.label"
-                    v-model="form[field.field_key]"
-                    :formError="errors[field.field_key]"
-                    :placeholder="field.placeholder"
-                    :helpText="field.help_text"
-                    :required="field.is_required"
-                    currencyLabel="Monto"
-                  />
-
-                  <FieldSelect
-                    v-else-if="field.field_type === 'select'"
-                    :id="`field-${field.field_key}`"
-                    :label="field.label"
-                    v-model="form[field.field_key]"
-                    :formError="errors[field.field_key]"
-                    :helpText="field.help_text"
-                    :required="field.is_required"
-                  >
-                    <option value="">Selecciona una opción</option>
-                    <option v-for="opt in field.options" :key="opt.value" :value="opt.value">
-                      {{ opt.label }}
-                    </option>
-                  </FieldSelect>
-
-                  <FieldRadio
-                    v-else-if="field.field_type === 'radio'"
-                    :id="`field-${field.field_key}`"
-                    :label="field.label"
-                    v-model="form[field.field_key]"
-                    :formError="errors[field.field_key]"
-                    :helpText="field.help_text"
-                    :required="field.is_required"
-                    :options="field.options"
-                  />
-
-                  <FieldCheckbox
-                    v-else-if="field.field_type === 'checkbox'"
-                    :id="`field-${field.field_key}`"
-                    :label="field.label"
-                    v-model="form[field.field_key]"
-                    :formError="errors[field.field_key]"
-                    :helpText="field.help_text"
-                  />
-
-                  <FieldDate
-                    v-else-if="field.field_type === 'date'"
-                    :id="`field-${field.field_key}`"
-                    :label="field.label"
-                    v-model="form[field.field_key]"
-                    :formError="errors[field.field_key]"
-                    :placeholder="field.placeholder"
-                    :helpText="field.help_text"
-                    :required="field.is_required"
-                  />
-
-                  <FieldImage
-                    v-else-if="field.field_type === 'image'"
-                    :id="`field-${field.field_key}`"
-                    :label="field.label"
-                    v-model="mainImageFile"
-                    :helpText="field.help_text"
-                    :required="field.is_required"
-                    :maxFiles="1"
-                    :maxSizeMb="5"
-                    accept="image/jpeg,image/png,image/webp"
-                    :initialUrl="property.main_image_url"
-                  />
-
-                  <FieldSwitch
-                    v-else-if="field.field_type === 'boolean'"
-                    :id="`field-${field.field_key}`"
-                    :label="field.label"
-                    v-model="form[field.field_key]"
-                  />
-                </div>
-              </template>
-            </template>
+          <div v-if="amenities.length > 0" class="col-12 mt-4">
+            <h5 class="border-bottom pb-2 mb-3">
+              <i class="bi bi-star me-2"></i>Amenidades
+            </h5>
+            <PropertyAmenityPicker
+              v-model="form.amenity_ids"
+              :amenities="amenities"
+            />
           </div>
 
           <div class="col-12 d-flex gap-2 mt-4">
@@ -150,7 +98,7 @@
 </template>
 
 <script setup>
-import { computed, reactive, ref } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { Head, Link, router, usePage } from '@inertiajs/vue3'
 import MemberLayout from '@/Layouts/MemberLayout.vue'
 import PageHeader from '@/Components/Admin/PageHeader.vue'
@@ -164,6 +112,14 @@ import FieldDate from '@/Components/Fields/FieldDate.vue'
 import FieldSwitch from '@/Components/Fields/FieldSwitch.vue'
 import FieldImage from '@/Components/Fields/FieldImage.vue'
 import FieldPrice from '@/Components/Fields/FieldPrice.vue'
+import FieldEmail from '@/Components/Fields/FieldEmail.vue'
+import FieldPhone from '@/Components/Fields/FieldPhone.vue'
+import FieldUrl from '@/Components/Fields/FieldUrl.vue'
+import FieldFile from '@/Components/Fields/FieldFile.vue'
+import PropertyLocationSection from '@/Components/Properties/PropertyLocationSection.vue'
+import FormSection from '@/Components/Properties/FormSection.vue'
+import PropertyImageUpload from '@/Components/Fields/PropertyImageUpload.vue'
+import PropertyAmenityPicker from '@/Components/Fields/PropertyAmenityPicker.vue'
 
 const page = usePage()
 const business = computed(() => page.props.business)
@@ -171,7 +127,40 @@ const property = computed(() => page.props.property)
 const propertyType = computed(() => page.props.propertyType)
 const formSchema = computed(() => page.props.formSchema)
 const dynamicValues = computed(() => page.props.dynamicValues || {})
-const errors = computed(() => page.props.errors || {})
+const propertyImages = computed(() => page.props.propertyImages || [])
+const amenities = computed(() => page.props.amenities || [])
+const selectedAmenityIds = computed(() => page.props.selectedAmenityIds || [])
+
+const hasGalleryFields = computed(() => {
+  if (!formSchema.value?.sections) return false
+  return formSchema.value.sections.some(section =>
+    section.fields?.some(f => f.field_type === 'gallery')
+  )
+})
+
+const lockedSection = computed(() => {
+  if (!formSchema.value?.sections) return null
+  return formSchema.value.sections.find(section => section.is_locked) || null
+})
+
+const nonLockedSections = computed(() => {
+  if (!formSchema.value?.sections) return []
+  return formSchema.value.sections.filter(section => !section.is_locked)
+})
+
+const reloadImages = () => {
+  router.reload({ only: ['propertyImages'], preserveScroll: true })
+}
+const errors = computed(() => {
+  const allErrors = { ...(page.props.errors || {}) }
+  Object.keys(allErrors).forEach(key => {
+    if (key.startsWith('dynamic_values.')) {
+      const fieldKey = key.replace('dynamic_values.', '')
+      allErrors[fieldKey] = allErrors[key]
+    }
+  })
+  return allErrors
+})
 const businessMenu = computed(() => page.props.businessMenu || [])
 
 const breadcrumbs = computed(() => {
@@ -180,13 +169,18 @@ const breadcrumbs = computed(() => {
   if (businessMatch) {
     const businessId = parseInt(businessMatch[1])
     const biz = businessMenu.value.find(b => b.id === businessId)
+    const pt = propertyType.value
+    const typeLabel = pt ? `${pt.name} (${pt.slug})` : 'Tipo'
+    const typeHref = pt ? `/member/businesses/${businessId}/properties?property_type_id=${pt.id}` : null
     if (biz) {
-      return [
+      const items = [
         { label: 'Mis Negocios', href: '/member/business-modules' },
         { label: biz.name, href: `/member/businesses/${biz.id}/edit` },
         { label: 'Propiedades', href: `/member/businesses/${biz.id}/properties` },
-        { label: 'Editar Propiedad', active: true },
       ]
+      if (typeHref) items.push({ label: typeLabel, href: typeHref })
+      items.push({ label: 'Editar Propiedad', active: true })
+      return items
     }
   }
   return [
@@ -198,8 +192,23 @@ const breadcrumbs = computed(() => {
 
 const sending = ref(false)
 const mainImageFile = ref(null)
+const keepMainImage = ref(true)
 
-const form = reactive({
+function removeMainImage() {
+  keepMainImage.value = false
+  form.remove_main_image = true
+}
+
+const nonLocationValues = {}
+Object.keys(dynamicValues.value).forEach(key => {
+  let val = dynamicValues.value[key]
+  if (val && typeof val === 'object' && val.date) {
+    val = val.date.substring(0, 10)
+  }
+  nonLocationValues[key] = val
+})
+
+const initialForm = {
   property_type_id: property.value?.property_type_id,
   title: property.value?.title || '',
   description: property.value?.description || '',
@@ -211,8 +220,50 @@ const form = reactive({
   is_featured: property.value?.is_featured || false,
   is_public: property.value?.is_public || false,
   remove_main_image: false,
-  ...dynamicValues.value,
+  amenity_ids: [...selectedAmenityIds.value],
+  ...nonLocationValues,
+}
+
+if (formSchema.value?.sections) {
+  for (const section of formSchema.value.sections) {
+    for (const field of section.fields || []) {
+      if (field.field_type === 'gallery') continue
+      if (initialForm[field.field_key] === undefined) {
+        if (field.field_type === 'boolean') {
+          initialForm[field.field_key] = ['1', 'true', true].includes(field.default_value)
+        } else if (field.default_value !== null && field.default_value !== '') {
+          initialForm[field.field_key] = field.default_value
+        } else {
+          initialForm[field.field_key] = ''
+        }
+      }
+    }
+  }
+}
+
+const form = reactive(initialForm)
+
+const locationKeys = ['country', 'state', 'city', 'municipality', 'colony', 'postal_code', 'street', 'exterior_number', 'interior_number', 'references', 'latitude', 'longitude', 'show_exact_location']
+
+const locationData = ref({
+  country: property.value?.country || 'MX',
+  state: property.value?.state || '',
+  city: property.value?.city || '',
+  municipality: property.value?.municipality || '',
+  colony: property.value?.colony || '',
+  postal_code: property.value?.postal_code || '',
+  street: property.value?.street || '',
+  exterior_number: property.value?.exterior_number || '',
+  interior_number: property.value?.interior_number || '',
+  references: property.value?.references || '',
+  latitude: property.value?.latitude || '',
+  longitude: property.value?.longitude || '',
+  show_exact_location: property.value?.show_exact_location || false,
 })
+
+watch(locationData, (val) => {
+  Object.assign(form, val)
+}, { deep: true })
 
 const getFieldColClass = (fieldType) => {
   if (['textarea', 'image'].includes(fieldType)) {
@@ -229,23 +280,43 @@ const submit = () => {
   const formData = new FormData()
   formData.append('_method', 'PUT')
 
+  const mainFields = [
+    'property_type_id', 'title', 'description', 'operation_type', 'price',
+    'currency', 'price_period', 'status', 'is_featured', 'is_public',
+    'remove_main_image', 'country', 'state', 'state_code', 'city',
+    'municipality', 'colony', 'postal_code', 'street', 'exterior_number',
+    'interior_number', 'references', 'latitude', 'longitude', 'show_exact_location'
+  ]
+
+  const dynamicValues = {}
+
   Object.keys(form).forEach(key => {
-    const val = form[key]
-    if (val !== null && val !== '') {
-      if (typeof val === 'boolean') {
-        formData.append(key, val ? '1' : '0')
-      } else {
-        formData.append(key, val)
+    if (mainFields.includes(key)) {
+      const val = form[key]
+      if (val !== null && val !== '') {
+        if (typeof val === 'boolean') {
+          formData.append(key, val ? '1' : '0')
+        } else {
+          formData.append(key, val)
+        }
       }
+    } else if (key !== 'location' && key !== 'amenity_ids') {
+      dynamicValues[key] = form[key]
     }
   })
 
-  if (mainImageFile.value instanceof File) {
-    formData.append('main_image', mainImageFile.value)
+  if (Object.keys(dynamicValues).length > 0) {
+    formData.append('dynamic_values', JSON.stringify(dynamicValues))
   }
 
-  if (form.remove_main_image) {
-    formData.append('remove_main_image', '1')
+  if (form.amenity_ids && form.amenity_ids.length > 0) {
+    form.amenity_ids.forEach(id => {
+      formData.append('amenity_ids[]', id)
+    })
+  }
+
+  if (mainImageFile.value instanceof File) {
+    formData.append('main_image', mainImageFile.value)
   }
 
   router.post(`/member/businesses/${business.value.id}/properties/${property.value.id}`, formData, {

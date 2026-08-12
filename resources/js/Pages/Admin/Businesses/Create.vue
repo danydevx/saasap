@@ -103,23 +103,19 @@
             </div>
 
             <div class="col-12 col-md-3">
-              <FieldText
-                id="business-timezone"
-                label="Zona Horaria"
-                placeholder="America/Argentina/Buenos_Aires"
-                v-model="form.timezone"
-                :formError="form.errors.timezone"
-              />
+              <label for="business-timezone" class="form-label">Zona Horaria</label>
+              <select id="business-timezone" class="form-select" v-model="form.timezone" :class="{ 'is-invalid': form.errors.timezone }">
+                <option value="America/Mexico_City">Ciudad de México (America/Mexico_City)</option>
+              </select>
+              <div v-if="form.errors.timezone" class="invalid-feedback">{{ form.errors.timezone }}</div>
             </div>
 
             <div class="col-12 col-md-3">
-              <FieldText
-                id="business-currency"
-                label="Moneda"
-                placeholder="USD"
-                v-model="form.currency"
-                :formError="form.errors.currency"
-              />
+              <label for="business-currency" class="form-label">Moneda</label>
+              <select id="business-currency" class="form-select" v-model="form.currency" :class="{ 'is-invalid': form.errors.currency }">
+                <option value="MXN">MXN - Peso Mexicano</option>
+              </select>
+              <div v-if="form.errors.currency" class="invalid-feedback">{{ form.errors.currency }}</div>
             </div>
 
             <div class="col-12 col-md-4">
@@ -195,8 +191,8 @@ const form = useForm({
   phone: '',
   email: '',
   website: '',
-  timezone: 'America/Argentina/Buenos_Aires',
-  currency: 'USD',
+  timezone: 'America/Mexico_City',
+  currency: 'MXN',
   is_active: true,
   is_published: false,
 })

@@ -11,6 +11,7 @@ const props = defineProps({
   classObject: { type: String, default: '' },
   initialPreview: { type: [String, Array], default: null },
   multiple: { type: Boolean, default: false },
+  maxSizeMb: { type: Number, default: 5 },
   readonly: { type: Boolean, default: false }
 });
 
@@ -99,15 +100,16 @@ watch(
 function onFileChange(event) {
   if (props.readonly) return;
   const selectedFiles = Array.from(event.target.files);
-  const maxSize = 2 * 1024 * 1024; // 2MB
+  const maxSizeBytes = (props.maxSizeMb || 5) * 1024 * 1024;
   const maxImages = props.multiple ? 6 : 1;
 
-  // Filter: JPG only and max 2MB
+  const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+
   const validFiles = selectedFiles
     .filter(file => {
-      const isJpg = file.type === 'image/jpeg' || file.type === 'image/jpg';
-      const isValidSize = file.size <= maxSize;
-      return isJpg && isValidSize;
+      const isValidType = validTypes.includes(file.type);
+      const isValidSize = file.size <= maxSizeBytes;
+      return isValidType && isValidSize;
     })
     .slice(0, maxImages);
 

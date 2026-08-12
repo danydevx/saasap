@@ -37,6 +37,8 @@ class PropertyController extends Controller
         $status = $request->get('status');
         $minPrice = $request->get('min_price');
         $maxPrice = $request->get('max_price');
+        $city = $request->get('city');
+        $state = $request->get('state');
 
         $filters = array_filter([
             'search' => $search,
@@ -45,6 +47,8 @@ class PropertyController extends Controller
             'status' => $status,
             'min_price' => $minPrice,
             'max_price' => $maxPrice,
+            'city' => $city,
+            'state' => $state,
             'sort' => $sort,
             'direction' => $direction,
         ]);
@@ -59,10 +63,36 @@ class PropertyController extends Controller
             $item['formatted_price'] = $property->getFormattedPrice();
             $item['operation_label'] = $property->getOperationLabel();
             $item['status_label'] = $property->getStatusLabel();
+            $item['property_type_name'] = $property->propertyType?->name;
+            $item['is_featured'] = $property->is_featured;
+
+            $locationParts = array_filter([$property->colony, $property->city, $property->state]);
+            $item['location'] = implode(', ', $locationParts);
+
             return $item;
         });
 
         $propertyTypes = PropertyType::active()->orderBy('name')->get(['id', 'name', 'key']);
+
+        $availableStates = $business->properties()
+            ->whereNotNull('state_code')
+            ->where('state_code', '!=', '')
+            ->distinct()
+            ->orderBy('state_code')
+            ->pluck('state_code')
+            ->toArray();
+
+        $availableCities = [];
+        if ($state) {
+            $availableCities = $business->properties()
+                ->where('state_code', $state)
+                ->whereNotNull('city')
+                ->where('city', '!=', '')
+                ->distinct()
+                ->orderBy('city')
+                ->pluck('city')
+                ->toArray();
+        }
 
         $dataTable = [
             'data' => $properties->items(),
@@ -88,6 +118,8 @@ class PropertyController extends Controller
             'filters' => $filters,
             'statusOptions' => $statusOptions,
             'operationOptions' => $operationOptions,
+            'availableStates' => $availableStates,
+            'availableCities' => $availableCities,
         ]);
     }
 
@@ -157,15 +189,40 @@ class PropertyController extends Controller
         $propertyType = $property->propertyType;
         $formSchema = $this->formSchemaService->getFormSchema($propertyType);
 
-        $property->load(['values.propertyField']);
+        $property->load(['values.propertyField', 'images']);
 
         $dynamicValues = [];
         foreach ($property->values as $value) {
             $fieldKey = $value->propertyField->field_key ?? null;
             if ($fieldKey) {
-                $dynamicValues[$fieldKey] = $value->getValue();
+                $val = $value->getValue();
+                if ($val instanceof \Carbon\Carbon) {
+                    $val = $val->format('Y-m-d');
+                }
+                $dynamicValues[$fieldKey] = $val;
             }
         }
+
+        $propertyImages = $property->images->map(fn($img) => [
+            'id' => $img->id,
+            'url' => $img->image_path ? "/storage/{$img->image_path}" : '',
+            'filename' => basename($img->image_path ?? ''),
+        ])->toArray();
+
+        $typeAmenities = $propertyType->amenities()
+            ->active()
+            ->sorted()
+            ->get()
+            ->map(fn($a) => [
+                'id' => $a->id,
+                'key' => $a->key,
+                'name' => $a->name,
+                'icon' => $a->icon,
+            ]);
+
+        $selectedAmenityIds = $property->amenities()
+            ->pluck('property_amenity_id')
+            ->toArray();
 
         return Inertia::render('Member/Properties/Edit', [
             'business' => [
@@ -187,6 +244,20 @@ class PropertyController extends Controller
                 'is_featured' => $property->is_featured,
                 'is_public' => $property->is_public,
                 'property_type_id' => $property->property_type_id,
+                'country' => $property->country,
+                'state' => $property->state,
+                'state_code' => $property->state_code,
+                'city' => $property->city,
+                'municipality' => $property->municipality,
+                'colony' => $property->colony,
+                'postal_code' => $property->postal_code,
+                'street' => $property->street,
+                'exterior_number' => $property->exterior_number,
+                'interior_number' => $property->interior_number,
+                'references' => $property->references,
+                'latitude' => $property->latitude,
+                'longitude' => $property->longitude,
+                'show_exact_location' => $property->show_exact_location,
             ],
             'propertyType' => [
                 'id' => $propertyType->id,
@@ -195,6 +266,9 @@ class PropertyController extends Controller
             ],
             'formSchema' => $formSchema,
             'dynamicValues' => $dynamicValues,
+            'propertyImages' => $propertyImages,
+            'amenities' => $typeAmenities,
+            'selectedAmenityIds' => $selectedAmenityIds,
         ]);
     }
 

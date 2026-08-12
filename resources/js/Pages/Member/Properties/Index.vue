@@ -25,25 +25,37 @@
     </PageHeader>
 
     <div class="row mb-4 align-items-center">
-      <div class="col-md-3">
+      <div class="col-md-2">
         <select v-model="filters.property_type_id" class="form-select" @change="filterProperties">
           <option :value="null">Todos los tipos</option>
           <option v-for="type in propertyTypes" :key="type.id" :value="type.id">{{ type.name }}</option>
         </select>
       </div>
-      <div class="col-md-3">
+      <div class="col-md-2">
         <select v-model="filters.operation_type" class="form-select" @change="filterProperties">
           <option :value="null">Todas las operaciones</option>
           <option v-for="op in operationOptions" :key="op" :value="op">{{ getOperationLabel(op) }}</option>
         </select>
       </div>
-      <div class="col-md-3">
+      <div class="col-md-2">
         <select v-model="filters.status" class="form-select" @change="filterProperties">
           <option :value="null">Todos los estados</option>
           <option v-for="st in statusOptions" :key="st" :value="st">{{ getStatusLabel(st) }}</option>
         </select>
       </div>
-      <div class="col-md-3">
+      <div class="col-md-2">
+        <select v-model="filters.state" class="form-select" @change="onStateChange">
+          <option :value="null">Todos los estados</option>
+          <option v-for="state in availableStates" :key="state" :value="state">{{ state }}</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <select v-model="filters.city" class="form-select" @change="filterProperties" :disabled="!filters.state">
+          <option :value="null">Todas las ciudades</option>
+          <option v-for="city in availableCities" :key="city" :value="city">{{ city }}</option>
+        </select>
+      </div>
+      <div class="col-md-2">
         <BulkSelect
           v-model:selectedIds="selectedIds"
           :current-page-ids="currentPageIds"
@@ -111,6 +123,25 @@
       <template #cell-title="{ row }">
         <strong>{{ row.title }}</strong>
         <p v-if="row.description" class="text-muted small mb-0">{{ row.description.substring(0, 60) }}...</p>
+      </template>
+
+      <template #cell-property_type="{ row }">
+        <span class="badge bg-light text-dark">{{ row.property_type_name || '-' }}</span>
+      </template>
+
+      <template #cell-is_featured="{ row }">
+        <span v-if="row.is_featured" class="badge bg-warning text-dark">
+          <i class="bi bi-star-fill"></i>
+        </span>
+        <span v-else class="text-muted">-</span>
+      </template>
+
+      <template #cell-created_at="{ row }">
+        <small class="text-muted">{{ formatDate(row.created_at) }}</small>
+      </template>
+
+      <template #cell-location="{ row }">
+        <small>{{ row.location || '-' }}</small>
       </template>
 
       <template #cell-operation_type="{ row }">
@@ -206,6 +237,8 @@ const props = defineProps({
   statusOptions: Array,
   operationOptions: Array,
   filters: Object,
+  availableStates: Array,
+  availableCities: Array,
 })
 
 const page = usePage()
@@ -237,8 +270,12 @@ const columns = [
   { key: 'checkbox', label: '', sortable: false, width: '40px' },
   { key: 'image', label: '', sortable: false, width: '60px' },
   { key: 'title', label: 'Título', sortable: true },
+  { key: 'property_type', label: 'Tipo', sortable: true },
   { key: 'operation_type', label: 'Operación', sortable: true },
   { key: 'price', label: 'Precio', sortable: true },
+  { key: 'location', label: 'Ubicación', sortable: false },
+  { key: 'is_featured', label: '', sortable: false, width: '50px' },
+  { key: 'created_at', label: 'Fecha', sortable: true },
   { key: 'status', label: 'Estado', sortable: true },
   { key: 'actions', label: 'Acciones', sortable: false },
 ]
@@ -292,12 +329,23 @@ const filterProperties = () => {
   if (filters.value.status) {
     params.push(`status=${filters.value.status}`)
   }
+  if (filters.value.state) {
+    params.push(`state=${filters.value.state}`)
+  }
+  if (filters.value.city) {
+    params.push(`city=${filters.value.city}`)
+  }
   if (searchQuery.value) {
     params.push(`search=${encodeURIComponent(searchQuery.value)}`)
   }
 
   url += params.join('&')
   window.location.href = url
+}
+
+const onStateChange = () => {
+  filters.value.city = null
+  filterProperties()
 }
 
 const searchProperties = () => {
@@ -309,6 +357,8 @@ const clearFilters = () => {
     property_type_id: null,
     operation_type: null,
     status: null,
+    state: null,
+    city: null,
   }
   searchQuery.value = ''
   window.location.href = `/member/businesses/${business.value.id}/properties`
@@ -330,6 +380,12 @@ const getStatusLabel = (st) => {
     archived: 'Archivada',
   }
   return labels[st] || st
+}
+
+const formatDate = (date) => {
+  if (!date) return '-'
+  const d = new Date(date)
+  return d.toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
 const getStatusBadgeClass = (status) => {

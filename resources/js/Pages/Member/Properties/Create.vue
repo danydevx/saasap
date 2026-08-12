@@ -8,6 +8,15 @@
       :backHref="`/member/businesses/${business?.id}/properties`"
     />
 
+    <div v-if="$page.props.flash?.success" class="alert alert-success alert-dismissible fade show" role="alert">
+      {{ $page.props.flash.success }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    <div v-if="$page.props.flash?.error" class="alert alert-danger alert-dismissible fade show" role="alert">
+      {{ $page.props.flash.error }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
     <div v-if="!selectedTypeId" class="card border-0 shadow-sm mb-4">
       <div class="card-body">
         <h5 class="card-title mb-4">Selecciona el tipo de propiedad</h5>
@@ -37,24 +46,30 @@
             </button>
           </div>
 
-          <div v-if="formSchema" class="row g-3">
-            <template v-for="section in formSchema.sections" :key="section.id">
-              <div class="col-12">
-                <h5 class="border-bottom pb-2 mb-3">{{ section.name }}</h5>
-              </div>
+          <div class="row g-3">
+            <PropertyLocationSection
+              v-model="locationData"
+              :errors="errors"
+            />
 
-              <template v-for="field in section.fields" :key="field.id">
-                <div class="col-12" :class="getFieldColClass(field.field_type)">
-                  <FieldText
-                    v-if="field.field_type === 'text'"
-                    :id="`field-${field.field_key}`"
-                    :label="field.label"
-                    v-model="form[field.field_key]"
-                    :formError="errors[field.field_key]"
-                    :placeholder="field.placeholder"
-                    :helpText="field.help_text"
-                    :required="field.is_required"
-                  />
+            <template v-if="formSchema">
+              <template v-for="section in filteredSections" :key="section.id">
+                <fieldset class="col-12">
+                  <legend class="border-bottom pb-2 mb-3">{{ section.name }}</legend>
+                  <div class="row g-3">
+
+                  <template v-for="field in section.fields.filter(f => f.field_type !== 'gallery')" :key="field.id">
+                    <div class="col-12" :class="getFieldColClass(field.field_type)">
+                    <FieldText
+                      v-if="field.field_type === 'text'"
+                      :id="`field-${field.field_key}`"
+                      :label="field.label"
+                      v-model="form[field.field_key]"
+                      :formError="errors[field.field_key]"
+                      :placeholder="field.placeholder"
+                      :helpText="field.help_text"
+                      :required="field.is_required"
+                    />
 
                   <FieldTextarea
                     v-else-if="field.field_type === 'textarea'"
@@ -155,9 +170,60 @@
                     :label="field.label"
                     v-model="form[field.field_key]"
                   />
+
+                  <FieldEmail
+                    v-else-if="field.field_type === 'email'"
+                    :id="`field-${field.field_key}`"
+                    :label="field.label"
+                    v-model="form[field.field_key]"
+                    :formError="errors[field.field_key]"
+                    :placeholder="field.placeholder"
+                    :helpText="field.help_text"
+                    :required="field.is_required"
+                  />
+
+                  <FieldPhone
+                    v-else-if="field.field_type === 'phone'"
+                    :id="`field-${field.field_key}`"
+                    :label="field.label"
+                    v-model="form[field.field_key]"
+                    :formError="errors[field.field_key]"
+                    :placeholder="field.placeholder"
+                    :helpText="field.help_text"
+                    :required="field.is_required"
+                  />
+
+                  <FieldUrl
+                    v-else-if="field.field_type === 'url'"
+                    :id="`field-${field.field_key}`"
+                    :label="field.label"
+                    v-model="form[field.field_key]"
+                    :formError="errors[field.field_key]"
+                    :placeholder="field.placeholder"
+                    :helpText="field.help_text"
+                    :required="field.is_required"
+                  />
+
+                  <FieldFile
+                    v-else-if="field.field_type === 'file'"
+                    :id="`field-${field.field_key}`"
+                    :label="field.label"
+                    v-model="form[field.field_key]"
+                    :helpText="field.help_text"
+                    :required="field.is_required"
+                    accept=".pdf,.doc,.docx,.xls,.xlsx"
+                  />
                 </div>
               </template>
+                  </div>
+                </fieldset>
             </template>
+          </template>
+          </div>
+
+          <div v-if="hasGalleryFields" class="alert alert-info mt-4">
+            <i class="bi bi-info-circle me-2"></i>
+            La galería de imágenes estará disponible después de crear la propiedad.
           </div>
 
           <div class="col-12 d-flex gap-2 mt-4">
@@ -175,7 +241,7 @@
 </template>
 
 <script setup>
-import { computed, reactive, ref } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { Head, Link, router, usePage } from '@inertiajs/vue3'
 import MemberLayout from '@/Layouts/MemberLayout.vue'
 import PageHeader from '@/Components/Admin/PageHeader.vue'
@@ -189,14 +255,44 @@ import FieldDate from '@/Components/Fields/FieldDate.vue'
 import FieldSwitch from '@/Components/Fields/FieldSwitch.vue'
 import FieldImage from '@/Components/Fields/FieldImage.vue'
 import FieldPrice from '@/Components/Fields/FieldPrice.vue'
+import FieldEmail from '@/Components/Fields/FieldEmail.vue'
+import FieldPhone from '@/Components/Fields/FieldPhone.vue'
+import FieldUrl from '@/Components/Fields/FieldUrl.vue'
+import FieldFile from '@/Components/Fields/FieldFile.vue'
+import PropertyLocationSection from '@/Components/Properties/PropertyLocationSection.vue'
 
 const page = usePage()
 const business = computed(() => page.props.business)
 const propertyTypes = computed(() => page.props.propertyTypes || [])
 const formSchema = computed(() => page.props.formSchema)
+const hasGalleryFields = computed(() => {
+  if (!formSchema.value?.sections) return false
+  return formSchema.value.sections.some(section =>
+    section.fields?.some(f => f.field_type === 'gallery')
+  )
+})
+
+const SECTIONS_TO_SKIP = ['seo', 'contacto', 'extras', 'multimedia']
+
+const filteredSections = computed(() => {
+  if (!formSchema.value?.sections) return []
+  return formSchema.value.sections.filter(section => {
+    const slug = section.general_field_section_slug
+    return !slug || !SECTIONS_TO_SKIP.includes(slug)
+  })
+})
 const selectedTypeId = computed(() => page.props.selectedTypeId)
 const limitInfo = computed(() => page.props.limitInfo)
-const errors = computed(() => page.props.errors || {})
+const errors = computed(() => {
+  const allErrors = { ...(page.props.errors || {}) }
+  Object.keys(allErrors).forEach(key => {
+    if (key.startsWith('dynamic_values.')) {
+      const fieldKey = key.replace('dynamic_values.', '')
+      allErrors[fieldKey] = allErrors[key]
+    }
+  })
+  return allErrors
+})
 const businessMenu = computed(() => page.props.businessMenu || [])
 
 const breadcrumbs = computed(() => {
@@ -222,10 +318,32 @@ const breadcrumbs = computed(() => {
 
 const sending = ref(false)
 const mainImageFile = ref(null)
+const locationData = ref({})
+
+watch(locationData, (val) => {
+  Object.assign(form, val)
+}, { deep: true })
 
 const form = reactive({
   property_type_id: selectedTypeId.value,
 })
+
+if (formSchema.value?.sections) {
+  for (const section of formSchema.value.sections) {
+    for (const field of section.fields || []) {
+      if (field.field_type === 'gallery') continue
+      if (form[field.field_key] === undefined) {
+        if (field.field_type === 'boolean') {
+          form[field.field_key] = ['1', 'true', true].includes(field.default_value)
+        } else if (field.default_value !== null && field.default_value !== '') {
+          form[field.field_key] = field.default_value
+        } else {
+          form[field.field_key] = ''
+        }
+      }
+    }
+  }
+}
 
 const selectType = (typeId) => {
   window.location.href = `/member/businesses/${business.value.id}/properties/create?type=${typeId}`
@@ -249,16 +367,34 @@ const submit = () => {
   sending.value = true
   const formData = new FormData()
 
+  const mainFields = [
+    'property_type_id', 'title', 'description', 'operation_type', 'price',
+    'currency', 'price_period', 'status', 'is_featured', 'is_public',
+    'country', 'state', 'state_code', 'city', 'municipality', 'colony',
+    'postal_code', 'street', 'exterior_number', 'interior_number',
+    'references', 'latitude', 'longitude', 'show_exact_location'
+  ]
+
+  const dynamicValues = {}
+
   Object.keys(form).forEach(key => {
-    const val = form[key]
-    if (val !== null && val !== '') {
-      if (typeof val === 'boolean') {
-        formData.append(key, val ? '1' : '0')
-      } else {
-        formData.append(key, val)
+    if (mainFields.includes(key)) {
+      const val = form[key]
+      if (val !== null && val !== '') {
+        if (typeof val === 'boolean') {
+          formData.append(key, val ? '1' : '0')
+        } else {
+          formData.append(key, val)
+        }
       }
+    } else if (key !== 'location' && key !== 'amenity_ids') {
+      dynamicValues[key] = form[key]
     }
   })
+
+  if (Object.keys(dynamicValues).length > 0) {
+    formData.append('dynamic_values', JSON.stringify(dynamicValues))
+  }
 
   if (mainImageFile.value instanceof File) {
     formData.append('main_image', mainImageFile.value)

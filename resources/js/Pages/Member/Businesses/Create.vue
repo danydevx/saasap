@@ -73,23 +73,29 @@
           </div>
 
           <div class="col-12 col-md-6">
-            <FieldText
+            <label for="business-timezone" class="form-label">Zona horaria</label>
+            <select
               id="business-timezone"
-              label="Zona horaria"
-              placeholder="UTC"
               v-model="form.timezone"
-              :formError="form.errors.timezone"
-            />
+              class="form-select"
+              :class="{ 'is-invalid': form.errors.timezone }"
+            >
+              <option value="America/Mexico_City">Ciudad de México (America/Mexico_City)</option>
+            </select>
+            <div v-if="form.errors.timezone" class="invalid-feedback">{{ form.errors.timezone }}</div>
           </div>
 
           <div class="col-12 col-md-6">
-            <FieldText
+            <label for="business-currency" class="form-label">Moneda</label>
+            <select
               id="business-currency"
-              label="Moneda"
-              placeholder="USD"
               v-model="form.currency"
-              :formError="form.errors.currency"
-            />
+              class="form-select"
+              :class="{ 'is-invalid': form.errors.currency }"
+            >
+              <option value="MXN">MXN - Peso Mexicano</option>
+            </select>
+            <div v-if="form.errors.currency" class="invalid-feedback">{{ form.errors.currency }}</div>
           </div>
 
           <div class="col-12">
@@ -142,8 +148,8 @@ const form = useForm({
   phone: '',
   email: '',
   website: '',
-  timezone: 'UTC',
-  currency: 'USD',
+  timezone: 'America/Mexico_City',
+  currency: 'MXN',
 })
 
 const breadcrumbs = [

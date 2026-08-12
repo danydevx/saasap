@@ -102,6 +102,23 @@ class LocationController extends Controller
             'directions_url' => ['nullable', 'string', 'max:500'],
             'is_primary' => ['boolean'],
             'is_active' => ['boolean'],
+        ], [], [
+            'name' => 'nombre',
+            'address_line_1' => 'dirección',
+            'address_line_2' => 'dirección línea 2',
+            'city' => 'ciudad',
+            'state' => 'estado',
+            'state_code' => 'código de estado',
+            'municipality' => 'municipio',
+            'postal_code' => 'código postal',
+            'country' => 'país',
+            'phone' => 'teléfono',
+            'email' => 'correo electrónico',
+            'latitude' => 'latitud',
+            'longitude' => 'longitud',
+            'directions_url' => 'URL de directions',
+            'is_primary' => 'ubicación principal',
+            'is_active' => 'ubicación activa',
         ]);
 
         $location = $business->locations()->create($data);
@@ -173,6 +190,23 @@ class LocationController extends Controller
             'directions_url' => ['nullable', 'string', 'max:500'],
             'is_primary' => ['boolean'],
             'is_active' => ['boolean'],
+        ], [], [
+            'name' => 'nombre',
+            'address_line_1' => 'dirección',
+            'address_line_2' => 'dirección línea 2',
+            'city' => 'ciudad',
+            'state' => 'estado',
+            'state_code' => 'código de estado',
+            'municipality' => 'municipio',
+            'postal_code' => 'código postal',
+            'country' => 'país',
+            'phone' => 'teléfono',
+            'email' => 'correo electrónico',
+            'latitude' => 'latitud',
+            'longitude' => 'longitud',
+            'directions_url' => 'URL de directions',
+            'is_primary' => 'ubicación principal',
+            'is_active' => 'ubicación activa',
         ]);
 
         if (isset($data['is_primary']) && $data['is_primary']) {

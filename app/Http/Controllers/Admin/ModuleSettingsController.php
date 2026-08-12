@@ -18,6 +18,7 @@ class ModuleSettingsController extends Controller
         }
 
         $settings = $definition->settings ?? $this->getDefaultSettings($moduleKey);
+        $links = $this->getModuleLinks($moduleKey);
 
         return Inertia::render('Admin/ModuleSettings/Show', [
             'moduleKey' => $moduleKey,
@@ -25,6 +26,7 @@ class ModuleSettingsController extends Controller
             'moduleIcon' => $definition->icon,
             'settings' => $settings,
             'schema' => $definition->settings_schema ?? $this->getSchemaForModule($moduleKey),
+            'links' => $links,
         ]);
     }
 
@@ -180,8 +182,23 @@ class ModuleSettingsController extends Controller
                 ['key' => 'max_promotions', 'label' => 'Maximo de promociones activas', 'type' => 'number', 'min' => 1, 'max' => 100, 'default' => 20],
                 ['key' => 'require_voucher', 'label' => 'Requerir codigo de voucher', 'type' => 'boolean', 'default' => false],
             ],
+            'properties' => [
+                ['key' => 'max_properties', 'label' => 'Maximo de propiedades', 'type' => 'number', 'min' => 1, 'max' => 1000, 'default' => 100],
+            ],
         ];
 
         return $schemas[$moduleKey] ?? [];
+    }
+
+    private function getModuleLinks(string $moduleKey): array
+    {
+        $links = [
+            'properties' => [
+                ['label' => 'Tipos de propiedad', 'icon' => 'bi bi-folder', 'href' => '/admin/modules/properties/types'],
+                ['label' => 'Campos generales', 'icon' => 'bi bi-diagram-3', 'href' => '/admin/modules/properties/general-sections'],
+            ],
+        ];
+
+        return $links[$moduleKey] ?? [];
     }
 }

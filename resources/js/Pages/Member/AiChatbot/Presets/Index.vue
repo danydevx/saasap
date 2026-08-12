@@ -1,22 +1,19 @@
 <template>
   <MemberLayout>
     <Head :title="`${business.name} - Presets de Chatbot`" />
-
-    <div class="container-fluid py-4">
-      <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-          <h1 class="h4 mb-0">Presets de Chatbot</h1>
-          <small class="text-muted">{{ business.name }}</small>
-        </div>
-        <div>
-          <Link :href="`/member/businesses/${business.id}/ai-chatbot`" class="btn btn-outline-secondary me-2">
-            <i class="bi bi-arrow-left me-1"></i>Volver
-          </Link>
-          <Link :href="`/member/businesses/${business.id}/ai-chatbot/presets/create`" class="btn btn-primary">
-            <i class="bi bi-plus-lg me-1"></i>Nuevo Preset
-          </Link>
-        </div>
-      </div>
+    <PageHeader
+      title="Presets de Chatbot"
+      :breadcrumbs="breadcrumbs"
+    >
+      <template #actions>
+        <Link :href="`/member/businesses/${business.id}/ai-chatbot`" class="btn btn-outline-secondary me-2">
+          <i class="bi bi-arrow-left me-1"></i>Volver
+        </Link>
+        <Link :href="`/member/businesses/${business.id}/ai-chatbot/presets/create`" class="btn btn-primary">
+          <i class="bi bi-plus-lg me-1"></i>Nuevo Preset
+        </Link>
+      </template>
+    </PageHeader>
 
       <div v-if="$page.props.flash?.success" class="alert alert-success alert-dismissible fade show" role="alert">
         {{ $page.props.flash.success }}
@@ -145,18 +142,26 @@
           </table>
         </div>
       </div>
-    </div>
   </MemberLayout>
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { Head, Link, router, usePage } from '@inertiajs/vue3'
 import MemberLayout from '@/Layouts/MemberLayout.vue'
+import PageHeader from '@/Components/Admin/PageHeader.vue'
 
 const page = usePage()
 const business = page.props.business
 const globalPresets = page.props.globalPresets || []
 const businessPresets = page.props.businessPresets || []
+
+const breadcrumbs = computed(() => [
+  { label: 'Mis Negocios', href: '/member/business-modules' },
+  { label: business?.name || 'Negocio', href: `/member/businesses/${business?.id}/edit` },
+  { label: 'AI Chatbot', href: `/member/businesses/${business?.id}/ai-chatbot` },
+  { label: 'Presets', active: true },
+])
 
 const duplicatePreset = (preset) => {
   if (confirm(`¿Duplicar el preset "${preset.name}"?`)) {

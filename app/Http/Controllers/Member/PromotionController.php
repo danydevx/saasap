@@ -102,6 +102,11 @@ class PromotionController extends Controller
     {
         $this->authorize('create', [BusinessPromotion::class, $business]);
 
+        \Log::info('Promotion store called', [
+            'hasFile_image' => $request->hasFile('image'),
+            'file_image' => $request->file('image') ? $request->file('image')->getClientOriginalName() : null,
+        ]);
+
         $data = $request->validate([
             'name' => ['required', 'string', 'max:150'],
             'description' => ['nullable', 'string'],
@@ -119,10 +124,15 @@ class PromotionController extends Controller
         $data['business_id'] = $business->id;
         $data['slug'] = \Illuminate\Support\Str::slug($data['name']);
 
+        \Log::info('Promotion data before create', ['data' => $data, 'hasFile' => $request->hasFile('image')]);
+
         $promotion = $business->promotions()->create($data);
 
         if ($request->hasFile('image')) {
+            \Log::info('Calling savePromotionImage');
             $this->savePromotionImage($promotion, $request->file('image'));
+        } else {
+            \Log::info('No image file in request');
         }
 
         $activity->log('promotion_created', [
@@ -230,11 +240,26 @@ class PromotionController extends Controller
     private function savePromotionImage(BusinessPromotion $promotion, $file): void
     {
         $disk = 'public';
-        $path = $file->store('promotions/' . $promotion->business_id, ['disk' => $disk]);
+        $directory = 'promotions/' . $promotion->business_id;
+
+        if (!Storage::disk($disk)->exists($directory)) {
+            Storage::disk($disk)->makeDirectory($directory);
+        }
+
+        $path = $file->store($directory, ['disk' => $disk]);
+
+        if (!$path) {
+            \Log::error('PromotionImage: file->store() returned empty path', [
+                'promotion_id' => $promotion->id,
+                'business_id' => $promotion->business_id,
+                'original_name' => $file->getClientOriginalName(),
+            ]);
+            return;
+        }
 
         $promotion->images()->create([
-            'path' => Storage::disk($disk)->url($path),
-            'filename' => basename($path),
+            'path' => $path,
+            'filename' => $file->getClientOriginalName(),
             'original_name' => $file->getClientOriginalName(),
             'extension' => $file->getClientOriginalExtension(),
             'mime_type' => $file->getClientMimeType(),
@@ -246,8 +271,7 @@ class PromotionController extends Controller
     private function deletePromotionImage(BusinessPromotion $promotion): void
     {
         foreach ($promotion->images as $image) {
-            $imagePath = str_replace(url('/') . '/storage/', '', $image->path);
-            Storage::disk('public')->delete($imagePath);
+            Storage::disk('public')->delete($image->path);
         }
         $promotion->images()->delete();
     }
@@ -298,9 +322,8 @@ class PromotionController extends Controller
             ->get();
 
         foreach ($promotions as $promotion) {
-            if ($promotion->image) {
-                $path = str_replace(url('/') . '/storage/', '', $promotion->image);
-                Storage::disk('public')->delete($path);
+            foreach ($promotion->images as $image) {
+                Storage::disk('public')->delete($image->path);
             }
             $promotion->images()->delete();
             $promotion->delete();

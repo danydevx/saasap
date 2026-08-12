@@ -60,8 +60,8 @@
                 accept="image/jpeg,image/png,image/webp,image/gif"
                 @change="handleImageChange"
               />
-              <div v-if="imagePreview || form.image" class="mt-2 d-flex align-items-center gap-2">
-                <img :src="imagePreview || form.image" class="img-thumbnail" style="max-height: 150px;" alt="Preview" />
+              <div v-if="imagePreview || promotion?.image" class="mt-2 d-flex align-items-center gap-2">
+                <img :src="imagePreview || promotion?.image" class="img-thumbnail" style="max-height: 150px;" alt="Preview" />
                 <button
                   v-if="imagePreview || form.image"
                   type="button"

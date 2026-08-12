@@ -54,6 +54,7 @@ class PropertyField extends Model
     protected $fillable = [
         'property_type_id',
         'section_id',
+        'general_field_id',
         'label',
         'field_key',
         'field_type',
@@ -69,6 +70,7 @@ class PropertyField extends Model
         'is_public',
         'is_filterable',
         'is_searchable',
+        'is_inherited',
         'sort_order',
     ];
 
@@ -81,6 +83,7 @@ class PropertyField extends Model
         'is_public' => 'boolean',
         'is_filterable' => 'boolean',
         'is_searchable' => 'boolean',
+        'is_inherited' => 'boolean',
         'sort_order' => 'integer',
     ];
 
@@ -94,12 +97,17 @@ class PropertyField extends Model
         return $this->belongsTo(PropertyFieldSection::class, 'section_id');
     }
 
-    public function options(): HasMany
+    public function generalField(): BelongsTo
+    {
+        return $this->belongsTo(GeneralField::class);
+    }
+
+    public function fieldOptions(): HasMany
     {
         return $this->hasMany(PropertyTypeOption::class)->orderBy('sort_order');
     }
 
-    public function activeOptions(): HasMany
+    public function activeFieldOptions(): HasMany
     {
         return $this->hasMany(PropertyTypeOption::class)
             ->where('is_active', true)

@@ -75,6 +75,9 @@
 
       <template #cell-actions="{ row }">
         <div class="actions">
+          <Link :href="`/member/businesses/${business?.id}/locations/${row.id}/schedules`" class="btn btn-sm btn-outline-secondary" title="Horarios">
+            <i class="bi bi-clock"></i>
+          </Link>
           <Link :href="`/member/businesses/${business?.id}/locations/${row.id}/edit`" class="btn btn-sm btn-outline-primary">
             <i class="bi bi-pencil"></i>
           </Link>

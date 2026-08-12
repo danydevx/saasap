@@ -64,4 +64,9 @@ class BusinessLocation extends Model
     {
         return $this->hasMany(\Modules\Appointments\Models\BusinessAppointment::class);
     }
+
+    public function schedules(): HasMany
+    {
+        return $this->hasMany(\Modules\OfficeHours\Models\BusinessSchedule::class);
+    }
 }

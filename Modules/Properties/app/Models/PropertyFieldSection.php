@@ -19,16 +19,31 @@ class PropertyFieldSection extends Model
         'description',
         'sort_order',
         'is_active',
+        'is_general',
+        'general_field_section_id',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'is_general' => 'boolean',
         'sort_order' => 'integer',
     ];
+
+    protected $appends = ['is_locked'];
+
+    public function getIsLockedAttribute(): bool
+    {
+        return $this->generalFieldSection?->is_locked ?? false;
+    }
 
     public function propertyType(): BelongsTo
     {
         return $this->belongsTo(PropertyType::class);
+    }
+
+    public function generalFieldSection(): BelongsTo
+    {
+        return $this->belongsTo(GeneralFieldSection::class);
     }
 
     public function fields(): HasMany
@@ -46,5 +61,15 @@ class PropertyFieldSection extends Model
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
+    }
+
+    public function scopeExclusive($query)
+    {
+        return $query->where('is_general', false);
+    }
+
+    public function scopeInherited($query)
+    {
+        return $query->where('is_general', true);
     }
 }
