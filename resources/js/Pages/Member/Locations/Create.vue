@@ -175,6 +175,17 @@
               </div>
             </div>
 
+            <div class="col-12">
+              <FieldImage
+                id="location-image"
+                label="Imagen de la ubicacion"
+                v-model="locationImage"
+                :maxSizeMb="2"
+                accept="image/jpeg,image/png"
+              />
+              <small class="text-muted">JPG o PNG, max 2MB. Opcional.</small>
+            </div>
+
             <div class="col-12 col-md-4">
               <div class="form-check form-switch mt-3 pt-3">
                 <input
@@ -202,11 +213,12 @@
 
 <script setup>
 import { computed, reactive, ref } from 'vue'
-import { Head, Link, usePage } from '@inertiajs/vue3'
+import { Head, Link, router, usePage } from '@inertiajs/vue3'
 import MemberLayout from '@/Layouts/MemberLayout.vue'
 import PageHeader from '@/Components/Admin/PageHeader.vue'
 import MapPicker from '@/Components/MapPicker.vue'
 import LocationSelector from '@/Components/LocationSelector.vue'
+import FieldImage from '@/Components/Fields/FieldImage.vue'
 
 const props = defineProps({
   business: {
@@ -230,6 +242,7 @@ const errors = reactive({
 })
 
 const sending = ref(false)
+const locationImage = ref(null)
 
 const form = reactive({
   name: '',
@@ -356,21 +369,24 @@ const submit = () => {
   formData.append('is_primary', form.is_primary ? '1' : '0')
   formData.append('is_active', form.is_active ? '1' : '0')
 
-  window.axios.post(`/member/businesses/${business.value.id}/locations`, formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  }).then(() => {
-    window.location.href = `/member/businesses/${business.value.id}/locations?success=created`
-  }).catch((error) => {
-    sending.value = false
-    if (error.response && error.response.data && error.response.data.errors) {
-      const serverErrors = error.response.data.errors
-      if (serverErrors.name) errors.name = serverErrors.name[0]
-      if (serverErrors.address_line_1) errors.address_line_1 = serverErrors.address_line_1[0]
-      if (serverErrors.city) errors.city = serverErrors.city[0]
-      if (serverErrors.email) errors.email = serverErrors.email[0]
-      if (serverErrors.state_code) errors.state_code = serverErrors.state_code[0]
-      if (serverErrors.municipality) errors.municipality = serverErrors.municipality[0]
-    }
+  if (locationImage.value instanceof File) {
+    formData.append('image', locationImage.value)
+  }
+
+  router.post(`/member/businesses/${business.value.id}/locations`, formData, {
+    onSuccess: () => {
+      window.location.href = `/member/businesses/${business.value.id}/locations?success=created`
+    },
+    onError: (serverErrors) => {
+      sending.value = false
+      if (serverErrors.name) errors.name = serverErrors.name
+      if (serverErrors.address_line_1) errors.address_line_1 = serverErrors.address_line_1
+      if (serverErrors.city) errors.city = serverErrors.city
+      if (serverErrors.email) errors.email = serverErrors.email
+      if (serverErrors.state_code) errors.state_code = serverErrors.state_code
+      if (serverErrors.municipality) errors.municipality = serverErrors.municipality
+      if (serverErrors.image) errors.image = serverErrors.image
+    },
   })
 }
 </script>

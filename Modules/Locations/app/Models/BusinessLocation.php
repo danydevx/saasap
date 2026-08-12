@@ -24,6 +24,7 @@ class BusinessLocation extends Model
         'latitude',
         'longitude',
         'directions_url',
+        'image',
         'is_primary',
         'is_active',
     ];

@@ -44,6 +44,18 @@
         />
       </template>
 
+      <template #cell-image="{ row }">
+        <img
+          v-if="row.image"
+          :src="row.image"
+          class="rounded"
+          style="width: 40px; height: 40px; object-fit: cover;"
+        />
+        <div v-else class="bg-light rounded d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+          <i class="bi bi-geo-alt text-muted"></i>
+        </div>
+      </template>
+
       <template #cell-name="{ row }">
         <div>
           <strong>{{ row.name }}</strong>
@@ -122,6 +134,7 @@ const breadcrumbs = computed(() => {
 
 const columns = [
   { key: 'checkbox', label: '', sortable: false, width: '40px' },
+  { key: 'image', label: '', sortable: false, width: '50px' },
   { key: 'name', label: 'Nombre', sortable: true },
   { key: 'address_line_1', label: 'Direccion', sortable: false },
   { key: 'phone', label: 'Telefono', sortable: false },

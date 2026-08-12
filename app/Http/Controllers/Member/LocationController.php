@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Member;
 use App\Http\Controllers\Controller;
 use App\Services\ActivityService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Modules\Businesses\Models\Business;
 use Modules\Locations\Models\BusinessLocation;
@@ -47,6 +48,7 @@ class LocationController extends Controller
                     'address_line_1' => $loc->address_line_1,
                     'city' => $loc->city,
                     'phone' => $loc->phone,
+                    'image' => $loc->image ? '/storage/' . $loc->image : null,
                     'is_primary' => $loc->is_primary,
                     'is_active' => $loc->is_active,
                 ];
@@ -100,6 +102,7 @@ class LocationController extends Controller
             'latitude' => ['nullable', 'numeric'],
             'longitude' => ['nullable', 'numeric'],
             'directions_url' => ['nullable', 'string', 'max:500'],
+            'image' => ['nullable', 'image', 'mimes:jpeg,jpg,png', 'max:2048'],
             'is_primary' => ['boolean'],
             'is_active' => ['boolean'],
         ], [], [
@@ -117,9 +120,15 @@ class LocationController extends Controller
             'latitude' => 'latitud',
             'longitude' => 'longitud',
             'directions_url' => 'URL de directions',
+            'image' => 'imagen',
             'is_primary' => 'ubicación principal',
             'is_active' => 'ubicación activa',
         ]);
+
+        if ($request->hasFile('image')) {
+            $path = $request->file('image')->store('locations', 'public');
+            $data['image'] = $path;
+        }
 
         $location = $business->locations()->create($data);
 
@@ -163,6 +172,7 @@ class LocationController extends Controller
                 'latitude' => $location->latitude,
                 'longitude' => $location->longitude,
                 'directions_url' => $location->directions_url,
+                'image' => $location->image ? '/storage/' . $location->image : null,
                 'is_primary' => $location->is_primary,
                 'is_active' => $location->is_active,
             ],
@@ -188,6 +198,8 @@ class LocationController extends Controller
             'latitude' => ['nullable', 'numeric'],
             'longitude' => ['nullable', 'numeric'],
             'directions_url' => ['nullable', 'string', 'max:500'],
+            'image' => ['nullable', 'image', 'mimes:jpeg,jpg,png', 'max:2048'],
+            'remove_image' => ['nullable', 'boolean'],
             'is_primary' => ['boolean'],
             'is_active' => ['boolean'],
         ], [], [
@@ -205,9 +217,23 @@ class LocationController extends Controller
             'latitude' => 'latitud',
             'longitude' => 'longitud',
             'directions_url' => 'URL de directions',
+            'image' => 'imagen',
             'is_primary' => 'ubicación principal',
             'is_active' => 'ubicación activa',
         ]);
+
+        if ($request->boolean('remove_image') && $location->image) {
+            Storage::disk('public')->delete($location->image);
+            $data['image'] = null;
+        }
+
+        if ($request->hasFile('image')) {
+            if ($location->image) {
+                Storage::disk('public')->delete($location->image);
+            }
+            $path = $request->file('image')->store('locations', 'public');
+            $data['image'] = $path;
+        }
 
         if (isset($data['is_primary']) && $data['is_primary']) {
             $business->locations()->where('id', '!=', $location->id)->update(['is_primary' => false]);
@@ -245,6 +271,10 @@ class LocationController extends Controller
     public function destroy(Request $request, Business $business, BusinessLocation $location, ActivityService $activity)
     {
         $this->authorize('delete', [BusinessLocation::class, $location]);
+
+        if ($location->image) {
+            Storage::disk('public')->delete($location->image);
+        }
 
         $activity->log('location_deleted', [
             'actor' => $request->user(),
