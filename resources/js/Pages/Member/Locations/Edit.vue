@@ -94,12 +94,14 @@
 
             <div class="col-12 col-md-6">
               <LocationSelector
+                ref="locationSelectorRef"
                 v-model="locationData"
                 :state-error="errors.state_code"
                 :municipality-error="errors.municipality"
                 required
                 @state-changed="onStateChanged"
                 @municipality-changed="onMunicipalityChanged"
+                @location-updated="onLocationUpdated"
               />
             </div>
 
@@ -157,6 +159,7 @@
                 :lng="form.longitude"
                 @update:lat="form.latitude = $event"
                 @update:lng="form.longitude = $event"
+                @reverse-geocoded="onReverseGeocoded"
               />
             </div>
 
@@ -215,6 +218,7 @@
 <script setup>
 import { computed, reactive, ref, watch } from 'vue'
 import { Head, Link, router, usePage } from '@inertiajs/vue3'
+import { toast } from 'vue3-toastify'
 import MemberLayout from '@/Layouts/MemberLayout.vue'
 import PageHeader from '@/Components/Admin/PageHeader.vue'
 import MapPicker from '@/Components/MapPicker.vue'
@@ -237,11 +241,13 @@ const errors = reactive({
   email: '',
   state_code: '',
   municipality: '',
+  image: '',
 })
 
 const sending = ref(false)
 const locationImage = ref(location.value.image || null)
 const removeImage = ref(false)
+const locationSelectorRef = ref(null)
 
 const form = reactive({
   name: location.value.name || '',
@@ -295,6 +301,24 @@ const onMunicipalityChanged = ({ lat, lng }) => {
   }
 }
 
+const onReverseGeocoded = (locationData) => {
+  if (locationSelectorRef.value) {
+    locationSelectorRef.value.handleReverseGeocoded(locationData)
+  }
+}
+
+const onLocationUpdated = (locationData) => {
+  if (locationData.address) {
+    form.address_line_1 = [locationData.address, locationData.number].filter(Boolean).join(' ')
+  }
+  if (locationData.colony) {
+    form.city = locationData.colony
+  }
+  if (locationData.postal_code) {
+    form.postal_code = locationData.postal_code
+  }
+}
+
 watch(locationImage, (newVal, oldVal) => {
   if (oldVal && oldVal instanceof File && (newVal === null || (Array.isArray(newVal) && newVal.length === 0))) {
     removeImage.value = true
@@ -310,6 +334,7 @@ const validateForm = () => {
   errors.email = ''
   errors.state_code = ''
   errors.municipality = ''
+  errors.image = ''
 
   if (!form.name || form.name.trim() === '') {
     errors.name = 'El nombre es obligatorio.'
@@ -351,6 +376,7 @@ const validateForm = () => {
 
 const submit = () => {
   if (!validateForm()) {
+    toast.warning('Por favor completa los campos requeridos')
     return
   }
 
@@ -388,13 +414,17 @@ const submit = () => {
     },
     onError: (serverErrors) => {
       sending.value = false
-      if (serverErrors.name) errors.name = serverErrors.name
-      if (serverErrors.address_line_1) errors.address_line_1 = serverErrors.address_line_1
-      if (serverErrors.city) errors.city = serverErrors.city
-      if (serverErrors.email) errors.email = serverErrors.email
-      if (serverErrors.state_code) errors.state_code = serverErrors.state_code
-      if (serverErrors.municipality) errors.municipality = serverErrors.municipality
-      if (serverErrors.image) errors.image = serverErrors.image
+      const errorMessages = []
+      if (serverErrors.name) { errors.name = serverErrors.name; errorMessages.push(serverErrors.name) }
+      if (serverErrors.address_line_1) { errors.address_line_1 = serverErrors.address_line_1; errorMessages.push(serverErrors.address_line_1) }
+      if (serverErrors.city) { errors.city = serverErrors.city; errorMessages.push(serverErrors.city) }
+      if (serverErrors.email) { errors.email = serverErrors.email; errorMessages.push(serverErrors.email) }
+      if (serverErrors.state_code) { errors.state_code = serverErrors.state_code; errorMessages.push(serverErrors.state_code) }
+      if (serverErrors.municipality) { errors.municipality = serverErrors.municipality; errorMessages.push(serverErrors.municipality) }
+      if (serverErrors.image) { errors.image = serverErrors.image; errorMessages.push(serverErrors.image) }
+      if (errorMessages.length > 0) {
+        toast.warning('Por favor completa los campos requeridos: ' + errorMessages.join(', '))
+      }
     },
   })
 }

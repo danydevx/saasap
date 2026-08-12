@@ -69,7 +69,7 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['update:modelValue', 'state-changed', 'municipality-changed'])
+const emit = defineEmits(['update:modelValue', 'state-changed', 'municipality-changed', 'location-updated'])
 
 const states = ref([])
 const municipalities = ref([])
@@ -91,6 +91,81 @@ const loadStates = async () => {
     loading.value = false
   }
 }
+
+const findStateByCoordinates = (lat, lng) => {
+  if (!states.value.length) return null
+
+  let closestState = null
+  let minDistance = Infinity
+
+  for (const state of states.value) {
+    if (state.lat && state.lng) {
+      const distance = Math.sqrt(
+        Math.pow(parseFloat(state.lat) - parseFloat(lat), 2) +
+        Math.pow(parseFloat(state.lng) - parseFloat(lng), 2)
+      )
+      if (distance < minDistance) {
+        minDistance = distance
+        closestState = state
+      }
+    }
+  }
+
+  return closestState
+}
+
+const findMunicipalityByCoordinates = async (stateCode, lat, lng) => {
+  if (!stateCode || !municipalities.value.length) return null
+
+  let closestMuni = null
+  let minDistance = Infinity
+
+  for (const muni of municipalities.value) {
+    if (muni.lat && muni.lng) {
+      const distance = Math.sqrt(
+        Math.pow(parseFloat(muni.lat) - parseFloat(lat), 2) +
+        Math.pow(parseFloat(muni.lng) - parseFloat(lng), 2)
+      )
+      if (distance < minDistance) {
+        minDistance = distance
+        closestMuni = muni
+      }
+    }
+  }
+
+  return closestMuni
+}
+
+const handleReverseGeocoded = async (locationData) => {
+  if (locationData.lat && locationData.lng) {
+    const lat = locationData.lat
+    const lng = locationData.lng
+
+    const closestState = findStateByCoordinates(lat, lng)
+    if (closestState) {
+      selectedState.value = closestState.code
+      await loadMunicipalities(closestState.code)
+
+      await new Promise(resolve => setTimeout(resolve, 100))
+
+      const closestMuni = await findMunicipalityByCoordinates(closestState.code, lat, lng)
+      if (closestMuni) {
+        selectedMunicipality.value = closestMuni.name
+      }
+
+      const coords = { lat: closestState.lat, lng: closestState.lng }
+      emit('update:modelValue', {
+        state_code: closestState.code,
+        municipality: selectedMunicipality.value,
+        ...coords,
+      })
+      emit('state-changed', coords)
+      emit('location-updated', locationData)
+    }
+  }
+}
+
+defineExpose({ handleReverseGeocoded })
 
 const loadMunicipalities = async (stateCode) => {
   if (!stateCode) {

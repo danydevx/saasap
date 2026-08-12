@@ -103,10 +103,41 @@ const onMapClick = (e) => {
   emit('update:lng', lng.toFixed(7))
 }
 
-const onMarkerDrag = (e) => {
+const onMarkerDrag = async (e) => {
   const { lat, lng } = e.target.getLatLng()
-  emit('update:lat', lat.toFixed(7))
-  emit('update:lng', lng.toFixed(7))
+  const latFixed = lat.toFixed(7)
+  const lngFixed = lng.toFixed(7)
+  emit('update:lat', latFixed)
+  emit('update:lng', lngFixed)
+
+  try {
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latFixed}&lon=${lngFixed}&addressdetails=1&zoom=18`
+    )
+    const data = await response.json()
+
+    if (data && data.address) {
+      const address = data.address
+      const locationData = {
+        lat: latFixed,
+        lng: lngFixed,
+        address: address.road || address.pedestrian || address.path || address.footway || address.street || '',
+        number: address.house_number || '',
+        colony: address.neighbourhood || address.suburb || address.village || address.hamlet || address.locality || '',
+        postal_code: address.postcode || '',
+        city: address.city || address.town || address.village || address.municipality || '',
+        municipality: address.municipality || address.city || address.town || '',
+        state: address.state || '',
+        state_code: '',
+        country: address.country || '',
+        country_code: address.country_code || '',
+      }
+
+      emit('reverse-geocoded', locationData)
+    }
+  } catch (error) {
+    console.error('Error reverse geocoding:', error)
+  }
 }
 
 const clearMarker = () => {
