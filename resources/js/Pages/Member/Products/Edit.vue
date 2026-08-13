@@ -78,6 +78,14 @@
             </div>
 
             <div class="col-12 col-md-4">
+              <FieldSwitch
+                id="product-show-price"
+                label="Mostrar precio"
+                v-model="form.show_price"
+              />
+            </div>
+
+            <div class="col-12 col-md-4">
               <FieldNumber
                 id="product-compare-price"
                 label="Precio anterior"
@@ -184,6 +192,7 @@
 <script setup>
 import { computed, reactive, ref } from 'vue'
 import { Head, Link, router, usePage } from '@inertiajs/vue3'
+import { toast } from 'vue3-toastify'
 import MemberLayout from '@/Layouts/MemberLayout.vue'
 import PageHeader from '@/Components/Admin/PageHeader.vue'
 import FieldText from '@/Components/Fields/FieldText.vue'
@@ -200,14 +209,60 @@ const business = computed(() => page.props.business)
 const product = computed(() => page.props.product)
 const locations = computed(() => page.props.locations || [])
 const categories = computed(() => page.props.categories || [])
-const errors = computed(() => {
-  const errs = page.props.errors || {}
-  const normalized = {}
-  for (const [key, value] of Object.entries(errs)) {
-    normalized[key] = Array.isArray(value) ? value.join(', ') : value
-  }
-  return normalized
+
+const errors = reactive({
+  name: '',
+  slug: '',
+  description: '',
+  price: '',
+  compare_at_price: '',
+  quantity: '',
+  sku: '',
+  barcode: '',
+  business_location_id: '',
+  category_id: '',
 })
+
+const validateForm = () => {
+  let isValid = true
+
+  errors.name = ''
+  errors.slug = ''
+  errors.description = ''
+  errors.price = ''
+  errors.compare_at_price = ''
+  errors.quantity = ''
+  errors.sku = ''
+  errors.barcode = ''
+  errors.business_location_id = ''
+  errors.category_id = ''
+
+  if (!form.name || form.name.trim() === '') {
+    errors.name = 'El nombre es obligatorio.'
+    isValid = false
+  } else if (form.name.length > 150) {
+    errors.name = 'El nombre no puede tener mas de 150 caracteres.'
+    isValid = false
+  }
+
+  if (form.price && isNaN(parseFloat(form.price))) {
+    errors.price = 'El precio debe ser un numero valido.'
+    isValid = false
+  }
+
+  if (form.compare_at_price && isNaN(parseFloat(form.compare_at_price))) {
+    errors.compare_at_price = 'El precio anterior debe ser un numero valido.'
+    isValid = false
+  }
+
+  if (form.quantity && isNaN(parseInt(form.quantity))) {
+    errors.quantity = 'La cantidad debe ser un numero entero.'
+    isValid = false
+  }
+
+  return isValid
+}
+
 const sending = ref(false)
 const businessMenu = computed(() => page.props.businessMenu || [])
 const productImages = ref([])
@@ -240,6 +295,7 @@ const form = reactive({
   slug: product.value.slug || '',
   description: product.value.description || '',
   price: product.value.price || '',
+  show_price: product.value.show_price ?? true,
   compare_at_price: product.value.compare_at_price || '',
   sku: product.value.sku || '',
   barcode: product.value.barcode || '',
@@ -253,6 +309,11 @@ const form = reactive({
 })
 
 const submit = () => {
+  if (!validateForm()) {
+    toast.warning('Por favor completa los campos requeridos')
+    return
+  }
+
   sending.value = true
   const formData = new FormData()
   formData.append('_method', 'PUT')
@@ -266,14 +327,22 @@ const submit = () => {
       }
     }
   })
-  console.log('Submitting category_id:', form.category_id, 'type:', typeof form.category_id)
   if (productImages.value instanceof File) {
     formData.append('image', productImages.value)
   }
   router.post(`/member/businesses/${business.value.id}/products/${product.value.id}`, formData, {
     preserveScroll: true,
+    onSuccess: () => {
+      sending.value = false
+    },
     onError: (errs) => {
-      console.error('Validation errors:', errs)
+      sending.value = false
+      Object.keys(errs).forEach(key => {
+        if (key in errors) {
+          errors[key] = errs[key]
+        }
+      })
+      toast.warning('Por favor completa los campos requeridos')
     },
     onFinish: () => {
       sending.value = false

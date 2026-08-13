@@ -183,6 +183,7 @@
 <script setup>
 import { ref, computed, reactive, nextTick } from 'vue'
 import { Head, Link, router, usePage } from '@inertiajs/vue3'
+import { toast } from 'vue3-toastify'
 import Sortable from 'sortablejs'
 import MemberLayout from '@/Layouts/MemberLayout.vue'
 import PageHeader from '@/Components/Admin/PageHeader.vue'
@@ -195,14 +196,40 @@ import FieldSwitch from '@/Components/Fields/FieldSwitch.vue'
 const page = usePage()
 const business = computed(() => page.props.business)
 const categories = computed(() => page.props.categories || [])
-const errors = computed(() => {
-  const errs = page.props.errors || {}
-  const normalized = {}
-  for (const [key, value] of Object.entries(errs)) {
-    normalized[key] = Array.isArray(value) ? value.join(', ') : value
-  }
-  return normalized
+
+const errors = reactive({
+  title: '',
+  description: '',
+  base_price: '',
+  category_id: '',
 })
+
+const validateForm = () => {
+  let isValid = true
+
+  errors.title = ''
+  errors.description = ''
+  errors.base_price = ''
+  errors.category_id = ''
+
+  if (!form.value.title || form.value.title.trim() === '') {
+    errors.title = 'El nombre es obligatorio.'
+    isValid = false
+  }
+
+  if (!form.value.category_id) {
+    errors.category_id = 'Selecciona una categoria.'
+    isValid = false
+  }
+
+  if (form.value.base_price && isNaN(parseFloat(form.value.base_price))) {
+    errors.base_price = 'El precio debe ser un numero valido.'
+    isValid = false
+  }
+
+  return isValid
+}
+
 const businessMenu = computed(() => page.props.businessMenu || [])
 
 const breadcrumbs = computed(() => {
@@ -350,6 +377,11 @@ const removeVariant = (index) => {
 }
 
 const submitForm = () => {
+  if (!validateForm()) {
+    toast.warning('Por favor completa los campos requeridos')
+    return
+  }
+
   sending.value = true
 
   router.post(`/member/businesses/${business.value.id}/menu-products`, {
@@ -362,7 +394,15 @@ const submitForm = () => {
     },
     onError: (errs) => {
       sending.value = false
-      console.error('Errors:', errs)
+      Object.keys(errs).forEach(key => {
+        if (key in errors) {
+          errors[key] = errs[key]
+        }
+      })
+      toast.warning('Por favor completa los campos requeridos')
+    },
+    onFinish: () => {
+      sending.value = false
     },
   })
 }

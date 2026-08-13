@@ -8,7 +8,7 @@
         :center="center"
         :options="{ scrollWheelZoom: false }"
         @click="onMapClick"
-        style="height: 250px; width: 100%; border-radius: 0.375rem;"
+        style="height: 500px; width: 100%; border-radius: 0.375rem;"
       >
         <l-tile-layer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -77,6 +77,10 @@ const props = defineProps({
     type: [String, Number],
     default: null,
   },
+  initialCenter: {
+    type: Array,
+    default: () => [19.4326, -99.1332],
+  },
 })
 
 const emit = defineEmits(['update:lat', 'update:lng'])
@@ -87,7 +91,7 @@ const center = computed(() => {
   if (props.lat && props.lng) {
     return [parseFloat(props.lat), parseFloat(props.lng)]
   }
-  return [-34.6037, -58.3816]
+  return props.initialCenter
 })
 
 const markerPosition = computed(() => {

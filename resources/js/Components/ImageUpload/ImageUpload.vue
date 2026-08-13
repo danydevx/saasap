@@ -174,8 +174,20 @@ const formatFileSize = (bytes) => {
 
 const open = () => {
   clearFiles()
+  uploadModalElement.value.removeEventListener('hidden.bs.modal', onModalHidden)
+  uploadModalElement.value.addEventListener('hidden.bs.modal', onModalHidden)
+
+  if (modalInstance) {
+    modalInstance.dispose()
+    modalInstance = null
+  }
+
   modalInstance = new Modal(uploadModalElement.value)
   modalInstance.show()
+}
+
+const onModalHidden = () => {
+  clearFiles()
 }
 
 const close = () => {
@@ -261,16 +273,17 @@ const startUpload = () => {
   router.post(`/member/businesses/${props.businessId}/gallery`, formData, {
     preserveScroll: true,
     onSuccess: () => {
-      toast.success(`${files.value.length} imagen(es) subida(s) correctamente`)
+      const uploadedCount = files.value.length
+      toast.success(`${uploadedCount} imagen(es) subida(s) correctamente`)
+      files.value = []
+      uploading.value = false
+      formError.value = ''
       emit('uploaded')
-      close()
+      modalInstance?.hide()
     },
     onError: (errors) => {
       uploading.value = false
       formError.value = errors.files || errors['files.0'] || errors.file || Object.values(errors)[0] || 'No se pudieron subir las imágenes.'
-    },
-    onFinish: () => {
-      uploading.value = false
     },
   })
 }

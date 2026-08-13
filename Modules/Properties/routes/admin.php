@@ -20,8 +20,9 @@ Route::middleware(['auth', 'verified', 'active', 'role:superadmin|admin'])
         Route::put('/types/{propertyType}', [PropertyTypeController::class, 'update'])->name('types.update');
         Route::delete('/types/{propertyType}', [PropertyTypeController::class, 'destroy'])->name('types.destroy');
 
-        Route::get('/types/{propertyType}/fields-edit', [PropertyTypeFieldController::class, 'edit'])->name('types.fields-edit');
+        Route::get('/types/{propertyType}/sections', [PropertyTypeFieldController::class, 'edit'])->name('types.sections');
         Route::post('/types/{propertyType}/assign-section', [PropertyTypeFieldController::class, 'assignSection'])->name('types.assign-section');
+        Route::post('/types/{propertyType}/assign-sections', [PropertyTypeFieldController::class, 'assignSections'])->name('types.assign-sections');
         Route::delete('/types/{propertyType}/unassign-section/{generalFieldSection}', [PropertyTypeFieldController::class, 'unassignSection'])->name('types.unassign-section');
         Route::post('/types/{propertyType}/customizations', [PropertyTypeFieldController::class, 'updateCustomizations'])->name('types.customizations');
         Route::post('/types/{propertyType}/reorder-sections', [PropertyTypeFieldController::class, 'reorderSections'])->name('types.reorder-sections');

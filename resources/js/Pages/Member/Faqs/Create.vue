@@ -78,8 +78,9 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, reactive } from 'vue'
 import { Head, Link, router, usePage } from '@inertiajs/vue3'
+import { toast } from 'vue3-toastify'
 import MemberLayout from '@/Layouts/MemberLayout.vue'
 import PageHeader from '@/Components/Admin/PageHeader.vue'
 import FieldText from '@/Components/Fields/FieldText.vue'
@@ -94,7 +95,34 @@ const props = defineProps({
 })
 
 const page = usePage()
-const errors = computed(() => page.props.errors || {})
+const errors = reactive({
+  question: '',
+  answer: '',
+  category_id: '',
+  sort_order: '',
+})
+
+const validateForm = () => {
+  let isValid = true
+
+  errors.question = ''
+  errors.answer = ''
+  errors.category_id = ''
+  errors.sort_order = ''
+
+  if (!form.value.question || form.value.question.trim() === '') {
+    errors.question = 'La pregunta es obligatoria.'
+    isValid = false
+  }
+
+  if (!form.value.answer || form.value.answer.trim() === '') {
+    errors.answer = 'La respuesta es obligatoria.'
+    isValid = false
+  }
+
+  return isValid
+}
+
 const sending = ref(false)
 const businessMenu = computed(() => page.props.businessMenu || [])
 
@@ -133,8 +161,26 @@ const breadcrumbs = computed(() => {
 })
 
 const submit = () => {
+  if (!validateForm()) {
+    toast.warning('Por favor completa los campos requeridos')
+    return
+  }
+
   sending.value = true
   router.post(`/member/businesses/${props.business.id}/faqs`, form.value, {
+    preserveScroll: true,
+    onSuccess: () => {
+      sending.value = false
+    },
+    onError: (errs) => {
+      sending.value = false
+      Object.keys(errs).forEach(key => {
+        if (key in errors) {
+          errors[key] = errs[key]
+        }
+      })
+      toast.warning('Por favor completa los campos requeridos')
+    },
     onFinish: () => {
       sending.value = false
     },

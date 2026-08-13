@@ -1,16 +1,12 @@
 <template>
   <AdminLayout>
-    <Head :title="`Campos - ${propertyType.name}`" />
+    <Head :title="`Configurar Secciones - ${propertyType.name}`" />
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <div>
-        <Link href="/admin/modules/properties/types" class="btn btn-outline-secondary btn-sm mb-2">
-          <i class="bi bi-arrow-left me-1"></i>
-          Volver a Tipos
-        </Link>
-        <h1 class="h3 mb-0">Campos: {{ propertyType.name }}</h1>
-      </div>
-    </div>
+    <PageHeader
+      :title="`Configurar Secciones: ${propertyType.name}`"
+      :breadcrumbs="breadcrumbs"
+      backHref="/admin/modules/properties/types"
+    />
 
     <div v-if="$page.props.flash?.success" class="alert alert-success alert-dismissible fade show" role="alert">
       {{ $page.props.flash.success }}
@@ -102,7 +98,9 @@
               group="sections"
               handle=".drag-handle"
               class="drag-area"
+              @start="onDragStart"
               @end="onDragEnd"
+              @add="onSectionAdded"
             >
               <template #item="{ element: section }">
                 <div :class="['card', 'mb-2', section.isAmenities ? 'border-success' : (section.is_general ? 'border-primary' : '')]">
@@ -438,6 +436,7 @@ import { Head, Link, router, usePage } from '@inertiajs/vue3'
 import { Modal } from 'bootstrap'
 import draggable from 'vuedraggable'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
+import PageHeader from '@/Components/Admin/PageHeader.vue'
 
 const page = usePage()
 const propertyType = page.props.propertyType
@@ -448,6 +447,12 @@ const allAmenities = ref(page.props.allAmenities || [])
 const assignedAmenityIds = ref(page.props.assignedAmenityIds || [])
 const localAmenityIds = ref([...assignedAmenityIds.value])
 const savingAmenities = ref(false)
+
+const breadcrumbs = [
+  { label: 'Propiedades', href: '/admin/modules/properties' },
+  { label: 'Tipos', href: '/admin/modules/properties/types' },
+  { label: propertyType.name },
+]
 
 const assignedAmenityObjects = computed(() => {
   return allAmenities.value.filter(a => assignedAmenityIds.value.includes(a.id))
@@ -519,9 +524,48 @@ watch(
 )
 
 let dragUpdateTimeout = null
+let previousDisplayedSectionIds = []
+
+const onDragStart = () => {
+  previousDisplayedSectionIds = displayedSections.value.map(s => s.isAmenities ? 'amenities' : s.id)
+}
+
+const onSectionAdded = (evt) => {
+  console.log('onSectionAdded called', evt)
+  const addedSection = displayedSections.value[evt.newIndex]
+  console.log('Added section:', addedSection)
+  if (!addedSection || addedSection.isAmenities) return
+
+  // Check if this is actually a new assignment (not a reorder)
+  const wasInAssigned = localAssignedSections.value.some(s => s.id === addedSection.id)
+  const wasInExclusive = exclusiveSections.value.some(s => s.id === addedSection.id)
+  console.log('wasInAssigned:', wasInAssigned, 'wasInExclusive:', wasInExclusive)
+
+  if (!wasInAssigned && !wasInExclusive && addedSection.is_general) {
+    console.log('Detected new section assignment, calling assign endpoint')
+    // This is a new section being assigned
+    if (!localAssignedSections.value.find(s => s.id === addedSection.id)) {
+      localAssignedSections.value.push(addedSection)
+    }
+
+    router.post(`/admin/modules/properties/types/${propertyType.id}/assign-sections`, {
+      section_ids: [addedSection.id],
+    }, {
+      preserveScroll: true,
+      onSuccess: () => {
+        console.log('Assign success, reloading')
+        setTimeout(() => router.reload({ preserveScroll: true }), 300)
+      },
+      onError: (err) => {
+        console.error('Assign error:', err)
+      },
+    })
+  }
+}
 
 const onDragEnd = () => {
   if (dragUpdateTimeout) clearTimeout(dragUpdateTimeout)
+
   dragUpdateTimeout = setTimeout(() => {
     const sectionIds = displayedSections.value.map(s => s.isAmenities ? 'amenities' : s.id)
     router.post(`/admin/modules/properties/types/${propertyType.id}/reorder-sections`, {

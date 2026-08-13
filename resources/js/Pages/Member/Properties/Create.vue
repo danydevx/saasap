@@ -49,7 +49,7 @@
           <div class="row g-3">
             <PropertyLocationSection
               v-model="locationData"
-              :errors="errors"
+              :errors="mergedErrors"
             />
 
             <template v-if="formSchema">
@@ -65,7 +65,7 @@
                       :id="`field-${field.field_key}`"
                       :label="field.label"
                       v-model="form[field.field_key]"
-                      :formError="errors[field.field_key]"
+                      :formError="mergedErrors[field.field_key]"
                       :placeholder="field.placeholder"
                       :helpText="field.help_text"
                       :required="field.is_required"
@@ -76,7 +76,7 @@
                     :id="`field-${field.field_key}`"
                     :label="field.label"
                     v-model="form[field.field_key]"
-                    :formError="errors[field.field_key]"
+                    :formError="mergedErrors[field.field_key]"
                     :placeholder="field.placeholder"
                     :helpText="field.help_text"
                     :required="field.is_required"
@@ -88,7 +88,7 @@
                     :id="`field-${field.field_key}`"
                     :label="field.label"
                     v-model="form[field.field_key]"
-                    :formError="errors[field.field_key]"
+                    :formError="mergedErrors[field.field_key]"
                     :placeholder="field.placeholder"
                     :helpText="field.help_text"
                     :required="field.is_required"
@@ -99,7 +99,7 @@
                     :id="`field-${field.field_key}`"
                     :label="field.label"
                     v-model="form[field.field_key]"
-                    :formError="errors[field.field_key]"
+                    :formError="mergedErrors[field.field_key]"
                     :placeholder="field.placeholder"
                     :helpText="field.help_text"
                     :required="field.is_required"
@@ -111,7 +111,7 @@
                     :id="`field-${field.field_key}`"
                     :label="field.label"
                     v-model="form[field.field_key]"
-                    :formError="errors[field.field_key]"
+                    :formError="mergedErrors[field.field_key]"
                     :helpText="field.help_text"
                     :required="field.is_required"
                   >
@@ -126,7 +126,7 @@
                     :id="`field-${field.field_key}`"
                     :label="field.label"
                     v-model="form[field.field_key]"
-                    :formError="errors[field.field_key]"
+                    :formError="mergedErrors[field.field_key]"
                     :helpText="field.help_text"
                     :required="field.is_required"
                     :options="field.options"
@@ -137,7 +137,7 @@
                     :id="`field-${field.field_key}`"
                     :label="field.label"
                     v-model="form[field.field_key]"
-                    :formError="errors[field.field_key]"
+                    :formError="mergedErrors[field.field_key]"
                     :helpText="field.help_text"
                   />
 
@@ -146,7 +146,7 @@
                     :id="`field-${field.field_key}`"
                     :label="field.label"
                     v-model="form[field.field_key]"
-                    :formError="errors[field.field_key]"
+                    :formError="mergedErrors[field.field_key]"
                     :placeholder="field.placeholder"
                     :helpText="field.help_text"
                     :required="field.is_required"
@@ -176,7 +176,7 @@
                     :id="`field-${field.field_key}`"
                     :label="field.label"
                     v-model="form[field.field_key]"
-                    :formError="errors[field.field_key]"
+                    :formError="mergedErrors[field.field_key]"
                     :placeholder="field.placeholder"
                     :helpText="field.help_text"
                     :required="field.is_required"
@@ -187,7 +187,7 @@
                     :id="`field-${field.field_key}`"
                     :label="field.label"
                     v-model="form[field.field_key]"
-                    :formError="errors[field.field_key]"
+                    :formError="mergedErrors[field.field_key]"
                     :placeholder="field.placeholder"
                     :helpText="field.help_text"
                     :required="field.is_required"
@@ -198,7 +198,7 @@
                     :id="`field-${field.field_key}`"
                     :label="field.label"
                     v-model="form[field.field_key]"
-                    :formError="errors[field.field_key]"
+                    :formError="mergedErrors[field.field_key]"
                     :placeholder="field.placeholder"
                     :helpText="field.help_text"
                     :required="field.is_required"
@@ -243,6 +243,7 @@
 <script setup>
 import { computed, reactive, ref, watch } from 'vue'
 import { Head, Link, router, usePage } from '@inertiajs/vue3'
+import { toast } from 'vue3-toastify'
 import MemberLayout from '@/Layouts/MemberLayout.vue'
 import PageHeader from '@/Components/Admin/PageHeader.vue'
 import FieldText from '@/Components/Fields/FieldText.vue'
@@ -283,7 +284,7 @@ const filteredSections = computed(() => {
 })
 const selectedTypeId = computed(() => page.props.selectedTypeId)
 const limitInfo = computed(() => page.props.limitInfo)
-const errors = computed(() => {
+const serverErrors = computed(() => {
   const allErrors = { ...(page.props.errors || {}) }
   Object.keys(allErrors).forEach(key => {
     if (key.startsWith('dynamic_values.')) {
@@ -292,6 +293,12 @@ const errors = computed(() => {
     }
   })
   return allErrors
+})
+
+const localErrors = reactive({})
+
+const mergedErrors = computed(() => {
+  return { ...serverErrors.value, ...localErrors }
 })
 const businessMenu = computed(() => page.props.businessMenu || [])
 
@@ -363,7 +370,44 @@ const getFieldColClass = (fieldType) => {
   return 'col-12 col-md-6'
 }
 
+const validateForm = () => {
+  Object.keys(localErrors).forEach(key => delete localErrors[key])
+
+  const requiredFields = ['title', 'operation_type', 'price', 'state', 'city']
+
+  for (const fieldKey of requiredFields) {
+    const val = form[fieldKey]
+    if (!val || (typeof val === 'string' && val.trim() === '')) {
+      localErrors[fieldKey] = `El campo ${fieldKey} es obligatorio.`
+    }
+  }
+
+  if (formSchema.value?.sections) {
+    for (const section of formSchema.value.sections) {
+      for (const field of section.fields || []) {
+        if (field.is_required && field.field_type !== 'gallery') {
+          const val = form[field.field_key]
+          if (!val || (typeof val === 'string' && val.trim() === '')) {
+            localErrors[field.field_key] = `El campo ${field.label} es obligatorio.`
+          }
+        }
+      }
+    }
+  }
+
+  if (Object.keys(localErrors).length > 0) {
+    toast.warning('Por favor completa los campos requeridos')
+    return false
+  }
+
+  return true
+}
+
 const submit = () => {
+  if (!validateForm()) {
+    return
+  }
+
   sending.value = true
   const formData = new FormData()
 
@@ -402,8 +446,17 @@ const submit = () => {
 
   router.post(`/member/businesses/${business.value.id}/properties`, formData, {
     preserveScroll: true,
-    onError: () => {
+    onSuccess: () => {
       sending.value = false
+    },
+    onError: (errs) => {
+      sending.value = false
+      Object.keys(errs).forEach(key => {
+        const fieldKey = key.startsWith('dynamic_values.')
+          ? key.replace('dynamic_values.', '')
+          : key
+        localErrors[fieldKey] = errs[key]
+      })
     },
     onFinish: () => {
       sending.value = false

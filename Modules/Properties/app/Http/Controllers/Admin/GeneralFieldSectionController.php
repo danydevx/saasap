@@ -50,6 +50,7 @@ class GeneralFieldSectionController extends Controller
             'description' => ['nullable', 'string'],
             'sort_order' => ['nullable', 'integer', 'min:0'],
             'is_active' => ['boolean'],
+            'is_locked' => ['boolean'],
         ]);
 
         $this->generalFieldService->updateSection($generalFieldSection, $data);

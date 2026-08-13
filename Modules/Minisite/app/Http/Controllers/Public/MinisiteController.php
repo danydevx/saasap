@@ -41,6 +41,8 @@ class MinisiteController extends Controller
                     'section_type' => $section->section_type,
                     'section_key' => $section->section_key,
                     'title' => $section->title,
+                    'subtitle' => $section->description,
+                    'buttons' => $section->buttons ?? [],
                     'config' => $config,
                 ];
 
@@ -111,6 +113,7 @@ class MinisiteController extends Controller
                 'hero_title' => $setting->hero_title,
                 'hero_subtitle' => $setting->hero_subtitle,
                 'hero_background_image' => $setting->hero_background_image,
+                'hero_show_social' => $setting->hero_show_social,
                 'footer_text' => $setting->footer_text,
                 'footer_show_social' => $setting->footer_show_social,
             ],
@@ -174,6 +177,7 @@ class MinisiteController extends Controller
                 'hero_title' => $setting->hero_title,
                 'hero_subtitle' => $setting->hero_subtitle,
                 'hero_background_image' => $setting->hero_background_image,
+                'hero_show_social' => $setting->hero_show_social,
                 'footer_text' => $setting->footer_text,
                 'footer_show_social' => $setting->footer_show_social,
             ],
@@ -229,6 +233,7 @@ class MinisiteController extends Controller
                 'hero_title' => $setting->hero_title,
                 'hero_subtitle' => $setting->hero_subtitle,
                 'hero_background_image' => $setting->hero_background_image,
+                'hero_show_social' => $setting->hero_show_social,
                 'footer_text' => $setting->footer_text,
                 'footer_show_social' => $setting->footer_show_social,
             ],
@@ -333,6 +338,7 @@ class MinisiteController extends Controller
                 'hero_title' => $setting->hero_title,
                 'hero_subtitle' => $setting->hero_subtitle,
                 'hero_background_image' => $setting->hero_background_image,
+                'hero_show_social' => $setting->hero_show_social,
                 'footer_text' => $setting->footer_text,
                 'footer_show_social' => $setting->footer_show_social,
             ],
@@ -428,6 +434,7 @@ class MinisiteController extends Controller
                 'hero_title' => $setting->hero_title,
                 'hero_subtitle' => $setting->hero_subtitle,
                 'hero_background_image' => $setting->hero_background_image,
+                'hero_show_social' => $setting->hero_show_social,
                 'footer_text' => $setting->footer_text,
                 'footer_show_social' => $setting->footer_show_social,
             ],
@@ -554,6 +561,7 @@ class MinisiteController extends Controller
                 'hero_title' => $setting->hero_title,
                 'hero_subtitle' => $setting->hero_subtitle,
                 'hero_background_image' => $setting->hero_background_image,
+                'hero_show_social' => $setting->hero_show_social,
                 'footer_text' => $setting->footer_text,
                 'footer_show_social' => $setting->footer_show_social,
             ],
@@ -653,6 +661,7 @@ class MinisiteController extends Controller
                 'hero_title' => $setting->hero_title,
                 'hero_subtitle' => $setting->hero_subtitle,
                 'hero_background_image' => $setting->hero_background_image,
+                'hero_show_social' => $setting->hero_show_social,
                 'footer_text' => $setting->footer_text,
                 'footer_show_social' => $setting->footer_show_social,
             ],
@@ -782,9 +791,13 @@ class MinisiteController extends Controller
             ->limit($limit)
             ->get(['id', 'path', 'title', 'description'])
             ->map(function ($image) {
+                $path = $image->path;
+                if ($path && !str_starts_with($path, 'http')) {
+                    $path = '/storage/' . $path;
+                }
                 return [
                     'id' => $image->id,
-                    'path' => $image->path,
+                    'path' => $path,
                     'title' => $image->title,
                     'description' => $image->description,
                 ];
@@ -802,17 +815,18 @@ class MinisiteController extends Controller
 
         return $query
             ->orderBy('sort_order')
-            ->get(['id', 'name', 'slug', 'description', 'promotion_price', 'expires_at', 'regular_price', 'coupon_code'])
+            ->get(['id', 'name', 'slug', 'description', 'image', 'promotion_price', 'expires_at', 'regular_price', 'coupon_code'])
             ->map(function ($promo) {
                 return [
                     'id' => $promo->id,
                     'slug' => $promo->slug,
-                    'title' => $promo->name,
+                    'name' => $promo->name,
                     'description' => $promo->description,
                     'regular_price' => $promo->regular_price,
                     'promotion_price' => $promo->promotion_price,
                     'expires_at' => $promo->expires_at,
                     'coupon_code' => $promo->coupon_code,
+                    'image' => $promo->image,
                 ];
             })->toArray();
     }

@@ -169,6 +169,16 @@
             <div class="row g-3">
               <div class="col-md-6">
                 <FieldSelect
+                  id="gallery-view-mode"
+                  label="Vista"
+                  v-model="config.gallery_view_mode"
+                >
+                  <option value="grid">Cuadrícula</option>
+                  <option value="carousel">Carrusel</option>
+                </FieldSelect>
+              </div>
+              <div class="col-md-6">
+                <FieldSelect
                   id="gallery-id"
                   label="Galería"
                   v-model="config.gallery_id"
@@ -188,6 +198,13 @@
                   :max="50"
                 />
               </div>
+              <div class="col-12">
+                <FieldSwitch
+                  id="show-captions"
+                  label="Mostrar títulos de imágenes"
+                  v-model="config.show_captions"
+                />
+              </div>
             </div>
           </div>
 
@@ -195,10 +212,41 @@
             <h6 class="mb-3">Configuración de Promociones</h6>
             <div class="row g-3">
               <div class="col-md-6">
+                <FieldSelect
+                  id="view-mode"
+                  label="Vista"
+                  v-model="config.view_mode"
+                >
+                  <option value="list">Lista</option>
+                  <option value="carousel">Carrusel</option>
+                </FieldSelect>
+              </div>
+              <div class="col-md-6">
                 <FieldSwitch
                   id="show-all-promos"
                   label="Mostrar todas las promociones"
                   v-model="config.show_all"
+                />
+              </div>
+              <div class="col-12">
+                <FieldSwitch
+                  id="show-image"
+                  label="Mostrar imagen"
+                  v-model="config.show_image"
+                />
+              </div>
+              <div class="col-12">
+                <FieldSwitch
+                  id="show-price"
+                  label="Mostrar precio"
+                  v-model="config.show_price"
+                />
+              </div>
+              <div class="col-12">
+                <FieldSwitch
+                  id="show-description"
+                  label="Mostrar descripción"
+                  v-model="config.show_description"
                 />
               </div>
             </div>
@@ -454,7 +502,9 @@ const config = reactive({
   show_price: true,
   show_description: false,
   gallery_id: null,
+  gallery_view_mode: 'grid',
   images_limit: 10,
+  show_captions: true,
   show_all: true,
   form_id: null,
   show_address: true,

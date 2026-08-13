@@ -9,6 +9,18 @@
         <img v-if="business.logo" :src="business.logo" :alt="business.name" class="hero__logo" />
       </div>
     </div>
+    <div v-if="showSocial && socialNetworks && socialNetworks.length" class="hero__social">
+      <a
+        v-for="(network, idx) in socialNetworks"
+        :key="idx"
+        :href="network.url"
+        target="_blank"
+        class="hero__social-link"
+        :title="network.platform"
+      >
+        <i :class="getSocialIcon(network.platform)"></i>
+      </a>
+    </div>
   </div>
 </template>
 
@@ -20,6 +32,14 @@ const props = defineProps({
   title: String,
   subtitle: String,
   backgroundImage: String,
+  showSocial: {
+    type: Boolean,
+    default: false,
+  },
+  socialNetworks: {
+    type: Array,
+    default: () => [],
+  },
 })
 
 const backgroundStyle = computed(() => {
@@ -30,6 +50,21 @@ const backgroundStyle = computed(() => {
   }
   return {}
 })
+
+const getSocialIcon = (platform) => {
+  const icons = {
+    facebook: 'bi bi-facebook',
+    instagram: 'bi bi-instagram',
+    twitter: 'bi bi-twitter-x',
+    linkedin: 'bi bi-linkedin',
+    youtube: 'bi bi-youtube',
+    tiktok: 'bi bi-tiktok',
+    whatsapp: 'bi bi-whatsapp',
+    telegram: 'bi bi-telegram',
+    default: 'bi bi-globe',
+  }
+  return icons[platform?.toLowerCase()] || icons.default
+}
 </script>
 
 <style lang="less">
@@ -76,6 +111,34 @@ const backgroundStyle = computed(() => {
       font-size: 1rem;
       margin: 0;
       color: #6c757d;
+    }
+  }
+
+  &__social {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.9);
+  }
+
+  &__social-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #3B82F6;
+    color: white;
+    font-size: 1.25rem;
+    transition: all 0.3s ease;
+    text-decoration: none;
+
+    &:hover {
+      background: #1d4ed8;
+      transform: translateY(-2px);
+      color: white;
     }
   }
 }

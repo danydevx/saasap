@@ -8,6 +8,7 @@
       :heroTitle="setting.hero_title"
       :heroSubtitle="setting.hero_subtitle"
       :heroBackgroundImage="setting.hero_background_image"
+      :heroShowSocial="setting.hero_show_social"
       :footerText="setting.footer_text"
       :footerShowSocial="setting.footer_show_social"
       :socialNetworks="socialNetworks"
@@ -16,6 +17,8 @@
         <SectionServices
           v-if="section.type === 'services'"
           :title="section.title"
+          :description="section.subtitle"
+          :buttons="section.buttons"
           :items="section.items"
           :config="section.config"
           :businessSlug="business.slug"
@@ -24,6 +27,8 @@
         <SectionGallery
           v-else-if="section.type === 'gallery'"
           :title="section.title"
+          :subtitle="section.subtitle"
+          :buttons="section.buttons"
           :items="section.items"
           :config="section.config"
         />
@@ -31,6 +36,8 @@
         <SectionPromotions
           v-else-if="section.type === 'promotions'"
           :title="section.title"
+          :subtitle="section.subtitle"
+          :buttons="section.buttons"
           :items="section.items"
           :config="section.config"
           :businessSlug="business.slug"
@@ -184,6 +191,8 @@ const renderedSections = computed(() => {
         id: section.id,
         type: section.section_type,
         title: section.title,
+        subtitle: section.subtitle || null,
+        buttons: section.buttons || [],
         config: section.config || {},
       }
 

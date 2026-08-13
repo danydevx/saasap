@@ -84,6 +84,23 @@ class PropertyTypeFieldController extends Controller
         return redirect()->back()->with('success', 'Sección asignada.');
     }
 
+    public function assignSections(Request $request, PropertyType $propertyType)
+    {
+        $data = $request->validate([
+            'section_ids' => ['required', 'array'],
+            'section_ids.*' => ['required', 'integer', 'exists:general_field_sections,id'],
+        ]);
+
+        foreach ($data['section_ids'] as $sectionId) {
+            $section = GeneralFieldSection::find($sectionId);
+            if ($section && !$section->is_locked) {
+                $this->generalFieldService->assignSectionToPropertyType($propertyType, $section);
+            }
+        }
+
+        return redirect()->back()->with('success', 'Secciones asignadas.');
+    }
+
     public function unassignSection(PropertyType $propertyType, GeneralFieldSection $generalFieldSection)
     {
         if ($generalFieldSection->is_locked) {

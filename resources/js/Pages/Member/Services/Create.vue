@@ -18,7 +18,7 @@
                 label="Nombre"
                 placeholder="Corte de cabello"
                 v-model="form.name"
-                :formError="form.errors.name"
+                :formError="errors.name"
                 required
               />
             </div>
@@ -29,7 +29,7 @@
                 label="Slug"
                 placeholder="corte-de-cabello"
                 v-model="form.slug"
-                :formError="form.errors.slug"
+                :formError="errors.slug"
               />
               <small class="text-muted">Se genera automaticamente si se deja vacio.</small>
             </div>
@@ -39,7 +39,7 @@
                 id="service-description"
                 label="Descripcion"
                 v-model="form.description"
-                :formError="form.errors.description"
+                :formError="errors.description"
                 :rows="3"
               />
             </div>
@@ -50,7 +50,7 @@
                 label="Ubicacion"
                 v-model="form.business_location_id"
                 :options="locationOptions"
-                :formError="form.errors.business_location_id"
+                :formError="errors.business_location_id"
               />
             </div>
 
@@ -60,7 +60,7 @@
                 label="Duracion (minutos)"
                 placeholder="30"
                 v-model="form.duration_minutes"
-                :formError="form.errors.duration_minutes"
+                :formError="errors.duration_minutes"
                 required
               />
             </div>
@@ -71,7 +71,7 @@
                 label="Precio"
                 placeholder="0.00"
                 v-model="form.price"
-                :formError="form.errors.price"
+                :formError="errors.price"
               />
             </div>
 
@@ -89,7 +89,7 @@
                 label="Monto deposito"
                 placeholder="0.00"
                 v-model="form.deposit_amount"
-                :formError="form.errors.deposit_amount"
+                :formError="errors.deposit_amount"
               />
             </div>
 
@@ -107,7 +107,7 @@
                 label="WhatsApp"
                 placeholder="+54 9 11 1234-5678"
                 v-model="form.whatsapp_contact"
-                :formError="form.errors.whatsapp_contact"
+                :formError="errors.whatsapp_contact"
               />
             </div>
 
@@ -125,7 +125,7 @@
                 label="Orden"
                 placeholder="0"
                 v-model="form.sort_order"
-                :formError="form.errors.sort_order"
+                :formError="errors.sort_order"
               />
               <small class="text-muted">Menor numero aparece primero.</small>
             </div>
@@ -151,8 +151,8 @@
           </div>
 
           <div class="col-12 d-flex gap-2 mt-4">
-            <button type="submit" class="btn btn-primary" :disabled="form.processing">
-              {{ form.processing ? 'Creando...' : 'Crear Servicio' }}
+            <button type="submit" class="btn btn-primary" :disabled="sending">
+              {{ sending ? 'Creando...' : 'Crear Servicio' }}
             </button>
             <Link :href="`/member/businesses/${business.id}/services`" class="btn btn-outline-secondary">Cancelar</Link>
           </div>
@@ -163,8 +163,9 @@
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { Head, Link, router, usePage } from '@inertiajs/vue3'
+import { toast } from 'vue3-toastify'
 import MemberLayout from '@/Layouts/MemberLayout.vue'
 import PageHeader from '@/Components/Admin/PageHeader.vue'
 import FieldText from '@/Components/Fields/FieldText.vue'
@@ -189,8 +190,9 @@ const locationOptions = computed(() => [
 ])
 
 const mainImage = ref(null)
+const sending = ref(false)
 
-const form = useForm({
+const form = reactive({
   name: '',
   slug: '',
   description: '',
@@ -204,6 +206,57 @@ const form = useForm({
   sort_order: 0,
   business_location_id: '',
 })
+
+const errors = reactive({
+  name: '',
+  slug: '',
+  description: '',
+  duration_minutes: '',
+  price: '',
+  deposit_amount: '',
+  whatsapp_contact: '',
+  business_location_id: '',
+  sort_order: '',
+})
+
+const validateForm = () => {
+  let isValid = true
+
+  errors.name = ''
+  errors.slug = ''
+  errors.description = ''
+  errors.duration_minutes = ''
+  errors.price = ''
+  errors.deposit_amount = ''
+  errors.whatsapp_contact = ''
+  errors.business_location_id = ''
+  errors.sort_order = ''
+
+  if (!form.name || form.name.trim() === '') {
+    errors.name = 'El nombre es obligatorio.'
+    isValid = false
+  } else if (form.name.length > 150) {
+    errors.name = 'El nombre no puede tener mas de 150 caracteres.'
+    isValid = false
+  }
+
+  if (!form.duration_minutes || form.duration_minutes < 1) {
+    errors.duration_minutes = 'La duracion minima es 1 minuto.'
+    isValid = false
+  }
+
+  if (form.price && isNaN(parseFloat(form.price))) {
+    errors.price = 'El precio debe ser un numero valido.'
+    isValid = false
+  }
+
+  if (form.deposit_required && form.deposit_amount && isNaN(parseFloat(form.deposit_amount))) {
+    errors.deposit_amount = 'El monto del deposito debe ser un numero valido.'
+    isValid = false
+  }
+
+  return isValid
+}
 
 watch(() => form.name, (val) => {
   if (val && !form.slug) {
@@ -235,6 +288,11 @@ const breadcrumbs = computed(() => {
 })
 
 const submit = () => {
+  if (!validateForm()) {
+    toast.warning('Por favor completa los campos requeridos')
+    return
+  }
+
   const formData = new FormData()
 
   Object.keys(form).forEach(key => {
@@ -252,8 +310,22 @@ const submit = () => {
     formData.append('image', mainImage.value)
   }
 
+  sending.value = true
   router.post(`/member/businesses/${business.value.id}/services`, formData, {
     preserveScroll: true,
+    onSuccess: () => {
+      sending.value = false
+    },
+    onError: (errs) => {
+      sending.value = false
+      const errorMessages = Object.values(errs).flat()
+      if (errorMessages.length > 0) {
+        toast.warning('Por favor completa los campos requeridos')
+      }
+    },
+    onFinish: () => {
+      sending.value = false
+    },
   })
 }
 </script>

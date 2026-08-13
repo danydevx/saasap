@@ -12,9 +12,6 @@ use Modules\Promotions\Models\BusinessPromotion;
 
 class PromotionController extends Controller
 {
-    private const MAX_FILE_SIZE_KB = 5120;
-    private const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-
     public function index(Request $request, Business $business)
     {
         $this->authorize('viewAny', [BusinessPromotion::class, $business]);
@@ -31,7 +28,7 @@ class PromotionController extends Controller
         $direction = strtolower($direction) === 'desc' ? 'desc' : 'asc';
 
         $query = $business->promotions()
-            ->with('location', 'images')
+            ->with('location')
             ->when($search, function ($q) use ($search) {
                 $q->where(function ($q) use ($search) {
                     $q->where('name', 'like', "%{$search}%")
@@ -50,7 +47,7 @@ class PromotionController extends Controller
                     'id' => $promo->id,
                     'name' => $promo->name,
                     'description' => $promo->description,
-                    'image' => $promo->first_image,
+                    'image' => $promo->image,
                     'regular_price' => $promo->regular_price,
                     'promotion_price' => $promo->promotion_price,
                     'coupon_code' => $promo->coupon_code,
@@ -102,17 +99,12 @@ class PromotionController extends Controller
     {
         $this->authorize('create', [BusinessPromotion::class, $business]);
 
-        \Log::info('Promotion store called', [
-            'hasFile_image' => $request->hasFile('image'),
-            'file_image' => $request->file('image') ? $request->file('image')->getClientOriginalName() : null,
-        ]);
-
         $data = $request->validate([
             'name' => ['required', 'string', 'max:150'],
             'description' => ['nullable', 'string'],
-            'image' => ['nullable', 'file', 'max:' . self::MAX_FILE_SIZE_KB, 'mimetypes:' . implode(',', self::ALLOWED_MIME_TYPES)],
-            'regular_price' => ['nullable', 'numeric', 'min:0'],
-            'promotion_price' => ['nullable', 'numeric', 'min:0'],
+            'image' => ['nullable', 'image', 'mimes:jpeg,jpg,png,webp', 'max:2048'],
+            'regular_price' => ['nullable', 'numeric', 'min:0', 'max:99999999'],
+            'promotion_price' => ['nullable', 'numeric', 'min:0', 'max:99999999'],
             'coupon_code' => ['nullable', 'string', 'max:50'],
             'starts_at' => ['nullable', 'date'],
             'expires_at' => ['nullable', 'date', 'after_or_equal:starts_at'],
@@ -124,16 +116,12 @@ class PromotionController extends Controller
         $data['business_id'] = $business->id;
         $data['slug'] = \Illuminate\Support\Str::slug($data['name']);
 
-        \Log::info('Promotion data before create', ['data' => $data, 'hasFile' => $request->hasFile('image')]);
+        if ($request->hasFile('image')) {
+            $path = $request->file('image')->store('promotions', 'public');
+            $data['image'] = $path;
+        }
 
         $promotion = $business->promotions()->create($data);
-
-        if ($request->hasFile('image')) {
-            \Log::info('Calling savePromotionImage');
-            $this->savePromotionImage($promotion, $request->file('image'));
-        } else {
-            \Log::info('No image file in request');
-        }
 
         $activity->log('promotion_created', [
             'actor' => $request->user(),
@@ -150,7 +138,6 @@ class PromotionController extends Controller
     {
         $this->authorize('update', [BusinessPromotion::class, $promotion]);
 
-        $promotion->load('images');
         $locations = $business->locations()->where('is_active', true)->orderBy('name')->get(['id', 'name']);
 
         return Inertia::render('Member/Promotions/Edit', [
@@ -163,7 +150,7 @@ class PromotionController extends Controller
                 'name' => $promotion->name,
                 'slug' => $promotion->slug,
                 'description' => $promotion->description,
-                'image' => $promotion->first_image,
+                'image' => $promotion->image,
                 'regular_price' => $promotion->regular_price,
                 'promotion_price' => $promotion->promotion_price,
                 'coupon_code' => $promotion->coupon_code,
@@ -185,10 +172,10 @@ class PromotionController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:150'],
             'description' => ['nullable', 'string'],
-            'image' => ['nullable', 'file', 'max:' . self::MAX_FILE_SIZE_KB, 'mimetypes:' . implode(',', self::ALLOWED_MIME_TYPES)],
+            'image' => ['nullable', 'image', 'mimes:jpeg,jpg,png,webp', 'max:2048'],
             'remove_image' => ['nullable', 'boolean'],
-            'regular_price' => ['nullable', 'numeric', 'min:0'],
-            'promotion_price' => ['nullable', 'numeric', 'min:0'],
+            'regular_price' => ['nullable', 'numeric', 'min:0', 'max:99999999'],
+            'promotion_price' => ['nullable', 'numeric', 'min:0', 'max:99999999'],
             'coupon_code' => ['nullable', 'string', 'max:50'],
             'starts_at' => ['nullable', 'date'],
             'expires_at' => ['nullable', 'date', 'after_or_equal:starts_at'],
@@ -197,16 +184,24 @@ class PromotionController extends Controller
             'sort_order' => ['nullable', 'integer', 'min:0'],
         ]);
 
-        $promotion->update($data);
-
         if ($request->boolean('remove_image')) {
-            $this->deletePromotionImage($promotion);
+            if ($promotion->image) {
+                Storage::disk('public')->delete($promotion->image);
+            }
+            $data['image'] = null;
         }
 
         if ($request->hasFile('image')) {
-            $this->deletePromotionImage($promotion);
-            $this->savePromotionImage($promotion, $request->file('image'));
+            if ($promotion->image) {
+                Storage::disk('public')->delete($promotion->image);
+            }
+            $path = $request->file('image')->store('promotions', 'public');
+            $data['image'] = $path;
+        } else {
+            unset($data['image']);
         }
+
+        $promotion->update($data);
 
         $activity->log('promotion_updated', [
             'actor' => $request->user(),
@@ -235,45 +230,6 @@ class PromotionController extends Controller
 
         return redirect()->route('member.businesses.promotions.index', $business->id)
             ->with('success', 'Promocion eliminada correctamente.');
-    }
-
-    private function savePromotionImage(BusinessPromotion $promotion, $file): void
-    {
-        $disk = 'public';
-        $directory = 'promotions/' . $promotion->business_id;
-
-        if (!Storage::disk($disk)->exists($directory)) {
-            Storage::disk($disk)->makeDirectory($directory);
-        }
-
-        $path = $file->store($directory, ['disk' => $disk]);
-
-        if (!$path) {
-            \Log::error('PromotionImage: file->store() returned empty path', [
-                'promotion_id' => $promotion->id,
-                'business_id' => $promotion->business_id,
-                'original_name' => $file->getClientOriginalName(),
-            ]);
-            return;
-        }
-
-        $promotion->images()->create([
-            'path' => $path,
-            'filename' => $file->getClientOriginalName(),
-            'original_name' => $file->getClientOriginalName(),
-            'extension' => $file->getClientOriginalExtension(),
-            'mime_type' => $file->getClientMimeType(),
-            'size' => $file->getSize(),
-            'sort_order' => 0,
-        ]);
-    }
-
-    private function deletePromotionImage(BusinessPromotion $promotion): void
-    {
-        foreach ($promotion->images as $image) {
-            Storage::disk('public')->delete($image->path);
-        }
-        $promotion->images()->delete();
     }
 
     public function reorder(Request $request, Business $business)

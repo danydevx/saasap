@@ -76,6 +76,7 @@ class PropertyService
             $propertyData = $this->extractMainFields($data);
             $propertyData['business_id'] = $business->id;
             $propertyData['slug'] = $this->generateUniqueSlug($business, $data['title'] ?? '');
+            $propertyData['property_code'] = $this->generateUniquePropertyCode();
 
             if ($this->isPublic($propertyData)) {
                 $propertyData['published_at'] = now();
@@ -283,5 +284,16 @@ class PropertyService
         }
 
         return $slug;
+    }
+
+    protected function generateUniquePropertyCode(): string
+    {
+        do {
+            $year = date('Y');
+            $random = strtoupper(\Illuminate\Support\Str::random(6));
+            $code = "PR{$year}{$random}";
+        } while (Property::where('property_code', $code)->exists());
+
+        return $code;
     }
 }

@@ -6,6 +6,8 @@
       :title="heroTitle"
       :subtitle="heroSubtitle"
       :backgroundImage="heroBackgroundImage"
+      :showSocial="heroShowSocial"
+      :socialNetworks="socialNetworks"
     />
     <HeroCenter
       v-else-if="heroLayout === 'center'"
@@ -13,6 +15,8 @@
       :title="heroTitle"
       :subtitle="heroSubtitle"
       :backgroundImage="heroBackgroundImage"
+      :showSocial="heroShowSocial"
+      :socialNetworks="socialNetworks"
     />
     <HeroRight
       v-else
@@ -20,6 +24,8 @@
       :title="heroTitle"
       :subtitle="heroSubtitle"
       :backgroundImage="heroBackgroundImage"
+      :showSocial="heroShowSocial"
+      :socialNetworks="socialNetworks"
     />
 
     <div class="minisite__content">
@@ -61,6 +67,10 @@ defineProps({
   heroBackgroundImage: {
     type: String,
     default: '',
+  },
+  heroShowSocial: {
+    type: Boolean,
+    default: false,
   },
   footerText: {
     type: String,

@@ -135,6 +135,7 @@
 <script setup>
 import { computed, reactive, ref, watch } from 'vue'
 import { Head, Link, router, usePage } from '@inertiajs/vue3'
+import { toast } from 'vue3-toastify'
 import MemberLayout from '@/Layouts/MemberLayout.vue'
 import PageHeader from '@/Components/Admin/PageHeader.vue'
 import FieldText from '@/Components/Fields/FieldText.vue'
@@ -150,16 +151,66 @@ const business = computed(() => page.props.business)
 const appointment = computed(() => page.props.appointment)
 const services = computed(() => page.props.services || [])
 const locations = computed(() => page.props.locations || [])
-const errors = computed(() => {
-  const errs = page.props.errors || {}
-  const normalized = {}
-  for (const [key, value] of Object.entries(errs)) {
-    normalized[key] = Array.isArray(value) ? value.join(', ') : value
-  }
-  return normalized
+
+const errors = reactive({
+  customer_name: '',
+  customer_email: '',
+  business_service_id: '',
+  business_location_id: '',
+  appointment_date: '',
+  start_time: '',
 })
 
-watch(() => errors.value.appointment_date, (val) => {
+const validateForm = () => {
+  let isValid = true
+
+  errors.customer_name = ''
+  errors.customer_email = ''
+  errors.business_service_id = ''
+  errors.business_location_id = ''
+  errors.appointment_date = ''
+  errors.start_time = ''
+
+  if (!form.customer_name || form.customer_name.trim() === '') {
+    errors.customer_name = 'El nombre es obligatorio.'
+    isValid = false
+  }
+
+  if (!form.customer_email || form.customer_email.trim() === '') {
+    errors.customer_email = 'El email es obligatorio.'
+    isValid = false
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.customer_email)) {
+    errors.customer_email = 'El email no es valido.'
+    isValid = false
+  }
+
+  if (!form.business_service_id) {
+    errors.business_service_id = 'Selecciona un servicio.'
+    isValid = false
+  }
+
+  if (!form.appointment_date) {
+    errors.appointment_date = 'La fecha es obligatoria.'
+    isValid = false
+  } else {
+    const selected = new Date(form.appointment_date)
+    const todayDate = new Date()
+    todayDate.setHours(0, 0, 0, 0)
+    if (selected < todayDate) {
+      errors.appointment_date = 'La fecha debe ser hoy o posterior.'
+      isValid = false
+    }
+  }
+
+  if (!form.start_time) {
+    errors.start_time = 'La hora es obligatoria.'
+    isValid = false
+  }
+
+  return isValid
+}
+
+watch(() => errors.appointment_date, (val) => {
   if (val) showDateValidation.value = true
 })
 const businessMenu = computed(() => page.props.businessMenu || [])
@@ -213,11 +264,25 @@ const form = reactive({
 })
 
 const submit = () => {
+  if (!validateForm()) {
+    toast.warning('Por favor completa los campos requeridos')
+    return
+  }
+
   sending.value = true
   router.put(`/member/businesses/${business.value.id}/appointments/${appointment.value.id}`, form, {
     preserveScroll: true,
+    onSuccess: () => {
+      sending.value = false
+    },
     onError: (errs) => {
-      console.error('Validation errors:', errs)
+      sending.value = false
+      Object.keys(errs).forEach(key => {
+        if (key in errors) {
+          errors[key] = errs[key]
+        }
+      })
+      toast.warning('Por favor completa los campos requeridos')
     },
     onFinish: () => {
       sending.value = false

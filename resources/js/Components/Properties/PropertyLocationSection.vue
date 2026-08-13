@@ -95,46 +95,23 @@
         </small>
       </div>
 
-      <div class="col-12" v-if="form.latitude && form.longitude">
-        <label class="form-label">Vista previa del mapa</label>
-        <div class="location-map-container rounded border overflow-hidden">
-          <l-map
-            ref="map"
-            :zoom="15"
-            :center="[form.latitude, form.longitude]"
-            :options="{ scrollWheelZoom: false, zoomControl: true }"
-            style="height: 250px; width: 100%;"
-          >
-            <l-tile-layer
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              layer-type="base"
-              name="OpenStreetMap"
-              attribution="&copy; OpenStreetMap contributors"
-            />
-            <l-marker :lat-lng="[form.latitude, form.longitude]" />
-          </l-map>
-        </div>
-        <small class="text-muted">
-          Puedes ajustar la ubicación arrastrando el marcador o ingresando coordenadas manualmente
-        </small>
-      </div>
-
-      <div class="col-12" v-else-if="fullAddress">
-        <label class="form-label">Ubicación aproximada</label>
-        <div class="alert alert-info py-2">
-          <i class="bi bi-info-circle me-2"></i>
-          Ingresa la dirección completa para ver una vista previa en el mapa.
-          {{ fullAddress }}
-        </div>
+      <div class="col-12">
+        <MapPicker
+          label="Ubicación en el mapa"
+          :lat="form.latitude"
+          :lng="form.longitude"
+          @update:lat="form.latitude = $event"
+          @update:lng="form.longitude = $event"
+          @reverse-geocoded="onReverseGeocoded"
+        />
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch } from 'vue'
-import { LMap, LTileLayer, LMarker } from '@vue-leaflet/vue-leaflet'
-import 'leaflet/dist/leaflet.css'
+import { ref, reactive, watch } from 'vue'
+import MapPicker from '@/Components/MapPicker.vue'
 import axios from 'axios'
 
 const props = defineProps({
@@ -156,6 +133,7 @@ const countries = ref([
 
 const states = ref([])
 const municipalities = ref([])
+let geocodeTimeout = null
 
 const form = reactive({
   country: props.modelValue?.country || 'MX',
@@ -173,16 +151,25 @@ const form = reactive({
   show_exact_location: props.modelValue?.show_exact_location ?? false,
 })
 
-const fullAddress = computed(() => {
-  const parts = []
-  if (form.street) parts.push(form.street)
-  if (form.exterior_number) parts.push(`#${form.exterior_number}`)
-  if (form.colony) parts.push(form.colony)
-  if (form.postal_code) parts.push(form.postal_code)
-  if (form.city) parts.push(form.city)
-  if (form.state) parts.push(form.state)
-  return parts.join(', ')
-})
+function onReverseGeocoded(data) {
+  if (data.address) form.street = data.address
+  if (data.number) form.exterior_number = data.number
+  if (data.colony) form.colony = data.colony
+  if (data.postal_code) form.postal_code = data.postal_code
+  if (data.city) form.city = data.city
+  if (data.municipality && !form.municipality) form.municipality = data.municipality
+  if (data.state) {
+    const stateOption = states.value.find(s => s.label === data.state || s.value === data.state)
+    if (stateOption) {
+      form.state = stateOption.value
+      loadMunicipalities(stateOption.value)
+    }
+  }
+  if (data.country) {
+    const countryOption = countries.value.find(c => c.label === data.country || c.value === data.country)
+    if (countryOption) form.country = countryOption.value
+  }
+}
 
 watch(
   () => form,
@@ -212,15 +199,73 @@ watch(
 
 watch(
   () => form.state,
-  async (newState) => {
+  async (newState, oldState) => {
     if (newState) {
       await loadMunicipalities(newState)
     } else {
       municipalities.value = []
       form.municipality = ''
     }
+    if (oldState !== undefined) {
+      triggerGeocode()
+    }
   }
 )
+
+watch(
+  () => form.city,
+  () => { triggerGeocode() }
+)
+
+watch(
+  () => form.municipality,
+  () => { triggerGeocode() }
+)
+
+watch(
+  () => form.colony,
+  () => { triggerGeocode() }
+)
+
+watch(
+  () => form.postal_code,
+  () => { triggerGeocode() }
+)
+
+function triggerGeocode() {
+  if (geocodeTimeout) clearTimeout(geocodeTimeout)
+  geocodeTimeout = setTimeout(async () => {
+    await geocodeFromAddress()
+  }, 1000)
+}
+
+async function geocodeFromAddress() {
+  const hasAddress = form.city || form.municipality || form.colony || form.postal_code || form.state
+  if (!hasAddress) return
+
+  const addressParts = []
+  if (form.colony) addressParts.push(form.colony)
+  if (form.postal_code) addressParts.push(form.postal_code)
+  if (form.city) addressParts.push(form.city)
+  if (form.municipality) addressParts.push(form.municipality)
+  if (form.state) addressParts.push(form.state)
+  addressParts.push('México')
+
+  const query = addressParts.join(', ')
+
+  try {
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1&countrycodes=mx`
+    )
+    const data = await response.json()
+    if (data && data.length > 0) {
+      form.latitude = parseFloat(data[0].lat).toFixed(7)
+      form.longitude = parseFloat(data[0].lon).toFixed(7)
+    }
+  } catch (error) {
+    console.error('Error geocoding address:', error)
+  }
+}
 
 async function loadStates() {
   try {

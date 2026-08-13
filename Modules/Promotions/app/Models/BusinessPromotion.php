@@ -17,6 +17,7 @@ class BusinessPromotion extends Model
         'name',
         'slug',
         'description',
+        'image',
         'regular_price',
         'promotion_price',
         'coupon_code',
@@ -78,6 +79,29 @@ class BusinessPromotion extends Model
         return '/storage/' . $path;
     }
 
+    public function getImageAttribute($value): ?string
+    {
+        if (!$value) {
+            return null;
+        }
+        if (str_starts_with($value, 'http://') || str_starts_with($value, 'https://')) {
+            return $value;
+        }
+        return '/storage/' . $value;
+    }
+
+    public function getQrCodePathAttribute(): ?string
+    {
+        $path = $this->attributes['qr_code_path'] ?? null;
+        if (!$path) {
+            return null;
+        }
+        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+            return $path;
+        }
+        return '/storage/' . $path;
+    }
+
     public function isValid(): bool
     {
         if (!$this->is_active) {
@@ -129,7 +153,7 @@ class BusinessPromotion extends Model
 
             Storage::disk('public')->put($path, $result->getString());
 
-            $this->updateQuietly(['qr_code_path' => Storage::disk('public')->url($path)]);
+            $this->updateQuietly(['qr_code_path' => $path]);
         } catch (\Exception $e) {
             \Log::error('QR code generation failed: ' . $e->getMessage());
         }

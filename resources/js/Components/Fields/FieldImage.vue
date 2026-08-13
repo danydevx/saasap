@@ -86,7 +86,6 @@ function revokeIfBlob(url) {
 watch(
   () => props.initialPreview,
   (newVal, oldVal) => {
-    // Revoca blobs anteriores si aplica
     const oldList = Array.isArray(oldVal) ? oldVal : oldVal ? [oldVal] : [];
     oldList.forEach(revokeIfBlob);
 
@@ -94,7 +93,8 @@ watch(
     emit('update:keep', previews.value.length > 0);
     files.value = [];
     if (fileInput.value) fileInput.value.value = null;
-  }
+  },
+  { immediate: true }
 );
 
 function onFileChange(event) {

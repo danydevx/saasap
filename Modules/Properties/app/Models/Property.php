@@ -68,6 +68,7 @@ class Property extends Model
         'property_type_id',
         'title',
         'slug',
+        'property_code',
         'description',
         'operation_type',
         'price',

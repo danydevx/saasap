@@ -2,6 +2,7 @@
   <section class="section-services">
     <div class="section-services__inner">
       <h2 v-if="title" class="section-services__title">{{ title }}</h2>
+      <p v-if="description" class="section-services__subtitle">{{ description }}</p>
 
       <div v-if="items.length === 0" class="text-muted text-center py-4">
         No hay servicios disponibles.
@@ -88,6 +89,18 @@
             </button>
           </div>
         </div>
+      </div>
+
+      <div v-if="buttons && buttons.length" class="section-services__buttons mt-4">
+        <a
+          v-for="(btn, idx) in buttons"
+          :key="idx"
+          :href="btn.url || '#'"
+          class="btn btn-primary me-2 mb-2"
+          :target="btn.open_in_new_tab ? '_blank' : '_self'"
+        >
+          {{ btn.text }}
+        </a>
       </div>
     </div>
 
@@ -266,9 +279,23 @@ export default defineComponent({ name: 'SectionServices' })
   &__title {
     font-size: 1.5rem;
     font-weight: 700;
-    margin: 0 0 24px;
+    margin: 0 0 8px;
     text-align: center;
     color: #212529;
+  }
+
+  &__subtitle {
+    font-size: 1rem;
+    color: #6c757d;
+    text-align: center;
+    margin: 0 0 16px;
+  }
+
+  &__buttons {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px;
   }
 
   &__carousel {

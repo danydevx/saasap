@@ -8,9 +8,9 @@
       :backHref="`/member/businesses/${business?.id}/minisite`"
     >
       <template #actions>
-        <a v-if="business?.slug" :href="`/b/${business.slug}`" target="_blank" class="btn btn-outline-secondary btn-sm me-2">
-          <i class="bi bi-eye me-1"></i>Ver Minisite
-        </a>
+        <!-- <a v-if="business?.slug" :href="`/b/${business.slug}`" target="_blank" class="btn btn-outline-secondary btn-sm me-2">
+          <i class="bi bi-display me-1"></i>Ver Desktop
+        </a> -->
         <Link :href="`/member/businesses/${business?.id}/minisite/sections/create`" class="btn btn-primary btn-sm">
           <i class="bi bi-plus-lg me-1"></i>Nueva Sección
         </Link>

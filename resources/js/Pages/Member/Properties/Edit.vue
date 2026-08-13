@@ -19,18 +19,26 @@
 
     <div class="card border-0 shadow-sm">
       <div class="card-body">
-        <div v-if="Object.keys(errors).length" class="alert alert-danger">
+        <div v-if="Object.keys(mergedErrors).length" class="alert alert-danger">
           <ul class="mb-0">
-            <li v-for="(error, key) in errors" :key="key">{{ error }}</li>
+            <li v-for="(error, key) in mergedErrors" :key="key">{{ error }}</li>
           </ul>
         </div>
         <form @submit.prevent="submit">
           <div class="row g-3">
+            <div class="col-12">
+              <div class="alert alert-secondary py-2 d-flex align-items-center gap-2">
+                <i class="bi bi-hash"></i>
+                <span><strong>ID de Propiedad:</strong></span>
+                <code class="mb-0">{{ property?.property_code || 'Sin asignar' }}</code>
+              </div>
+            </div>
+
             <div v-if="formSchema && lockedSection" class="col-12">
               <FormSection
                 :section="lockedSection"
                 :form="form"
-                :errors="errors"
+                :errors="mergedErrors"
                 :mainImageFile="mainImageFile"
                 :initialMainImageUrl="property?.main_image_url"
                 @update:keep="keepMainImage = $event"
@@ -40,7 +48,7 @@
 
             <PropertyLocationSection
               v-model="locationData"
-              :errors="errors"
+              :errors="mergedErrors"
             />
 
             <div v-if="formSchema" class="row g-3">
@@ -49,7 +57,7 @@
                 :key="section.id"
                 :section="section"
                 :form="form"
-                :errors="errors"
+                :errors="mergedErrors"
                 :mainImageFile="mainImageFile"
                 :initialMainImageUrl="property?.main_image_url"
                 @update:keep="keepMainImage = $event"
@@ -100,6 +108,7 @@
 <script setup>
 import { computed, reactive, ref, watch } from 'vue'
 import { Head, Link, router, usePage } from '@inertiajs/vue3'
+import { toast } from 'vue3-toastify'
 import MemberLayout from '@/Layouts/MemberLayout.vue'
 import PageHeader from '@/Components/Admin/PageHeader.vue'
 import FieldText from '@/Components/Fields/FieldText.vue'
@@ -151,7 +160,7 @@ const nonLockedSections = computed(() => {
 const reloadImages = () => {
   router.reload({ only: ['propertyImages'], preserveScroll: true })
 }
-const errors = computed(() => {
+const serverErrors = computed(() => {
   const allErrors = { ...(page.props.errors || {}) }
   Object.keys(allErrors).forEach(key => {
     if (key.startsWith('dynamic_values.')) {
@@ -160,6 +169,12 @@ const errors = computed(() => {
     }
   })
   return allErrors
+})
+
+const localErrors = reactive({})
+
+const mergedErrors = computed(() => {
+  return { ...serverErrors.value, ...localErrors }
 })
 const businessMenu = computed(() => page.props.businessMenu || [])
 
@@ -275,7 +290,44 @@ const getFieldColClass = (fieldType) => {
   return 'col-12 col-md-6'
 }
 
+const validateForm = () => {
+  Object.keys(localErrors).forEach(key => delete localErrors[key])
+
+  const requiredFields = ['title', 'operation_type', 'price', 'state', 'city']
+
+  for (const fieldKey of requiredFields) {
+    const val = form[fieldKey]
+    if (!val || (typeof val === 'string' && val.trim() === '')) {
+      localErrors[fieldKey] = `El campo ${fieldKey} es obligatorio.`
+    }
+  }
+
+  if (formSchema.value?.sections) {
+    for (const section of formSchema.value.sections) {
+      for (const field of section.fields || []) {
+        if (field.is_required && field.field_type !== 'gallery') {
+          const val = form[field.field_key]
+          if (!val || (typeof val === 'string' && val.trim() === '')) {
+            localErrors[field.field_key] = `El campo ${field.label} es obligatorio.`
+          }
+        }
+      }
+    }
+  }
+
+  if (Object.keys(localErrors).length > 0) {
+    toast.warning('Por favor completa los campos requeridos')
+    return false
+  }
+
+  return true
+}
+
 const submit = () => {
+  if (!validateForm()) {
+    return
+  }
+
   sending.value = true
   const formData = new FormData()
   formData.append('_method', 'PUT')
@@ -321,8 +373,17 @@ const submit = () => {
 
   router.post(`/member/businesses/${business.value.id}/properties/${property.value.id}`, formData, {
     preserveScroll: true,
-    onError: () => {
+    onSuccess: () => {
       sending.value = false
+    },
+    onError: (errs) => {
+      sending.value = false
+      Object.keys(errs).forEach(key => {
+        const fieldKey = key.startsWith('dynamic_values.')
+          ? key.replace('dynamic_values.', '')
+          : key
+        localErrors[fieldKey] = errs[key]
+      })
     },
     onFinish: () => {
       sending.value = false

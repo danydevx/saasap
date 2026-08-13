@@ -204,8 +204,11 @@ class GeneralFieldService
 
     public function removeInheritedFields(PropertyType $propertyType, GeneralFieldSection $section): void
     {
+        // Get the general field IDs that belong to this section
+        $generalFieldIds = $section->activeFields->pluck('id');
+
         $fieldIds = PropertyField::where('property_type_id', $propertyType->id)
-            ->where('general_field_section_id', $section->id)
+            ->whereIn('general_field_id', $generalFieldIds)
             ->pluck('id');
 
         PropertyField::whereIn('id', $fieldIds)->delete();
@@ -258,10 +261,19 @@ class GeneralFieldService
                 continue;
             }
 
+            // First try to find by PropertyFieldSection.id
             $propertyFieldSection = PropertyFieldSection::with('generalFieldSection')
                 ->where('property_type_id', $propertyType->id)
                 ->where('id', $sectionId)
                 ->first();
+
+            // If not found, try to find by general_field_section_id
+            if (!$propertyFieldSection) {
+                $propertyFieldSection = PropertyFieldSection::with('generalFieldSection')
+                    ->where('property_type_id', $propertyType->id)
+                    ->where('general_field_section_id', $sectionId)
+                    ->first();
+            }
 
             if ($propertyFieldSection) {
                 if ($propertyFieldSection->is_locked) {

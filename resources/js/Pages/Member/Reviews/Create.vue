@@ -93,6 +93,7 @@
 <script setup>
 import { computed, reactive, ref } from 'vue'
 import { Head, Link, router, usePage } from '@inertiajs/vue3'
+import { toast } from 'vue3-toastify'
 import MemberLayout from '@/Layouts/MemberLayout.vue'
 import PageHeader from '@/Components/Admin/PageHeader.vue'
 import FieldText from '@/Components/Fields/FieldText.vue'
@@ -103,13 +104,12 @@ import FieldSwitch from '@/Components/Fields/FieldSwitch.vue'
 
 const page = usePage()
 const business = computed(() => page.props.business)
-const errors = computed(() => {
-  const errs = page.props.errors || {}
-  const normalized = {}
-  for (const [key, value] of Object.entries(errs)) {
-    normalized[key] = Array.isArray(value) ? value.join(', ') : value
-  }
-  return normalized
+const errors = reactive({
+  client_name: '',
+  company: '',
+  comment: '',
+  rating: '',
+  google_link: '',
 })
 const sending = ref(false)
 const businessMenu = computed(() => page.props.businessMenu || [])
@@ -144,12 +144,59 @@ const form = reactive({
   is_active: true,
 })
 
+const validateForm = () => {
+  let isValid = true
+
+  errors.client_name = ''
+  errors.company = ''
+  errors.comment = ''
+  errors.rating = ''
+  errors.google_link = ''
+
+  if (!form.client_name || form.client_name.trim() === '') {
+    errors.client_name = 'El nombre es obligatorio.'
+    isValid = false
+  }
+
+  if (!form.comment || form.comment.trim() === '') {
+    errors.comment = 'El comentario es obligatorio.'
+    isValid = false
+  }
+
+  if (!form.rating) {
+    errors.rating = 'La calificacion es obligatoria.'
+    isValid = false
+  }
+
+  if (form.google_link && form.google_link.trim() !== '') {
+    const urlPattern = /^https?:\/\/.+/
+    if (!urlPattern.test(form.google_link)) {
+      errors.google_link = 'El link debe ser una URL valida (https://...).'
+      isValid = false
+    }
+  }
+
+  return isValid
+}
+
 const submit = () => {
+  if (!validateForm()) {
+    toast.warning('Por favor completa los campos requeridos')
+    return
+  }
+
   sending.value = true
   router.post(`/member/businesses/${business.value.id}/reviews`, form, {
     preserveScroll: true,
     onError: (errs) => {
-      console.error('Validation errors:', errs)
+      errors.client_name = errs.client_name || ''
+      errors.comment = errs.comment || ''
+      errors.rating = errs.rating || ''
+      errors.google_link = errs.google_link || ''
+      const errorMessages = Object.values(errs).flat()
+      if (errorMessages.length > 0) {
+        toast.warning('Por favor completa los campos requeridos')
+      }
     },
     onFinish: () => {
       sending.value = false

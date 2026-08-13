@@ -233,6 +233,7 @@ class PropertyController extends Controller
                 'id' => $property->id,
                 'title' => $property->title,
                 'slug' => $property->slug,
+                'property_code' => $property->property_code,
                 'description' => $property->description,
                 'operation_type' => $property->operation_type,
                 'price' => $property->price,

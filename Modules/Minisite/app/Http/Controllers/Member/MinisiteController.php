@@ -29,6 +29,7 @@ class MinisiteController extends Controller
                 'hero_title' => $setting->hero_title,
                 'hero_subtitle' => $setting->hero_subtitle,
                 'hero_background_image' => $setting->hero_background_image,
+                'hero_show_social' => $setting->hero_show_social,
                 'footer_text' => $setting->footer_text,
                 'footer_show_social' => $setting->footer_show_social,
                 'is_active' => $setting->is_active,
@@ -46,6 +47,7 @@ class MinisiteController extends Controller
             'hero_title' => ['nullable', 'string', 'max:150'],
             'hero_subtitle' => ['nullable', 'string', 'max:255'],
             'hero_background_image' => ['nullable', 'image', 'mimes:jpeg,png,webp', 'max:5120'],
+            'hero_show_social' => ['boolean'],
             'footer_text' => ['nullable', 'string', 'max:500'],
             'footer_show_social' => ['boolean'],
             'is_active' => ['boolean'],
@@ -68,7 +70,10 @@ class MinisiteController extends Controller
 
     public function update(Request $request, Business $business)
     {
-        $this->authorize('viewAny', [BusinessMinisiteSetting::class, $business]);
+        $user = $request->user();
+        if (!$user->hasAnyRole(['superadmin', 'admin']) && $user->id !== $business->user_id) {
+            abort(403);
+        }
 
         $setting = BusinessMinisiteSetting::where('business_id', $business->id)->first();
 
@@ -81,6 +86,7 @@ class MinisiteController extends Controller
             'hero_title' => ['nullable', 'string', 'max:150'],
             'hero_subtitle' => ['nullable', 'string', 'max:255'],
             'hero_background_image' => ['nullable', 'image', 'mimes:jpeg,png,webp', 'max:5120'],
+            'hero_show_social' => ['boolean'],
             'footer_text' => ['nullable', 'string', 'max:500'],
             'footer_show_social' => ['boolean'],
             'is_active' => ['boolean'],

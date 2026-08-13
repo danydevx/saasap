@@ -318,12 +318,16 @@ class MinisiteSectionController extends Controller
         $query->limit($limit);
 
         return $query->get(['id', 'name', 'description', 'price', 'image'])->map(function ($service) {
+            $image = $service->image;
+            if ($image && !str_starts_with($image, 'http')) {
+                $image = '/storage/' . $image;
+            }
             return [
                 'id' => $service->id,
                 'name' => $service->name,
                 'description' => $service->description,
                 'price' => $service->price,
-                'image' => $service->image,
+                'image' => $image,
             ];
         })->toArray();
     }
@@ -345,9 +349,13 @@ class MinisiteSectionController extends Controller
             ->limit($limit)
             ->get(['id', 'path', 'title', 'description'])
             ->map(function ($image) {
+                $path = $image->path;
+                if ($path && !str_starts_with($path, 'http')) {
+                    $path = '/storage/' . $path;
+                }
                 return [
                     'id' => $image->id,
-                    'path' => $image->path,
+                    'path' => $path,
                     'title' => $image->title,
                     'description' => $image->description,
                 ];
@@ -365,15 +373,18 @@ class MinisiteSectionController extends Controller
 
         return $query
             ->orderBy('sort_order')
-            ->get(['id', 'name', 'description', 'regular_price', 'promotion_price', 'expires_at'])
+            ->get(['id', 'name', 'description', 'image', 'regular_price', 'promotion_price', 'expires_at', 'coupon_code'])
             ->map(function ($promo) {
                 return [
                     'id' => $promo->id,
-                    'title' => $promo->name,
+                    'name' => $promo->name,
+                    'slug' => $promo->slug,
                     'description' => $promo->description,
                     'regular_price' => $promo->regular_price,
                     'promotion_price' => $promo->promotion_price,
                     'expires_at' => $promo->expires_at,
+                    'image' => $promo->image,
+                    'coupon_code' => $promo->coupon_code,
                 ];
             })->toArray();
     }
@@ -508,9 +519,13 @@ class MinisiteSectionController extends Controller
             ->with('images')
             ->get(['id', 'name', 'description', 'price', 'compare_at_price'])
             ->map(function ($product) {
-                $firstImage = $product->images && $product->images->isNotEmpty()
-                    ? $product->images->first()->path
-                    : null;
+                $firstImage = null;
+                if ($product->images && $product->images->isNotEmpty()) {
+                    $firstImage = $product->images->first()->path;
+                    if ($firstImage && !str_starts_with($firstImage, 'http')) {
+                        $firstImage = '/storage/' . $firstImage;
+                    }
+                }
 
                 return [
                     'id' => $product->id,

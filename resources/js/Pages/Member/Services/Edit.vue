@@ -165,6 +165,7 @@
 <script setup>
 import { computed, ref, reactive, onMounted } from 'vue'
 import { Head, Link, router, usePage } from '@inertiajs/vue3'
+import { toast } from 'vue3-toastify'
 import MemberLayout from '@/Layouts/MemberLayout.vue'
 import PageHeader from '@/Components/Admin/PageHeader.vue'
 import FieldText from '@/Components/Fields/FieldText.vue'
@@ -211,7 +212,56 @@ const form = reactive({
   business_location_id: '',
 })
 
-const errors = reactive({})
+const errors = reactive({
+  name: '',
+  slug: '',
+  description: '',
+  duration_minutes: '',
+  price: '',
+  deposit_amount: '',
+  whatsapp_contact: '',
+  business_location_id: '',
+  sort_order: '',
+})
+
+const validateForm = () => {
+  let isValid = true
+
+  errors.name = ''
+  errors.slug = ''
+  errors.description = ''
+  errors.duration_minutes = ''
+  errors.price = ''
+  errors.deposit_amount = ''
+  errors.whatsapp_contact = ''
+  errors.business_location_id = ''
+  errors.sort_order = ''
+
+  if (!form.name || form.name.trim() === '') {
+    errors.name = 'El nombre es obligatorio.'
+    isValid = false
+  } else if (form.name.length > 150) {
+    errors.name = 'El nombre no puede tener mas de 150 caracteres.'
+    isValid = false
+  }
+
+  if (!form.duration_minutes || form.duration_minutes < 1) {
+    errors.duration_minutes = 'La duracion minima es 1 minuto.'
+    isValid = false
+  }
+
+  if (form.price && isNaN(parseFloat(form.price))) {
+    errors.price = 'El precio debe ser un numero valido.'
+    isValid = false
+  }
+
+  if (form.deposit_required && form.deposit_amount && isNaN(parseFloat(form.deposit_amount))) {
+    errors.deposit_amount = 'El monto del deposito debe ser un numero valido.'
+    isValid = false
+  }
+
+  return isValid
+}
 
 onMounted(() => {
   form.name = service.value?.name || ''
@@ -252,7 +302,11 @@ const breadcrumbs = computed(() => {
 })
 
 const submit = () => {
-  Object.keys(errors).forEach(key => delete errors[key])
+  if (!validateForm()) {
+    toast.warning('Por favor completa los campos requeridos')
+    return
+  }
+
   sending.value = true
   const formData = new FormData()
   formData.append('_method', 'PUT')
@@ -274,10 +328,17 @@ const submit = () => {
 
   router.post(`/member/businesses/${business.value.id}/services/${service.value.id}`, formData, {
     preserveScroll: true,
+    onSuccess: () => {
+      sending.value = false
+    },
     onError: (errs) => {
+      sending.value = false
       Object.keys(errs).forEach(key => {
-        errors[key] = errs[key]
+        if (key in errors) {
+          errors[key] = errs[key]
+        }
       })
+      toast.warning('Por favor completa los campos requeridos')
     },
     onFinish: () => {
       sending.value = false

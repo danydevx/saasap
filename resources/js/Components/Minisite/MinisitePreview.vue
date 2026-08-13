@@ -19,8 +19,8 @@
                   :is="sectionComponent(section.section_type)"
                   v-if="sectionComponent(section.section_type) && hasContent(section)"
                   :title="section.title"
-                  :description="section.description"
-                  :buttons="section.buttons"
+                  :subtitle="section.description"
+                  :buttons="section.buttons || []"
                   v-bind="sectionProps(section)"
                 />
                 <div v-else class="minisite-preview__section minisite-preview__section--empty">
@@ -82,13 +82,7 @@ const props = defineProps({
   },
 })
 
-const heroComponent = computed(() => {
-  if (!props.setting) return HeroLeft
-  const layout = props.setting.hero_layout || 'left'
-  return { left: HeroLeft, center: HeroCenter, right: HeroRight }[layout] || HeroLeft
-})
-
-  const sectionComponent = (type) => {
+const sectionComponent = (type) => {
   const components = {
     hero: SectionHero,
     services: SectionServices,
@@ -106,7 +100,7 @@ const heroComponent = computed(() => {
   return components[type] || null
 }
 
-  const sectionIcon = (type) => {
+const sectionIcon = (type) => {
   const icons = {
     hero: 'bi bi-house',
     services: 'bi bi-briefcase',
@@ -168,20 +162,35 @@ const sectionProps = (section) => {
   if (section.section_type === 'hero') {
     return {
       business: props.business,
-      title: section.title || section.config?.layout === 'left' ? section.title : section.title,
+      title: section.title,
       subtitle: section.description,
       backgroundImage: section.config?.background_image,
       config: section.config || {},
     }
   }
   if (section.section_type === 'services') {
-    return { items: section.items || [], config: section.config || {} }
+    return {
+      items: section.items || [],
+      config: section.config || {},
+      businessSlug: props.business?.slug,
+    }
   }
   if (section.section_type === 'gallery') {
-    return { items: section.items || [], config: section.config || {} }
+    return {
+      items: section.items || [],
+      config: section.config || {},
+      subtitle: section.description,
+      buttons: section.buttons || [],
+    }
   }
   if (section.section_type === 'promotions') {
-    return { items: section.items || [], config: section.config || {} }
+    return {
+      items: section.items || [],
+      config: section.config || {},
+      subtitle: section.description,
+      buttons: section.buttons || [],
+      businessSlug: props.business?.slug,
+    }
   }
   if (section.section_type === 'contact_form') {
     return { form: section.form || {}, config: section.config || {} }

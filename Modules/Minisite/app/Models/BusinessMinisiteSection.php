@@ -17,6 +17,7 @@ class BusinessMinisiteSection extends Model
         'buttons',
         'sort_order',
         'is_active',
+        'show_social_links',
     ];
 
     protected $casts = [
@@ -24,6 +25,7 @@ class BusinessMinisiteSection extends Model
         'buttons' => 'array',
         'is_active' => 'boolean',
         'sort_order' => 'integer',
+        'show_social_links' => 'boolean',
     ];
 
     public function business(): BelongsTo

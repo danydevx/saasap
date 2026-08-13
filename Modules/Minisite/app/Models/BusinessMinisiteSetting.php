@@ -15,6 +15,7 @@ class BusinessMinisiteSetting extends Model
         'hero_title',
         'hero_subtitle',
         'hero_background_image',
+        'hero_show_social',
         'footer_text',
         'footer_show_social',
         'is_active',
@@ -22,6 +23,7 @@ class BusinessMinisiteSetting extends Model
 
     protected $casts = [
         'footer_show_social' => 'boolean',
+        'hero_show_social' => 'boolean',
         'is_active' => 'boolean',
     ];
 

@@ -42,9 +42,9 @@
               <td>
                 <div class="actions">
                   <Link
-                    :href="`/admin/modules/properties/types/${type.id}/fields-edit`"
+                    :href="`/admin/modules/properties/types/${type.id}/sections`"
                     class="btn btn-sm btn-outline-secondary"
-                    title="Configurar campos"
+                    title="Configurar secciones"
                   >
                     <i class="bi bi-list-check"></i>
                   </Link>

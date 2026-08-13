@@ -16,6 +16,7 @@ class BusinessProduct extends Model
         'description',
         'image',
         'price',
+        'show_price',
         'compare_at_price',
         'sku',
         'barcode',
@@ -32,6 +33,7 @@ class BusinessProduct extends Model
         'quantity' => 'integer',
         'is_active' => 'boolean',
         'is_featured' => 'boolean',
+        'show_price' => 'boolean',
         'sort_order' => 'integer',
     ];
 

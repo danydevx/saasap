@@ -2,7 +2,11 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    @if(request()->query('preview') === 'mobile')
+        <meta name="viewport" content="width=375, initial-scale=1, maximum-scale=1">
+    @else
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+    @endif
     <title inertia>{{ config('app.name', 'Mi SaaS') }}</title>
 
     @php

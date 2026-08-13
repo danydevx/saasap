@@ -1,14 +1,18 @@
 <template>
   <AdminLayout>
-    <Head title="Campos Generales" />
+    <Head title="Secciones Generales" />
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <h1 class="h3 mb-0">Campos Generales</h1>
-      <button @click="openSectionModal()" class="btn btn-primary">
-        <i class="bi bi-plus-lg me-1"></i>
-        Nueva Sección
-      </button>
-    </div>
+    <PageHeader
+      title="Secciones Generales"
+      :breadcrumbs="breadcrumbs"
+    >
+      <template #actions>
+        <button @click="openSectionModal()" class="btn btn-primary">
+          <i class="bi bi-plus-lg me-1"></i>
+          Nueva Sección
+        </button>
+      </template>
+    </PageHeader>
 
     <div v-if="$page.props.flash?.success" class="alert alert-success alert-dismissible fade show" role="alert">
       {{ $page.props.flash.success }}
@@ -46,8 +50,19 @@
                     <i :class="section.icon || 'bi bi-folder'"></i>
                     <strong>{{ section.name }}</strong>
                     <span v-if="!section.is_active" class="badge bg-secondary">Inactivo</span>
+                    <span v-if="section.is_locked" class="badge bg-warning text-dark">
+                      <i class="bi bi-lock-fill me-1"></i>Bloqueada
+                    </span>
                   </div>
                   <div class="btn-group btn-group-sm">
+                    <button
+                      @click="toggleLock(section)"
+                      class="btn"
+                      :class="section.is_locked ? 'btn-outline-warning' : 'btn-outline-secondary'"
+                      :title="section.is_locked ? 'Desbloquear sección' : 'Bloquear sección'"
+                    >
+                      <i :class="section.is_locked ? 'bi bi-unlock' : 'bi bi-lock'"></i>
+                    </button>
                     <button @click="editSection(section)" class="btn btn-outline-secondary">
                       <i class="bi bi-pencil"></i>
                     </button>
@@ -123,6 +138,10 @@
               <div class="mb-3 form-check">
                 <input v-model="sectionForm.is_active" type="checkbox" class="form-check-input" id="sectionActive">
                 <label class="form-check-label" for="sectionActive">Activo</label>
+              </div>
+              <div class="mb-3 form-check">
+                <input v-model="sectionForm.is_locked" type="checkbox" class="form-check-input" id="sectionLocked">
+                <label class="form-check-label" for="sectionLocked">Bloqueada (previene eliminar campos)</label>
               </div>
             </div>
             <div class="modal-footer">
@@ -239,9 +258,16 @@ import { Head, router, usePage } from '@inertiajs/vue3'
 import { Modal } from 'bootstrap'
 import draggable from 'vuedraggable'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
+import PageHeader from '@/Components/Admin/PageHeader.vue'
 
 const page = usePage()
 const sections = ref(page.props.sections || [])
+
+const breadcrumbs = [
+  { label: 'Propiedades', href: '/admin/modules/properties' },
+  { label: 'Tipos', href: '/admin/modules/properties/types' },
+  { label: 'Secciones Generales' },
+]
 
 const showCreateModal = ref(false)
 const editingSection = ref(null)
@@ -255,6 +281,7 @@ const sectionForm = reactive({
   icon: '',
   description: '',
   is_active: true,
+  is_locked: false,
 })
 
 const fieldForm = reactive({
@@ -286,6 +313,7 @@ const openSectionModal = () => {
   sectionForm.icon = ''
   sectionForm.description = ''
   sectionForm.is_active = true
+  sectionForm.is_locked = false
   const modal = new Modal(document.getElementById('sectionModal'))
   modal.show()
 }
@@ -325,6 +353,7 @@ const editSection = (section) => {
   sectionForm.icon = section.icon || ''
   sectionForm.description = section.description || ''
   sectionForm.is_active = !!section.is_active
+  sectionForm.is_locked = !!section.is_locked
 
   const modal = new Modal(document.getElementById('sectionModal'))
   modal.show()
@@ -352,6 +381,21 @@ const deleteSection = (section) => {
   if (!confirm(`¿Eliminar la sección "${section.name}" y todos sus campos?`)) return
 
   router.delete(`/admin/modules/properties/general-sections/${section.id}`, {
+    onSuccess: () => {
+      router.reload({ only: ['sections'], preserveScroll: true })
+    },
+    preserveScroll: true,
+  })
+}
+
+const toggleLock = (section) => {
+  const newLocked = !section.is_locked
+  const action = newLocked ? 'bloquear' : 'desbloquear'
+  if (!confirm(`¿${action.charAt(0).toUpperCase() + action.slice(1)} la sección "${section.name}"?`)) return
+
+  router.put(`/admin/modules/properties/general-sections/${section.id}`, {
+    is_locked: newLocked,
+  }, {
     onSuccess: () => {
       router.reload({ only: ['sections'], preserveScroll: true })
     },

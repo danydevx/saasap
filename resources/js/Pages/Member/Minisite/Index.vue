@@ -65,6 +65,14 @@
               </div>
             </div>
 
+            <div class="col-md-6 d-flex align-items-end">
+              <FieldSwitch
+                id="hero-social"
+                label="Mostrar redes sociales"
+                v-model="form.hero_show_social"
+              />
+            </div>
+
             <div class="col-12">
               <h5 class="border-bottom pb-2 mb-3">Footer</h5>
             </div>
@@ -162,6 +170,7 @@ const form = reactive({
   hero_title: '',
   hero_subtitle: '',
   hero_background_image: null,
+  hero_show_social: false,
   footer_text: '',
   footer_show_social: true,
   is_active: false,
@@ -173,6 +182,7 @@ if (setting.value) {
     hero_title: setting.value.hero_title || '',
     hero_subtitle: setting.value.hero_subtitle || '',
     hero_background_image: setting.value.hero_background_image,
+    hero_show_social: setting.value.hero_show_social || false,
     footer_text: setting.value.footer_text || '',
     footer_show_social: setting.value.footer_show_social,
     is_active: setting.value.is_active,
@@ -189,15 +199,12 @@ const onBackgroundChange = (event) => {
 const saveSettings = () => {
   sending.value = true
 
-  const method = setting.value ? 'put' : 'post'
-  const url = setting.value
-    ? `/member/businesses/${business.value.id}/minisite`
-    : `/member/businesses/${business.value.id}/minisite`
-
   const formData = new FormData()
+  formData.append('_method', setting.value ? 'PUT' : 'POST')
   formData.append('hero_layout', form.hero_layout)
   formData.append('hero_title', form.hero_title || '')
   formData.append('hero_subtitle', form.hero_subtitle || '')
+  formData.append('hero_show_social', form.hero_show_social ? '1' : '0')
   formData.append('footer_text', form.footer_text || '')
   formData.append('footer_show_social', form.footer_show_social ? '1' : '0')
   formData.append('is_active', form.is_active ? '1' : '0')
@@ -206,13 +213,18 @@ const saveSettings = () => {
     formData.append('hero_background_image', form.hero_background_image)
   }
 
-  router[method](url, formData, {
+  router.post(`/member/businesses/${business.value.id}/minisite`, formData, {
     forceFormData: true,
     onFinish: () => {
       sending.value = false
     },
     onSuccess: () => {
-      // noop
+      toast.success('Configuración guardada correctamente')
+    },
+    onError: (errors) => {
+      sending.value = false
+      const errorMsg = Object.values(errors).join(', ') || 'Error al guardar'
+      toast.error(errorMsg)
     },
   })
 }
