@@ -210,10 +210,10 @@
 
 <script setup>
 import { ref, computed, onMounted, nextTick } from 'vue'
-import NavigationMenu from './theme1/NavigationMenu.vue'
+import NavigationMenu from '../../components/NavigationMenu.vue'
 import AiChatWidget from '@/Components/Minisite/AiChatWidget.vue'
-import HeroSimple from './theme1/HeroSimple.vue'
-import Footer from './theme1/Footer.vue'
+import HeroSimple from '../../components/HeroSimple.vue'
+import Footer from '../../components/Footer.vue'
 import GLightbox from 'glightbox'
 import 'glightbox/dist/css/glightbox.min.css'
 

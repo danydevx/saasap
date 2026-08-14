@@ -223,6 +223,31 @@ class FaqController extends Controller
             ->with('success', 'Pregunta frecuente eliminada correctamente.');
     }
 
+    public function clone(Request $request, Business $business, BusinessFaq $faq, ActivityService $activity)
+    {
+        $this->authorize('create', [BusinessFaq::class, $business]);
+
+        $maxSortOrder = BusinessFaq::where('business_id', $business->id)->max('sort_order') ?? 0;
+
+        $clonedFaq = BusinessFaq::create([
+            'business_id' => $business->id,
+            'question' => $faq->question . ' (copia)',
+            'answer' => $faq->answer,
+            'category_id' => $faq->category_id,
+            'is_active' => false,
+            'sort_order' => $maxSortOrder + 1,
+        ]);
+
+        $activity->log('faq_cloned', [
+            'actor' => $request->user(),
+            'subject' => $clonedFaq,
+            'description' => 'Pregunta frecuente clonada',
+        ]);
+
+        return redirect()->route('member.businesses.faqs.index', $business->id)
+            ->with('success', 'Pregunta frecuente clonada correctamente.');
+    }
+
     public function bulkDelete(Request $request, Business $business)
     {
         $this->authorize('deleteAny', [\Modules\Faqs\Models\BusinessFaq::class, $business]);

@@ -11,9 +11,9 @@
 
 <script setup>
 import { computed } from 'vue'
-import HeroLeft from '@/Pages/Minisite/theme1/HeroLeft.vue'
-import HeroCenter from '@/Pages/Minisite/theme1/HeroCenter.vue'
-import HeroRight from '@/Pages/Minisite/theme1/HeroRight.vue'
+import HeroLeft from './HeroLeft.vue'
+import HeroCenter from './HeroCenter.vue'
+import HeroRight from './HeroRight.vue'
 
 const props = defineProps({
   business: Object,

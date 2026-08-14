@@ -10,17 +10,14 @@
 
     <section class="page-content">
       <div class="page-content__inner">
-        <SectionAppointments
-          v-if="sectionData.appointments"
+        <SectionContactForm
+          v-if="sectionData.form"
           :title="pageTitle"
-          :services="sectionData.appointments.services || []"
-          :locations="sectionData.appointments.locations || []"
-          :availableDays="sectionData.appointments.availableDays || []"
+          :form="sectionData.form"
           :config="{}"
-          :businessSlug="business.slug"
         />
         <div v-else class="text-muted text-center py-5">
-          El sistema de citas no está disponible.
+          El formulario de contacto no está disponible.
         </div>
       </div>
     </section>
@@ -44,10 +41,10 @@
 </template>
 
 <script setup>
-import NavigationMenu from './theme1/NavigationMenu.vue'
-import HeroSimple from './theme1/HeroSimple.vue'
-import SectionAppointments from './theme1/SectionAppointments.vue'
-import Footer from './theme1/Footer.vue'
+import NavigationMenu from '../../components/NavigationMenu.vue'
+import HeroSimple from '../../components/HeroSimple.vue'
+import SectionContactForm from '../../components/SectionContactForm.vue'
+import Footer from '../../components/Footer.vue'
 import AiChatWidget from '@/Components/Minisite/AiChatWidget.vue'
 
 defineProps({

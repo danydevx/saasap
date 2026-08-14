@@ -161,7 +161,7 @@ class HandleInertiaRequests extends Middleware
             'branding' => 'branding',
             'tasks' => 'tasks',
             'clients' => 'clients',
-            'minisite' => 'minisite',
+            'minisite' => 'minisite/sections',
             'properties' => 'properties',
             'office_hours' => 'office-hours',
         ];

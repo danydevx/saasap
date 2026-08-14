@@ -8,7 +8,7 @@
 </template>
 
 <script setup>
-import Footer from '@/Pages/Minisite/theme1/Footer.vue'
+import Footer from './Footer.vue'
 
 defineProps({
   business: Object,

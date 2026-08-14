@@ -114,8 +114,8 @@
 
 <script setup>
 import { ref, computed, onMounted, nextTick } from 'vue'
-import NavigationMenu from './theme1/NavigationMenu.vue'
-import Footer from './theme1/Footer.vue'
+import NavigationMenu from '../../components/NavigationMenu.vue'
+import Footer from '../../components/Footer.vue'
 import BreadcrumbNav from '@/Components/Minisite/BreadcrumbNav.vue'
 import { usePriceFormatter } from '@/Composables/usePriceFormatter'
 import GLightbox from 'glightbox'

@@ -16,7 +16,7 @@
             <div class="row g-4">
               <div class="col-md-6">
                 <label class="form-label">Theme</label>
-                <input v-model="form.theme" type="text" class="form-control" placeholder="theme1">
+                <input v-model="form.theme" type="text" class="form-control" placeholder="default">
               </div>
 
               <div class="col-md-3">
@@ -69,7 +69,7 @@ const props = defineProps({
 })
 
 const form = useForm({
-  theme: props.setting?.theme || 'theme1',
+  theme: props.setting?.theme || 'default',
   primary_color: props.setting?.primary_color || '#0d6efd',
   secondary_color: props.setting?.secondary_color || '#6c757d',
   font_family: props.setting?.font_family || 'Inter, sans-serif',

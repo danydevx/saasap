@@ -174,8 +174,8 @@
 <script setup>
 import { ref, computed, onMounted, nextTick, onUnmounted } from 'vue'
 import { Link } from '@inertiajs/vue3'
-import NavigationMenu from './theme1/NavigationMenu.vue'
-import Footer from './theme1/Footer.vue'
+import NavigationMenu from '../../components/NavigationMenu.vue'
+import Footer from '../../components/Footer.vue'
 import BreadcrumbNav from '@/Components/Minisite/BreadcrumbNav.vue'
 import AiChatWidget from '@/Components/Minisite/AiChatWidget.vue'
 import GLightbox from 'glightbox'

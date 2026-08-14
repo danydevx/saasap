@@ -46,18 +46,18 @@
 
 <script setup>
 import { computed } from 'vue'
-import SectionServices from '@/Pages/Minisite/theme1/SectionServices.vue'
-import SectionGallery from '@/Pages/Minisite/theme1/SectionGallery.vue'
-import SectionPromotions from '@/Pages/Minisite/theme1/SectionPromotions.vue'
-import SectionContactForm from '@/Pages/Minisite/theme1/SectionContactForm.vue'
-import SectionLocations from '@/Pages/Minisite/theme1/SectionLocations.vue'
-import SectionAbout from '@/Pages/Minisite/theme1/SectionAbout.vue'
-import SectionFeatures from '@/Pages/Minisite/theme1/SectionFeatures.vue'
-import SectionFaqs from '@/Pages/Minisite/theme1/SectionFaqs.vue'
-import SectionProducts from '@/Pages/Minisite/theme1/SectionProducts.vue'
-import SectionHero from '@/Pages/Minisite/theme1/SectionHero.vue'
-import SectionFooter from '@/Pages/Minisite/theme1/SectionFooter.vue'
-import SectionRestaurantMenu from '@/Pages/Minisite/theme1/SectionRestaurantMenu.vue'
+import SectionServices from '@/Pages/Minisite/components/SectionServices.vue'
+import SectionGallery from '@/Pages/Minisite/components/SectionGallery.vue'
+import SectionPromotions from '@/Pages/Minisite/components/SectionPromotions.vue'
+import SectionContactForm from '@/Pages/Minisite/components/SectionContactForm.vue'
+import SectionLocations from '@/Pages/Minisite/components/SectionLocations.vue'
+import SectionAbout from '@/Pages/Minisite/components/SectionAbout.vue'
+import SectionFeatures from '@/Pages/Minisite/components/SectionFeatures.vue'
+import SectionFaqs from '@/Pages/Minisite/components/SectionFaqs.vue'
+import SectionProducts from '@/Pages/Minisite/components/SectionProducts.vue'
+import SectionHero from '@/Pages/Minisite/components/SectionHero.vue'
+import SectionFooter from '@/Pages/Minisite/components/SectionFooter.vue'
+import SectionRestaurantMenu from '@/Pages/Minisite/components/SectionRestaurantMenu.vue'
 
 const props = defineProps({
   business: {

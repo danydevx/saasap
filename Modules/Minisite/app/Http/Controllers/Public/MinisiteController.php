@@ -105,7 +105,7 @@ class MinisiteController extends Controller
 
         $aiChatbot = $this->getAiChatbotSettings($business);
 
-        return Inertia::render('Minisite/Show', [
+        return Inertia::render($this->resolveThemeView('Show', $setting->theme_key), [
             'business' => [
                 'id' => $business->id,
                 'name' => $business->name,
@@ -169,7 +169,7 @@ class MinisiteController extends Controller
         $existingSections = $this->getExistingSections($business);
         $aiChatbot = $this->getAiChatbotSettings($business);
 
-        return Inertia::render('Minisite/Products', [
+        return Inertia::render($this->resolveThemeView('Products', $setting->theme_key), [
             'business' => [
                 'id' => $business->id,
                 'name' => $business->name,
@@ -225,7 +225,7 @@ class MinisiteController extends Controller
         $existingSections = $this->getExistingSections($business);
         $aiChatbot = $this->getAiChatbotSettings($business);
 
-        return Inertia::render('Minisite/Menu', [
+        return Inertia::render($this->resolveThemeView('Menu', $setting->theme_key), [
             'business' => [
                 'id' => $business->id,
                 'name' => $business->name,
@@ -330,7 +330,7 @@ class MinisiteController extends Controller
 
         $existingSections = $this->getExistingSections($business);
 
-        return Inertia::render('Minisite/ProductDetail', [
+        return Inertia::render($this->resolveThemeView('ProductDetail', $setting->theme_key), [
             'business' => [
                 'id' => $business->id,
                 'name' => $business->name,
@@ -426,7 +426,7 @@ class MinisiteController extends Controller
 
         $existingSections = $this->getExistingSections($business);
 
-        return Inertia::render('Minisite/ServiceDetail', [
+        return Inertia::render($this->resolveThemeView('ServiceDetail', $setting->theme_key), [
             'business' => [
                 'id' => $business->id,
                 'name' => $business->name,
@@ -553,7 +553,7 @@ class MinisiteController extends Controller
             $discountPercent = round((1 - $promotion->promotion_price / $promotion->regular_price) * 100);
         }
 
-        return Inertia::render('Minisite/PromotionDetail', [
+        return Inertia::render($this->resolveThemeView('PromotionDetail', $setting->theme_key), [
             'business' => [
                 'id' => $business->id,
                 'name' => $business->name,
@@ -784,7 +784,7 @@ class MinisiteController extends Controller
         $existingSections = $this->getExistingSections($business);
         $aiChatbot = $this->getAiChatbotSettings($business);
 
-        return Inertia::render('Minisite/PropertyDetail', [
+        return Inertia::render($this->resolveThemeView('PropertyDetail', $setting->theme_key), [
             'business' => [
                 'id' => $business->id,
                 'name' => $business->name,
@@ -860,19 +860,19 @@ class MinisiteController extends Controller
             ->get(['platform', 'url', 'icon_class']);
 
         $pageKeyMap = [
-            'services' => 'Minisite/Services',
-            'products' => 'Minisite/Products',
-            'gallery' => 'Minisite/Gallery',
-            'appointments' => 'Minisite/Appointments',
-            'promotions' => 'Minisite/Promotions',
-            'locations' => 'Minisite/Locations',
-            'reviews' => 'Minisite/Reviews',
-            'faqs' => 'Minisite/Faqs',
-            'contact' => 'Minisite/Contact',
-            'properties' => 'Minisite/Properties',
+            'services' => 'Services',
+            'products' => 'Products',
+            'gallery' => 'Gallery',
+            'appointments' => 'Appointments',
+            'promotions' => 'Promotions',
+            'locations' => 'Locations',
+            'reviews' => 'Reviews',
+            'faqs' => 'Faqs',
+            'contact' => 'Contact',
+            'properties' => 'Properties',
         ];
 
-        return Inertia::render($pageKeyMap[$sectionType], [
+        return Inertia::render($this->resolveThemeView($pageKeyMap[$sectionType], $setting->theme_key), [
             'business' => [
                 'id' => $business->id,
                 'name' => $business->name,
@@ -1512,6 +1512,16 @@ class MinisiteController extends Controller
                 'name' => $type->name,
             ])
             ->toArray();
+    }
+
+    private function resolveThemeView(string $page, ?string $theme = null): string
+    {
+        $theme = $theme ?: 'base';
+        $overridePath = "Minisite.themes.{$theme}.{$page}";
+        if (view()->exists($overridePath)) {
+            return $overridePath;
+        }
+        return "Minisite.themes.base.{$page}";
     }
 
     private function getAiChatbotSettings($business): ?array

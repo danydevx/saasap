@@ -9,7 +9,8 @@ import { createPinia } from 'pinia'
 createInertiaApp({
     resolve: async (name) => {
         const pages = import.meta.glob('./Pages/**/*.vue')
-        return await pages[`./Pages/${name}.vue`]()
+        const pagePath = name.replace(/\./g, '/')
+        return await pages[`./Pages/${pagePath}.vue`]()
     },
 
     setup({ el, App, props, plugin }) {

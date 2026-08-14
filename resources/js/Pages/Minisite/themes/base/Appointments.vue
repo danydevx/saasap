@@ -10,14 +10,17 @@
 
     <section class="page-content">
       <div class="page-content__inner">
-        <SectionLocations
-          v-if="sectionData.items && sectionData.items.length"
+        <SectionAppointments
+          v-if="sectionData.appointments"
           :title="pageTitle"
-          :items="sectionData.items"
+          :services="sectionData.appointments.services || []"
+          :locations="sectionData.appointments.locations || []"
+          :availableDays="sectionData.appointments.availableDays || []"
           :config="{}"
+          :businessSlug="business.slug"
         />
         <div v-else class="text-muted text-center py-5">
-          No hay ubicaciones disponibles.
+          El sistema de citas no está disponible.
         </div>
       </div>
     </section>
@@ -41,10 +44,10 @@
 </template>
 
 <script setup>
-import NavigationMenu from './theme1/NavigationMenu.vue'
-import HeroSimple from './theme1/HeroSimple.vue'
-import SectionLocations from './theme1/SectionLocations.vue'
-import Footer from './theme1/Footer.vue'
+import NavigationMenu from '../../components/NavigationMenu.vue'
+import HeroSimple from '../../components/HeroSimple.vue'
+import SectionAppointments from '../../components/SectionAppointments.vue'
+import Footer from '../../components/Footer.vue'
 import AiChatWidget from '@/Components/Minisite/AiChatWidget.vue'
 
 defineProps({
@@ -61,7 +64,7 @@ defineProps({
 <style lang="less">
 .page-content {
   padding: 32px 16px;
-  background: #fff;
+  background: #f8f9fa;
 
   &__inner {
     max-width: 1024px;

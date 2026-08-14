@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('business_minisite_settings', function (Blueprint $table) {
             $table->id();
             $table->foreignId('business_id')->constrained()->onDelete('cascade');
-            $table->string('theme_key', 50)->default('theme1');
+            $table->string('theme_key', 50)->default('default');
             $table->string('hero_layout', 20)->default('left');
             $table->string('hero_title')->nullable();
             $table->string('hero_subtitle')->nullable();

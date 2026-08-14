@@ -236,4 +236,37 @@ class ClientController extends Controller
 
         return redirect()->back()->with('success', $message);
     }
+
+    public function clone(Request $request, Business $business, BusinessClient $client, ActivityService $activity)
+    {
+        abort_unless($client->business_id === $business->id, 404);
+        $this->authorize('create', [BusinessClient::class, $business]);
+
+        $clonedClient = $business->clients()->create([
+            'customer_name' => $client->customer_name . ' (copia)',
+            'customer_email' => $client->customer_email,
+            'customer_phone' => $client->customer_phone,
+            'contact_person' => $client->contact_person,
+            'company_name' => $client->company_name,
+            'whatsapp' => $client->whatsapp,
+            'website' => $client->website,
+            'rfc' => $client->rfc,
+            'address_line_1' => $client->address_line_1,
+            'address_line_2' => $client->address_line_2,
+            'neighborhood' => $client->neighborhood,
+            'postal_code' => $client->postal_code,
+            'state_code' => $client->state_code,
+            'municipality' => $client->municipality,
+            'notes' => $client->notes,
+        ]);
+
+        $activity->log('client_cloned', [
+            'actor' => $request->user(),
+            'subject' => $clonedClient,
+            'description' => 'Cliente clonado',
+        ]);
+
+        return redirect()->route('member.businesses.clients.index', $business->id)
+            ->with('success', 'Cliente clonado correctamente.');
+    }
 }

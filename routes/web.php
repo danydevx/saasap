@@ -351,6 +351,9 @@ Route::post('/member/businesses/{business}/faqs/reorder', [FaqController::class,
 Route::post('/member/businesses/{business}/faqs/bulk-delete', [FaqController::class, 'bulkDelete'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.businesses.faqs.bulk-delete');
+Route::post('/member/businesses/{business}/faqs/{faq}/clone', [FaqController::class, 'clone'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.faqs.clone');
 
 Route::get('/member/businesses/{business}/faq-categories', [FaqCategoryController::class, 'index'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
@@ -478,6 +481,9 @@ Route::delete('/member/businesses/{business}/clients/{client}', [ClientControlle
 Route::post('/member/businesses/{business}/clients/bulk-delete', [ClientController::class, 'bulkDelete'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.businesses.clients.bulk-delete');
+Route::post('/member/businesses/{business}/clients/{client}/clone', [ClientController::class, 'clone'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.clients.clone');
 
 Route::get('/member/businesses/{business}/galleries', [GalleryGroupController::class, 'index'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])

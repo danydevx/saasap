@@ -10,14 +10,14 @@
 
     <section class="page-content">
       <div class="page-content__inner">
-        <SectionFaqs
+        <SectionReviews
           v-if="sectionData.items && sectionData.items.length"
           :title="pageTitle"
           :items="sectionData.items"
           :config="{}"
         />
         <div v-else class="text-muted text-center py-5">
-          No hay preguntas frecuentes disponibles.
+          No hay reseñas disponibles.
         </div>
       </div>
     </section>
@@ -41,10 +41,10 @@
 </template>
 
 <script setup>
-import NavigationMenu from './theme1/NavigationMenu.vue'
-import HeroSimple from './theme1/HeroSimple.vue'
-import SectionFaqs from './theme1/SectionFaqs.vue'
-import Footer from './theme1/Footer.vue'
+import NavigationMenu from '../../components/NavigationMenu.vue'
+import HeroSimple from '../../components/HeroSimple.vue'
+import SectionReviews from '../../components/SectionReviews.vue'
+import Footer from '../../components/Footer.vue'
 import AiChatWidget from '@/Components/Minisite/AiChatWidget.vue'
 
 defineProps({
@@ -61,7 +61,7 @@ defineProps({
 <style lang="less">
 .page-content {
   padding: 32px 16px;
-  background: #fff;
+  background: #f8f9fa;
 
   &__inner {
     max-width: 1024px;

@@ -10,14 +10,14 @@
 
     <section class="page-content">
       <div class="page-content__inner">
-        <SectionGallery
+        <SectionFaqs
           v-if="sectionData.items && sectionData.items.length"
           :title="pageTitle"
           :items="sectionData.items"
-          :config="{ view_mode: 'grid' }"
+          :config="{}"
         />
         <div v-else class="text-muted text-center py-5">
-          No hay imágenes en la galería.
+          No hay preguntas frecuentes disponibles.
         </div>
       </div>
     </section>
@@ -41,10 +41,10 @@
 </template>
 
 <script setup>
-import NavigationMenu from './theme1/NavigationMenu.vue'
-import HeroSimple from './theme1/HeroSimple.vue'
-import SectionGallery from './theme1/SectionGallery.vue'
-import Footer from './theme1/Footer.vue'
+import NavigationMenu from '../../components/NavigationMenu.vue'
+import HeroSimple from '../../components/HeroSimple.vue'
+import SectionFaqs from '../../components/SectionFaqs.vue'
+import Footer from '../../components/Footer.vue'
 import AiChatWidget from '@/Components/Minisite/AiChatWidget.vue'
 
 defineProps({

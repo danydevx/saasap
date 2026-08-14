@@ -62,10 +62,10 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import NavigationMenu from './theme1/NavigationMenu.vue'
-import HeroSimple from './theme1/HeroSimple.vue'
-import SectionProducts from './theme1/SectionProducts.vue'
-import Footer from './theme1/Footer.vue'
+import NavigationMenu from '../../components/NavigationMenu.vue'
+import HeroSimple from '../../components/HeroSimple.vue'
+import SectionProducts from '../../components/SectionProducts.vue'
+import Footer from '../../components/Footer.vue'
 import AiChatWidget from '@/Components/Minisite/AiChatWidget.vue'
 
 const props = defineProps({

@@ -57,6 +57,9 @@
 
       <template #cell-actions="{ row }">
         <div class="actions">
+          <button class="btn btn-sm btn-outline-secondary" @click="cloneClient(row)" title="Clonar">
+            <i class="bi bi-copy"></i>
+          </button>
           <Link :href="`/member/businesses/${business?.id}/clients/${row.id}/edit`" class="btn btn-sm btn-outline-primary">
             <i class="bi bi-pencil"></i>
           </Link>
@@ -157,6 +160,20 @@ const deleteClient = (row) => {
       },
     })
   }
+}
+
+const cloneClient = (row) => {
+  if (!confirm(`¿Clonar "${row.customer_name}"?`)) {
+    return
+  }
+  router.post(`/member/businesses/${business.value.id}/clients/${row.id}/clone`, {}, {
+    preserveScroll: true,
+    onSuccess: () => {
+      if (dataTableRef.value) {
+        dataTableRef.value.reload()
+      }
+    },
+  })
 }
 
 const deleteSelected = () => {
