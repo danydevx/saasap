@@ -2,87 +2,253 @@
   <section class="section-restaurant-menu">
     <div class="section-restaurant-menu__inner">
       <h2 v-if="title" class="section-restaurant-menu__title">{{ title }}</h2>
+      <h3 v-if="subtitle" class="section-restaurant-menu__subtitle">{{ subtitle }}</h3>
+      <p v-if="description" class="section-restaurant-menu__description-text">{{ description }}</p>
 
       <div v-if="items.length === 0" class="text-muted text-center py-4">
         No hay opciones disponibles en el menú.
       </div>
 
-      <div v-else class="section-restaurant-menu__categories">
-        <div
-          v-for="category in items"
-          :key="category.id"
-          class="section-restaurant-menu__category"
-        >
-          <div v-if="category.title" class="section-restaurant-menu__category-header">
-            <h3 class="section-restaurant-menu__category-title">{{ category.title }}</h3>
-            <p v-if="category.description" class="section-restaurant-menu__category-desc">
-              {{ category.description }}
-            </p>
-          </div>
+      <div v-else>
+        <div v-if="hasCategories && items.length > 1" class="section-restaurant-menu__tabs">
+          <button
+            v-for="category in items"
+            :key="category.id"
+            class="section-restaurant-menu__tab"
+            :class="{ 'active': activeCategory === category.id }"
+            @click="activeCategory = category.id"
+          >
+            {{ category.title }}
+          </button>
+        </div>
 
-          <div class="section-restaurant-menu__products">
+        <div class="section-restaurant-menu__category-content">
+          <template v-for="category in items" :key="category.id">
             <div
-              v-for="product in category.products"
-              :key="product.id"
-              class="section-restaurant-menu__product"
-              @click="openProductModal(product)"
+              v-show="!hasCategories || activeCategory === category.id || items.length === 1"
+              class="section-restaurant-menu__category"
             >
-              <div v-if="showImages && product.image" class="section-restaurant-menu__product-image">
-                <img :src="product.image" :alt="product.title" loading="lazy" />
-              </div>
-              <div class="section-restaurant-menu__product-info">
-                <h4 class="section-restaurant-menu__product-name">{{ product.title }}</h4>
-                <p v-if="product.description" class="section-restaurant-menu__product-desc">
-                  {{ truncateText(product.description, 80) }}
+              <div v-if="category.title && items.length > 1" class="section-restaurant-menu__category-header">
+                <h3 class="section-restaurant-menu__category-title">{{ category.title }}</h3>
+                <p v-if="category.description" class="section-restaurant-menu__category-desc">
+                  {{ category.description }}
                 </p>
-                <div v-if="showPrices && product.price" class="section-restaurant-menu__product-price">
-                  {{ formatCurrency(product.price) }}
-                </div>
-                <div v-if="product.has_variants" class="section-restaurant-menu__product-variants">
-                  <span class="badge bg-secondary">
-                    <i class="bi bi-list-ul me-1"></i>Con variantes
-                  </span>
-                </div>
               </div>
-              <button class="section-restaurant-menu__product-btn">
-                <i class="bi bi-plus-lg"></i>
-              </button>
-            </div>
-          </div>
 
-          <div v-if="category.children && category.children.length" class="section-restaurant-menu__subcategories">
-            <div
-              v-for="child in category.children"
-              :key="child.id"
-              class="section-restaurant-menu__subcategory"
-            >
-              <h4 class="section-restaurant-menu__subcategory-title">{{ child.title }}</h4>
-              <div class="section-restaurant-menu__products">
-                <div
-                  v-for="product in child.products"
-                  :key="product.id"
-                  class="section-restaurant-menu__product"
-                  @click="openProductModal(product)"
-                >
-                  <div v-if="showImages && product.image" class="section-restaurant-menu__product-image">
-                    <img :src="product.image" :alt="product.title" loading="lazy" />
-                  </div>
-                  <div class="section-restaurant-menu__product-info">
-                    <h5 class="section-restaurant-menu__product-name">{{ product.title }}</h5>
-                    <p v-if="product.description" class="section-restaurant-menu__product-desc">
-                      {{ truncateText(product.description, 60) }}
-                    </p>
-                    <div v-if="showPrices && product.price" class="section-restaurant-menu__product-price">
-                      {{ formatCurrency(product.price) }}
+              <template v-if="viewMode === 'full'">
+                <div class="section-restaurant-menu__full-section">
+                  <h4 class="section-restaurant-menu__full-title">
+                    <i class="bi bi-collection me-2"></i>Carrusel
+                  </h4>
+                  <div class="section-restaurant-menu__carousel">
+                    <div
+                      v-for="product in getDisplayedProducts(category)"
+                      :key="'carousel-' + product.id"
+                      class="section-restaurant-menu__carousel-card"
+                      @click="openProductModal(product)"
+                    >
+                      <template v-if="showImages">
+                        <div v-if="product.image" class="section-restaurant-menu__card-image">
+                          <img :src="product.image" :alt="product.title" loading="lazy" />
+                        </div>
+                        <div v-else class="section-restaurant-menu__card-image-placeholder">
+                          <i class="bi bi-basket"></i>
+                        </div>
+                      </template>
+                      <div class="section-restaurant-menu__card-body">
+                        <h4 class="section-restaurant-menu__product-name">{{ product.title }}</h4>
+                        <p v-if="product.description" class="section-restaurant-menu__product-desc">
+                          {{ truncateText(product.description, 60) }}
+                        </p>
+                        <div v-if="showPrices && product.price !== null && product.price !== undefined" class="section-restaurant-menu__product-price">
+                          {{ formatCurrency(product.price) }}
+                        </div>
+                        <div v-if="product.has_variants" class="section-restaurant-menu__product-variants">
+                          <span class="badge bg-secondary">
+                            <i class="bi bi-list-ul me-1"></i>Con variantes
+                          </span>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                  <button class="section-restaurant-menu__product-btn">
-                    <i class="bi bi-plus-lg"></i>
-                  </button>
                 </div>
+
+                <div class="section-restaurant-menu__full-section">
+                  <h4 class="section-restaurant-menu__full-title">
+                    <i class="bi bi-grid-3x3-gap me-2"></i>Cuadrícula
+                  </h4>
+                  <div class="section-restaurant-menu__grid">
+                    <div
+                      v-for="product in getDisplayedProducts(category)"
+                      :key="'grid-' + product.id"
+                      class="section-restaurant-menu__grid-card"
+                      @click="openProductModal(product)"
+                    >
+                      <template v-if="showImages">
+                        <div v-if="product.image" class="section-restaurant-menu__card-image">
+                          <img :src="product.image" :alt="product.title" loading="lazy" />
+                        </div>
+                        <div v-else class="section-restaurant-menu__card-image-placeholder">
+                          <i class="bi bi-basket"></i>
+                        </div>
+                      </template>
+                      <div class="section-restaurant-menu__card-body">
+                        <h4 class="section-restaurant-menu__product-name">{{ product.title }}</h4>
+                        <p v-if="product.description" class="section-restaurant-menu__product-desc">
+                          {{ truncateText(product.description, 60) }}
+                        </p>
+                        <div v-if="showPrices && product.price !== null && product.price !== undefined" class="section-restaurant-menu__product-price">
+                          {{ formatCurrency(product.price) }}
+                        </div>
+                        <div v-if="product.has_variants" class="section-restaurant-menu__product-variants">
+                          <span class="badge bg-secondary">
+                            <i class="bi bi-list-ul me-1"></i>Con variantes
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="section-restaurant-menu__full-section">
+                  <h4 class="section-restaurant-menu__full-title">
+                    <i class="bi bi-list-ul me-2"></i>Lista
+                  </h4>
+                  <div class="section-restaurant-menu__list">
+                    <div
+                      v-for="product in getDisplayedProducts(category)"
+                      :key="'list-' + product.id"
+                      class="section-restaurant-menu__product"
+                      @click="openProductModal(product)"
+                    >
+                      <div v-if="showImages && product.image" class="section-restaurant-menu__product-image">
+                        <img :src="product.image" :alt="product.title" loading="lazy" />
+                      </div>
+                      <div class="section-restaurant-menu__product-info">
+                        <h4 class="section-restaurant-menu__product-name">{{ product.title }}</h4>
+                        <p v-if="product.description" class="section-restaurant-menu__product-desc">
+                          {{ truncateText(product.description, 80) }}
+                        </p>
+                        <div v-if="showPrices && product.price !== null && product.price !== undefined" class="section-restaurant-menu__product-price">
+                          {{ formatCurrency(product.price) }}
+                        </div>
+                        <div v-if="product.has_variants" class="section-restaurant-menu__product-variants">
+                          <span class="badge bg-secondary">
+                            <i class="bi bi-list-ul me-1"></i>Con variantes
+                          </span>
+                        </div>
+                      </div>
+                      <button class="section-restaurant-menu__product-btn">
+                        <i class="bi bi-plus-lg"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </template>
+
+              <template v-else>
+                <div v-if="viewMode === 'carousel'" class="section-restaurant-menu__carousel">
+                  <div
+                    v-for="product in getDisplayedProducts(category)"
+                    :key="product.id"
+                    class="section-restaurant-menu__carousel-card"
+                    @click="openProductModal(product)"
+                  >
+                    <template v-if="showImages">
+                      <div v-if="product.image" class="section-restaurant-menu__card-image">
+                        <img :src="product.image" :alt="product.title" loading="lazy" />
+                      </div>
+                      <div v-else class="section-restaurant-menu__card-image-placeholder">
+                        <i class="bi bi-basket"></i>
+                      </div>
+                    </template>
+                    <div class="section-restaurant-menu__card-body">
+                      <h4 class="section-restaurant-menu__product-name">{{ product.title }}</h4>
+                      <p v-if="product.description" class="section-restaurant-menu__product-desc">
+                        {{ truncateText(product.description, 60) }}
+                      </p>
+                      <div v-if="showPrices && product.price !== null && product.price !== undefined" class="section-restaurant-menu__product-price">
+                        {{ formatCurrency(product.price) }}
+                      </div>
+                      <div v-if="product.has_variants" class="section-restaurant-menu__product-variants">
+                        <span class="badge bg-secondary">
+                          <i class="bi bi-list-ul me-1"></i>Con variantes
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div v-else-if="viewMode === 'grid'" class="section-restaurant-menu__grid">
+                  <div
+                    v-for="product in getDisplayedProducts(category)"
+                    :key="product.id"
+                    class="section-restaurant-menu__grid-card"
+                    @click="openProductModal(product)"
+                  >
+                    <template v-if="showImages">
+                      <div v-if="product.image" class="section-restaurant-menu__card-image">
+                        <img :src="product.image" :alt="product.title" loading="lazy" />
+                      </div>
+                      <div v-else class="section-restaurant-menu__card-image-placeholder">
+                        <i class="bi bi-basket"></i>
+                      </div>
+                    </template>
+                    <div class="section-restaurant-menu__card-body">
+                      <h4 class="section-restaurant-menu__product-name">{{ product.title }}</h4>
+                      <p v-if="product.description" class="section-restaurant-menu__product-desc">
+                        {{ truncateText(product.description, 60) }}
+                      </p>
+                      <div v-if="showPrices && product.price !== null && product.price !== undefined" class="section-restaurant-menu__product-price">
+                        {{ formatCurrency(product.price) }}
+                      </div>
+                      <div v-if="product.has_variants" class="section-restaurant-menu__product-variants">
+                        <span class="badge bg-secondary">
+                          <i class="bi bi-list-ul me-1"></i>Con variantes
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div v-else class="section-restaurant-menu__list">
+                  <div
+                    v-for="product in getDisplayedProducts(category)"
+                    :key="product.id"
+                    class="section-restaurant-menu__product"
+                    @click="openProductModal(product)"
+                  >
+                    <div v-if="showImages && product.image" class="section-restaurant-menu__product-image">
+                      <img :src="product.image" :alt="product.title" loading="lazy" />
+                    </div>
+                    <div class="section-restaurant-menu__product-info">
+                      <h4 class="section-restaurant-menu__product-name">{{ product.title }}</h4>
+                      <p v-if="product.description" class="section-restaurant-menu__product-desc">
+                        {{ truncateText(product.description, 80) }}
+                      </p>
+                      <div v-if="showPrices && product.price !== null && product.price !== undefined" class="section-restaurant-menu__product-price">
+                        {{ formatCurrency(product.price) }}
+                      </div>
+                      <div v-if="product.has_variants" class="section-restaurant-menu__product-variants">
+                        <span class="badge bg-secondary">
+                          <i class="bi bi-list-ul me-1"></i>Con variantes
+                        </span>
+                      </div>
+                    </div>
+                    <button class="section-restaurant-menu__product-btn">
+                      <i class="bi bi-plus-lg"></i>
+                    </button>
+                  </div>
+                </div>
+              </template>
+
+              <div v-if="hasMoreItems(category) && viewMode !== 'full'" class="section-restaurant-menu__show-all">
+                <button class="btn btn-outline-primary" @click="showAllCategory(category.id)">
+                  Ver todos ({{ category.products.length }})
+                </button>
               </div>
             </div>
-          </div>
+          </template>
         </div>
       </div>
 
@@ -151,6 +317,7 @@ import { computed, ref } from 'vue'
 
 const props = defineProps({
   title: String,
+  subtitle: String,
   items: {
     type: Array,
     default: () => [],
@@ -171,9 +338,36 @@ const props = defineProps({
 })
 
 const selectedProduct = ref(null)
+const expandedCategories = ref(new Set())
 
+const viewMode = computed(() => props.config?.view_mode || 'list')
 const showImages = computed(() => props.config?.show_images !== false)
 const showPrices = computed(() => props.config?.show_prices !== false)
+const maxItems = computed(() => props.config?.max_items || 12)
+const showAll = computed(() => props.config?.show_all === true)
+
+const hasCategories = computed(() => {
+  return props.items.some(cat => cat.products && cat.products.length > 0)
+})
+
+const activeCategory = ref(null)
+
+const getDisplayedProducts = (category) => {
+  const products = category.products || []
+  if (showAll.value || expandedCategories.value.has(category.id)) {
+    return products
+  }
+  return products.slice(0, maxItems.value)
+}
+
+const hasMoreItems = (category) => {
+  const products = category.products || []
+  return !showAll.value && !expandedCategories.value.has(category.id) && products.length > maxItems.value
+}
+
+const showAllCategory = (categoryId) => {
+  expandedCategories.value.add(categoryId)
+}
 
 const truncateText = (text, length) => {
   if (!text || text.length <= length) return text
@@ -213,25 +407,68 @@ export default defineComponent({ name: 'SectionRestaurantMenu' })
   }
 
   &__title {
-    font-size: 1.5rem;
     font-weight: 700;
-    margin: 0 0 24px;
+    margin: 0 0 8px;
     text-align: center;
     color: #212529;
   }
 
-  &__categories {
+  &__subtitle {
+    font-weight: 600;
+    color: #495057;
+    text-align: center;
+    margin: 0 0 16px;
+  }
+
+  &__description-text {
+    font-size: 1rem;
+    color: #6c757d;
+    text-align: center;
+    margin: 0 0 16px;
+  }
+
+  &__tabs {
     display: flex;
-    flex-direction: column;
-    gap: 32px;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #e9ecef;
+  }
+
+  &__tab {
+    padding: 8px 16px;
+    border: 1px solid #dee2e6;
+    border-radius: 20px;
+    background: #fff;
+    color: #495057;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &:hover {
+      background: #f8f9fa;
+      border-color: #adb5bd;
+    }
+
+    &.active {
+      background: #0d6efd;
+      border-color: #0d6efd;
+      color: #fff;
+    }
+  }
+
+  &__category-content {
+    margin-bottom: 24px;
   }
 
   &__category {
-    border-bottom: 1px solid #e9ecef;
-    padding-bottom: 24px;
+    margin-bottom: 32px;
 
     &:last-child {
-      border-bottom: none;
+      margin-bottom: 0;
     }
   }
 
@@ -252,7 +489,7 @@ export default defineComponent({ name: 'SectionRestaurantMenu' })
     margin: 0;
   }
 
-  &__products {
+  &__list {
     display: flex;
     flex-direction: column;
     gap: 8px;
@@ -285,6 +522,18 @@ export default defineComponent({ name: 'SectionRestaurantMenu' })
       height: 100%;
       object-fit: cover;
     }
+  }
+
+  &__product-image-placeholder {
+    width: 64px;
+    height: 64px;
+    border-radius: 8px;
+    background: #e9ecef;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #adb5bd;
+    font-size: 1.5rem;
   }
 
   &__product-info {
@@ -341,21 +590,197 @@ export default defineComponent({ name: 'SectionRestaurantMenu' })
     }
   }
 
-  &__subcategories {
-    margin-top: 24px;
-    padding-left: 16px;
-    display: flex;
-    flex-direction: column;
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
     gap: 16px;
   }
 
-  &__subcategory-title {
+  &__grid-card {
+    background: #f8f9fa;
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+
+    &:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    }
+
+    .section-restaurant-menu__card-image {
+      width: 100%;
+      height: 140px;
+      overflow: hidden;
+
+      img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+    }
+
+    .section-restaurant-menu__card-image-placeholder {
+      width: 100%;
+      height: 140px;
+      background: #e9ecef;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #adb5bd;
+      font-size: 2.5rem;
+    }
+
+    .section-restaurant-menu__card-body {
+      padding: 16px;
+    }
+
+    .section-restaurant-menu__product-name {
+      font-size: 0.9375rem;
+      font-weight: 600;
+      color: #212529;
+      margin: 0 0 8px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .section-restaurant-menu__product-desc {
+      font-size: 0.8125rem;
+      color: #6c757d;
+      margin: 0 0 8px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .section-restaurant-menu__product-price {
+      font-size: 0.9375rem;
+      font-weight: 600;
+      color: #198754;
+    }
+  }
+
+  &__carousel {
+    display: flex;
+    gap: 16px;
+    overflow-x: auto;
+    padding-bottom: 16px;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+
+    &::-webkit-scrollbar {
+      height: 4px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 2px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: #dee2e6;
+      border-radius: 2px;
+    }
+  }
+
+  &__carousel-card {
+    flex: 0 0 220px;
+    background: #f8f9fa;
+    border-radius: 12px;
+    overflow: hidden;
+    scroll-snap-align: start;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+
+    &:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    }
+
+    .section-restaurant-menu__card-image {
+      width: 100%;
+      height: 140px;
+      overflow: hidden;
+
+      img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+    }
+
+    .section-restaurant-menu__card-image-placeholder {
+      width: 100%;
+      height: 140px;
+      background: #e9ecef;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #adb5bd;
+      font-size: 2.5rem;
+    }
+
+    .section-restaurant-menu__card-body {
+      padding: 16px;
+    }
+
+    .section-restaurant-menu__product-name {
+      font-size: 0.9375rem;
+      font-weight: 600;
+      color: #212529;
+      margin: 0 0 8px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .section-restaurant-menu__product-desc {
+      font-size: 0.8125rem;
+      color: #6c757d;
+      margin: 0 0 8px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .section-restaurant-menu__product-price {
+      font-size: 0.9375rem;
+      font-weight: 600;
+      color: #198754;
+    }
+  }
+
+  &__show-all {
+    display: flex;
+    justify-content: center;
+    margin-top: 16px;
+  }
+
+  &__full-section {
+    margin-bottom: 32px;
+    padding-bottom: 24px;
+    border-bottom: 1px dashed #dee2e6;
+
+    &:last-of-type {
+      border-bottom: none;
+      margin-bottom: 0;
+    }
+  }
+
+  &__full-title {
     font-size: 1rem;
     font-weight: 600;
     color: #495057;
-    margin: 0 0 12px;
-    padding-bottom: 8px;
-    border-bottom: 1px dashed #dee2e6;
+    margin: 0 0 16px;
+    display: flex;
+    align-items: center;
+
+    i {
+      color: #0d6efd;
+    }
   }
 
   &__buttons {

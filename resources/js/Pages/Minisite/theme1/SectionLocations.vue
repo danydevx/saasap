@@ -2,6 +2,8 @@
   <section class="section-locations">
     <div class="section-locations__inner">
       <h2 v-if="title" class="section-locations__title">{{ title }}</h2>
+      <h3 v-if="subtitle" class="section-locations__subtitle">{{ subtitle }}</h3>
+      <p v-if="description" class="section-locations__description-text">{{ description }}</p>
 
       <div v-if="items.length === 0" class="text-muted text-center py-4">
         No hay ubicaciones disponibles.
@@ -73,6 +75,7 @@ import LocationMap from '@/Components/Minisite/LocationMap.vue'
 
 const props = defineProps({
   title: String,
+  subtitle: String,
   items: {
     type: Array,
     default: () => [],
@@ -109,11 +112,24 @@ export default defineComponent({ name: 'SectionLocations' })
   }
 
   &__title {
-    font-size: 1.5rem;
     font-weight: 700;
-    margin: 0 0 24px;
+    margin: 0 0 8px;
     text-align: center;
     color: #212529;
+  }
+
+  &__subtitle {
+    font-weight: 600;
+    color: #495057;
+    text-align: center;
+    margin: 0 0 16px;
+  }
+
+  &__description-text {
+    font-size: 1rem;
+    color: #6c757d;
+    text-align: center;
+    margin: 0 0 16px;
   }
 
   &__list {

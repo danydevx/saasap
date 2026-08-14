@@ -2,6 +2,8 @@
   <section class="section-contact">
     <div class="section-contact__inner">
       <h2 v-if="title" class="section-contact__title">{{ title }}</h2>
+      <h3 v-if="subtitle" class="section-contact__subtitle">{{ subtitle }}</h3>
+      <p v-if="description" class="section-contact__description-text">{{ description }}</p>
 
       <div v-if="!form" class="text-muted text-center py-4">
         Formulario no disponible.
@@ -66,8 +68,14 @@ import { ref, reactive, computed } from 'vue'
 
 const props = defineProps({
   title: String,
+  subtitle: String,
   form: Object,
   config: Object,
+  description: String,
+  buttons: {
+    type: Array,
+    default: () => [],
+  },
 })
 
 const sending = ref(false)
@@ -104,11 +112,24 @@ const submitForm = async () => {
   }
 
   &__title {
-    font-size: 1.5rem;
     font-weight: 700;
-    margin: 0 0 24px;
+    margin: 0 0 8px;
     text-align: center;
     color: #212529;
+  }
+
+  &__subtitle {
+    font-weight: 600;
+    color: #495057;
+    text-align: center;
+    margin: 0 0 16px;
+  }
+
+  &__description-text {
+    font-size: 1rem;
+    color: #6c757d;
+    text-align: center;
+    margin: 0 0 16px;
   }
 
   &__form {

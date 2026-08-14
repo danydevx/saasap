@@ -17,7 +17,8 @@
         <SectionServices
           v-if="section.type === 'services'"
           :title="section.title"
-          :description="section.subtitle"
+          :subtitle="section.subtitle"
+          :description="section.description"
           :buttons="section.buttons"
           :items="section.items"
           :config="section.config"
@@ -28,6 +29,7 @@
           v-else-if="section.type === 'gallery'"
           :title="section.title"
           :subtitle="section.subtitle"
+          :description="section.description"
           :buttons="section.buttons"
           :items="section.items"
           :config="section.config"
@@ -37,6 +39,7 @@
           v-else-if="section.type === 'promotions'"
           :title="section.title"
           :subtitle="section.subtitle"
+          :description="section.description"
           :buttons="section.buttons"
           :items="section.items"
           :config="section.config"
@@ -46,6 +49,9 @@
         <SectionContactForm
           v-else-if="section.type === 'contact_form'"
           :title="section.title"
+          :subtitle="section.subtitle"
+          :description="section.description"
+          :buttons="section.buttons"
           :form="section.form"
           :config="section.config"
         />
@@ -53,6 +59,9 @@
         <SectionAppointments
           v-else-if="section.type === 'appointments'"
           :title="section.title"
+          :subtitle="section.subtitle"
+          :description="section.description"
+          :buttons="section.buttons"
           :services="section.appointments?.services || []"
           :locations="section.appointments?.locations || []"
           :availableDays="section.appointments?.availableDays || []"
@@ -63,12 +72,18 @@
         <SectionAvailability
           v-else-if="section.type === 'availability'"
           :title="section.title"
+          :subtitle="section.subtitle"
+          :description="section.description"
+          :buttons="section.buttons"
           :availability="section.availability || {}"
         />
 
         <SectionLocations
           v-else-if="section.type === 'locations'"
           :title="section.title"
+          :subtitle="section.subtitle"
+          :description="section.description"
+          :buttons="section.buttons"
           :items="section.items"
           :config="section.config"
         />
@@ -76,6 +91,9 @@
         <SectionAbout
           v-else-if="section.type === 'about'"
           :title="section.title"
+          :subtitle="section.subtitle"
+          :description="section.description"
+          :buttons="section.buttons"
           :content="section.content"
           :config="section.config"
         />
@@ -83,6 +101,9 @@
         <SectionFeatures
           v-else-if="section.type === 'features'"
           :title="section.title"
+          :subtitle="section.subtitle"
+          :description="section.description"
+          :buttons="section.buttons"
           :items="section.items"
           :config="section.config"
         />
@@ -90,6 +111,9 @@
         <SectionFaqs
           v-else-if="section.type === 'faqs'"
           :title="section.title"
+          :subtitle="section.subtitle"
+          :description="section.description"
+          :buttons="section.buttons"
           :items="section.items"
           :config="section.config"
         />
@@ -97,6 +121,9 @@
         <SectionProducts
           v-else-if="section.type === 'products'"
           :title="section.title"
+          :subtitle="section.subtitle"
+          :description="section.description"
+          :buttons="section.buttons"
           :items="section.items"
           :config="section.config"
           :businessSlug="business.slug"
@@ -113,6 +140,9 @@
         <SectionReviews
           v-else-if="section.type === 'reviews'"
           :title="section.title"
+          :subtitle="section.subtitle"
+          :description="section.description"
+          :buttons="section.buttons"
           :items="section.items"
           :config="section.config"
         />
@@ -120,6 +150,20 @@
         <SectionRestaurantMenu
           v-else-if="section.type === 'restaurant_menu'"
           :title="section.title"
+          :subtitle="section.subtitle"
+          :description="section.description"
+          :buttons="section.buttons"
+          :items="section.items"
+          :config="section.config"
+          :businessSlug="business.slug"
+        />
+
+        <SectionProperties
+          v-else-if="section.type === 'properties'"
+          :title="section.title"
+          :subtitle="section.subtitle"
+          :description="section.description"
+          :buttons="section.buttons"
           :items="section.items"
           :config="section.config"
           :businessSlug="business.slug"
@@ -158,6 +202,7 @@ import SectionProducts from './theme1/SectionProducts.vue'
 import SectionFooter from './theme1/SectionFooter.vue'
 import SectionReviews from './theme1/SectionReviews.vue'
 import SectionRestaurantMenu from './theme1/SectionRestaurantMenu.vue'
+import SectionProperties from './theme1/SectionProperties.vue'
 import AiChatWidget from '@/Components/Minisite/AiChatWidget.vue'
 
 const props = defineProps({
@@ -182,7 +227,7 @@ const props = defineProps({
 })
 
 const renderedSections = computed(() => {
-  const sectionComponents = ['services', 'gallery', 'promotions', 'contact_form', 'appointments', 'availability', 'locations', 'about', 'features', 'faqs', 'products', 'footer', 'reviews', 'restaurant_menu']
+  const sectionComponents = ['services', 'gallery', 'promotions', 'contact_form', 'appointments', 'availability', 'locations', 'about', 'features', 'faqs', 'products', 'footer', 'reviews', 'restaurant_menu', 'properties']
 
   return props.sections
     .filter(section => sectionComponents.includes(section.section_type))
@@ -191,7 +236,8 @@ const renderedSections = computed(() => {
         id: section.id,
         type: section.section_type,
         title: section.title,
-        subtitle: section.subtitle || null,
+        subtitle: section.subtitle || section.description || null,
+        description: section.description || section.subtitle || null,
         buttons: section.buttons || [],
         config: section.config || {},
       }
@@ -206,6 +252,7 @@ const renderedSections = computed(() => {
         case 'products':
         case 'reviews':
         case 'restaurant_menu':
+        case 'properties':
           data.items = section.items || []
           break
         case 'contact_form':

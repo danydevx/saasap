@@ -115,6 +115,14 @@
 
       <template #cell-actions="{ row }">
         <div class="actions">
+          <button
+            class="btn btn-sm btn-outline-secondary"
+            @click="cloneProduct(row)"
+            :disabled="cloning === row.id"
+            title="Clonar producto"
+          >
+            <i class="bi bi-copy"></i>
+          </button>
           <Link
             :href="`/member/businesses/${business?.id}/products/${row.id}/edit`"
             class="btn btn-sm btn-outline-primary"
@@ -186,6 +194,7 @@ const columns = [
 
 const dataTableRef = ref(null)
 const deleting = ref(null)
+const cloning = ref(null)
 const perPage = ref(10)
 const selectedIds = ref([])
 const filterCategory = ref(props.selectedCategory)
@@ -235,6 +244,18 @@ const deleteProduct = (product) => {
         if (dataTableRef.value) {
           dataTableRef.value.reload()
         }
+      },
+    })
+  }
+}
+
+const cloneProduct = (product) => {
+  if (confirm(`Clonar el producto "${product.name}"?`)) {
+    cloning.value = product.id
+    router.post(`/member/businesses/${business.value.id}/products/${product.id}/clone`, {}, {
+      preserveScroll: true,
+      onFinish: () => {
+        cloning.value = null
       },
     })
   }

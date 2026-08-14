@@ -2,6 +2,8 @@
   <section class="section-about">
     <div class="section-about__inner">
       <h2 v-if="title" class="section-about__title">{{ title }}</h2>
+      <h3 v-if="subtitle" class="section-about__subtitle">{{ subtitle }}</h3>
+      <p v-if="description" class="section-about__description-text">{{ description }}</p>
 
       <div v-if="content" class="section-about__content">
         <div v-if="showImage && (content.logo || content.image)" class="section-about__image-wrapper">
@@ -39,6 +41,7 @@
 <script setup>
 const props = defineProps({
   title: String,
+  subtitle: String,
   items: {
     type: Array,
     default: () => [],
@@ -78,10 +81,22 @@ export default defineComponent({ name: 'SectionAbout' })
   }
 
   &__title {
-    font-size: 1.5rem;
     font-weight: 700;
     margin: 0 0 24px;
     color: #212529;
+  }
+
+  &__subtitle {
+    font-weight: 600;
+    margin: 0 0 16px;
+    color: #495057;
+  }
+
+  &__description-text {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: #6c757d;
+    margin: 0 0 16px;
   }
 
   &__image-wrapper {

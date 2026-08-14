@@ -83,6 +83,14 @@
 
       <template #cell-actions="{ row }">
         <div class="actions">
+          <button
+            class="btn btn-sm btn-outline-secondary"
+            @click="clonePromotion(row)"
+            :disabled="cloning === row.id"
+            title="Clonar promocion"
+          >
+            <i class="bi bi-copy"></i>
+          </button>
           <Link :href="`/member/businesses/${business?.id}/promotions/${row.id}/edit`" class="btn btn-sm btn-outline-primary">
             <i class="bi bi-pencil"></i>
           </Link>
@@ -144,6 +152,7 @@ const columns = [
 ]
 
 const dataTableRef = ref(null)
+const cloning = ref(null)
 const selectedIds = ref([])
 
 const currentPageIds = computed(() => {
@@ -179,6 +188,17 @@ const deletePromotion = (row) => {
   if (!confirm(`Eliminar la promocion "${row.name}"?`)) return
   router.delete(`/member/businesses/${business.value.id}/promotions/${row.id}`, {
     preserveScroll: true,
+  })
+}
+
+const clonePromotion = (row) => {
+  if (!confirm(`Clonar la promocion "${row.name}"?`)) return
+  cloning.value = row.id
+  router.post(`/member/businesses/${business.value.id}/promotions/${row.id}/clone`, {}, {
+    preserveScroll: true,
+    onFinish: () => {
+      cloning.value = null
+    },
   })
 }
 

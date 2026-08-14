@@ -21,4 +21,6 @@ Route::middleware(['web'])
         Route::get('/{slug}/preguntas-frecuentes', [MinisiteController::class, 'faqs'])->name('faqs');
         Route::get('/{slug}/contacto', [MinisiteController::class, 'contact'])->name('contact');
         Route::get('/{slug}/menu', [MinisiteController::class, 'menu'])->name('menu');
+        Route::get('/{slug}/propiedades', [MinisiteController::class, 'properties'])->name('properties');
+        Route::get('/{slug}/propiedades/{propertySlug}', [MinisiteController::class, 'propertyDetail'])->name('property.detail');
     });

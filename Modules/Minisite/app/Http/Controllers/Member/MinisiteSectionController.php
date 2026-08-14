@@ -27,6 +27,7 @@ class MinisiteSectionController extends Controller
                     'section_type' => $section->section_type,
                     'section_key' => $section->section_key,
                     'title' => $section->title,
+                    'subtitle' => $section->subtitle,
                     'description' => $section->description,
                     'config' => $config,
                     'buttons' => $section->buttons ?? [],
@@ -182,6 +183,7 @@ class MinisiteSectionController extends Controller
         $data = $request->validate([
             'section_type' => ['required', 'string'],
             'title' => ['nullable', 'string', 'max:150'],
+            'subtitle' => ['nullable', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:1000'],
             'config' => ['nullable', 'array'],
             'buttons' => ['nullable', 'array'],
@@ -204,6 +206,7 @@ class MinisiteSectionController extends Controller
             'section_type' => $data['section_type'],
             'section_key' => $sectionKey,
             'title' => $data['title'] ?? null,
+            'subtitle' => $data['subtitle'] ?? null,
             'description' => $data['description'] ?? null,
             'config' => $data['config'] ?? BusinessMinisiteSection::getDefaultConfig($data['section_type']),
             'buttons' => $data['buttons'] ?? [],
@@ -241,6 +244,7 @@ class MinisiteSectionController extends Controller
                 'section_type' => $section->section_type,
                 'section_key' => $section->section_key,
                 'title' => $section->title,
+                'subtitle' => $section->subtitle,
                 'description' => $section->description,
                 'config' => $section->config,
                 'buttons' => $section->buttons ?? [],
@@ -261,6 +265,7 @@ class MinisiteSectionController extends Controller
 
         $data = $request->validate([
             'title' => ['nullable', 'string', 'max:150'],
+            'subtitle' => ['nullable', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:1000'],
             'config' => ['nullable', 'array'],
             'buttons' => ['nullable', 'array'],
@@ -482,25 +487,25 @@ class MinisiteSectionController extends Controller
     {
         $query = $business->faqs()
             ->where('is_active', true)
-            ->whereNull('faq_category_id');
+            ->whereNull('category_id');
 
         if (!empty($config['faq_ids'])) {
             $query->whereIn('id', $config['faq_ids']);
         }
 
         if (!empty($config['category_id'])) {
-            $query->where('faq_category_id', $config['category_id']);
+            $query->where('category_id', $config['category_id']);
         }
 
             return $query
                 ->orderBy('sort_order')
-                ->get(['id', 'question', 'answer', 'faq_category_id'])
+                ->get(['id', 'question', 'answer', 'category_id'])
                 ->map(function ($faq) {
                     return [
                         'id' => $faq->id,
                         'question' => $faq->question,
                         'answer' => $faq->answer,
-                        'category_id' => $faq->faq_category_id,
+                        'category_id' => $faq->category_id,
                     ];
                 })->toArray();
     }

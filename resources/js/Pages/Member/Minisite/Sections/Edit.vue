@@ -76,6 +76,15 @@
             </div>
 
             <div class="mb-3">
+              <FieldText
+                id="section-subtitle"
+                label="Subtítulo"
+                v-model="form.subtitle"
+                placeholder="Subtítulo breve para mostrar bajo el título..."
+              />
+            </div>
+
+            <div class="mb-3">
               <FieldTextarea
                 id="section-description"
                 label="Descripción"
@@ -138,6 +147,7 @@
                 >
                   <option value="carousel">Carrusel</option>
                   <option value="list">Lista</option>
+                  <option value="grid">Cuadrícula</option>
                 </FieldSelect>
               </div>
               <div class="col-12">
@@ -159,6 +169,14 @@
                   id="show-description"
                   label="Mostrar descripción"
                   v-model="config.show_description"
+                />
+              </div>
+              <div class="col-md-6">
+                <FieldNumber
+                  id="max-items"
+                  label="Máximo de items a mostrar"
+                  v-model="config.max_items"
+                  placeholder="12"
                 />
               </div>
             </div>
@@ -403,6 +421,7 @@
                 >
                   <option value="grid">Cuadrícula</option>
                   <option value="carousel">Carrusel</option>
+                  <option value="list">Lista</option>
                 </FieldSelect>
               </div>
               <div class="col-md-4">
@@ -424,6 +443,167 @@
                   id="show-compare-price"
                   label="Mostrar precio anterior"
                   v-model="config.show_compare_price"
+                />
+              </div>
+              <div class="col-md-6">
+                <FieldNumber
+                  id="max-items"
+                  label="Máximo de items a mostrar"
+                  v-model="config.max_items"
+                  placeholder="12"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div v-if="section.section_type === 'reviews'" class="border-top pt-4">
+            <h6 class="mb-3">Configuración de Reseñas</h6>
+            <div class="row g-3">
+              <div class="col-12">
+                <FieldSwitch
+                  id="show-all-reviews"
+                  label="Mostrar todas las reseñas"
+                  v-model="config.show_all"
+                />
+              </div>
+              <div class="col-md-6">
+                <FieldSelect
+                  id="view-mode"
+                  label="Vista"
+                  v-model="config.view_mode"
+                >
+                  <option value="grid">Cuadrícula</option>
+                  <option value="carousel">Carrusel</option>
+                  <option value="list">Lista</option>
+                </FieldSelect>
+              </div>
+              <div class="col-md-6">
+                <FieldSwitch
+                  id="show-comment"
+                  label="Mostrar comentario"
+                  v-model="config.show_comment"
+                />
+              </div>
+              <div class="col-md-6">
+                <FieldSwitch
+                  id="show-client-name"
+                  label="Mostrar nombre del cliente"
+                  v-model="config.show_client_name"
+                />
+              </div>
+              <div class="col-md-6">
+                <FieldNumber
+                  id="max-items"
+                  label="Máximo de items a mostrar"
+                  v-model="config.max_items"
+                  placeholder="12"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div v-if="section.section_type === 'restaurant_menu'" class="border-top pt-4">
+            <h6 class="mb-3">Configuración del Menú</h6>
+            <div class="row g-3">
+              <div class="col-12">
+                <FieldSwitch
+                  id="show-all-items"
+                  label="Mostrar todos los elementos"
+                  v-model="config.show_all"
+                />
+              </div>
+              <div class="col-md-6">
+                <FieldSelect
+                  id="view-mode"
+                  label="Vista"
+                  v-model="config.view_mode"
+                >
+                  <option value="list">Lista</option>
+                  <option value="grid">Cuadrícula</option>
+                  <option value="carousel">Carrusel</option>
+                  <option value="full">Completa (las 3)</option>
+                </FieldSelect>
+              </div>
+              <div class="col-md-6">
+                <FieldSwitch
+                  id="show-images"
+                  label="Mostrar imágenes"
+                  v-model="config.show_images"
+                />
+              </div>
+              <div class="col-md-6">
+                <FieldSwitch
+                  id="show-prices"
+                  label="Mostrar precios"
+                  v-model="config.show_prices"
+                />
+              </div>
+              <div class="col-md-6">
+                <FieldNumber
+                  id="max-items"
+                  label="Máximo de items por categoría"
+                  v-model="config.max_items"
+                  placeholder="12"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div v-if="section.section_type === 'properties'" class="border-top pt-4">
+            <h6 class="mb-3">Configuración de Propiedades</h6>
+            <div class="row g-3">
+              <div class="col-12">
+                <FieldSwitch
+                  id="show-all-properties"
+                  label="Mostrar todas las propiedades"
+                  v-model="config.show_all"
+                />
+              </div>
+              <div class="col-md-6">
+                <FieldSelect
+                  id="view-mode"
+                  label="Vista"
+                  v-model="config.view_mode"
+                >
+                  <option value="grid">Cuadrícula</option>
+                  <option value="carousel">Carrusel</option>
+                  <option value="list">Lista</option>
+                </FieldSelect>
+              </div>
+              <div class="col-md-4">
+                <FieldSwitch
+                  id="show-image"
+                  label="Mostrar imagen"
+                  v-model="config.show_image"
+                />
+              </div>
+              <div class="col-md-4">
+                <FieldSwitch
+                  id="show-price"
+                  label="Mostrar precio"
+                  v-model="config.show_price"
+                />
+              </div>
+              <div class="col-md-4">
+                <FieldSwitch
+                  id="show-location"
+                  label="Mostrar ubicación"
+                  v-model="config.show_location"
+                />
+              </div>
+              <div class="col-md-6">
+                <FieldSwitch
+                  id="show-description"
+                  label="Mostrar descripción"
+                  v-model="config.show_description"
+                />
+              </div>
+              <div class="col-md-6">
+                <FieldNumber
+                  id="max-items"
+                  label="Máximo de items a mostrar"
+                  v-model="config.max_items"
+                  placeholder="12"
                 />
               </div>
             </div>
@@ -487,6 +667,7 @@ const breadcrumbs = computed(() => {
 const sending = ref(false)
 const form = reactive({
   title: '',
+  subtitle: '',
   description: '',
   buttons: [],
   hero_title: '',
@@ -520,6 +701,7 @@ const config = reactive({
 onMounted(() => {
   if (section.value) {
     form.title = section.value.title || ''
+    form.subtitle = section.value.subtitle || ''
     form.description = section.value.description || ''
     form.buttons = section.value.buttons || []
     form.hero_title = section.value.title || ''
@@ -564,6 +746,7 @@ const updateSection = () => {
   } else {
     router.put(`/member/businesses/${business.value.id}/minisite/sections/${section.value.id}`, {
       title: form.title || null,
+      subtitle: form.subtitle || null,
       description: form.description || null,
       config: { ...config },
       buttons: form.buttons.filter(b => b.text && b.url),

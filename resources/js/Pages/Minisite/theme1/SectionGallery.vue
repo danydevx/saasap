@@ -2,7 +2,8 @@
   <section class="section-gallery">
     <div class="section-gallery__inner">
       <h2 v-if="title" class="section-gallery__title">{{ title }}</h2>
-      <p v-if="subtitle" class="section-gallery__subtitle">{{ subtitle }}</p>
+      <h3 v-if="subtitle" class="section-gallery__subtitle">{{ subtitle }}</h3>
+      <p v-if="description" class="section-gallery__description-text">{{ description }}</p>
 
       <div v-if="items.length === 0" class="text-muted text-center py-4">
         No hay imágenes en la galería.
@@ -67,6 +68,7 @@ import 'glightbox/dist/css/glightbox.min.css'
 const props = defineProps({
   title: String,
   subtitle: String,
+  description: String,
   buttons: {
     type: Array,
     default: () => [],
@@ -107,7 +109,6 @@ onMounted(() => {
   }
 
   &__title {
-    font-size: 1.5rem;
     font-weight: 700;
     margin: 0 0 8px;
     text-align: center;
@@ -115,6 +116,13 @@ onMounted(() => {
   }
 
   &__subtitle {
+    font-weight: 600;
+    color: #495057;
+    text-align: center;
+    margin: 0 0 16px;
+  }
+
+  &__description-text {
     font-size: 1rem;
     color: #6c757d;
     text-align: center;

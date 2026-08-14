@@ -3,11 +3,13 @@
 namespace Modules\Minisite\Http\Controllers\Public;
 
 use App\Http\Controllers\Controller;
+use App\Services\Properties\PropertyFormSchemaService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Modules\Businesses\Models\Business;
 use Modules\Minisite\Models\BusinessMinisiteSection;
 use Modules\Minisite\Models\BusinessMinisiteSetting;
+use Modules\Properties\Models\PropertyValue;
 
 class MinisiteController extends Controller
 {
@@ -41,7 +43,8 @@ class MinisiteController extends Controller
                     'section_type' => $section->section_type,
                     'section_key' => $section->section_key,
                     'title' => $section->title,
-                    'subtitle' => $section->description,
+                    'subtitle' => $section->subtitle,
+                    'description' => $section->description,
                     'buttons' => $section->buttons ?? [],
                     'config' => $config,
                 ];
@@ -85,6 +88,9 @@ class MinisiteController extends Controller
                         break;
                     case 'restaurant_menu':
                         $sectionData['items'] = $this->getRestaurantMenuData($business, $config);
+                        break;
+                    case 'properties':
+                        $sectionData['items'] = $this->getPropertiesData($business, $config);
                         break;
                 }
 
@@ -609,6 +615,224 @@ class MinisiteController extends Controller
         return $this->renderPage($slug, 'contact', 'Contacto', fn($b) => ['form' => $this->getContactFormData($b, [])]);
     }
 
+    public function properties(string $slug)
+    {
+        return $this->renderPage($slug, 'properties', 'Propiedades', fn($b) => [
+            'items' => $this->getPropertiesData($b, []),
+            'property_types' => $this->getPropertyTypes($b),
+        ]);
+    }
+
+    public function propertyDetail(string $slug, string $propertySlug)
+    {
+        $business = Business::where('slug', $slug)
+            ->where('is_active', true)
+            ->first();
+
+        if (!$business) {
+            abort(404);
+        }
+
+        $setting = BusinessMinisiteSetting::where('business_id', $business->id)
+            ->where('is_active', true)
+            ->first();
+
+        if (!$setting) {
+            abort(404, 'Minisite no configurado');
+        }
+
+        $property = \Modules\Properties\Models\Property::where('business_id', $business->id)
+            ->where('slug', $propertySlug)
+            ->with(['images', 'propertyType', 'amenities.amenity', 'values.propertyField'])
+            ->first();
+
+        if (!$property) {
+            abort(404, 'Propiedad no encontrada');
+        }
+
+        $imagePath = $property->main_image;
+        if (!$imagePath && $property->images && $property->images->isNotEmpty()) {
+            $firstImage = $property->images->first();
+            $imagePath = $firstImage->path ?? null;
+        }
+
+        if ($imagePath) {
+            if (str_starts_with($imagePath, 'http://') || str_starts_with($imagePath, 'https://')) {
+                $finalPath = $imagePath;
+            } else {
+                $finalPath = "/storage/{$imagePath}";
+            }
+        } else {
+            $finalPath = null;
+        }
+
+        $galleryImages = [];
+        if ($finalPath) {
+            $galleryImages[] = [
+                'id' => 'main',
+                'path' => $finalPath,
+                'title' => $property->title,
+            ];
+        }
+        foreach ($property->images as $img) {
+            if (!empty($img->image_path)) {
+                $path = str_starts_with($img->image_path, 'http') ? $img->image_path : "/storage/{$img->image_path}";
+                if ($path !== $finalPath) {
+                    $galleryImages[] = [
+                        'id' => $img->id,
+                        'path' => $path,
+                        'title' => $img->alt_text ?? '',
+                    ];
+                }
+            }
+        }
+
+        $amenities = $property->amenities->map(function ($pa) {
+            return [
+                'id' => $pa->amenity?->id,
+                'name' => $pa->amenity?->name,
+                'icon' => $pa->amenity?->icon ?? 'bi bi-check-circle',
+            ];
+        })->filter(fn($a) => $a['name'])->values()->toArray();
+
+        $propertyData = [
+            'id' => $property->id,
+            'title' => $property->title,
+            'slug' => $property->slug,
+            'description' => $property->description,
+            'operation_type' => $property->operation_type,
+            'operation_label' => $property->getOperationLabel(),
+            'price' => $property->price,
+            'formatted_price' => $property->getFormattedPrice(),
+            'currency' => $property->currency,
+            'price_period' => $property->price_period,
+            'main_image' => $finalPath,
+            'gallery' => $galleryImages,
+            'property_type' => $property->propertyType?->name,
+            'property_type_key' => $property->propertyType?->key,
+            'city' => $property->city,
+            'state' => $property->state ?: $property->state_code,
+            'country' => $property->country,
+            'colony' => $property->colony,
+            'municipality' => $property->municipality,
+            'street' => $property->street,
+            'exterior_number' => $property->exterior_number,
+            'interior_number' => $property->interior_number,
+            'postal_code' => $property->postal_code,
+            'references' => $property->references,
+            'full_address' => trim("{$property->street}, {$property->city}, {$property->state}"),
+            'latitude' => $property->latitude,
+            'longitude' => $property->longitude,
+            'show_exact_location' => $property->show_exact_location,
+            'amenities' => $amenities,
+            'property_code' => $property->property_code,
+            'status' => $property->status,
+        ];
+
+        $formSchema = [];
+        if ($property->propertyType) {
+            $formSchemaService = new PropertyFormSchemaService();
+            $schema = $formSchemaService->getFormSchema($property->propertyType);
+
+            $valuesByFieldKey = [];
+
+            foreach ($property->values as $value) {
+                $fieldKey = $value->propertyField?->field_key;
+                if ($fieldKey) {
+                    $valuesByFieldKey[$fieldKey] = $this->formatPropertyValue($value);
+                }
+            }
+
+            $propertyFields = [
+                'title' => $property->title,
+                'description' => $property->description,
+                'operation_type' => $property->operation_type,
+                'price' => $property->price,
+                'currency' => $property->currency,
+                'price_period' => $property->price_period,
+                'country' => $property->country,
+                'state' => $property->state,
+                'city' => $property->city,
+                'municipality' => $property->municipality,
+                'colony' => $property->colony,
+                'street' => $property->street,
+                'exterior_number' => $property->exterior_number,
+                'interior_number' => $property->interior_number,
+                'postal_code' => $property->postal_code,
+                'references' => $property->references,
+            ];
+
+            foreach ($propertyFields as $key => $value) {
+                if ($value !== null && $value !== '') {
+                    $valuesByFieldKey[$key] = $value;
+                }
+            }
+
+            $formSchema = array_map(function ($section) use ($valuesByFieldKey) {
+                $section['fields'] = array_map(function ($field) use ($valuesByFieldKey) {
+                    $field['value'] = $valuesByFieldKey[$field['field_key']] ?? null;
+                    return $field;
+                }, $section['fields']);
+                return $section;
+            }, $schema['sections']);
+        }
+
+        $socialNetworks = $business->socialNetworks()
+            ->where('is_active', true)
+            ->get(['platform', 'url', 'icon_class']);
+
+        $existingSections = $this->getExistingSections($business);
+        $aiChatbot = $this->getAiChatbotSettings($business);
+
+        return Inertia::render('Minisite/PropertyDetail', [
+            'business' => [
+                'id' => $business->id,
+                'name' => $business->name,
+                'slug' => $business->slug,
+                'logo' => $business->logo,
+                'cover_image' => $business->cover_image_path,
+                'whatsapp' => $business->whatsapp,
+                'phone' => $business->phone,
+                'email' => $business->email,
+            ],
+            'setting' => [
+                'theme_key' => $setting->theme_key,
+                'hero_layout' => $setting->hero_layout,
+                'hero_title' => $setting->hero_title,
+                'hero_subtitle' => $setting->hero_subtitle,
+                'hero_background_image' => $setting->hero_background_image,
+                'hero_show_social' => $setting->hero_show_social,
+                'footer_text' => $setting->footer_text,
+                'footer_show_social' => $setting->footer_show_social,
+            ],
+            'property' => $propertyData,
+            'formSchema' => $formSchema,
+            'socialNetworks' => $socialNetworks,
+            'existingSections' => $existingSections,
+            'aiChatbot' => $aiChatbot,
+        ]);
+    }
+
+    protected function formatPropertyValue(PropertyValue $value): mixed
+    {
+        if ($value->value_text !== null) {
+            return $value->value_text;
+        }
+        if ($value->value_number !== null) {
+            return $value->value_number;
+        }
+        if ($value->value_boolean !== null) {
+            return $value->value_boolean;
+        }
+        if ($value->value_date !== null) {
+            return $value->value_date;
+        }
+        if ($value->value_json !== null) {
+            return $value->value_json;
+        }
+        return null;
+    }
+
     private function renderPage(string $slug, string $sectionType, string $pageTitle, callable $dataLoader): \Inertia\Response
     {
         $business = Business::where('slug', $slug)
@@ -645,6 +869,7 @@ class MinisiteController extends Controller
             'reviews' => 'Minisite/Reviews',
             'faqs' => 'Minisite/Faqs',
             'contact' => 'Minisite/Contact',
+            'properties' => 'Minisite/Properties',
         ];
 
         return Inertia::render($pageKeyMap[$sectionType], [
@@ -709,6 +934,9 @@ class MinisiteController extends Controller
         }
         if (\Modules\RestaurantMenu\Entities\MenuCategory::where('business_id', $business->id)->where('active', true)->has('activeProducts')->exists()) {
             $sections[] = 'restaurant_menu';
+        }
+        if (\Modules\Properties\Models\Property::where('business_id', $business->id)->exists()) {
+            $sections[] = 'properties';
         }
 
         return $sections;
@@ -1119,7 +1347,7 @@ class MinisiteController extends Controller
     private function getProductsData(Business $business, array $config): array
     {
         $query = $business->products()
-            ->with('images', 'category')
+            ->with('images', 'category', 'location')
             ->where('is_active', true)
             ->orderBy('sort_order');
 
@@ -1128,7 +1356,7 @@ class MinisiteController extends Controller
         }
 
         return $query
-            ->get(['id', 'name', 'slug', 'description', 'price', 'compare_at_price', 'sku', 'barcode', 'quantity', 'whatsapp_contact', 'image', 'category_id'])
+            ->get(['id', 'name', 'slug', 'description', 'price', 'compare_at_price', 'sku', 'barcode', 'quantity', 'whatsapp_contact', 'image', 'category_id', 'business_location_id'])
             ->map(function ($product) {
                 $imagePath = $product->image;
                 if (!$imagePath && $product->images && $product->images->isNotEmpty()) {
@@ -1168,6 +1396,9 @@ class MinisiteController extends Controller
                     'image' => $finalPath,
                     'gallery' => $galleryImages,
                     'category_id' => $product->category_id,
+                    'category_name' => $product->category?->name,
+                    'location_id' => $product->business_location_id,
+                    'location_name' => $product->location?->name,
                 ];
             })->toArray();
     }
@@ -1197,6 +1428,90 @@ class MinisiteController extends Controller
                     'google_link' => $review->google_link,
                 ];
             })->toArray();
+    }
+
+    private function getPropertiesData(Business $business, array $config): array
+    {
+        // TEMP: Show all properties regardless of status for testing
+        // TODO: Change back to only published and public properties for production
+        $query = \Modules\Properties\Models\Property::where('business_id', $business->id)
+            ->orderBy('is_featured', 'desc')
+            ->orderBy('created_at', 'desc');
+
+        if (!empty($config['property_ids'])) {
+            $query->whereIn('id', $config['property_ids']);
+        }
+
+        $maxItems = $config['max_items'] ?? 12;
+        $query->limit($maxItems);
+
+        return $query
+            ->with('images', 'propertyType')
+            ->get()
+            ->map(function ($property) {
+                $imagePath = $property->main_image;
+                if (!$imagePath && $property->images && $property->images->isNotEmpty()) {
+                    $firstImage = $property->images->first();
+                    $imagePath = $firstImage->path ?? null;
+                }
+
+                if ($imagePath) {
+                    if (str_starts_with($imagePath, 'http://') || str_starts_with($imagePath, 'https://')) {
+                        $finalPath = $imagePath;
+                    } else {
+                        $finalPath = "/storage/{$imagePath}";
+                    }
+                } else {
+                    $finalPath = null;
+                }
+
+                $galleryImages = $property->images->map(function ($img) {
+                    $path = str_starts_with($img->path, 'http') ? $img->path : "/storage/{$img->path}";
+                    return [
+                        'id' => $img->id,
+                        'path' => $path,
+                        'title' => $img->title ?? '',
+                    ];
+                })->toArray();
+
+                return [
+                    'id' => $property->id,
+                    'title' => $property->title,
+                    'slug' => $property->slug,
+                    'description' => $property->description,
+                    'operation_type' => $property->operation_type,
+                    'operation_label' => $property->getOperationLabel(),
+                    'price' => $property->price,
+                    'formatted_price' => $property->getFormattedPrice(),
+                    'currency' => $property->currency,
+                    'price_period' => $property->price_period,
+                    'main_image' => $finalPath,
+                    'gallery' => $galleryImages,
+                    'property_type' => $property->propertyType?->name,
+                    'property_type_key' => $property->propertyType?->key,
+                    'city' => $property->city,
+                    'state' => $property->state ?: $property->state_code,
+                    'country' => $property->country,
+                    'full_address' => trim("{$property->street}, {$property->city}, {$property->state}"),
+                    'latitude' => $property->latitude,
+                    'longitude' => $property->longitude,
+                ];
+            })->toArray();
+    }
+
+    private function getPropertyTypes(Business $business): array
+    {
+        return \Modules\Properties\Models\PropertyType::where('business_id', $business->id)
+            ->orWhereNull('business_id')
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get(['id', 'key', 'name'])
+            ->map(fn($type) => [
+                'id' => $type->id,
+                'key' => $type->key,
+                'name' => $type->name,
+            ])
+            ->toArray();
     }
 
     private function getAiChatbotSettings($business): ?array

@@ -114,8 +114,6 @@ class UserController extends Controller
                 'label' => $plan->name,
             ]);
 
-        $subscription = $user->currentSubscription;
-
         return Inertia::render('Admin/Users/Create', [
             'roles' => $roles,
         ]);

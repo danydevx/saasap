@@ -302,4 +302,35 @@ class PromotionController extends Controller
         return redirect()->route('member.businesses.promotions.edit', [$business->id, $promotion->id])
             ->with('success', 'Código QR regenerado correctamente.');
     }
+
+    public function clone(Request $request, Business $business, BusinessPromotion $promotion, ActivityService $activity)
+    {
+        $this->authorize('create', [BusinessPromotion::class, $business]);
+
+        $maxOrder = $business->promotions()->max('sort_order') ?? 0;
+
+        $cloned = $business->promotions()->create([
+            'name' => $promotion->name . ' (copia)',
+            'slug' => \Illuminate\Support\Str::slug($promotion->name) . '-copia-' . time(),
+            'description' => $promotion->description,
+            'image' => $promotion->image,
+            'regular_price' => $promotion->regular_price,
+            'promotion_price' => $promotion->promotion_price,
+            'coupon_code' => $promotion->coupon_code ? $promotion->coupon_code . '-COPY' : null,
+            'starts_at' => $promotion->starts_at,
+            'expires_at' => $promotion->expires_at,
+            'business_location_id' => $promotion->business_location_id,
+            'is_active' => false,
+            'sort_order' => $maxOrder + 1,
+        ]);
+
+        $activity->log('promotion_cloned', [
+            'actor' => $request->user(),
+            'subject' => $cloned,
+            'description' => 'Promocion clonada',
+            'request' => $request,
+        ]);
+
+        return redirect()->route('member.businesses.promotions.edit', [$business->id, $cloned->id]);
+    }
 }

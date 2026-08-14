@@ -34,15 +34,17 @@
                 <i class="bi bi-image"></i>
               </div>
               <div v-if="product.gallery && product.gallery.length > 1" class="product-gallery__thumbs">
-                <button
+                <a
                   v-for="(img, index) in product.gallery"
                   :key="img.id"
-                  class="product-gallery__thumb"
+                  :href="img.path"
+                  class="product-gallery__thumb glightbox"
                   :class="{ active: activeImage === img.path }"
-                  @click="activeImage = img.path"
+                  data-gallery="product-detail-gallery"
+                  @click.prevent="activeImage = img.path"
                 >
                   <img :src="img.path" :alt="img.title || product.name" />
-                </button>
+                </a>
               </div>
             </div>
           </div>
@@ -399,6 +401,7 @@ onMounted(() => {
     background: none;
     cursor: pointer;
     transition: border-color 0.2s;
+    display: block;
 
     &.active,
     &:hover {

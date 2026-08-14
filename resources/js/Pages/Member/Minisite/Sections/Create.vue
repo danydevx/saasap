@@ -38,6 +38,15 @@
             </div>
 
             <div class="mb-3">
+              <FieldText
+                id="section-subtitle"
+                label="Subtítulo"
+                v-model="form.subtitle"
+                placeholder="Subtítulo breve para mostrar bajo el título..."
+              />
+            </div>
+
+            <div class="mb-3">
               <FieldTextarea
                 id="section-description"
                 label="Descripción"
@@ -323,6 +332,7 @@
                   >
                     <option value="grid">Cuadrícula</option>
                     <option value="carousel">Carrusel</option>
+                    <option value="list">Lista</option>
                   </FieldSelect>
                 </div>
                 <div class="col-md-4">
@@ -344,6 +354,58 @@
                     id="show-compare-price"
                     label="Mostrar precio anterior"
                     v-model="config.show_compare_price"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div v-if="form.section_type === 'properties'" class="border-top pt-4">
+              <h6 class="mb-3">Configuración de Propiedades</h6>
+              <div class="row g-3">
+                <div class="col-12">
+                  <FieldSwitch
+                    id="show-all-properties"
+                    label="Mostrar todas las propiedades"
+                    v-model="config.show_all"
+                  />
+                </div>
+                <div class="col-md-6">
+                  <FieldSelect
+                    id="view-mode"
+                    label="Vista"
+                    v-model="config.view_mode"
+                  >
+                    <option value="grid">Cuadrícula</option>
+                    <option value="carousel">Carrusel</option>
+                    <option value="list">Lista</option>
+                  </FieldSelect>
+                </div>
+                <div class="col-md-4">
+                  <FieldSwitch
+                    id="show-image"
+                    label="Mostrar imagen"
+                    v-model="config.show_image"
+                  />
+                </div>
+                <div class="col-md-4">
+                  <FieldSwitch
+                    id="show-price"
+                    label="Mostrar precio"
+                    v-model="config.show_price"
+                  />
+                </div>
+                <div class="col-md-4">
+                  <FieldSwitch
+                    id="show-location"
+                    label="Mostrar ubicación"
+                    v-model="config.show_location"
+                  />
+                </div>
+                <div class="col-md-4">
+                  <FieldSwitch
+                    id="show-description"
+                    label="Mostrar descripción"
+                    v-model="config.show_description"
                   />
                 </div>
               </div>
@@ -408,6 +470,7 @@ const sending = ref(false)
 const form = reactive({
   section_type: '',
   title: '',
+  subtitle: '',
   description: '',
   buttons: [],
 })
@@ -459,6 +522,8 @@ const getDefaultConfig = (type) => {
       return { show_all: true, faq_ids: [], category_id: null, show_questions: true }
     case 'products':
       return { show_all: true, product_ids: [], show_image: true, show_price: true, show_compare_price: true, view_mode: 'grid' }
+    case 'properties':
+      return { show_all: true, property_ids: [], show_image: true, show_price: true, show_location: true, show_description: true, view_mode: 'grid' }
     default:
       return {}
   }
@@ -480,6 +545,7 @@ const createSection = () => {
   const data = {
     section_type: form.section_type,
     title: form.title || null,
+    subtitle: form.subtitle || null,
     description: form.description || null,
     config: { ...config },
     buttons: form.buttons.filter(b => b.text && b.url),

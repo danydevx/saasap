@@ -268,6 +268,19 @@ class ProductController extends Controller
             ->with('success', 'Producto eliminado correctamente.');
     }
 
+    public function clone(Request $request, Business $business, BusinessProduct $product)
+    {
+        $this->authorize('create', [BusinessProduct::class, $business]);
+
+        $newProduct = $product->replicate();
+        $newProduct->name = $product->name . ' (Copia)';
+        $newProduct->slug = \Illuminate\Support\Str::slug($product->name) . '-' . time();
+        $newProduct->save();
+
+        return redirect()->route('member.businesses.products.edit', [$business->id, $newProduct->id])
+            ->with('success', 'Producto clonado correctamente.');
+    }
+
     public function reorder(Request $request, Business $business)
     {
         $user = $request->user();

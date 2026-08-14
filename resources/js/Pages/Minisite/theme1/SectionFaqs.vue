@@ -2,6 +2,8 @@
   <section class="section-faqs">
     <div class="section-faqs__inner">
       <h2 v-if="title" class="section-faqs__title">{{ title }}</h2>
+      <h3 v-if="subtitle" class="section-faqs__subtitle">{{ subtitle }}</h3>
+      <p v-if="description" class="section-faqs__description-text">{{ description }}</p>
 
       <div v-if="items.length === 0" class="text-muted text-center py-4">
         No hay preguntas frecuentes disponibles.
@@ -39,8 +41,11 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
+
 const props = defineProps({
   title: String,
+  subtitle: String,
   items: {
     type: Array,
     default: () => [],
@@ -60,7 +65,7 @@ const showQuestions = computed(() => props.config?.show_questions !== false)
 </script>
 
 <script>
-import { computed, defineComponent } from 'vue'
+import { defineComponent } from 'vue'
 export default defineComponent({ name: 'SectionFaqs' })
 </script>
 
@@ -74,11 +79,24 @@ export default defineComponent({ name: 'SectionFaqs' })
   }
 
   &__title {
-    font-size: 1.5rem;
     font-weight: 700;
-    margin: 0 0 24px;
+    margin: 0 0 8px;
     text-align: center;
     color: #212529;
+  }
+
+  &__subtitle {
+    font-weight: 600;
+    color: #495057;
+    text-align: center;
+    margin: 0 0 16px;
+  }
+
+  &__description-text {
+    font-size: 1rem;
+    color: #6c757d;
+    text-align: center;
+    margin: 0 0 16px;
   }
 
   &__list {

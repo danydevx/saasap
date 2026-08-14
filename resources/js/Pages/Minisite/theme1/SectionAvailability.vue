@@ -2,6 +2,8 @@
   <section class="section-availability">
     <div class="section-availability__inner">
       <h2 v-if="title" class="section-availability__title">{{ title }}</h2>
+      <h3 v-if="subtitle" class="section-availability__subtitle">{{ subtitle }}</h3>
+      <p v-if="description" class="section-availability__description-text">{{ description }}</p>
 
       <AvailabilityCalendar
         v-if="schedule && schedule.length"
@@ -26,9 +28,15 @@ const props = defineProps({
     type: String,
     default: 'Horario de Atención',
   },
+  subtitle: String,
   availability: {
     type: Object,
     required: true,
+  },
+  description: String,
+  buttons: {
+    type: Array,
+    default: () => [],
   },
 })
 
@@ -49,10 +57,23 @@ const exceptions = props.availability?.exceptions || []
 
   &__title {
     text-align: center;
-    margin-bottom: 30px;
-    font-size: 1.75rem;
+    margin-bottom: 8px;
+    font-weight: 700;
+    color: #212529;
+  }
+
+  &__subtitle {
     font-weight: 600;
-    color: #333;
+    color: #495057;
+    text-align: center;
+    margin: 0 0 16px;
+  }
+
+  &__description-text {
+    font-size: 1rem;
+    color: #6c757d;
+    text-align: center;
+    margin: 0 0 16px;
   }
 }
 </style>

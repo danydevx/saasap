@@ -11,6 +11,7 @@ class BusinessProduct extends Model
     protected $fillable = [
         'business_id',
         'business_location_id',
+        'category_id',
         'name',
         'slug',
         'description',

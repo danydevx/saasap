@@ -226,6 +226,19 @@ class ServiceController extends Controller
             ->with('success', 'Servicio eliminado correctamente.');
     }
 
+    public function clone(Request $request, Business $business, \Modules\Services\Models\BusinessService $service)
+    {
+        $this->authorize('create', [\Modules\Services\Models\BusinessService::class, $business]);
+
+        $newService = $service->replicate();
+        $newService->name = $service->name . ' (Copia)';
+        $newService->slug = \Illuminate\Support\Str::slug($service->name) . '-' . time();
+        $newService->save();
+
+        return redirect()->route('member.businesses.services.edit', [$business->id, $newService->id])
+            ->with('success', 'Servicio clonado correctamente.');
+    }
+
     public function bulkDelete(Request $request, Business $business)
     {
         $this->authorize('deleteAny', [\Modules\Services\Models\BusinessService::class, $business]);

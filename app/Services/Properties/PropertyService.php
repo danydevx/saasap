@@ -273,12 +273,12 @@ class PropertyService
         $originalSlug = $slug;
         $counter = 1;
 
-        $query = $business->properties()->where('slug', 'like', "{$slug}%");
+        $baseQuery = $business->properties()->withTrashed();
         if ($excludeId) {
-            $query->where('id', '!=', $excludeId);
+            $baseQuery->where('id', '!=', $excludeId);
         }
 
-        while ($query->where('slug', $slug)->exists()) {
+        while ($baseQuery->where('slug', $slug)->exists()) {
             $slug = "{$originalSlug}-{$counter}";
             $counter++;
         }

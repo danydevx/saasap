@@ -2,15 +2,54 @@
   <section class="section-services">
     <div class="section-services__inner">
       <h2 v-if="title" class="section-services__title">{{ title }}</h2>
-      <p v-if="description" class="section-services__subtitle">{{ description }}</p>
+      <h3 v-if="subtitle" class="section-services__subtitle">{{ subtitle }}</h3>
+      <p v-if="description" class="section-services__description-text">{{ description }}</p>
 
       <div v-if="items.length === 0" class="text-muted text-center py-4">
         No hay servicios disponibles.
       </div>
 
+      <div v-else-if="viewMode === 'grid'" class="section-services__grid">
+        <div
+          v-for="item in displayedItems"
+          :key="item.id"
+          class="section-services__grid-card"
+          @click="openServiceModal(item)"
+        >
+          <div class="section-services__card-image-wrapper">
+            <img
+              v-if="showImage && item.image"
+              :src="item.image"
+              :alt="item.name"
+              class="section-services__card-image"
+            />
+            <div v-else class="section-services__card-image-placeholder">
+              <i class="bi bi-briefcase"></i>
+            </div>
+            <span v-if="item.duration_minutes" class="section-services__duration-badge">
+              <i class="bi bi-clock me-1"></i>{{ item.duration_minutes }} min
+            </span>
+          </div>
+          <div class="section-services__card-body">
+            <h3 class="section-services__card-title">{{ item.name }}</h3>
+            <p v-if="showDescription && item.description" class="section-services__card-desc">
+              {{ truncateText(item.description, 60) }}
+            </p>
+            <div class="section-services__card-footer">
+              <p v-if="showPrice && item.price" class="section-services__card-price">
+                {{ formatCurrency(item.price) }}
+              </p>
+              <button class="section-services__book-btn" @click.stop="openServiceModal(item)">
+                Ver detalles
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div v-else-if="viewMode === 'carousel'" class="section-services__carousel">
         <div
-          v-for="item in items"
+          v-for="item in displayedItems"
           :key="item.id"
           class="section-services__card"
           @click="openServiceModal(item)"
@@ -48,7 +87,7 @@
 
       <div v-else class="section-services__list">
         <div
-          v-for="item in items"
+          v-for="item in displayedItems"
           :key="item.id"
           class="section-services__list-item"
           @click="openServiceModal(item)"
@@ -89,6 +128,12 @@
             </button>
           </div>
         </div>
+      </div>
+
+      <div v-if="hasMoreItems" class="section-services__show-all">
+        <a :href="showAllUrl" class="btn btn-outline-primary">
+          <i class="bi bi-grid me-2"></i>Ver todos los servicios ({{ items.length }})
+        </a>
       </div>
 
       <div v-if="buttons && buttons.length" class="section-services__buttons mt-4">
@@ -191,6 +236,7 @@ import 'glightbox/dist/css/glightbox.min.css'
 
 const props = defineProps({
   title: String,
+  subtitle: String,
   items: {
     type: Array,
     default: () => [],
@@ -241,6 +287,18 @@ const viewMode = computed(() => props.config?.view_mode || 'carousel')
 const showImage = computed(() => props.config?.show_image !== false)
 const showPrice = computed(() => props.config?.show_price !== false)
 const showDescription = computed(() => props.config?.show_description !== true)
+const maxItems = computed(() => props.config?.max_items || 12)
+const minItems = computed(() => props.config?.min_items || 3)
+const displayedItems = computed(() => {
+  const max = maxItems.value
+  const items = props.items || []
+  if (items.length <= max) {
+    return items
+  }
+  return items.slice(0, max)
+})
+const hasMoreItems = computed(() => (props.items || []).length > maxItems.value)
+const showAllUrl = computed(() => `/m/${props.businessSlug}/servicios`)
 
 const truncateText = (text, length) => {
   if (!text || text.length <= length) return text
@@ -277,7 +335,6 @@ export default defineComponent({ name: 'SectionServices' })
   }
 
   &__title {
-    font-size: 1.5rem;
     font-weight: 700;
     margin: 0 0 8px;
     text-align: center;
@@ -285,6 +342,13 @@ export default defineComponent({ name: 'SectionServices' })
   }
 
   &__subtitle {
+    font-weight: 600;
+    color: #495057;
+    text-align: center;
+    margin: 0 0 16px;
+  }
+
+  &__description-text {
     font-size: 1rem;
     color: #6c757d;
     text-align: center;
@@ -296,6 +360,12 @@ export default defineComponent({ name: 'SectionServices' })
     justify-content: center;
     flex-wrap: wrap;
     gap: 8px;
+  }
+
+  &__show-all {
+    display: flex;
+    justify-content: center;
+    margin-top: 24px;
   }
 
   &__carousel {
@@ -313,6 +383,41 @@ export default defineComponent({ name: 'SectionServices' })
     &::-webkit-scrollbar-thumb {
       background: #dee2e6;
       border-radius: 2px;
+    }
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 16px;
+  }
+
+  &__grid-card {
+    background: #fff;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+
+    &:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    }
+
+    .section-services__card-image-wrapper {
+      position: relative;
+    }
+
+    .section-services__card-body {
+      padding: 16px;
+    }
+
+    .section-services__card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 12px;
     }
   }
 

@@ -85,6 +85,14 @@
 
       <template #cell-actions="{ row }">
         <div class="actions">
+          <button
+            class="btn btn-sm btn-outline-secondary"
+            @click="cloneService(row)"
+            :disabled="cloning === row.id"
+            title="Clonar servicio"
+          >
+            <i class="bi bi-copy"></i>
+          </button>
           <Link :href="`/member/businesses/${business?.id}/services/${row.id}/edit`" class="btn btn-sm btn-outline-primary">
             <i class="bi bi-pencil"></i>
           </Link>
@@ -150,6 +158,7 @@ const columns = [
 
 const dataTableRef = ref(null)
 const selectedIds = ref([])
+const cloning = ref(null)
 
 const currentPageIds = computed(() => {
   if (!props.dataTable?.data) return []
@@ -178,6 +187,20 @@ const deleteService = (service) => {
       if (dataTableRef.value) {
         dataTableRef.value.reload()
       }
+    },
+  })
+}
+
+const cloneService = (service) => {
+  if (!confirm(`Clonar el servicio "${service.name}"?`)) {
+    return
+  }
+
+  cloning.value = service.id
+  router.post(`/member/businesses/${business.value.id}/services/${service.id}/clone`, {}, {
+    preserveScroll: true,
+    onFinish: () => {
+      cloning.value = null
     },
   })
 }

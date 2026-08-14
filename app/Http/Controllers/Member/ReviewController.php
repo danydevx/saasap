@@ -239,4 +239,31 @@ class ReviewController extends Controller
         return redirect()->back()
             ->with('success', $message);
     }
+
+    public function clone(Request $request, Business $business, BusinessReview $review, ActivityService $activity)
+    {
+        $this->authorize('create', [BusinessReview::class, $business]);
+
+        $maxOrder = $business->reviews()->max('sort_order') ?? 0;
+
+        $cloned = $business->reviews()->create([
+            'client_name' => $review->client_name . ' (copia)',
+            'company' => $review->company,
+            'comment' => $review->comment,
+            'rating' => $review->rating,
+            'google_link' => $review->google_link,
+            'business_location_id' => $review->business_location_id,
+            'is_active' => false,
+            'sort_order' => $maxOrder + 1,
+        ]);
+
+        $activity->log('review_cloned', [
+            'actor' => $request->user(),
+            'subject' => $cloned,
+            'description' => 'Resena clonada',
+            'request' => $request,
+        ]);
+
+        return redirect()->route('member.businesses.reviews.edit', [$business->id, $cloned->id]);
+    }
 }

@@ -305,6 +305,9 @@ Route::put('/member/businesses/{business}/services/{service}', [ServiceControlle
 Route::delete('/member/businesses/{business}/services/{service}', [ServiceController::class, 'destroy'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.businesses.services.destroy');
+Route::post('/member/businesses/{business}/services/{service}/clone', [ServiceController::class, 'clone'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.services.clone');
 Route::post('/member/businesses/{business}/services/reorder', [ServiceController::class, 'reorder'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.businesses.services.reorder');
@@ -546,6 +549,9 @@ Route::put('/member/businesses/{business}/products/{product}', [ProductControlle
 Route::delete('/member/businesses/{business}/products/{product}', [ProductController::class, 'destroy'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.businesses.products.destroy');
+Route::post('/member/businesses/{business}/products/{product}/clone', [ProductController::class, 'clone'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.products.clone');
 Route::post('/member/businesses/{business}/products/reorder', [ProductController::class, 'reorder'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.businesses.products.reorder');
@@ -700,6 +706,9 @@ Route::post('/member/businesses/{business}/reviews/reorder', [ReviewController::
 Route::post('/member/businesses/{business}/reviews/bulk-delete', [ReviewController::class, 'bulkDelete'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.businesses.reviews.bulk-delete');
+Route::post('/member/businesses/{business}/reviews/{review}/clone', [ReviewController::class, 'clone'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.reviews.clone');
 Route::get('/member/businesses/{business}/reviews/{review}/edit', [ReviewController::class, 'edit'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.businesses.reviews.edit');
@@ -734,6 +743,9 @@ Route::post('/member/businesses/{business}/promotions/reorder', [PromotionContro
 Route::post('/member/businesses/{business}/promotions/bulk-delete', [PromotionController::class, 'bulkDelete'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.businesses.promotions.bulk-delete');
+Route::post('/member/businesses/{business}/promotions/{promotion}/clone', [PromotionController::class, 'clone'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.promotions.clone');
 Route::post('/member/businesses/{business}/promotions/{promotion}/regenerate-qr', [PromotionController::class, 'regenerateQrCode'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.businesses.promotions.regenerate-qr');

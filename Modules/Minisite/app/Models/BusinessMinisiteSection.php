@@ -12,6 +12,7 @@ class BusinessMinisiteSection extends Model
         'section_type',
         'section_key',
         'title',
+        'subtitle',
         'description',
         'config',
         'buttons',
@@ -51,6 +52,7 @@ class BusinessMinisiteSection extends Model
             'reviews' => 'Reseñas',
             'availability' => 'Horario de Atención',
             'restaurant_menu' => 'Menú Restaurante',
+            'properties' => 'Propiedades',
         ];
     }
 
@@ -63,14 +65,20 @@ class BusinessMinisiteSection extends Model
                 'show_price' => true,
                 'show_description' => false,
                 'service_ids' => [],
+                'max_items' => 12,
+                'min_items' => 3,
             ],
             'gallery' => [
                 'gallery_id' => null,
                 'images_limit' => 10,
+                'max_items' => 12,
+                'min_items' => 3,
             ],
             'promotions' => [
                 'show_all' => true,
                 'promotion_ids' => [],
+                'max_items' => 12,
+                'min_items' => 3,
             ],
             'contact_form' => [
                 'form_id' => null,
@@ -82,6 +90,8 @@ class BusinessMinisiteSection extends Model
                 'show_phone' => true,
                 'show_email' => true,
                 'show_hours' => true,
+                'max_items' => 12,
+                'min_items' => 3,
             ],
             'about' => [
                 'show_image' => true,
@@ -93,12 +103,16 @@ class BusinessMinisiteSection extends Model
                 'show_icon' => true,
                 'show_title' => true,
                 'show_description' => true,
+                'max_items' => 12,
+                'min_items' => 3,
             ],
             'faqs' => [
                 'show_all' => true,
                 'faq_ids' => [],
                 'category_id' => null,
                 'show_questions' => true,
+                'max_items' => 12,
+                'min_items' => 3,
             ],
             'products' => [
                 'show_all' => true,
@@ -108,6 +122,8 @@ class BusinessMinisiteSection extends Model
                 'show_compare_price' => true,
                 'show_add_to_cart' => false,
                 'view_mode' => 'grid',
+                'max_items' => 12,
+                'min_items' => 3,
             ],
             'hero' => [
                 'show' => true,
@@ -126,7 +142,8 @@ class BusinessMinisiteSection extends Model
                 'show_rating' => true,
                 'show_comment' => true,
                 'show_client_name' => true,
-                'max_items' => 10,
+                'max_items' => 12,
+                'min_items' => 3,
             ],
             'availability' => [
                 'show_legend' => true,
@@ -136,6 +153,19 @@ class BusinessMinisiteSection extends Model
                 'category_ids' => [],
                 'show_images' => true,
                 'show_prices' => true,
+                'max_items' => 12,
+                'min_items' => 3,
+            ],
+            'properties' => [
+                'show_all' => true,
+                'property_ids' => [],
+                'show_image' => true,
+                'show_price' => true,
+                'show_location' => true,
+                'show_description' => true,
+                'view_mode' => 'grid',
+                'max_items' => 12,
+                'min_items' => 3,
             ],
             default => [],
         };

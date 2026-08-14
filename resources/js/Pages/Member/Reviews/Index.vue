@@ -72,6 +72,14 @@
 
       <template #cell-actions="{ row }">
         <div class="actions">
+          <button
+            class="btn btn-sm btn-outline-secondary"
+            @click="cloneReview(row)"
+            :disabled="cloning === row.id"
+            title="Clonar resena"
+          >
+            <i class="bi bi-copy"></i>
+          </button>
           <Link :href="`/member/businesses/${business?.id}/reviews/${row.id}/edit`" class="btn btn-sm btn-outline-primary">
             <i class="bi bi-pencil"></i>
           </Link>
@@ -143,6 +151,7 @@ const columns = [
 
 const dataTableRef = ref(null)
 const deleting = ref(null)
+const cloning = ref(null)
 const selectedIds = ref([])
 
 const currentPageIds = computed(() => {
@@ -170,6 +179,17 @@ const deleteReview = (review) => {
       if (dataTableRef.value) {
         dataTableRef.value.reload()
       }
+    },
+  })
+}
+
+const cloneReview = (review) => {
+  if (!confirm(`Clonar la resena de "${review.client_name}"?`)) return
+  cloning.value = review.id
+  router.post(`/member/businesses/${business.value.id}/reviews/${review.id}/clone`, {}, {
+    preserveScroll: true,
+    onFinish: () => {
+      cloning.value = null
     },
   })
 }

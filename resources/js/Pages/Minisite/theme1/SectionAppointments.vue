@@ -2,6 +2,8 @@
   <section class="section-appointments">
     <div class="section-appointments__inner">
       <h2 v-if="title" class="section-appointments__title">{{ title }}</h2>
+      <h3 v-if="subtitle" class="section-appointments__subtitle">{{ subtitle }}</h3>
+      <p v-if="description" class="section-appointments__description-text">{{ description }}</p>
 
       <form @submit.prevent="submitForm" class="section-appointments__form">
         <div class="row g-3">
@@ -190,6 +192,7 @@ import { ref, reactive, computed, watch } from 'vue'
 
 const props = defineProps({
   title: String,
+  subtitle: String,
   services: {
     type: Array,
     default: () => [],
@@ -203,6 +206,11 @@ const props = defineProps({
     default: () => [],
   },
   config: Object,
+  description: String,
+  buttons: {
+    type: Array,
+    default: () => [],
+  },
   businessSlug: {
     type: String,
     required: true,
@@ -383,11 +391,24 @@ const resetForm = () => {
   }
 
   &__title {
-    font-size: 1.75rem;
     font-weight: 700;
-    margin: 0 0 32px;
+    margin: 0 0 8px;
     text-align: center;
     color: #212529;
+  }
+
+  &__subtitle {
+    font-weight: 600;
+    color: #495057;
+    text-align: center;
+    margin: 0 0 16px;
+  }
+
+  &__description-text {
+    font-size: 1rem;
+    color: #6c757d;
+    text-align: center;
+    margin: 0 0 16px;
   }
 
   &__form {
