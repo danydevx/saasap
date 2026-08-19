@@ -161,14 +161,6 @@ class BusinessPromotion extends Model
 
     public function regenerateQrCode(): void
     {
-        if ($this->qr_code_path) {
-            $oldPath = str_replace(url('/') . '/storage/', '', $this->qr_code_path);
-            try {
-                Storage::disk('public')->delete($oldPath);
-            } catch (\Exception $e) {
-                \Log::error('Failed to delete old QR: ' . $e->getMessage());
-            }
-        }
         $this->generateQrCode();
     }
 }

@@ -97,13 +97,12 @@
                 <h5 class="mb-0">Imagen del producto</h5>
               </div>
               <div class="card-body">
-                <div class="mb-3">
-                  <input ref="imageInput" type="file" class="form-control" accept="image/jpeg,image/png" @change="handleImageChange">
-                  <small class="text-muted d-block">JPG o PNG, max 10MB</small>
-                </div>
-                <div v-if="imagePreview" class="mt-2">
-                  <img :src="imagePreview" class="img-thumbnail" alt="Preview" style="max-height: 200px;">
-                </div>
+                <FieldImage
+                  id="product-image"
+                  label=""
+                  v-model="productImage"
+                  :maxSizeMb="10"
+                />
               </div>
             </div>
           </div>
@@ -152,12 +151,12 @@
                         </div>
                       </div>
                       <div class="mb-2">
-                        <label class="form-label small">Imagen de variante</label>
-                        <input :ref="el => variantImageInputs[index] = el" type="file" class="form-control" accept="image/jpeg,image/png" @change="e => handleVariantImageChange(e, index)">
-                        <small class="text-muted d-block">JPG o PNG, max 5MB</small>
-                      </div>
-                      <div v-if="variantImagePreviews[index]" class="mb-2">
-                        <img :src="variantImagePreviews[index]" class="img-thumbnail" alt="Variante" style="max-height: 80px;">
+                        <FieldImage
+                          :id="`variant-image-${index}`"
+                          label=""
+                          v-model="variantImages[index]"
+                          :maxSizeMb="5"
+                        />
                       </div>
                     </div>
                   </div>
@@ -192,6 +191,7 @@ import FieldNumber from '@/Components/Fields/FieldNumber.vue'
 import FieldTextarea from '@/Components/Fields/FieldTextarea.vue'
 import FieldSelect from '@/Components/Fields/FieldSelect.vue'
 import FieldSwitch from '@/Components/Fields/FieldSwitch.vue'
+import FieldImage from '@/Components/Fields/FieldImage.vue'
 
 const page = usePage()
 const business = computed(() => page.props.business)
@@ -254,13 +254,11 @@ const breadcrumbs = computed(() => {
   ]
 })
 
-const imageInput = ref(null)
-const imagePreview = ref(null)
+const productImage = ref(null)
 const variantsList = ref(null)
 const sending = ref(false)
 
-const variantImageInputs = ref([])
-const variantImagePreviews = reactive({})
+const variantImages = ref([])
 const expandedVariants = ref([])
 
 let sortableInstance = null
@@ -310,54 +308,6 @@ const initSortable = () => {
   })
 }
 
-const handleImageChange = (e) => {
-  const file = e.target.files[0]
-  if (!file) return
-
-  if (file.size > 10 * 1024 * 1024) {
-    alert('El archivo supera el tamano maximo de 10MB.')
-    return
-  }
-
-  const allowedTypes = ['image/jpeg', 'image/png']
-  if (!allowedTypes.includes(file.type)) {
-    alert('Solo se permiten imagenes JPG o PNG.')
-    return
-  }
-
-  form.value.image = file
-
-  const reader = new FileReader()
-  reader.onload = (e) => {
-    imagePreview.value = e.target.result
-  }
-  reader.readAsDataURL(file)
-}
-
-const handleVariantImageChange = (e, index) => {
-  const file = e.target.files[0]
-  if (!file) return
-
-  if (file.size > 5 * 1024 * 1024) {
-    alert('El archivo supera el tamano maximo de 5MB.')
-    return
-  }
-
-  const allowedTypes = ['image/jpeg', 'image/png']
-  if (!allowedTypes.includes(file.type)) {
-    alert('Solo se permiten imagenes JPG o PNG.')
-    return
-  }
-
-  form.value.variants[index].image = file
-
-  const reader = new FileReader()
-  reader.onload = (e) => {
-    variantImagePreviews[index] = e.target.result
-  }
-  reader.readAsDataURL(file)
-}
-
 const addVariant = () => {
   form.value.variants.push({
     title: '',
@@ -366,13 +316,14 @@ const addVariant = () => {
     image: null,
   })
   const newIndex = form.value.variants.length - 1
+  variantImages.value.push(null)
   expandedVariants.value.push(newIndex)
   nextTick(() => initSortable())
 }
 
 const removeVariant = (index) => {
   form.value.variants.splice(index, 1)
-  delete variantImagePreviews[index]
+  variantImages.value.splice(index, 1)
   expandedVariants.value = expandedVariants.value.filter(i => i !== index)
 }
 
@@ -384,8 +335,15 @@ const submitForm = () => {
 
   sending.value = true
 
+  const variantsWithImages = form.value.variants.map((v, i) => ({
+    ...v,
+    image: variantImages.value[i],
+  }))
+
   router.post(`/member/businesses/${business.value.id}/menu-products`, {
     ...form.value,
+    image: productImage.value,
+    variants: variantsWithImages,
   }, {
     forceFormData: true,
     preserveScroll: true,

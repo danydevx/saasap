@@ -170,11 +170,6 @@ const onBulkDeleted = () => {
   }
 }
 
-const formatPrice = (price) => {
-  if (!price && price !== 0) return '-'
-  return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(price)
-}
-
 const formatDate = (date) => {
   if (!date) return '-'
   return new Date(date).toLocaleDateString('es-AR')

@@ -5,6 +5,7 @@ import 'bootstrap'
 import { createApp, h } from 'vue'
 import { createInertiaApp, Link, Head } from '@inertiajs/vue3'
 import { createPinia } from 'pinia'
+import { formatPriceDirective } from './@core/directives'
 
 createInertiaApp({
     resolve: async (name) => {
@@ -19,6 +20,7 @@ createInertiaApp({
         createApp({ render: () => h(App, props) })
             .use(plugin)
             .use(pinia)
+            .use(formatPriceDirective)
             .component('Link', Link)
             .component('Head', Head)
             .mount(el)

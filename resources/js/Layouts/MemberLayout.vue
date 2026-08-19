@@ -437,7 +437,7 @@
 </template>
 
 <script setup>
-import { computed, ref, provide } from 'vue'
+import { computed, ref, provide, onMounted } from 'vue'
 import { Link, router, usePage } from '@inertiajs/vue3'
 import { useFlashToast } from '@/Composables/useFlashToast'
 
@@ -457,9 +457,31 @@ const canSupport = computed(() => modules.value.support !== false && features.va
 
 const businessesMenuOpen = ref(true)
 const openBusiness = ref(null)
-const teamSubmenuOpen = ref(true)
-const productsSubmenuOpen = ref(true)
-const menuSubmenuOpen = ref(true)
+const teamSubmenuOpen = ref(false)
+const productsSubmenuOpen = ref(false)
+const menuSubmenuOpen = ref(false)
+
+const checkAndOpenSubmenu = (path) => {
+  if (!primaryBusiness.value) return
+  const bizId = primaryBusiness.value.id
+
+  if (path.startsWith(`/member/businesses/${bizId}/team-members`) ||
+      path.startsWith(`/member/businesses/${bizId}/team-member-positions`)) {
+    teamSubmenuOpen.value = true
+  }
+  if (path.startsWith(`/member/businesses/${bizId}/products`) ||
+      path.startsWith(`/member/businesses/${bizId}/product-categories`)) {
+    productsSubmenuOpen.value = true
+  }
+  if (path.startsWith(`/member/businesses/${bizId}/menu-products`) ||
+      path.startsWith(`/member/businesses/${bizId}/menu-categories`)) {
+    menuSubmenuOpen.value = true
+  }
+}
+
+onMounted(() => {
+  checkAndOpenSubmenu(window.location.pathname)
+})
 
 const toggleBusinessesMenu = () => {
   businessesMenuOpen.value = !businessesMenuOpen.value

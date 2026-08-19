@@ -39,7 +39,7 @@
                     <strong>{{ service.name }}</strong>
                     <p v-if="service.description" class="text-muted small mb-0">{{ service.description.substring(0, 80) }}...</p>
                   </td>
-                  <td>{{ service.price ? `$${service.price}` : '—' }}</td>
+                  <td v-format-price="service.price"></td>
                   <td>{{ service.duration_minutes }} min</td>
                   <td>
                     <span v-if="service.allows_online_booking" class="badge bg-success">Sí</span>

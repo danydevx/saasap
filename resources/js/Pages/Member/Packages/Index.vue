@@ -63,10 +63,10 @@
 
       <template #cell-price="{ row }">
         <span v-if="row.promo_price">
-          <span class="text-decoration-line-through text-muted">${{ row.price }}</span>
-          <span class="text-success fw-bold ms-1">${{ row.promo_price }}</span>
+          <span class="text-decoration-line-through text-muted" v-format-price="row.price"></span>
+          <span class="text-success fw-bold ms-1" v-format-price="row.promo_price"></span>
         </span>
-        <span v-else-if="row.price">${{ row.price }}</span>
+        <span v-else-if="row.price" v-format-price="row.price"></span>
         <span v-else class="text-muted">-</span>
       </template>
 

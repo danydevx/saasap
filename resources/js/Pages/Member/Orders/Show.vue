@@ -57,22 +57,22 @@
                     </small>
                   </td>
                   <td class="text-center">{{ item.quantity }}</td>
-                  <td class="text-end">${{ parseFloat(item.unit_price).toFixed(2) }}</td>
-                  <td class="text-end fw-bold">${{ parseFloat(item.subtotal).toFixed(2) }}</td>
+                  <td class="text-end" v-format-price="item.unit_price"></td>
+                  <td class="text-end fw-bold" v-format-price="item.subtotal"></td>
                 </tr>
               </tbody>
               <tfoot class="table-light">
                 <tr>
                   <td colspan="3" class="text-end">Subtotal:</td>
-                  <td class="text-end">${{ parseFloat(order.subtotal).toFixed(2) }}</td>
+                  <td class="text-end" v-format-price="order.subtotal"></td>
                 </tr>
                 <tr v-if="order.order_type === 'delivery'">
                   <td colspan="3" class="text-end">Delivery:</td>
-                  <td class="text-end">${{ parseFloat(order.delivery_fee).toFixed(2) }}</td>
+                  <td class="text-end" v-format-price="order.delivery_fee"></td>
                 </tr>
                 <tr class="fw-bold fs-5">
                   <td colspan="3" class="text-end">Total:</td>
-                  <td class="text-end">${{ parseFloat(order.total).toFixed(2) }}</td>
+                  <td class="text-end" v-format-price="order.total"></td>
                 </tr>
               </tfoot>
             </table>

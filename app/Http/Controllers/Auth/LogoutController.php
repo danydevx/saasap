@@ -32,7 +32,7 @@ class LogoutController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        if (Inertia::isInertiaRequest()) {
+        if ($request->header('X-Inertia')) {
             return Inertia::location(route('login'));
         }
 

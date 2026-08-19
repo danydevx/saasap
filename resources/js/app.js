@@ -11,6 +11,7 @@ import Toastify from 'vue3-toastify'
 import 'vue3-toastify/dist/index.css'
 
 import './@core/vee-validate'
+import { formatPriceDirective } from './@core/directives'
 
 createInertiaApp({
     resolve: async (name) => {
@@ -25,6 +26,7 @@ createInertiaApp({
         createApp({ render: () => h(App, props) })
             .use(plugin)
             .use(pinia)
+            .use(formatPriceDirective)
             .use(Toastify, {
                 position: 'top-right',
                 duration: 4000,

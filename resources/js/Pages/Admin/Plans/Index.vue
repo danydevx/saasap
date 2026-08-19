@@ -53,7 +53,7 @@
             <tr v-for="plan in plans.data" :key="plan.id">
               <td class="fw-semibold">{{ plan.name }}</td>
               <td class="text-muted">{{ plan.slug }}</td>
-              <td>{{ plan.price ?? '-' }}</td>
+              <td v-format-price="plan.price"></td>
               <td>{{ plan.billing_period || '-' }}</td>
               <td>
                 <span v-if="plan.is_active" class="badge text-bg-success">Activo</span>

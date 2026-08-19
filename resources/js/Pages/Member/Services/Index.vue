@@ -63,7 +63,7 @@
       </template>
 
       <template #cell-price="{ value, row }">
-        <span v-if="row.price" class="fw-semibold">${{ row.price }}</span>
+        <span v-if="row.price" class="fw-semibold" v-format-price="row.price"></span>
         <span v-else class="text-muted">—</span>
       </template>
 
