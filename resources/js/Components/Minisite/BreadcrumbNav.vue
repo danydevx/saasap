@@ -4,10 +4,10 @@
       <li class="breadcrumb-item">
         <Link :href="`/m/${baseSlug}`">Inicio</Link>
       </li>
-      <li v-if="parentHref" class="breadcrumb-item">
-        <Link :href="parentHref">{{ parentLabel }}</Link>
+      <li v-for="(item, index) in items" :key="index" class="breadcrumb-item" :class="{ active: index === items.length - 1 }">
+        <Link v-if="item.href" :href="item.href">{{ item.label }}</Link>
+        <span v-else>{{ item.label }}</span>
       </li>
-      <li class="breadcrumb-item active" aria-current="page">{{ currentLabel }}</li>
     </ol>
   </nav>
 </template>
@@ -20,17 +20,9 @@ const props = defineProps({
     type: String,
     required: true,
   },
-  parentHref: {
-    type: String,
-    default: null,
-  },
-  parentLabel: {
-    type: String,
-    default: '',
-  },
-  currentLabel: {
-    type: String,
-    required: true,
+  items: {
+    type: Array,
+    default: () => [],
   },
 })
 </script>

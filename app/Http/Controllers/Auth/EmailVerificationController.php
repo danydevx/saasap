@@ -50,6 +50,10 @@ class EmailVerificationController extends Controller
             $user->assignRole($memberRole);
         }
 
+        $user->businesses()
+            ->where('is_published', false)
+            ->update(['is_published' => true]);
+
         $activity->log('user_verified', [
             'user' => $user,
             'actor' => $user,

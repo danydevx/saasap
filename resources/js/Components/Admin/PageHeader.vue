@@ -14,7 +14,7 @@
       </div>
 
       <div v-if="backHref || $slots.actions" class="d-flex gap-2">
-        <Link v-if="backHref" :href="backHref" class="btn btn-outline-secondary">
+        <Link v-if="backHref" :href="backHref" class="btn btn-outline-secondary btn-sm">
           <i class="bi bi-arrow-left me-1"></i>
           {{ backLabel }}
         </Link>
@@ -46,7 +46,7 @@ defineProps({
   },
   backLabel: {
     type: String,
-    default: '',
+    default: 'Regresar',
   },
 })
 </script>
@@ -65,7 +65,7 @@ defineProps({
 }
 
 .page-header__title {
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   font-weight: 600;
   margin-bottom: 0.25rem;
 }

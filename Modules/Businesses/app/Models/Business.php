@@ -233,9 +233,24 @@ public function galleryImages(): HasMany
         return $this->hasMany(\Modules\Clients\Models\BusinessClient::class);
     }
 
+    public function teamMembers(): HasMany
+    {
+        return $this->hasMany(\Modules\TeamMembers\Models\BusinessTeamMember::class);
+    }
+
+    public function teamMemberPositions(): HasMany
+    {
+        return $this->hasMany(\Modules\TeamMembers\Models\TeamMemberPosition::class);
+    }
+
     public function properties(): HasMany
     {
         return $this->hasMany(\Modules\Properties\Models\Property::class);
+    }
+
+    public function packages(): HasMany
+    {
+        return $this->hasMany(\Modules\Packages\Models\BusinessPackage::class);
     }
 
     public function getEnabledModules(): array
@@ -263,7 +278,46 @@ public function galleryImages(): HasMany
                     'is_enabled' => $isEnabled,
                 ]
             );
+
+            $businessModule = BusinessModule::where('business_id', $this->id)
+                ->where('module_definition_id', $definition->id)
+                ->first();
+
+            if ($businessModule) {
+                $businessModule->update([
+                    'show_in_menu' => $definition->show_in_menu,
+                    'menu_title' => $definition->menu_title,
+                ]);
+            }
         }
+    }
+
+    public function forceDeleteWithRelations(): void
+    {
+        BusinessLocation::where('business_id', $this->id)->delete();
+        BusinessService::where('business_id', $this->id)->delete();
+        BusinessAppointment::where('business_id', $this->id)->delete();
+        BusinessAppointmentSlot::where('business_id', $this->id)->delete();
+        BusinessAvailability::where('business_id', $this->id)->delete();
+        BusinessAvailabilityException::where('business_id', $this->id)->delete();
+        BusinessLead::where('business_id', $this->id)->delete();
+        BusinessGalleryImage::where('business_id', $this->id)->delete();
+        BusinessAbout::where('business_id', $this->id)->delete();
+        BusinessHero::where('business_id', $this->id)->delete();
+        BusinessFaq::where('business_id', $this->id)->delete();
+        BusinessFaqCategory::where('business_id', $this->id)->delete();
+        BusinessFeature::where('business_id', $this->id)->delete();
+        BusinessPromotion::where('business_id', $this->id)->delete();
+        BusinessReview::where('business_id', $this->id)->delete();
+        BusinessSeoSetting::where('business_id', $this->id)->delete();
+        BusinessContactForm::where('business_id', $this->id)->delete();
+        BusinessContactFormField::where('business_id', $this->id)->delete();
+        BusinessProduct::where('business_id', $this->id)->delete();
+        BusinessProductCategory::where('business_id', $this->id)->delete();
+        BusinessModule::where('business_id', $this->id)->delete();
+        BusinessSeoSetting::where('business_id', $this->id)->delete();
+
+        $this->forceDelete();
     }
 
     protected function getPlanModules(): array

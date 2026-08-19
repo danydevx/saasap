@@ -4,7 +4,14 @@
 
     <div class="menu-page">
       <div class="menu-header">
-        <div class="menu-header__search" v-if="searchQuery || filteredProducts.length > 0 || Object.keys(categories).length > 1">
+        <BreadcrumbNav
+          :baseSlug="business.slug"
+          :items="[{ label: pageTitle || 'Menú' }]"
+        />
+      </div>
+
+      <div class="menu-filters" v-if="searchQuery || filteredProducts.length > 0 || Object.keys(categories).length > 1">
+        <div class="menu-filters__search">
           <div class="search-input">
             <i class="bi bi-search"></i>
             <input
@@ -19,7 +26,7 @@
           </div>
         </div>
 
-        <div class="menu-header__categories" v-if="!searchQuery && Object.keys(categories).length > 1">
+        <div class="menu-filters__categories" v-if="!searchQuery && Object.keys(categories).length > 1">
           <button
             v-for="(cat, key) in categories"
             :key="key"
@@ -165,6 +172,8 @@
               v-for="variant in selectedProduct.variants"
               :key="variant.id"
               class="product-modal__variant"
+              :class="{ active: selectedVariant?.id === variant.id }"
+              @click="selectedVariant = variant"
             >
               <div class="product-modal__variant-info">
                 <span class="product-modal__variant-name">{{ variant.title }}</span>
@@ -176,7 +185,23 @@
             </div>
           </div>
 
+          <div v-if="!selectedProduct.has_variants" class="product-modal__quantity">
+            <label class="form-label">Cantidad:</label>
+            <div class="input-group" style="max-width: 150px;">
+              <button class="btn btn-outline-secondary" @click="decreaseQuantity">-</button>
+              <input type="number" class="form-control text-center" v-model.number="addQuantity" min="1" />
+              <button class="btn btn-outline-secondary" @click="addQuantity++">+</button>
+            </div>
+          </div>
+
           <div class="product-modal__actions">
+            <button
+              v-if="orderSettings?.is_active && hasValidPrice"
+              class="btn btn-primary btn-lg w-100 mb-2"
+              @click="addToCart"
+            >
+              <i class="bi bi-cart-plus me-2"></i>Agregar al carrito
+            </button>
             <a
               :href="`https://wa.me/${business.whatsapp || ''}?text=Hola, me interesa: ${selectedProduct.title}`"
               target="_blank"
@@ -205,6 +230,38 @@
       :widgetTheme="aiChatbot.widget_theme || 'light'"
       :allowReset="aiChatbot.allow_reset_chat"
     />
+
+    <CartDrawer
+      v-if="orderSettings?.is_active"
+      :isOpen="cart.isCartOpen.value"
+      @close="cart.closeCart"
+      @checkout="openCheckout"
+    />
+
+    <div v-if="showCheckout && orderSettings?.is_active" class="checkout-modal">
+      <div class="checkout-modal__content">
+        <button class="checkout-modal__close" @click="showCheckout = false">
+          <i class="bi bi-x-lg"></i>
+        </button>
+        <CheckoutForm
+          v-if="showCheckout"
+          :businessId="business.id"
+          :businessLocations="businessLocations || []"
+          :orderSettings="orderSettings || {}"
+          :whatsappNumber="orderSettings?.whatsapp_number || ''"
+          @success="onCheckoutSuccess"
+        />
+      </div>
+    </div>
+
+    <button
+      v-if="orderSettings?.is_active && cart.itemCount.value > 0"
+      class="floating-cart-btn"
+      @click="cart.openCart"
+    >
+      <i class="bi bi-cart3"></i>
+      <span class="floating-cart-btn__badge">{{ cart.itemCount.value }}</span>
+    </button>
   </div>
 </template>
 
@@ -214,6 +271,10 @@ import NavigationMenu from '../../components/NavigationMenu.vue'
 import AiChatWidget from '@/Components/Minisite/AiChatWidget.vue'
 import HeroSimple from '../../components/HeroSimple.vue'
 import Footer from '../../components/Footer.vue'
+import BreadcrumbNav from '@/Components/Minisite/BreadcrumbNav.vue'
+import CartDrawer from '@/Components/Cart/CartDrawer.vue'
+import CheckoutForm from '@/Components/Cart/CheckoutForm.vue'
+import { useCart } from '@/composables/useCart'
 import GLightbox from 'glightbox'
 import 'glightbox/dist/css/glightbox.min.css'
 
@@ -225,12 +286,19 @@ const props = defineProps({
   socialNetworks: Array,
   existingSections: Array,
   aiChatbot: Object,
+  businessLocations: Array,
+  orderSettings: Object,
 })
 
+const cart = useCart()
 const searchQuery = ref('')
 const activeCategory = ref(null)
 const selectedProduct = ref(null)
 const activeProductImage = ref(null)
+const selectedVariant = ref(null)
+const showCheckout = ref(false)
+const showCartDrawer = ref(false)
+const addQuantity = ref(1)
 
 let lightbox = null
 
@@ -243,6 +311,14 @@ const productGallery = computed(() => {
     return [{ id: 'main', path: selectedProduct.value.image, title: selectedProduct.value.title }]
   }
   return []
+})
+
+const hasValidPrice = computed(() => {
+  if (!selectedProduct.value) return false
+  const price = selectedVariant.value
+    ? parseFloat(selectedVariant.value.price)
+    : parseFloat(selectedProduct.value.base_price || selectedProduct.value.price)
+  return !isNaN(price) && price > 0
 })
 
 onMounted(() => {
@@ -342,6 +418,8 @@ const scrollToCategory = (key) => {
 const openProductModal = (product) => {
   selectedProduct.value = product
   activeProductImage.value = product.gallery?.[0]?.path || product.image || null
+  selectedVariant.value = product.variants?.[0] || null
+  addQuantity.value = 1
   nextTick(() => {
     if (lightbox) {
       lightbox.destroy()
@@ -358,6 +436,46 @@ const openProductModal = (product) => {
 const closeProductModal = () => {
   selectedProduct.value = null
   activeProductImage.value = null
+  selectedVariant.value = null
+  addQuantity.value = 1
+}
+
+const decreaseQuantity = () => {
+  if (addQuantity.value > 1) {
+    addQuantity.value--
+  }
+}
+
+const addToCart = () => {
+  if (!selectedProduct.value) return
+
+  const product = selectedProduct.value
+  const variant = selectedVariant.value
+  const quantity = addQuantity.value
+
+  cart.addItem({
+    id: product.id,
+    business_id: props.business.id,
+    title: variant ? `${product.title} - ${variant.title}` : product.title,
+    image: product.image,
+    base_price: variant ? parseFloat(variant.price) : parseFloat(product.base_price || product.price || 0),
+  }, {
+    productType: 'menu_product',
+    variantId: variant?.id || null,
+    quantity,
+  })
+
+  closeProductModal()
+  cart.openCart()
+}
+
+const openCheckout = () => {
+  showCheckout.value = true
+}
+
+const onCheckoutSuccess = () => {
+  showCheckout.value = false
+  cart.clearCart()
 }
 
 onMounted(() => {
@@ -379,10 +497,21 @@ onMounted(() => {
   z-index: 100;
   background: #fff;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  padding: 8px 16px;
+  border-bottom: 1px solid #e9ecef;
+
+  :deep(.breadcrumb) {
+    margin: 0;
+    padding: 0;
+  }
+}
+
+.menu-filters {
+  background: #fff;
+  border-bottom: 1px solid #eee;
 
   &__search {
     padding: 12px 16px;
-    border-bottom: 1px solid #eee;
   }
 
   &__categories {
@@ -859,6 +988,106 @@ onMounted(() => {
       font-weight: 600;
       border-radius: 8px;
     }
+  }
+
+  &__quantity {
+    margin-bottom: 16px;
+    padding-top: 16px;
+    border-top: 1px solid #e9ecef;
+
+    .form-label {
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+  }
+}
+
+.product-modal__variant.active {
+  background: #e7f5ff;
+  border: 2px solid #0d6efd;
+}
+
+.floating-cart-btn {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: #0d6efd;
+  color: white;
+  border: none;
+  box-shadow: 0 4px 12px rgba(13, 110, 253, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  cursor: pointer;
+  z-index: 1040;
+  transition: transform 0.2s, box-shadow 0.2s;
+
+  &:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 16px rgba(13, 110, 253, 0.5);
+  }
+
+  &__badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background: #dc3545;
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 700;
+    min-width: 22px;
+    height: 22px;
+    border-radius: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 6px;
+  }
+}
+
+.checkout-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 1060;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  overflow-y: auto;
+
+  &__content {
+    background: white;
+    border-radius: 12px;
+    max-width: 600px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+  }
+
+  &__close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: white;
+    border: none;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 1;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   }
 }
 </style>

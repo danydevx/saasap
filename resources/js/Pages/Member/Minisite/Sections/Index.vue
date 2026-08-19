@@ -38,9 +38,9 @@
             <div v-else ref="sectionsList" class="minisite-sections">
               <div
                 v-for="section in localSections"
-                :key="section.id"
+                :key="section.id || section.section_key"
                 class="minisite-sections__item"
-                :data-id="section.id"
+                :data-id="section.id || section.section_key"
               >
                 <div class="minisite-sections__drag">
                   <i class="bi bi-grip-vertical"></i>
@@ -165,19 +165,21 @@ const initSortable = () => {
     ghostClass: 'sortable-ghost',
     dragClass: 'sortable-drag',
     onEnd: () => {
-      const ids = Array.from(sectionsList.value.querySelectorAll('[data-id]'))
-        .map(el => parseInt(el.dataset.id))
+      const elements = Array.from(sectionsList.value.querySelectorAll('[data-id]'))
+      const ids = elements.map(el => el.dataset.id).filter(id => !isNaN(id))
 
-      const reordered = ids.map(id => localSections.value.find(s => s.id === id))
-      localSections.value = reordered
+      const reordered = ids.map(id => localSections.value.find(s => s.id == id))
+      localSections.value = reordered.filter(Boolean)
 
-      router.post(
-        `/member/businesses/${business.value.id}/minisite/sections/reorder`,
-        { ids },
-        {
-          preserveScroll: true,
-        }
-      )
+      if (ids.length > 0) {
+        router.post(
+          `/member/businesses/${business.value.id}/minisite/sections/reorder`,
+          { ids },
+          {
+            preserveScroll: true,
+          }
+        )
+      }
     },
   })
 }

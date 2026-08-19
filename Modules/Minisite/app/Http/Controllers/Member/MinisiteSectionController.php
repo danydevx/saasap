@@ -63,6 +63,9 @@ class MinisiteSectionController extends Controller
                     case 'products':
                         $sectionData['items'] = $this->getProductsData($business, $config);
                         break;
+                    case 'packages':
+                        $sectionData['items'] = $this->getPackagesData($business, $config);
+                        break;
                 }
 
                 return $sectionData;
@@ -306,7 +309,7 @@ class MinisiteSectionController extends Controller
                 ->update(['sort_order' => $index + 1]);
         }
 
-        return back(303);
+        return redirect()->to("/member/businesses/{$business->id}/minisite/sections", 303);
     }
 
     private function getServicesData(Business $business, array $config): array
@@ -539,6 +542,39 @@ class MinisiteSectionController extends Controller
                     'price' => $product->price,
                     'compare_at_price' => $product->compare_at_price,
                     'image' => $firstImage,
+                ];
+            })->toArray();
+    }
+
+    private function getPackagesData(Business $business, array $config): array
+    {
+        $query = $business->packages()
+            ->where('is_active', true)
+            ->with('features')
+            ->orderBy('sort_order');
+
+        if (!empty($config['package_ids'])) {
+            $query->whereIn('id', $config['package_ids']);
+        }
+
+        return $query
+            ->get(['id', 'title', 'short_description', 'long_description', 'image', 'price', 'promo_price', 'whatsapp', 'whatsapp_message'])
+            ->map(function ($package) {
+                $image = $package->image;
+                if ($image && !str_starts_with($image, 'http')) {
+                    $image = '/storage/' . $image;
+                }
+                return [
+                    'id' => $package->id,
+                    'title' => $package->title,
+                    'short_description' => $package->short_description,
+                    'long_description' => $package->long_description,
+                    'price' => $package->price,
+                    'promo_price' => $package->promo_price,
+                    'image' => $image,
+                    'whatsapp' => $package->whatsapp,
+                    'whatsapp_message' => $package->whatsapp_message,
+                    'features' => $package->features->pluck('name')->toArray(),
                 ];
             })->toArray();
     }

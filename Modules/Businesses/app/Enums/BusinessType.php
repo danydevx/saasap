@@ -34,4 +34,40 @@ enum BusinessType: string
             self::GENERIC => 'Generic',
         };
     }
+
+    public function icon(): string
+    {
+        return match ($this) {
+            self::BARBER_SHOP => 'bi-scissors',
+            self::BEAUTY_SALON => 'bi-heart',
+            self::DENTIST => 'bi-bandaid',
+            self::MEDICAL_CLINIC => 'bi-hospital',
+            self::DOCTOR => 'bi-activity',
+            self::SPA => 'bi-flower1',
+            self::VETERINARIAN => 'bi-bug',
+            self::PHYSIOTHERAPIST => 'bi-person',
+            self::PSYCHOLOGIST => 'bi-chat-quote',
+            self::NUTRITIONIST => 'bi-egg-fried',
+            self::TATTOO_STUDIO => 'bi-brush',
+            self::GENERIC => 'bi-grid',
+        };
+    }
+
+    public function color(): string
+    {
+        return match ($this) {
+            self::BARBER_SHOP => '#6F42C1',
+            self::BEAUTY_SALON => '#E83E8C',
+            self::DENTIST => '#0DCAF0',
+            self::MEDICAL_CLINIC => '#DC3545',
+            self::DOCTOR => '#FD7E14',
+            self::SPA => '#20C997',
+            self::VETERINARIAN => '#198754',
+            self::PHYSIOTHERAPIST => '#20C997',
+            self::PSYCHOLOGIST => '#6F42C1',
+            self::NUTRITIONIST => '#FD7E14',
+            self::TATTOO_STUDIO => '#DC3545',
+            self::GENERIC => '#6C757D',
+        };
+    }
 }

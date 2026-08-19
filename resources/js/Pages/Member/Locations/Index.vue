@@ -15,18 +15,6 @@
       </template>
     </PageHeader>
 
-    <div class="row mb-3">
-      <div class="col-md-4">
-        <BulkSelect
-          v-model:selectedIds="selectedIds"
-          :current-page-ids="currentPageIds"
-          :delete-endpoint="`/member/businesses/${business?.id}/locations/bulk-delete`"
-          item-name="ubicaciones"
-          @deleted="onBulkDeleted"
-        />
-      </div>
-    </div>
-
     <BaseDataTable
       ref="dataTableRef"
       :endpoint="`/member/businesses/${business?.id}/locations`"
@@ -37,6 +25,16 @@
       empty-text="Comienza creando tu primera ubicacion."
       @updated="onDataTableUpdated"
     >
+      <template #header-actions>
+        <BulkSelect
+          v-model:selectedIds="selectedIds"
+          :current-page-ids="currentPageIds"
+          :delete-endpoint="`/member/businesses/${business?.id}/locations/bulk-delete`"
+          item-name="ubicaciones"
+          @deleted="onBulkDeleted"
+        />
+      </template>
+
       <template #cell-checkbox="{ row }">
         <BulkSelectRowCheckbox
           :id="row.id"

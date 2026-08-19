@@ -3,17 +3,11 @@
 namespace App\Jobs;
 
 use App\Models\User;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
 
-class SendVerificationEmailJob implements ShouldQueue
+class SendVerificationEmailJob
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
-
-    public function __construct(public int $userId) {}
+    public function __construct(public int $userId)
+    {}
 
     public function handle(): void
     {
@@ -23,5 +17,10 @@ class SendVerificationEmailJob implements ShouldQueue
         }
 
         $user->sendEmailVerificationNotification();
+    }
+
+    public static function dispatch(int $userId): void
+    {
+        (new self($userId))->handle();
     }
 }

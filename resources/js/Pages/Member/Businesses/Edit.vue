@@ -130,6 +130,56 @@
         </form>
       </div>
     </div>
+
+    <div class="card border-0 shadow-sm mt-4">
+      <div class="card-body">
+        <h5 class="card-title mb-3">
+          <i class="bi bi-qr-code me-2"></i>Código QR del Negocio
+        </h5>
+        <p class="text-muted small mb-3">Escanea el código para acceder directamente al minisite de tu negocio.</p>
+
+        <div class="row align-items-center">
+          <div class="col-auto">
+            <div class="bg-white p-3 rounded border" style="width: 150px; height: 150px; display: flex; align-items: center; justify-content: center;">
+              <img v-if="qrCodeUrl" :src="qrCodeUrl" alt="QR Code" style="max-width: 100%; max-height: 100%;" />
+              <div v-else class="text-muted">
+                <i class="bi bi-hourglass-split"></i>
+              </div>
+            </div>
+          </div>
+          <div class="col">
+            <div class="mb-3">
+              <label class="form-label">Tipo de versión</label>
+              <div class="d-flex gap-2">
+                <button
+                  type="button"
+                  class="btn"
+                  :class="qrVersion === 'mobile' ? 'btn-primary' : 'btn-outline-secondary'"
+                  @click="qrVersion = 'mobile'"
+                >
+                  <i class="bi bi-phone me-1"></i>Móvil (/m/)
+                </button>
+                <button
+                  type="button"
+                  class="btn"
+                  :class="qrVersion === 'desktop' ? 'btn-primary' : 'btn-outline-secondary'"
+                  @click="qrVersion = 'desktop'"
+                >
+                  <i class="bi bi-display me-1"></i>Escritorio (/b/)
+                </button>
+              </div>
+            </div>
+            <div class="mb-2">
+              <label class="form-label fw-semibold">URL del minisite:</label>
+              <code class="d-block mb-2 p-2 bg-light rounded">{{ qrLink }}</code>
+            </div>
+            <a :href="qrLink" target="_blank" class="btn btn-sm btn-outline-primary">
+              <i class="bi bi-box-arrow-up-right me-1"></i>Abrir minisite
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
   </MemberLayout>
 </template>
 
@@ -180,6 +230,18 @@ const form = ref({
   phone: props.business.phone || '',
   email: props.business.email || '',
   website: props.business.website || '',
+})
+
+const qrVersion = ref('mobile')
+
+const qrLink = computed(() => {
+  const baseUrl = window.location.origin
+  const prefix = qrVersion.value === 'mobile' ? '/m' : '/b'
+  return `${baseUrl}${prefix}/${props.business.slug}`
+})
+
+const qrCodeUrl = computed(() => {
+  return `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(qrLink.value)}`
 })
 
 const handleLogoChange = (event) => {

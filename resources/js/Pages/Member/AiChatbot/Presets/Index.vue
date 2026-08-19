@@ -9,7 +9,7 @@
         <Link :href="`/member/businesses/${business.id}/ai-chatbot`" class="btn btn-outline-secondary me-2">
           <i class="bi bi-arrow-left me-1"></i>Volver
         </Link>
-        <Link :href="`/member/businesses/${business.id}/ai-chatbot/presets/create`" class="btn btn-primary">
+        <Link :href="`/member/businesses/${business.id}/ai-chatbot/presets/create`" class="btn btn-primary btn-sm">
           <i class="bi bi-plus-lg me-1"></i>Nuevo Preset
         </Link>
       </template>

@@ -15,6 +15,61 @@ class DirectoryController extends Controller
 {
     public function index(Request $request)
     {
+        $filters = [
+            'search' => $request->input('search', ''),
+            'type' => $request->input('type', ''),
+            'location' => $request->input('location', ''),
+            'lat' => $request->input('lat', ''),
+            'lng' => $request->input('lng', ''),
+            'radius' => $request->input('radius', '10'),
+        ];
+
+        $hasFilters = $request->filled('search') || $request->filled('type') || $request->filled('location');
+
+        if (!$hasFilters) {
+            $businessTypes = BusinessType::cases();
+
+            $featuredQuery = Business::where('is_active', true)
+                ->where('is_published', true)
+                ->with(['locations' => function ($q) {
+                    $q->where('is_active', true);
+                }])
+                ->withCount(['reviews' => function ($q) {
+                    $q->where('is_active', true);
+                }])
+                ->withAvg(['reviews' => function ($q) {
+                    $q->where('is_active', true);
+                }], 'rating')
+                ->orderByDesc('reviews_count')
+                ->limit(8);
+
+            $featuredBusinesses = $featuredQuery->get();
+
+            $recentQuery = Business::where('is_active', true)
+                ->where('is_published', true)
+                ->with(['locations' => function ($q) {
+                    $q->where('is_active', true);
+                }])
+                ->withCount(['reviews' => function ($q) {
+                    $q->where('is_active', true);
+                }])
+                ->withAvg(['reviews' => function ($q) {
+                    $q->where('is_active', true);
+                }], 'rating')
+                ->orderByDesc('created_at')
+                ->limit(4);
+
+            $recentBusinesses = $recentQuery->get();
+
+            return view('public.home.index', [
+                'title' => 'Directorio de Negocios',
+                'description' => 'Encuentra los mejores negocios locales cerca de ti',
+                'businessTypes' => $businessTypes,
+                'featuredBusinesses' => $featuredBusinesses,
+                'recentBusinesses' => $recentBusinesses,
+            ]);
+        }
+
         $query = Business::where('is_active', true)
             ->where('is_published', true)
             ->with(['locations' => function ($q) {
@@ -95,14 +150,7 @@ class DirectoryController extends Controller
             'businesses' => $businesses,
             'businessTypes' => $businessTypes,
             'mapMarkers' => $mapMarkers,
-            'filters' => [
-                'search' => $request->input('search', ''),
-                'type' => $request->input('type', ''),
-                'location' => $request->input('location', ''),
-                'lat' => $request->input('lat', ''),
-                'lng' => $request->input('lng', ''),
-                'radius' => $request->input('radius', '10'),
-            ],
+            'filters' => $filters,
         ]);
     }
 

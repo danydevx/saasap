@@ -7,6 +7,7 @@ use App\Services\ActivityService;
 use App\Services\SecurityService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Inertia\Inertia;
 
 class LogoutController extends Controller
 {
@@ -30,6 +31,10 @@ class LogoutController extends Controller
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();
+
+        if (Inertia::isInertiaRequest()) {
+            return Inertia::location(route('login'));
+        }
 
         return redirect()->route('login');
     }

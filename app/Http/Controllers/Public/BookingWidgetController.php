@@ -11,6 +11,7 @@ use Modules\Appointments\Enums\AppointmentStatus;
 use Modules\Appointments\Models\BusinessAppointment;
 use Modules\Businesses\Models\Business;
 use Modules\Locations\Models\BusinessLocation;
+use Modules\Packages\Models\BusinessPackage;
 use Modules\Services\Models\BusinessService;
 
 class BookingWidgetController extends Controller
@@ -55,6 +56,28 @@ class BookingWidgetController extends Controller
         return response()->json([
             'services' => $services,
             'locations' => $locations,
+        ]);
+    }
+
+    public function packages(Business $businessSlug): JsonResponse
+    {
+        $packages = BusinessPackage::where('business_id', $businessSlug->id)
+            ->where('is_active', true)
+            ->with('features')
+            ->orderBy('name')
+            ->get(['id', 'title', 'short_description', 'price', 'promo_price']);
+
+        return response()->json([
+            'packages' => $packages->map(function ($package) {
+                return [
+                    'id' => $package->id,
+                    'title' => $package->title,
+                    'short_description' => $package->short_description,
+                    'price' => $package->price,
+                    'promo_price' => $package->promo_price,
+                    'features' => $package->features->pluck('name')->toArray(),
+                ];
+            }),
         ]);
     }
 

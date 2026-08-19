@@ -11,6 +11,13 @@ use Illuminate\Validation\ValidationException;
 
 class LoginController extends Controller
 {
+    public function showLogin()
+    {
+        return view('auth.login', [
+            'title' => 'Iniciar sesion',
+        ]);
+    }
+
     public function store(Request $request, ActivityService $activity, SecurityService $security)
     {
         $credentials = $request->validate([
@@ -19,6 +26,17 @@ class LoginController extends Controller
         ]);
 
         $remember = $request->boolean('remember');
+
+        $user = \App\Models\User::where('email', $credentials['email'])->withTrashed()->first();
+
+        if ($user && $user->deleted_at) {
+            $security->log('login_failed', null, $request, 'Intento de login en cuenta eliminada', [
+                'email' => strtolower((string) $credentials['email']),
+            ]);
+            throw ValidationException::withMessages([
+                'email' => 'Esta cuenta ha sido eliminada.',
+            ]);
+        }
 
         if (! Auth::attempt($credentials, $remember)) {
             $security->log('login_failed', null, $request, 'Intento de login fallido', [

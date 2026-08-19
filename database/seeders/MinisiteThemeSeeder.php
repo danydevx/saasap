@@ -56,6 +56,7 @@ class MinisiteThemeSeeder extends Seeder
                         'locations' => 'cards',
                         'gallery' => 'grid',
                         'products' => 'cards',
+                        'packages' => 'cards',
                     ],
                 ],
                 'is_active' => true,

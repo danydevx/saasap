@@ -27,6 +27,9 @@ Route::prefix('book')->group(function () {
     Route::get('business/{businessSlug}/services', [BookingWidgetController::class, 'services'])
         ->name('api.book.services');
 
+    Route::get('business/{businessSlug}/packages', [BookingWidgetController::class, 'packages'])
+        ->name('api.book.packages');
+
     Route::get('business/{businessSlug}/slots', [BookingWidgetController::class, 'slots'])
         ->name('api.book.slots');
 

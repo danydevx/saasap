@@ -23,5 +23,7 @@
     "Clients": true,
     "Minisite": true,
     "Properties": true,
-    "OfficeHours": true
+    "OfficeHours": true,
+    "Orders": true,
+    "ClientFidelity": true
 }

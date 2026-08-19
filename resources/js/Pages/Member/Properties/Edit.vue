@@ -18,32 +18,33 @@
     </div>
 
     <div class="card border-0 shadow-sm">
-      <div class="card-body">
-        <div v-if="Object.keys(mergedErrors).length" class="alert alert-danger">
+      <div class="card-body p-0">
+        <div v-if="Object.keys(mergedErrors).length" class="alert alert-danger m-3">
           <ul class="mb-0">
             <li v-for="(error, key) in mergedErrors" :key="key">{{ error }}</li>
           </ul>
         </div>
         <form @submit.prevent="submit">
-          <div class="row g-3">
-            <div class="col-12">
-              <div class="alert alert-secondary py-2 d-flex align-items-center gap-2">
-                <i class="bi bi-hash"></i>
-                <span><strong>ID de Propiedad:</strong></span>
-                <code class="mb-0">{{ property?.property_code || 'Sin asignar' }}</code>
-              </div>
-            </div>
+          <div class="property-sections">
 
-            <div v-if="formSchema && lockedSection" class="col-12">
-              <FormSection
-                :section="lockedSection"
-                :form="form"
-                :errors="mergedErrors"
-                :mainImageFile="mainImageFile"
-                :initialMainImageUrl="property?.main_image_url"
-                @update:keep="keepMainImage = $event"
-                @image-removed="removeMainImage"
-              />
+            <div class="property-section">
+              <div class="property-section__header">
+                <i class="bi bi-hash"></i>
+                <span>Información de la Propiedad</span>
+              </div>
+              <div class="property-section__body">
+                <div v-if="formSchema && lockedSection">
+                  <FormSection
+                    :section="lockedSection"
+                    :form="form"
+                    :errors="mergedErrors"
+                    :mainImageFile="mainImageFile"
+                    :initialMainImageUrl="property?.main_image_url"
+                    @update:keep="keepMainImage = $event"
+                    @image-removed="removeMainImage"
+                  />
+                </div>
+              </div>
             </div>
 
             <PropertyLocationSection
@@ -51,47 +52,60 @@
               :errors="mergedErrors"
             />
 
-            <div v-if="formSchema" class="row g-3">
-              <FormSection
-                v-for="section in nonLockedSections"
-                :key="section.id"
-                :section="section"
-                :form="form"
-                :errors="mergedErrors"
-                :mainImageFile="mainImageFile"
-                :initialMainImageUrl="property?.main_image_url"
-                @update:keep="keepMainImage = $event"
-                @image-removed="removeMainImage"
-              />
+            <div v-if="formSchema && nonLockedSections.length > 0">
+              <div v-for="section in nonLockedSections" :key="section.id" class="property-section">
+                <div class="property-section__header">
+                  <i class="bi bi-list-ul"></i>
+                  <span>{{ section.name }}</span>
+                </div>
+                <div class="property-section__body">
+                  <FormSection
+                    :section="section"
+                    :form="form"
+                    :errors="mergedErrors"
+                    :mainImageFile="mainImageFile"
+                    :initialMainImageUrl="property?.main_image_url"
+                    @update:keep="keepMainImage = $event"
+                    @image-removed="removeMainImage"
+                  />
+                </div>
+              </div>
             </div>
+
+            <div v-if="hasGalleryFields" class="property-section">
+              <div class="property-section__header">
+                <i class="bi bi-images"></i>
+                <span>Galería de imágenes</span>
+              </div>
+              <div class="property-section__body">
+                <PropertyImageUpload
+                  :businessId="business?.id"
+                  :propertyId="property?.id"
+                  :images="propertyImages || []"
+                  :maxFiles="10"
+                  :maxSizeMb="5"
+                  label="Galería de imágenes"
+                  @updated="reloadImages"
+                />
+              </div>
+            </div>
+
+            <div v-if="amenities.length > 0" class="property-section">
+              <div class="property-section__header">
+                <i class="bi bi-star"></i>
+                <span>Amenidades</span>
+              </div>
+              <div class="property-section__body">
+                <PropertyAmenityPicker
+                  v-model="form.amenity_ids"
+                  :amenities="amenities"
+                />
+              </div>
+            </div>
+
           </div>
 
-          <div v-if="hasGalleryFields" class="col-12 mt-4">
-            <h5 class="border-bottom pb-2 mb-3">
-              <i class="bi bi-images me-2"></i>Galería de imágenes
-            </h5>
-            <PropertyImageUpload
-              :businessId="business?.id"
-              :propertyId="property?.id"
-              :images="propertyImages || []"
-              :maxFiles="10"
-              :maxSizeMb="5"
-              label="Galería de imágenes"
-              @updated="reloadImages"
-            />
-          </div>
-
-          <div v-if="amenities.length > 0" class="col-12 mt-4">
-            <h5 class="border-bottom pb-2 mb-3">
-              <i class="bi bi-star me-2"></i>Amenidades
-            </h5>
-            <PropertyAmenityPicker
-              v-model="form.amenity_ids"
-              :amenities="amenities"
-            />
-          </div>
-
-          <div class="col-12 d-flex gap-2 mt-4">
+          <div class="property-form-actions">
             <button type="submit" class="btn btn-primary" :disabled="sending">
               {{ sending ? 'Guardando...' : 'Guardar Cambios' }}
             </button>
@@ -391,3 +405,45 @@ const submit = () => {
   })
 }
 </script>
+
+<style scoped>
+.property-sections {
+  display: flex;
+  flex-direction: column;
+}
+
+.property-section {
+  border-bottom: 1px solid #e9ecef;
+}
+
+.property-section:last-child {
+  border-bottom: none;
+}
+
+.property-section__header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1rem;
+  background: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+  font-weight: 600;
+  color: #495057;
+}
+
+.property-section__header i {
+  color: #0d6efd;
+}
+
+.property-section__body {
+  padding: 1rem;
+}
+
+.property-form-actions {
+  display: flex;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-top: 1px solid #e9ecef;
+}
+</style>

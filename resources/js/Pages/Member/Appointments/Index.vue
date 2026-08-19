@@ -327,13 +327,7 @@ const handleCreate = ({ date, time }) => {
 }
 
 const handleEdit = (appointment) => {
-  console.log('handleEdit called with:', appointment)
-  console.log('appointmentModal ref:', appointmentModal.value)
-  if (appointmentModal.value) {
-    appointmentModal.value.openView(appointment)
-  } else {
-    console.error('appointmentModal ref is null')
-  }
+  window.location.href = `/member/businesses/${business.value.id}/appointments/${appointment.id}/edit`
 }
 
 const handleModalSaved = () => {

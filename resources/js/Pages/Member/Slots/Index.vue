@@ -9,7 +9,7 @@
     >
       <template #actions>
         <button type="button" class="btn btn-primary btn-sm" @click="openCreateModal">
-          <i class="bi bi-plus me-1"></i>Nuevo Turno
+          <i class="bi bi-plus-lg me-1"></i>Nuevo Turno
         </button>
       </template>
     </PageHeader>

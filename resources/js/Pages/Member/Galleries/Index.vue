@@ -20,7 +20,7 @@
         <i class="bi bi-images display-1 text-muted"></i>
         <h3 class="h5 mt-3">No hay galerías registradas</h3>
         <p class="text-muted">Crea tu primera galería para empezar a organizar imágenes.</p>
-        <Link :href="`/member/businesses/${business?.id}/galleries/create`" class="btn btn-primary">
+        <Link :href="`/member/businesses/${business?.id}/galleries/create`" class="btn btn-primary btn-sm">
           <i class="bi bi-plus-lg me-1"></i>
           Crear primera galería
         </Link>

@@ -6,9 +6,7 @@
       <div class="page-header__inner">
         <BreadcrumbNav
           :baseSlug="business.slug"
-          :parentHref="`/m/${business.slug}/propiedades`"
-          parentLabel="Propiedades"
-          :currentLabel="property.title"
+          :items="[{ label: 'Propiedades', href: `/m/${business.slug}/propiedades` }, { label: property.title }]"
         />
       </div>
     </section>

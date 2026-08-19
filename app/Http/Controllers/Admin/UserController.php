@@ -355,13 +355,23 @@ class UserController extends Controller
             ]);
         }
 
+        if ($user->deleted_at) {
+            return back()->withErrors([
+                'delete' => 'Este usuario ya esta eliminado.',
+            ]);
+        }
+
+        $userId = $user->id;
+        $userName = $user->name;
+        $actor = request()->user();
+
         $user->delete();
 
-        $activity->log('user_deleted', [
-            'user' => $user,
-            'actor' => request()->user(),
-            'subject' => $user,
-            'description' => 'Usuario eliminado por admin',
+        $activity->log('user_archived', [
+            'user' => null,
+            'actor' => $actor,
+            'subject' => null,
+            'description' => "Usuario archivado por admin: {$userName} (ID: {$userId})",
             'request' => request(),
         ]);
 
@@ -470,5 +480,95 @@ class UserController extends Controller
         ]);
 
         return back()->with('success', 'Correo de verificacion enviado.');
+    }
+
+    public function archived(Request $request)
+    {
+        $search = trim((string) $request->input('search', ''));
+
+        $users = User::onlyTrashed()
+            ->with(['roles:id,name', 'profile:id,user_id,phone'])
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($q) use ($search) {
+                    $q->whereRaw('LOWER(name) like ?', ['%'.mb_strtolower($search).'%'])
+                        ->orWhereRaw('LOWER(email) like ?', ['%'.mb_strtolower($search).'%']);
+
+                    if (is_numeric($search)) {
+                        $q->orWhere('id', (int) $search);
+                    }
+                });
+            })
+            ->orderBy('deleted_at', 'desc')
+            ->paginate(10)
+            ->withQueryString()
+            ->through(fn ($user) => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'phone' => $user->profile?->phone,
+                'roles' => $user->roles->pluck('name')->values(),
+                'is_active' => (bool) $user->is_active,
+                'email_verified_at' => $user->email_verified_at,
+                'created_at' => $user->created_at?->toDateString(),
+                'deleted_at' => $user->deleted_at?->toDateString(),
+            ]);
+
+        return Inertia::render('Admin/Users/Archived', [
+            'users' => $users,
+            'filters' => [
+                'search' => $search,
+            ],
+        ]);
+    }
+
+    public function restore(int $id, ActivityService $activity)
+    {
+        $user = User::withTrashed()->findOrFail($id);
+
+        if (! $user->deleted_at) {
+            return back()->withErrors([
+                'restore' => 'Este usuario no esta eliminado.',
+            ]);
+        }
+
+        $userName = $user->name;
+        $user->restore();
+
+        $activity->log('user_restored', [
+            'user' => null,
+            'actor' => request()->user(),
+            'subject' => null,
+            'description' => "Usuario restaurado por admin: {$userName} (ID: {$user->id})",
+            'request' => request(),
+        ]);
+
+        return redirect()->route('admin.users.archived')->with('success', 'Usuario restaurado correctamente.');
+    }
+
+    public function forceDestroy(int $id, ActivityService $activity)
+    {
+        $user = User::withTrashed()->findOrFail($id);
+
+        if (! $user->deleted_at) {
+            return back()->withErrors([
+                'force_delete' => 'Solo se pueden eliminar permanentemente usuarios archivados.',
+            ]);
+        }
+
+        $userId = $user->id;
+        $userName = $user->name;
+        $actor = request()->user();
+
+        $user->forceDeleteWithRelations();
+
+        $activity->log('user_force_deleted', [
+            'user' => null,
+            'actor' => $actor,
+            'subject' => null,
+            'description' => "Usuario eliminado permanentemente por admin: {$userName} (ID: {$userId})",
+            'request' => request(),
+        ]);
+
+        return redirect()->route('admin.users.archived')->with('success', 'Usuario y todos sus datos han sido eliminados permanentemente.');
     }
 }

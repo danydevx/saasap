@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Modules\Businesses\Models\Business;
 use Modules\Minisite\Models\BusinessMinisiteSection;
+use Modules\Packages\Models\BusinessPackage;
 use Modules\Minisite\Models\BusinessMinisiteSetting;
 use Modules\Properties\Models\PropertyValue;
 
@@ -92,6 +93,9 @@ class MinisiteController extends Controller
                     case 'properties':
                         $sectionData['items'] = $this->getPropertiesData($business, $config);
                         break;
+                    case 'packages':
+                        $sectionData['items'] = $this->getPackagesData($business, $config);
+                        break;
                 }
 
                 return $sectionData;
@@ -105,6 +109,11 @@ class MinisiteController extends Controller
 
         $aiChatbot = $this->getAiChatbotSettings($business);
 
+        $orderSettings = null;
+        if (class_exists('\Modules\Orders\Models\OrderSetting')) {
+            $orderSettings = \Modules\Orders\Models\OrderSetting::where('business_id', $business->id)->first();
+        }
+
         return Inertia::render($this->resolveThemeView('Show', $setting->theme_key), [
             'business' => [
                 'id' => $business->id,
@@ -112,6 +121,7 @@ class MinisiteController extends Controller
                 'slug' => $business->slug,
                 'logo' => $business->logo,
                 'cover_image' => $business->cover_image_path,
+                'whatsapp' => $business->whatsapp,
             ],
             'setting' => [
                 'theme_key' => $setting->theme_key,
@@ -127,6 +137,7 @@ class MinisiteController extends Controller
             'socialNetworks' => $socialNetworks,
             'existingSections' => $existingSections,
             'aiChatbot' => $aiChatbot,
+            'orderSettings' => $orderSettings,
         ]);
     }
 
@@ -169,6 +180,27 @@ class MinisiteController extends Controller
         $existingSections = $this->getExistingSections($business);
         $aiChatbot = $this->getAiChatbotSettings($business);
 
+        $orderSettings = null;
+        $businessLocations = [];
+        if (class_exists('\Modules\Orders\Models\OrderSetting')) {
+            $orderSettings = \Modules\Orders\Models\OrderSetting::where('business_id', $business->id)->first();
+        }
+        if (class_exists('\Modules\Locations\Models\BusinessLocation')) {
+            $businessLocations = $business->locations()
+                ->where('is_active', true)
+                ->get(['id', 'name', 'address_line_1', 'latitude', 'longitude'])
+                ->map(function ($loc) {
+                    return [
+                        'id' => $loc->id,
+                        'name' => $loc->name,
+                        'address' => $loc->full_address ?? $loc->address_line_1,
+                        'latitude' => $loc->latitude,
+                        'longitude' => $loc->longitude,
+                    ];
+                })
+                ->toArray();
+        }
+
         return Inertia::render($this->resolveThemeView('Products', $setting->theme_key), [
             'business' => [
                 'id' => $business->id,
@@ -176,6 +208,7 @@ class MinisiteController extends Controller
                 'slug' => $business->slug,
                 'logo' => $business->logo,
                 'cover_image' => $business->cover_image_path,
+                'whatsapp' => $business->whatsapp,
             ],
             'setting' => [
                 'theme_key' => $setting->theme_key,
@@ -195,6 +228,8 @@ class MinisiteController extends Controller
             'socialNetworks' => $socialNetworks,
             'existingSections' => $existingSections,
             'aiChatbot' => $aiChatbot,
+            'orderSettings' => $orderSettings,
+            'businessLocations' => $businessLocations,
         ]);
     }
 
@@ -225,6 +260,27 @@ class MinisiteController extends Controller
         $existingSections = $this->getExistingSections($business);
         $aiChatbot = $this->getAiChatbotSettings($business);
 
+        $orderSettings = null;
+        $businessLocations = [];
+        if (class_exists('\Modules\Orders\Models\OrderSetting')) {
+            $orderSettings = \Modules\Orders\Models\OrderSetting::where('business_id', $business->id)->first();
+        }
+        if (class_exists('\Modules\Locations\Models\BusinessLocation')) {
+            $businessLocations = $business->locations()
+                ->where('is_active', true)
+                ->get(['id', 'name', 'address_line_1', 'latitude', 'longitude'])
+                ->map(function ($loc) {
+                    return [
+                        'id' => $loc->id,
+                        'name' => $loc->name,
+                        'address' => $loc->full_address ?? $loc->address_line_1,
+                        'latitude' => $loc->latitude,
+                        'longitude' => $loc->longitude,
+                    ];
+                })
+                ->toArray();
+        }
+
         return Inertia::render($this->resolveThemeView('Menu', $setting->theme_key), [
             'business' => [
                 'id' => $business->id,
@@ -232,6 +288,7 @@ class MinisiteController extends Controller
                 'slug' => $business->slug,
                 'logo' => $business->logo,
                 'cover_image' => $business->cover_image_path,
+                'whatsapp' => $business->whatsapp,
             ],
             'setting' => [
                 'theme_key' => $setting->theme_key,
@@ -248,6 +305,8 @@ class MinisiteController extends Controller
             'socialNetworks' => $socialNetworks,
             'existingSections' => $existingSections,
             'aiChatbot' => $aiChatbot,
+            'orderSettings' => $orderSettings,
+            'businessLocations' => $businessLocations,
         ]);
     }
 
@@ -329,6 +388,12 @@ class MinisiteController extends Controller
             ->get(['platform', 'url', 'icon_class']);
 
         $existingSections = $this->getExistingSections($business);
+        $aiChatbot = $this->getAiChatbotSettings($business);
+
+        $orderSettings = null;
+        if (class_exists('\Modules\Orders\Models\OrderSetting')) {
+            $orderSettings = \Modules\Orders\Models\OrderSetting::where('business_id', $business->id)->first();
+        }
 
         return Inertia::render($this->resolveThemeView('ProductDetail', $setting->theme_key), [
             'business' => [
@@ -337,6 +402,7 @@ class MinisiteController extends Controller
                 'slug' => $business->slug,
                 'logo' => $business->logo,
                 'cover_image' => $business->cover_image_path,
+                'whatsapp' => $business->whatsapp,
             ],
             'setting' => [
                 'theme_key' => $setting->theme_key,
@@ -350,6 +416,7 @@ class MinisiteController extends Controller
             ],
             'product' => [
                 'id' => $product->id,
+                'business_id' => $business->id,
                 'name' => $product->name,
                 'slug' => $product->slug,
                 'description' => $product->description,
@@ -365,6 +432,8 @@ class MinisiteController extends Controller
             'relatedProducts' => $relatedProducts,
             'socialNetworks' => $socialNetworks,
             'existingSections' => $existingSections,
+            'aiChatbot' => $aiChatbot,
+            'orderSettings' => $orderSettings,
         ]);
     }
 
@@ -1320,8 +1389,7 @@ class MinisiteController extends Controller
     private function getFaqsData(Business $business, array $config): array
     {
         $query = $business->faqs()
-            ->where('is_active', true)
-            ->whereNull('category_id');
+            ->where('is_active', true);
 
         if (!empty($config['faq_ids'])) {
             $query->whereIn('id', $config['faq_ids']);
@@ -1540,5 +1608,38 @@ class MinisiteController extends Controller
             'widget_theme' => $aiSetting->widget_theme ?? 'light',
             'allow_reset_chat' => $aiSetting->allow_reset_chat ?? false,
         ];
+    }
+
+    private function getPackagesData(Business $business, array $config): array
+    {
+        $query = $business->packages()
+            ->where('is_active', true)
+            ->with('features')
+            ->orderBy('sort_order');
+
+        if (!empty($config['package_ids'])) {
+            $query->whereIn('id', $config['package_ids']);
+        }
+
+        return $query
+            ->get()
+            ->map(function ($package) {
+                $image = $package->image;
+                if ($image && !str_starts_with($image, 'http')) {
+                    $image = '/storage/' . $image;
+                }
+                return [
+                    'id' => $package->id,
+                    'title' => $package->title,
+                    'short_description' => $package->short_description,
+                    'long_description' => $package->long_description,
+                    'price' => $package->price,
+                    'promo_price' => $package->promo_price,
+                    'image' => $image,
+                    'whatsapp' => $package->whatsapp,
+                    'whatsapp_message' => $package->whatsapp_message,
+                    'features' => $package->features->pluck('name')->toArray(),
+                ];
+            })->toArray();
     }
 }

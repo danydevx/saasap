@@ -28,6 +28,9 @@
             <li v-if="isModuleEnabled('products')" class="nav-item">
               <a :href="`#products`" class="nav-link" :style="{ color: navbarTextColor }">Productos</a>
             </li>
+            <li v-if="isModuleEnabled('packages')" class="nav-item">
+              <a :href="`#packages`" class="nav-link" :style="{ color: navbarTextColor }">Paquetes</a>
+            </li>
             <li v-if="isModuleEnabled('restaurant_menu')" class="nav-item">
               <a :href="`#restaurant_menu`" class="nav-link" :style="{ color: navbarTextColor }">Menú</a>
             </li>
@@ -149,6 +152,38 @@
           <Link :href="`/b/${business.slug}/products`" class="btn-site btn-site-outline">
             Ver todos los productos <i class="bi bi-arrow-right ms-2"></i>
           </Link>
+        </div>
+      </div>
+    </section>
+
+    <section id="packages" v-if="isModuleEnabled('packages') && packages.length" class="py-5" :class="'section--' + (sectionSchemes.packages || 'light')">
+      <div class="container">
+        <div class="text-center mb-5">
+          <h2 class="fw-bold">Paquetes</h2>
+          <p class="text-site-muted">Explora nuestros paquetes especiales</p>
+        </div>
+        <div class="row g-4">
+          <div v-for="pkg in packages.slice(0, 8)" :key="pkg.id" class="col-6 col-md-4 col-lg-3">
+            <div class="card h-100" :class="cardHoverClass">
+              <img v-if="pkg.image" :src="pkg.image" class="card-img-top img-cover" :alt="pkg.title" style="height: 120px;">
+              <div class="card-body">
+                <h5 class="card-title card-title-custom">{{ pkg.title }}</h5>
+                <p v-if="pkg.short_description" class="card-text text-site-muted small">{{ pkg.short_description }}</p>
+                <div class="mt-auto">
+                  <div v-if="pkg.promo_price" class="fw-bold accent-color">
+                    {{ formatPrice(pkg.promo_price) }}
+                    <small class="text-muted text-decoration-line-through">{{ formatPrice(pkg.price) }}</small>
+                  </div>
+                  <div v-else-if="pkg.price" class="fw-bold accent-color">
+                    {{ formatPrice(pkg.price) }}
+                  </div>
+                  <a v-if="pkg.whatsapp" :href="`https://wa.me/${pkg.whatsapp}?text=${encodeURIComponent(pkg.whatsapp_message || 'Hola, me interesa este paquete')}`" target="_blank" class="btn btn-success btn-sm mt-2">
+                    <i class="bi bi-whatsapp"></i>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -336,6 +371,7 @@ const gallery = computed(() => page.props.gallery || [])
 const reviews = computed(() => page.props.reviews || [])
 const promotions = computed(() => page.props.promotions || [])
 const products = computed(() => page.props.products || [])
+const packages = computed(() => page.props.packages || [])
 const menuCategories = computed(() => page.props.menuCategories || [])
 const menuProducts = computed(() => page.props.menuProducts || [])
 const socialNetworks = computed(() => page.props.socialNetworks || [])
@@ -354,6 +390,7 @@ const sectionSchemes = computed(() => page.props.sectionSchemes || {
   locations: 'neutral',
   contact: 'dark',
   promotions: 'accent',
+  packages: 'light',
 })
 
 const schemePalettes = computed(() => theme.value?.scheme_palettes || [])

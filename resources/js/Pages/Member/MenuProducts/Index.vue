@@ -30,13 +30,27 @@
     </PageHeader>
 
     <div class="row mb-4 align-items-center">
-      <div class="col-md-4">
-        <select v-model="filterCategory" class="form-select" @change="filterProducts">
-          <option :value="null">Todas las categorias</option>
-          <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.title }}</option>
-        </select>
+      <div class="col">
+        <div class="d-flex gap-2 align-items-center flex-wrap">
+          <div style="max-width: 200px;">
+            <input
+              type="text"
+              class="form-control form-control-sm"
+              v-model="searchQuery"
+              placeholder="Buscar productos..."
+              @keyup.enter="filterProducts"
+            />
+          </div>
+          <select v-model="filterCategory" class="form-select form-select-sm" @change="filterProducts" style="max-width: 200px;">
+            <option :value="null">Todas las categorias</option>
+            <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.title }}</option>
+          </select>
+          <button v-if="filterCategory || searchQuery" type="button" class="btn btn-outline-secondary btn-sm" @click="clearFilters">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
       </div>
-      <div class="col-md-4">
+      <div class="col-auto">
         <BulkSelect
           v-model:selectedIds="selectedIds"
           :current-page-ids="currentPageIds"
@@ -44,11 +58,6 @@
           item-name="productos"
           @deleted="onBulkDeleted"
         />
-      </div>
-      <div v-if="filterCategory" class="col-md-2">
-        <button type="button" class="btn btn-outline-secondary" @click="clearFilter">
-          <i class="bi bi-x-lg me-1"></i>Limpiar
-        </button>
       </div>
     </div>
 
@@ -104,6 +113,9 @@
         </div>
         <div class="card-footer bg-transparent py-1">
           <div class="d-flex gap-1">
+            <button @click="cloneProduct(product)" class="btn btn-sm btn-outline-secondary">
+              <i class="bi bi-copy"></i>
+            </button>
             <Link :href="`/member/businesses/${business?.id}/menu-products/${product.id}/edit`" class="btn btn-sm btn-outline-primary flex-grow-1">
               <i class="bi bi-pencil"></i>
             </Link>
@@ -134,6 +146,7 @@ const props = defineProps({
   products: Object,
   categories: Array,
   selectedCategory: [Number, String],
+  searchQuery: String,
 })
 
 const page = usePage()
@@ -165,6 +178,7 @@ const sortableCardsRef = ref(null)
 const loading = ref(false)
 const deleting = ref(false)
 const filterCategory = ref(props.selectedCategory)
+const searchQuery = ref(props.searchQuery || '')
 const selectedIds = ref([])
 
 const productsList = computed(() => {
@@ -197,18 +211,26 @@ const onBulkDeleted = () => {
 
 const filterProducts = () => {
   let url = `/member/businesses/${props.business.id}/menu-products`
+  const params = []
   if (filterCategory.value) {
     if (filterCategory.value === 'uncategorized') {
-      url += '?uncategorized=1'
+      params.push('uncategorized=1')
     } else {
-      url += `?category=${filterCategory.value}`
+      params.push(`category=${filterCategory.value}`)
     }
+  }
+  if (searchQuery.value) {
+    params.push(`search=${encodeURIComponent(searchQuery.value)}`)
+  }
+  if (params.length > 0) {
+    url += '?' + params.join('&')
   }
   window.location.href = url
 }
 
-const clearFilter = () => {
+const clearFilters = () => {
   filterCategory.value = null
+  searchQuery.value = ''
   window.location.href = `/member/businesses/${props.business.id}/menu-products`
 }
 
@@ -216,6 +238,14 @@ const deleteProduct = (product) => {
   if (!confirm(`Eliminar el producto "${product.title}"?`)) return
 
   router.delete(`/member/businesses/${props.business.id}/menu-products/${product.id}`, {
+    preserveScroll: true,
+  })
+}
+
+const cloneProduct = (product) => {
+  if (!confirm(`Clonar el producto "${product.title}"?`)) return
+
+  router.post(`/member/businesses/${props.business.id}/menu-products/${product.id}/clone`, {
     preserveScroll: true,
   })
 }

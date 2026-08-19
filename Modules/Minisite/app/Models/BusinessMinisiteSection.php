@@ -53,6 +53,7 @@ class BusinessMinisiteSection extends Model
             'availability' => 'Horario de Atención',
             'restaurant_menu' => 'Menú Restaurante',
             'properties' => 'Propiedades',
+            'packages' => 'Paquetes',
         ];
     }
 
@@ -163,6 +164,17 @@ class BusinessMinisiteSection extends Model
                 'show_price' => true,
                 'show_location' => true,
                 'show_description' => true,
+                'view_mode' => 'grid',
+                'max_items' => 12,
+                'min_items' => 3,
+            ],
+            'packages' => [
+                'show_all' => true,
+                'package_ids' => [],
+                'show_image' => true,
+                'show_price' => true,
+                'show_features' => true,
+                'show_whatsapp' => true,
                 'view_mode' => 'grid',
                 'max_items' => 12,
                 'min_items' => 3,

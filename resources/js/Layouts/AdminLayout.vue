@@ -200,14 +200,14 @@ const showSystemMenu = computed(() =>
   canViewMonitor.value ||
   (canViewQueues.value && modules.value.queues !== false) ||
   (canViewActivity.value && modules.value.activity !== false) ||
-  (canViewSecurity.value && modules.value['security-events'] !== false) ||
-  (canViewSystemErrors.value && modules.value['system-errors'] !== false) ||
-  (canViewFeatureFlags.value && modules.value['feature-flags'] !== false) ||
-  (canViewAnnouncements.value && modules.value.announcements !== false) ||
-  (canViewAutomations.value && modules.value.automations !== false) ||
+  (canViewSecurity.value && modules['security-events'] !== false) ||
+  (canViewSystemErrors.value && modules['system-errors'] !== false) ||
+  (canViewFeatureFlags.value && modules['feature-flags'] !== false) ||
+  (canViewAnnouncements.value && modules.announcements !== false) ||
+  (canViewAutomations.value && modules.automations !== false) ||
   canViewTemplates.value ||
   (isSuperAdmin.value && canViewModules.value) ||
-  (canViewLegalDocuments.value && modules.value.legal !== false) ||
+  (canViewLegalDocuments.value && modules.legal !== false) ||
   canViewSettings.value
 )
 </script>

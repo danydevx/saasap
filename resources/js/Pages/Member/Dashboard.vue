@@ -4,7 +4,16 @@
 
     <div class="mb-4">
       <h1 class="h4 mb-1">Hola, {{ userName }}</h1>
-      <p class="text-muted mb-0">Gestiona tus negocios desde un solo lugar.</p>
+      <p class="text-muted mb-0">Gestiona tu negocio desde un solo lugar.</p>
+    </div>
+
+    <div v-if="hasPendingBusiness" class="alert alert-warning d-flex align-items-center gap-2 mb-4">
+      <i class="bi bi-clock-history fs-4"></i>
+      <div>
+        <strong>Tu negocio está pendiente de activación.</strong>
+        <span v-if="!emailVerified"> Verifica tu email para activarlo.</span>
+        <span v-else> El administrador debe aprobarlo.</span>
+      </div>
     </div>
 
     <div class="row g-3 mb-4">
@@ -17,28 +26,6 @@
             <h2 class="h6 text-muted text-uppercase small mb-1">{{ stat.label }}</h2>
             <p class="display-6 fw-bold mb-0">{{ stat.count }}</p>
           </div>
-        </div>
-      </div>
-    </div>
-
-    <div v-if="businesses.length" class="mb-4">
-      <h2 class="h6 text-muted text-uppercase small mb-3">Mis negocios</h2>
-      <div class="row g-3">
-        <div v-for="biz in businesses" :key="biz.id" class="col-12 col-md-6 col-lg-4">
-          <Link :href="`/member/businesses/${biz.id}/modules`" class="text-decoration-none">
-            <div class="card border-0 shadow-sm h-100">
-              <div class="card-body d-flex flex-column">
-                <div class="d-flex align-items-center mb-2">
-                  <i class="bi bi-building me-2 text-primary"></i>
-                  <h3 class="h6 mb-0 text-dark">{{ biz.name }}</h3>
-                </div>
-                <p class="text-muted small mb-2">{{ biz.description || 'Sin descripción' }}</p>
-                <span class="badge bg-light text-dark mt-auto">
-                  <i class="bi bi-grid me-1"></i>Ver módulos
-                </span>
-              </div>
-            </div>
-          </Link>
         </div>
       </div>
     </div>
@@ -78,9 +65,14 @@ import MemberLayout from '@/Layouts/MemberLayout.vue'
 
 const page = usePage()
 const userName = computed(() => page.props.auth?.user?.name || 'Usuario')
-const businessCount = computed(() => Number(page.props.businessCount ?? 0))
 const stats = computed(() => page.props.stats || {})
 const businesses = computed(() => page.props.businesses || [])
+
+const hasPendingBusiness = computed(() => {
+  return businesses.value.some(biz => !biz.is_published)
+})
+
+const emailVerified = computed(() => page.props.auth?.user?.email_verified_at !== null)
 
 const statCards = computed(() => [
   { key: 'leads', label: 'Leads', count: Number(stats.value.leads ?? 0), icon: 'bi-people', tone: 'primary' },

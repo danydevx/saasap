@@ -6,9 +6,7 @@
       <div class="page-header__inner">
         <BreadcrumbNav
           :baseSlug="business.slug"
-          :parentHref="`/m/${business.slug}/productos`"
-          parentLabel="Productos"
-          :currentLabel="product.name"
+          :items="[{ label: 'Productos', href: `/m/${business.slug}/productos` }, { label: product.name }]"
         />
       </div>
     </section>
@@ -86,6 +84,13 @@
             </div>
 
             <div class="product-detail__actions">
+              <button
+                v-if="orderSettings?.is_active && hasValidPrice"
+                class="btn btn-primary btn-lg w-100 mb-2"
+                @click="addToCart"
+              >
+                <i class="bi bi-cart-plus me-2"></i>Agregar al carrito
+              </button>
               <a
                 v-if="product.whatsapp_contact"
                 :href="`https://wa.me/${product.whatsapp_contact}?text=Hola, me interesa el producto: ${product.name}`"
@@ -134,6 +139,46 @@
       :showSocial="setting.footer_show_social"
       :socialNetworks="socialNetworks"
     />
+
+    <AiChatWidget
+      v-if="aiChatbot && aiChatbot.is_enabled"
+      :businessSlug="business.slug"
+      :businessName="business.name"
+      :widgetColor="aiChatbot.widget_color || '#3B82F6'"
+      :widgetTheme="aiChatbot.widget_theme || 'light'"
+      :allowReset="aiChatbot.allow_reset_chat"
+    />
+
+    <CartDrawer
+      v-if="orderSettings?.is_active"
+      :isOpen="cart.isCartOpen.value"
+      @close="cart.closeCart"
+      @checkout="openCheckout"
+    />
+
+    <div v-if="showCheckout && orderSettings?.is_active" class="checkout-modal">
+      <div class="checkout-modal__content">
+        <button class="checkout-modal__close" @click="showCheckout = false">
+          <i class="bi bi-x-lg"></i>
+        </button>
+        <CheckoutForm
+          v-if="showCheckout"
+          :businessId="business.id"
+          :orderSettings="orderSettings || {}"
+          :whatsappNumber="orderSettings?.whatsapp_number || ''"
+          @success="onCheckoutSuccess"
+        />
+      </div>
+    </div>
+
+    <button
+      v-if="orderSettings?.is_active && cart.itemCount.value > 0"
+      class="floating-cart-btn"
+      @click="cart.openCart"
+    >
+      <i class="bi bi-cart3"></i>
+      <span class="floating-cart-btn__badge">{{ cart.itemCount.value }}</span>
+    </button>
   </div>
 </template>
 
@@ -142,6 +187,10 @@ import { ref, computed, onMounted, nextTick } from 'vue'
 import NavigationMenu from '../../components/NavigationMenu.vue'
 import Footer from '../../components/Footer.vue'
 import BreadcrumbNav from '@/Components/Minisite/BreadcrumbNav.vue'
+import AiChatWidget from '@/Components/Minisite/AiChatWidget.vue'
+import CartDrawer from '@/Components/Cart/CartDrawer.vue'
+import CheckoutForm from '@/Components/Cart/CheckoutForm.vue'
+import { useCart } from '@/composables/useCart'
 import { usePriceFormatter } from '@/Composables/usePriceFormatter'
 import GLightbox from 'glightbox'
 import 'glightbox/dist/css/glightbox.min.css'
@@ -156,7 +205,12 @@ const props = defineProps({
   },
   socialNetworks: Array,
   existingSections: Array,
+  aiChatbot: Object,
+  orderSettings: Object,
 })
+
+const cart = useCart()
+const showCheckout = ref(false)
 
 const { formatPrice } = usePriceFormatter({
   locale: 'es-MX',
@@ -181,8 +235,38 @@ const discountPercent = computed(() => {
   return Math.round((1 - props.product.price / props.product.compare_at_price) * 100)
 })
 
+const hasValidPrice = computed(() => {
+  if (!props.product) return false
+  const price = parseFloat(props.product.price)
+  return !isNaN(price) && price > 0
+})
+
 const goToProduct = (slug) => {
   window.location.href = `/m/${props.business.slug}/productos/${slug}`
+}
+
+const addToCart = () => {
+  if (!props.product) return
+  cart.addItem({
+    id: props.product.id,
+    business_id: props.product.business_id || props.business.id,
+    title: props.product.name,
+    image: props.product.image,
+    base_price: props.product.price,
+  }, {
+    productType: 'product',
+    quantity: 1,
+  })
+  cart.openCart()
+}
+
+const openCheckout = () => {
+  showCheckout.value = true
+}
+
+const onCheckoutSuccess = () => {
+  showCheckout.value = false
+  cart.clearCart()
 }
 
 let lightbox = null
@@ -486,6 +570,99 @@ onMounted(() => {
     font-size: 1.125rem;
     font-weight: 700;
     color: #198754;
+  }
+}
+
+.floating-cart-btn {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: #198754;
+  color: #fff;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  transition: transform 0.2s, box-shadow 0.2s;
+
+  &:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+  }
+
+  i {
+    font-size: 1.5rem;
+  }
+
+  &__badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background: #dc3545;
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 700;
+    min-width: 22px;
+    height: 22px;
+    border-radius: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 6px;
+  }
+}
+
+.checkout-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+
+  &__content {
+    background: #fff;
+    border-radius: 16px;
+    max-width: 600px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+  }
+
+  &__close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.95);
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 10;
+    color: #495057;
+    transition: all 0.2s;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+
+    &:hover {
+      background: #fff;
+      color: #dc3545;
+    }
   }
 }
 </style>

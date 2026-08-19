@@ -1,109 +1,142 @@
 <template>
-  <div class="property-location-section">
-    <div class="row g-3">
-      <div class="col-12">
-        <h5 class="border-bottom pb-2 mb-3">
-          <i class="bi bi-geo-alt me-2"></i>Ubicación
-        </h5>
-      </div>
-
-      <div class="col-md-6">
-        <label class="form-label">País</label>
-        <select class="form-select" v-model="form.country" :class="{ 'is-invalid': errors.country }">
-          <option value="">Selecciona un país</option>
-          <option v-for="c in countries" :key="c.value" :value="c.value">{{ c.label }}</option>
-        </select>
-        <div v-if="errors.country" class="invalid-feedback">{{ errors.country }}</div>
-      </div>
-
-      <div class="col-md-6">
-        <label class="form-label">Estado</label>
-        <select class="form-select" v-model="form.state" :disabled="!form.country" :class="{ 'is-invalid': errors.state }">
-          <option value="">{{ form.country ? 'Selecciona un estado' : 'Selecciona un país primero' }}</option>
-          <option v-for="s in states" :key="s.value" :value="s.value">{{ s.label }}</option>
-        </select>
-        <div v-if="errors.state" class="invalid-feedback">{{ errors.state }}</div>
-      </div>
-
-      <div class="col-md-6">
-        <label class="form-label">Ciudad</label>
-        <input type="text" class="form-control" v-model="form.city" placeholder="Nombre de la ciudad" :class="{ 'is-invalid': errors.city }">
-        <div v-if="errors.city" class="invalid-feedback">{{ errors.city }}</div>
-      </div>
-
-      <div class="col-md-6">
-        <label class="form-label">Municipio</label>
-        <select class="form-select" v-model="form.municipality" :disabled="!form.state" :class="{ 'is-invalid': errors.municipality }">
-          <option value="">{{ form.state ? 'Selecciona un municipio' : 'Selecciona un estado primero' }}</option>
-          <option v-for="m in municipalities" :key="m.value" :value="m.value">{{ m.label }}</option>
-        </select>
-        <div v-if="errors.municipality" class="invalid-feedback">{{ errors.municipality }}</div>
-      </div>
-
-      <div class="col-md-4">
-        <label class="form-label">Colonia</label>
-        <input type="text" class="form-control" v-model="form.colony" placeholder="Nombre de la colonia">
-      </div>
-
-      <div class="col-md-4">
-        <label class="form-label">Código Postal</label>
-        <input type="text" class="form-control" v-model="form.postal_code" placeholder="00000">
-      </div>
-
-      <div class="col-md-4">
-        <label class="form-label">Calle</label>
-        <input type="text" class="form-control" v-model="form.street" placeholder="Nombre de la calle">
-      </div>
-
-      <div class="col-md-6">
-        <label class="form-label">Número Exterior</label>
-        <input type="text" class="form-control" v-model="form.exterior_number" placeholder="S/N">
-      </div>
-
-      <div class="col-md-6">
-        <label class="form-label">Número Interior</label>
-        <input type="text" class="form-control" v-model="form.interior_number" placeholder="(Opcional)">
-      </div>
-
-      <div class="col-12">
-        <label class="form-label">Referencias</label>
-        <textarea class="form-control" v-model="form.references" rows="2" placeholder="Indicaciones para llegar, puntos de referencia..."></textarea>
-      </div>
-
-      <div class="col-md-4">
-        <label class="form-label">Latitud</label>
-        <input type="text" class="form-control" v-model="form.latitude" placeholder="19.4326" @blur="onLatLngChange">
-        <small class="text-muted">Ej: 19.4326</small>
-      </div>
-
-      <div class="col-md-4">
-        <label class="form-label">Longitud</label>
-        <input type="text" class="form-control" v-model="form.longitude" placeholder="-99.1332" @blur="onLatLngChange">
-        <small class="text-muted">Ej: -99.1332</small>
-      </div>
-
-      <div class="col-md-4">
-        <label class="form-label">Precisión del mapa</label>
-        <div class="form-check form-switch mt-2">
-          <input class="form-check-input" type="checkbox" v-model="form.show_exact_location" id="showExactLocation">
-          <label class="form-check-label" for="showExactLocation">
-            {{ form.show_exact_location ? 'Ubicación exacta' : 'Ubicación aproximada' }}
-          </label>
+  <div class="property-section">
+    <div class="property-section__header">
+      <i class="bi bi-geo-alt"></i>
+      <span>Ubicación</span>
+    </div>
+    <div class="property-section__body">
+      <div class="row g-3">
+        <div class="col-12 col-md-6">
+          <FieldSelect
+            label="País"
+            v-model="form.country"
+            :formError="errors.country"
+          >
+            <option value="">Selecciona un país</option>
+            <option v-for="c in countries" :key="c.value" :value="c.value">{{ c.label }}</option>
+          </FieldSelect>
         </div>
-        <small class="text-muted">
-          {{ form.show_exact_location ? 'Se mostrará la ubicación exacta en el mapa público' : 'La ubicación se mostrará con aproximación' }}
-        </small>
-      </div>
 
-      <div class="col-12">
-        <MapPicker
-          label="Ubicación en el mapa"
-          :lat="form.latitude"
-          :lng="form.longitude"
-          @update:lat="form.latitude = $event"
-          @update:lng="form.longitude = $event"
-          @reverse-geocoded="onReverseGeocoded"
-        />
+        <div class="col-12 col-md-6">
+          <FieldSelect
+            label="Estado"
+            v-model="form.state"
+            :formError="errors.state"
+            :disabled="!form.country"
+          >
+            <option value="">{{ form.country ? 'Selecciona un estado' : 'Selecciona un país primero' }}</option>
+            <option v-for="s in states" :key="s.value" :value="s.value">{{ s.label }}</option>
+          </FieldSelect>
+        </div>
+
+        <div class="col-12 col-md-6">
+          <FieldText
+            label="Ciudad"
+            v-model="form.city"
+            placeholder="Nombre de la ciudad"
+            :formError="errors.city"
+          />
+        </div>
+
+        <div class="col-12 col-md-6">
+          <FieldSelect
+            label="Municipio"
+            v-model="form.municipality"
+            :formError="errors.municipality"
+            :disabled="!form.state"
+          >
+            <option value="">{{ form.state ? 'Selecciona un municipio' : 'Selecciona un estado primero' }}</option>
+            <option v-for="m in municipalities" :key="m.value" :value="m.value">{{ m.label }}</option>
+          </FieldSelect>
+        </div>
+
+        <div class="col-12 col-md-4">
+          <FieldText
+            label="Colonia"
+            v-model="form.colony"
+            placeholder="Nombre de la colonia"
+          />
+        </div>
+
+        <div class="col-12 col-md-4">
+          <FieldText
+            label="Código Postal"
+            v-model="form.postal_code"
+            placeholder="00000"
+          />
+        </div>
+
+        <div class="col-12 col-md-4">
+          <FieldText
+            label="Calle"
+            v-model="form.street"
+            placeholder="Nombre de la calle"
+          />
+        </div>
+
+        <div class="col-12 col-md-6">
+          <FieldText
+            label="Número Exterior"
+            v-model="form.exterior_number"
+            placeholder="S/N"
+          />
+        </div>
+
+        <div class="col-12 col-md-6">
+          <FieldText
+            label="Número Interior"
+            v-model="form.interior_number"
+            placeholder="(Opcional)"
+          />
+        </div>
+
+        <div class="col-12">
+          <FieldTextarea
+            label="Referencias"
+            v-model="form.references"
+            placeholder="Indicaciones para llegar, puntos de referencia..."
+            :rows="2"
+          />
+        </div>
+
+        <div class="col-12 col-md-4">
+          <FieldText
+            label="Latitud"
+            v-model="form.latitude"
+            placeholder="19.4326"
+            @blur="onLatLngChange"
+          />
+        </div>
+
+        <div class="col-12 col-md-4">
+          <FieldText
+            label="Longitud"
+            v-model="form.longitude"
+            placeholder="-99.1332"
+            @blur="onLatLngChange"
+          />
+        </div>
+
+        <div class="col-12 col-md-4">
+          <FieldSwitch
+            label="Precisión del mapa"
+            v-model="form.show_exact_location"
+          />
+          <small class="text-muted d-block">
+            {{ form.show_exact_location ? 'Se mostrará la ubicación exacta en el mapa público' : 'La ubicación se mostrará con aproximación' }}
+          </small>
+        </div>
+
+        <div class="col-12">
+          <MapPicker
+            label="Ubicación en el mapa"
+            :lat="form.latitude"
+            :lng="form.longitude"
+            @update:lat="form.latitude = $event"
+            @update:lng="form.longitude = $event"
+            @reverse-geocoded="onReverseGeocoded"
+          />
+        </div>
       </div>
     </div>
   </div>
@@ -112,6 +145,10 @@
 <script setup>
 import { ref, reactive, watch } from 'vue'
 import MapPicker from '@/Components/MapPicker.vue'
+import FieldText from '@/Components/Fields/FieldText.vue'
+import FieldTextarea from '@/Components/Fields/FieldTextarea.vue'
+import FieldSelect from '@/Components/Fields/FieldSelect.vue'
+import FieldSwitch from '@/Components/Fields/FieldSwitch.vue'
 import axios from 'axios'
 
 const props = defineProps({
@@ -307,10 +344,6 @@ loadStates()
 </script>
 
 <style scoped>
-.property-location-section {
-  padding: 1rem 0;
-}
-
 .location-map-container {
   background: #f8f9fa;
 }

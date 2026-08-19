@@ -8,23 +8,11 @@
       :backHref="'/member/business-modules'"
     >
       <template #actions>
-        <Link :href="`/member/businesses/${business?.id}/services/create`" class="btn btn-primary">
-          <i class="bi bi-plus me-1"></i>Nuevo servicio
+        <Link :href="`/member/businesses/${business?.id}/services/create`" class="btn btn-primary btn-sm">
+          <i class="bi bi-plus-lg me-1"></i>Nuevo servicio
         </Link>
       </template>
     </PageHeader>
-
-    <div class="row mb-3">
-      <div class="col-md-4">
-        <BulkSelect
-          v-model:selectedIds="selectedIds"
-          :current-page-ids="currentPageIds"
-          :delete-endpoint="`/member/businesses/${business?.id}/services/bulk-delete`"
-          item-name="servicios"
-          @deleted="onBulkDeleted"
-        />
-      </div>
-    </div>
 
     <BaseDataTable
       ref="dataTableRef"
@@ -39,6 +27,16 @@
       empty-text="Comienza creando tu primer servicio."
       @updated="onDataTableUpdated"
     >
+      <template #header-actions>
+        <BulkSelect
+          v-model:selectedIds="selectedIds"
+          :current-page-ids="currentPageIds"
+          :delete-endpoint="`/member/businesses/${business?.id}/services/bulk-delete`"
+          item-name="servicios"
+          @deleted="onBulkDeleted"
+        />
+      </template>
+
       <template #cell-checkbox="{ row }">
         <BulkSelectRowCheckbox
           :id="row.id"

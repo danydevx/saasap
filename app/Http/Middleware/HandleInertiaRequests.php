@@ -164,6 +164,7 @@ class HandleInertiaRequests extends Middleware
             'minisite' => 'minisite/sections',
             'properties' => 'properties',
             'office_hours' => 'office-hours',
+            'client_fidelity' => 'fidelity-cards',
         ];
 
         return $paths[$moduleKey] ?? $moduleKey;

@@ -238,6 +238,13 @@
             {{ selectedProduct.description }}
           </p>
           <div class="product-modal__actions">
+            <button
+              v-if="orderSettings?.is_active && hasValidPrice"
+              class="btn btn-primary btn-lg w-100 mb-2"
+              @click="addToCart"
+            >
+              <i class="bi bi-cart-plus me-2"></i>Agregar al carrito
+            </button>
             <a
               v-if="selectedProduct.whatsapp_contact"
               :href="`https://wa.me/${selectedProduct.whatsapp_contact}?text=Hola, me interesa el producto: ${selectedProduct.name}`"
@@ -263,6 +270,7 @@
 import { computed, onMounted, nextTick, ref } from 'vue'
 import GLightbox from 'glightbox'
 import 'glightbox/dist/css/glightbox.min.css'
+import { useCart } from '@/composables/useCart'
 
 const props = defineProps({
   title: String,
@@ -284,7 +292,13 @@ const props = defineProps({
     type: String,
     default: '',
   },
+  orderSettings: {
+    type: Object,
+    default: null,
+  },
 })
+
+const cart = useCart()
 
 const selectedProduct = ref(null)
 let lightbox = null
@@ -342,6 +356,29 @@ const openProductModal = (item) => {
 
 const closeProductModal = () => {
   selectedProduct.value = null
+}
+
+const hasValidPrice = computed(() => {
+  if (!selectedProduct.value) return false
+  const price = parseFloat(selectedProduct.value.price)
+  return !isNaN(price) && price > 0
+})
+
+const addToCart = () => {
+  if (!selectedProduct.value) return
+  const product = selectedProduct.value
+  cart.addItem({
+    id: product.id,
+    business_id: product.business_id,
+    title: product.name,
+    image: product.image,
+    base_price: product.price,
+  }, {
+    productType: 'product',
+    quantity: 1,
+  })
+  closeProductModal()
+  cart.openCart()
 }
 </script>
 

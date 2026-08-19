@@ -49,6 +49,8 @@ Route::prefix('member/businesses/{business}')->middleware(['auth', 'role:superad
     Route::post('menu-products/{product}/images', [\App\Http\Controllers\Member\MenuProductImageController::class, 'store'])->name('member.menu.products.images.store');
     Route::put('menu-products/{product}/images/{image}', [\App\Http\Controllers\Member\MenuProductImageController::class, 'update'])->name('member.menu.products.images.update');
     Route::delete('menu-products/{product}/images/{image}', [\App\Http\Controllers\Member\MenuProductImageController::class, 'destroy'])->name('member.menu.products.images.destroy');
+
+    Route::post('menu-products/{product}/clone', [\App\Http\Controllers\Member\MenuProductController::class, 'clone'])->name('member.menu.products.clone');
 });
 
 Route::get('{businessSlug}/menu', [\App\Http\Controllers\Public\MenuController::class, 'show'])->name('public.menu.show');

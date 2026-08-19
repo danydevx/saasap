@@ -8,6 +8,15 @@
       :businessSlug="business.slug"
     />
 
+    <section class="page-header">
+      <div class="page-header__inner">
+        <BreadcrumbNav
+          :baseSlug="business.slug"
+          :items="[{ label: pageTitle }]"
+        />
+      </div>
+    </section>
+
     <section class="page-content">
       <div class="page-content__inner">
         <SectionAppointments
@@ -48,6 +57,7 @@ import NavigationMenu from '../../components/NavigationMenu.vue'
 import HeroSimple from '../../components/HeroSimple.vue'
 import SectionAppointments from '../../components/SectionAppointments.vue'
 import Footer from '../../components/Footer.vue'
+import BreadcrumbNav from '@/Components/Minisite/BreadcrumbNav.vue'
 import AiChatWidget from '@/Components/Minisite/AiChatWidget.vue'
 
 defineProps({
@@ -69,6 +79,17 @@ defineProps({
   &__inner {
     max-width: 1024px;
     margin: 0 auto;
+  }
+}
+
+.page-header {
+  background: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+
+  &__inner {
+    max-width: 1024px;
+    margin: 0 auto;
+    padding: 0 16px;
   }
 }
 </style>

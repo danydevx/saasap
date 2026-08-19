@@ -34,6 +34,8 @@ use App\Policies\BusinessReviewPolicy;
 use App\Policies\BusinessSeoSettingPolicy;
 use App\Policies\BusinessServicePolicy;
 use App\Policies\BusinessSocialNetworkPolicy;
+use App\Policies\BusinessTeamMemberPolicy;
+use App\Policies\BusinessPackagePolicy;
 use App\Policies\MediaFilePolicy;
 use App\Policies\PaymentPolicy;
 use App\Policies\SubscriptionPolicy;
@@ -156,6 +158,8 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(\Modules\Properties\Models\Property::class, \App\Policies\PropertyPolicy::class);
         Gate::policy(\Modules\Properties\Models\PropertyType::class, \App\Policies\PropertyTypePolicy::class);
         Gate::policy(BusinessSchedule::class, BusinessSchedulePolicy::class);
+        Gate::policy(\Modules\TeamMembers\Models\BusinessTeamMember::class, BusinessTeamMemberPolicy::class);
+        Gate::policy(\Modules\Packages\Models\BusinessPackage::class, BusinessPackagePolicy::class);
 
         PropertyType::observe(PropertyTypeObserver::class);
 

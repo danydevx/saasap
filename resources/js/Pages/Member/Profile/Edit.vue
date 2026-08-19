@@ -122,44 +122,6 @@
           </div>
         </div>
 
-        <div class="card border-0 shadow-sm mt-3">
-          <div class="card-body">
-            <h2 class="h6 mb-3">Redes sociales</h2>
-
-            <div class="row g-3">
-              <div class="col-12 col-md-4">
-                <FieldText
-                  id="profile-facebook"
-                  label="Facebook"
-                  placeholder="https://facebook.com/usuario"
-                  v-model="form.facebook"
-                  :formError="form.errors.facebook"
-                />
-              </div>
-
-              <div class="col-12 col-md-4">
-                <FieldText
-                  id="profile-instagram"
-                  label="Instagram"
-                  placeholder="https://instagram.com/usuario"
-                  v-model="form.instagram"
-                  :formError="form.errors.instagram"
-                />
-              </div>
-
-              <div class="col-12 col-md-4">
-                <FieldText
-                  id="profile-x"
-                  label="X"
-                  placeholder="https://x.com/usuario"
-                  v-model="form.x"
-                  :formError="form.errors.x"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
         <div class="mt-3">
           <button type="button" class="btn btn-primary" :disabled="form.processing" @click="submit">
             {{ form.processing ? 'Guardando...' : 'Guardar cambios' }}
@@ -194,9 +156,9 @@ const breadcrumbs = [
 ]
 
 const countryOptions = [
+  { value: 'MX', label: 'Mexico' },
   { value: 'US', label: 'Estados Unidos' },
   { value: 'CA', label: 'Canada' },
-  { value: 'MX', label: 'Mexico' },
   { value: 'CU', label: 'Cuba' },
   { value: 'AR', label: 'Argentina' },
   { value: 'BR', label: 'Brasil' },
@@ -229,12 +191,9 @@ const form = useForm({
   name: props.profile.name || '',
   phone: props.profile.phone || '',
   whatsapp: props.profile.whatsapp || '',
-  whatsapp_country: props.profile.whatsapp_country || '+1',
-  facebook: props.profile.facebook || '',
-  instagram: props.profile.instagram || '',
-  x: props.profile.x || '',
+  whatsapp_country: props.profile.whatsapp_country || '+52',
   personal_email: props.profile.personal_email || '',
-  country: props.profile.country || '',
+  country: props.profile.country || 'MX',
   avatar: props.profile.avatar || '',
 })
 

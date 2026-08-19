@@ -8,6 +8,15 @@
       :businessSlug="business.slug"
     />
 
+    <section class="page-header">
+      <div class="page-header__inner">
+        <BreadcrumbNav
+          :baseSlug="business.slug"
+          :items="[{ label: pageTitle }]"
+        />
+      </div>
+    </section>
+
     <section class="page-content">
       <div class="page-content__inner">
         <SectionServices
@@ -46,6 +55,7 @@ import NavigationMenu from '../../components/NavigationMenu.vue'
 import HeroSimple from '../../components/HeroSimple.vue'
 import SectionServices from '../../components/SectionServices.vue'
 import Footer from '../../components/Footer.vue'
+import BreadcrumbNav from '@/Components/Minisite/BreadcrumbNav.vue'
 import AiChatWidget from '@/Components/Minisite/AiChatWidget.vue'
 
 defineProps({

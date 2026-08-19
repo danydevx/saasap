@@ -5,6 +5,9 @@
     <PageHeader :title="'Usuarios'" :breadcrumbs="breadcrumbs" backHref="/dashboard">
       <template #actions>
         <Link href="/admin/users/create" class="btn btn-primary">Agregar usuario</Link>
+        <Link href="/admin/users/archived" class="btn btn-outline-warning">
+          <i class="bi bi-archive me-1"></i>Archivados
+        </Link>
       </template>
     </PageHeader>
 

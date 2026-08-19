@@ -58,7 +58,9 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\Auth\SocialAuthController;
 use App\Http\Controllers\HealthController;
+use App\Http\Controllers\Wizard\BusinessController as WizardBusinessController;
 use App\Http\Controllers\Member\AboutController;
 use App\Http\Controllers\Member\AccountController;
 use App\Http\Controllers\Member\ActivityController as MemberActivityController;
@@ -107,6 +109,9 @@ use App\Http\Controllers\Member\SlotController;
 use App\Http\Controllers\Member\SocialNetworkController;
 use App\Http\Controllers\Member\SupportTicketController as MemberSupportTicketController;
 use App\Http\Controllers\Member\SystemAnnouncementController as MemberSystemAnnouncementController;
+use App\Http\Controllers\Member\TeamMemberController;
+use App\Http\Controllers\Member\TeamMemberPositionController;
+use App\Http\Controllers\Member\PackageController;
 use App\Http\Controllers\Member\WebhookController as MemberWebhookController;
 use Modules\Minisite\Http\Controllers\Member\MinisiteController;
 use Modules\Minisite\Http\Controllers\Member\MinisiteSectionController;
@@ -139,9 +144,9 @@ Route::get('/maintenance', function () {
     ]);
 })->name('maintenance');
 
-Route::get('/login', function () {
-    return Inertia::render('Auth/Login');
-})->middleware('guest')->name('login');
+Route::get('/login', [LoginController::class, 'showLogin'])
+    ->middleware('guest')
+    ->name('login');
 
 Route::get('/pricing', [PricingController::class, 'index'])->name('pricing');
 Route::post('/pricing/select/{plan}', [PricingController::class, 'select'])->name('pricing.select');
@@ -159,6 +164,7 @@ Route::get('/b/{slug}/locations', [PublicBusinessController::class, 'locations']
 Route::get('/b/{slug}/services', [PublicBusinessController::class, 'services'])->name('public.business.services');
 Route::get('/b/{slug}/gallery', [PublicBusinessController::class, 'gallery'])->name('public.business.gallery');
 Route::get('/b/{slug}/products', [PublicBusinessController::class, 'products'])->name('public.business.products');
+Route::get('/b/{slug}/packages', [PublicBusinessController::class, 'packages'])->name('public.business.packages');
 Route::get('/b/{slug}/features', [PublicFeatureController::class, 'index'])->name('public.business.features.index');
 Route::get('/b/{slug}/book', [PublicBusinessController::class, 'book'])->name('public.business.book');
 Route::post('/b/{slug}/book', [PublicBusinessController::class, 'storeBooking'])->name('public.business.booking.store');
@@ -194,9 +200,29 @@ Route::post('/login', [LoginController::class, 'store'])
     ->middleware(['guest', 'throttle:login'])
     ->name('login.store');
 
+Route::post('/register/wizard', [RegisterController::class, 'storeWizard'])
+    ->middleware(['guest', 'throttle:register'])
+    ->name('register.wizard.store');
+
 Route::post('/register', [RegisterController::class, 'register'])
     ->middleware(['guest', 'throttle:register'])
     ->name('register.store');
+
+Route::get('/onboarding/business', [WizardBusinessController::class, 'show'])
+    ->middleware(['auth'])
+    ->name('wizard.business');
+
+Route::post('/onboarding/business', [WizardBusinessController::class, 'store'])
+    ->middleware(['auth'])
+    ->name('wizard.business.store');
+
+Route::get('/auth/{provider}', [SocialAuthController::class, 'redirectToProvider'])
+    ->middleware('guest')
+    ->name('social.redirect');
+
+Route::get('/auth/{provider}/callback', [SocialAuthController::class, 'handleProviderCallback'])
+    ->middleware('guest')
+    ->name('social.callback');
 
 Route::get('/forgot-password', [PasswordResetController::class, 'showForgotPassword'])
     ->middleware('guest')
@@ -232,6 +258,10 @@ Route::post('/email/verification-notification', [EmailVerificationController::cl
 Route::post('/logout', [LogoutController::class, 'destroy'])
     ->middleware('auth')
     ->name('logout');
+
+Route::get('/member', fn () => redirect()->route('member.dashboard'))
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member');
 
 Route::get('/member/dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
@@ -326,6 +356,78 @@ Route::post('/member/businesses/{business}/properties/{property}/images', [Prope
 Route::delete('/member/businesses/{business}/properties/{property}/images/{image}', [PropertyImageController::class, 'destroy'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.businesses.properties.images.destroy');
+
+Route::get('/member/businesses/{business}/team-members', [TeamMemberController::class, 'index'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.team-members.index');
+Route::get('/member/businesses/{business}/team-members/create', [TeamMemberController::class, 'create'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.team-members.create');
+Route::post('/member/businesses/{business}/team-members', [TeamMemberController::class, 'store'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.team-members.store');
+Route::get('/member/businesses/{business}/team-members/{member}/edit', [TeamMemberController::class, 'edit'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.team-members.edit');
+Route::post('/member/businesses/{business}/team-members/{member}', [TeamMemberController::class, 'update'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.team-members.update');
+Route::delete('/member/businesses/{business}/team-members/{member}', [TeamMemberController::class, 'destroy'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.team-members.destroy');
+Route::post('/member/businesses/{business}/team-members/reorder', [TeamMemberController::class, 'reorder'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.team-members.reorder');
+Route::post('/member/businesses/{business}/team-members/bulk-delete', [TeamMemberController::class, 'bulkDelete'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.team-members.bulk-delete');
+
+Route::get('/member/businesses/{business}/team-member-positions', [TeamMemberPositionController::class, 'index'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.team-member-positions.index');
+Route::get('/member/businesses/{business}/team-member-positions/create', [TeamMemberPositionController::class, 'create'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.team-member-positions.create');
+Route::post('/member/businesses/{business}/team-member-positions', [TeamMemberPositionController::class, 'store'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.team-member-positions.store');
+Route::get('/member/businesses/{business}/team-member-positions/{position}/edit', [TeamMemberPositionController::class, 'edit'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.team-member-positions.edit');
+Route::put('/member/businesses/{business}/team-member-positions/{position}', [TeamMemberPositionController::class, 'update'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.team-member-positions.update');
+Route::delete('/member/businesses/{business}/team-member-positions/{position}', [TeamMemberPositionController::class, 'destroy'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.team-member-positions.destroy');
+
+Route::get('/member/businesses/{business}/packages', [PackageController::class, 'index'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.packages.index');
+Route::get('/member/businesses/{business}/packages/create', [PackageController::class, 'create'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.packages.create');
+Route::post('/member/businesses/{business}/packages', [PackageController::class, 'store'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.packages.store');
+Route::post('/member/businesses/{business}/packages/reorder', [PackageController::class, 'reorder'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.packages.reorder');
+Route::post('/member/businesses/{business}/packages/bulk-delete', [PackageController::class, 'bulkDelete'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.packages.bulk-delete');
+Route::get('/member/businesses/{business}/packages/{package}/edit', [PackageController::class, 'edit'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.packages.edit');
+Route::post('/member/businesses/{business}/packages/{package}', [PackageController::class, 'update'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.packages.update');
+Route::delete('/member/businesses/{business}/packages/{package}', [PackageController::class, 'destroy'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.packages.destroy');
+Route::post('/member/businesses/{business}/packages/{package}/clone', [PackageController::class, 'clone'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.businesses.packages.clone');
 
 Route::get('/member/businesses/{business}/faqs', [FaqController::class, 'index'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
@@ -834,6 +936,9 @@ Route::put('/member/businesses/{business}/menu-products/{product}', [MemberMenuP
 Route::delete('/member/businesses/{business}/menu-products/{product}', [MemberMenuProductController::class, 'destroy'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.menu.products.destroy');
+Route::post('/member/businesses/{business}/menu-products/{product}/clone', [MemberMenuProductController::class, 'clone'])
+    ->middleware(['auth', 'verified', 'active', 'role:member'])
+    ->name('member.menu.products.clone');
 Route::post('/member/businesses/{business}/menu-products/{product}/variants', [MemberMenuProductVariantController::class, 'store'])
     ->middleware(['auth', 'verified', 'active', 'role:member'])
     ->name('member.menu.products.variants.store');
@@ -1389,6 +1494,15 @@ Route::prefix('admin')->middleware(['auth', 'admin_or_user:1'])->group(function 
     Route::put('/users/{user}/verify-email', [UserController::class, 'verifyEmail'])
         ->middleware('permission_or_user:users.update,1')
         ->name('admin.users.verify-email');
+    Route::get('/users/archived', [UserController::class, 'archived'])
+        ->middleware('permission_or_user:users.view,1')
+        ->name('admin.users.archived');
+    Route::post('/users/{user}/restore', [UserController::class, 'restore'])
+        ->middleware('permission_or_user:users.restore,1')
+        ->name('admin.users.restore');
+    Route::delete('/users/{user}/force', [UserController::class, 'forceDestroy'])
+        ->middleware('permission_or_user:users.force_delete,1')
+        ->name('admin.users.force-destroy');
 
     Route::get('/invitations', [InvitationController::class, 'index'])
         ->middleware(['permission_or_user:invitations.view,1', 'module:invitations'])

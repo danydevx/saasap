@@ -67,6 +67,7 @@ const menuOrder = [
   { key: 'promotions', name: 'Promociones', url: '/promociones', icon: 'bi bi-tag' },
   { key: 'locations', name: 'Ubicaciones', url: '/ubicaciones', icon: 'bi bi-geo-alt' },
   { key: 'reviews', name: 'Reseñas', url: '/resenas', icon: 'bi bi-star' },
+  { key: 'properties', name: 'Propiedades', url: '/propiedades', icon: 'bi bi-building' },
   { key: 'faqs', name: 'Preguntas Frecuentes', url: '/preguntas-frecuentes', icon: 'bi bi-question-circle' },
   { key: 'contact_form', name: 'Contacto', url: '/contacto', icon: 'bi bi-envelope' },
 ]

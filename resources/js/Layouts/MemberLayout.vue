@@ -28,59 +28,140 @@
         </div>
 
         <div class="sidebar-section">
-          <div 
-            class="sidebar-section-title d-flex align-items-center justify-content-between"
-            style="cursor: pointer;"
-            @click="toggleBusinessesMenu"
-          >
-            <span>Negocios</span>
-            <i class="bi" :class="businessesMenuOpen ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
-          </div>
+          <div class="sidebar-section-title">Mi Negocio</div>
+          
+          <template v-if="primaryBusiness">
+            <Link
+              :href="`/member/businesses/${primaryBusiness.id}/modules`"
+              class="sidebar-link"
+              :class="{ active: isActive(`/member/businesses/${primaryBusiness.id}/modules`) }"
+            >
+              <i class="bi bi-grid"></i>
+              <span>Ver módulos</span>
+            </Link>
 
-          <template v-if="businessesMenuOpen && businessMenu.length">
-            <div v-for="business in businessMenu" :key="business.id">
-              <div 
-                class="sidebar-link d-flex align-items-center justify-content-between"
-                style="cursor: pointer;"
-                @click="toggleBusiness(business.id)"
+            <Link
+              :href="`/member/businesses/${primaryBusiness.id}/edit`"
+              class="sidebar-link"
+              :class="{ active: isActive(`/member/businesses/${primaryBusiness.id}/edit`) }"
+            >
+              <i class="bi bi-pencil"></i>
+              <span>Editar negocio</span>
+            </Link>
+
+            <a
+              href="#"
+              class="sidebar-link"
+              :class="{ active: isActive(`/member/businesses/${primaryBusiness.id}/team-members`) || isActive(`/member/businesses/${primaryBusiness.id}/team-member-positions`) }"
+              @click.prevent="teamSubmenuOpen = !teamSubmenuOpen"
+            >
+              <i class="bi bi-people"></i>
+              <span>Mi Equipo</span>
+              <i class="bi bi-chevron-right ms-auto" :class="{ 'rotate-90': teamSubmenuOpen }"></i>
+            </a>
+            <div v-show="teamSubmenuOpen" class="sidebar-submenu">
+              <Link
+                :href="`/member/businesses/${primaryBusiness.id}/team-members`"
+                class="sidebar-link sidebar-link-sub"
+                :class="{ active: isActive(`/member/businesses/${primaryBusiness.id}/team-members`) }"
               >
-                <span class="d-flex align-items-center gap-2">
-                  <i class="bi bi-building"></i>
-                  <span class="text-truncate">{{ business.name }}</span>
-                </span>
-                <i class="bi" :class="openBusiness === business.id ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
-              </div>
-              
-              <template v-if="openBusiness === business.id">
-                <Link
-                  :href="`/member/businesses/${business.id}/edit`"
-                  class="sidebar-link ps-4"
-                  :class="{ active: isActive(`/member/businesses/${business.id}/edit`) }"
-                >
-                  <span><i class="bi bi-pencil"></i> Editar</span>
-                </Link>
-                <Link
-                  v-for="mod in business.modules"
-                  :key="mod.key"
-                  :href="mod.url"
-                  class="sidebar-link ps-4"
-                  :class="{ active: isActive(mod.url) }"
-                >
-                  <span>{{ mod.title }}</span>
-                </Link>
-              </template>
+                <i class="bi bi-person-badge"></i>
+                <span>Miembros</span>
+              </Link>
+              <Link
+                :href="`/member/businesses/${primaryBusiness.id}/team-member-positions`"
+                class="sidebar-link sidebar-link-sub"
+                :class="{ active: isActive(`/member/businesses/${primaryBusiness.id}/team-member-positions`) }"
+              >
+                <i class="bi bi-folder"></i>
+                <span>Puestos</span>
+              </Link>
             </div>
-          </template>
 
-          <Link 
-            v-else
-            href="/member/businesses" 
-            class="sidebar-link" 
-            :class="{ active: isActive('/member/businesses') }"
-          >
-            <i class="bi bi-building"></i>
-            <span>Mis Negocios</span>
-          </Link>
+            <Link
+              :href="`/member/businesses/${primaryBusiness.id}/packages`"
+              class="sidebar-link"
+              :class="{ active: isActive(`/member/businesses/${primaryBusiness.id}/packages`) }"
+            >
+              <i class="bi bi-box-seam"></i>
+              <span>Paquetes</span>
+            </Link>
+
+            <a
+              href="#"
+              class="sidebar-link"
+              :class="{ active: isActive(`/member/businesses/${primaryBusiness.id}/products`) || isActive(`/member/businesses/${primaryBusiness.id}/product-categories`) }"
+              @click.prevent="productsSubmenuOpen = !productsSubmenuOpen"
+            >
+              <i class="bi bi-cart"></i>
+              <span>Productos</span>
+              <i class="bi bi-chevron-right ms-auto" :class="{ 'rotate-90': productsSubmenuOpen }"></i>
+            </a>
+            <div v-show="productsSubmenuOpen" class="sidebar-submenu">
+              <Link
+                :href="`/member/businesses/${primaryBusiness.id}/products`"
+                class="sidebar-link sidebar-link-sub"
+                :class="{ active: isActive(`/member/businesses/${primaryBusiness.id}/products`) }"
+              >
+                <i class="bi bi-list"></i>
+                <span>Lista</span>
+              </Link>
+              <Link
+                :href="`/member/businesses/${primaryBusiness.id}/product-categories`"
+                class="sidebar-link sidebar-link-sub"
+                :class="{ active: isActive(`/member/businesses/${primaryBusiness.id}/product-categories`) }"
+              >
+                <i class="bi bi-folder"></i>
+                <span>Categorías</span>
+              </Link>
+            </div>
+
+            <a
+              href="#"
+              class="sidebar-link"
+              :class="{ active: isActive(`/member/businesses/${primaryBusiness.id}/menu-products`) || isActive(`/member/businesses/${primaryBusiness.id}/menu-categories`) }"
+              @click.prevent="menuSubmenuOpen = !menuSubmenuOpen"
+            >
+              <i class="bi bi-cup-hot"></i>
+              <span>Menú Restaurante</span>
+              <i class="bi bi-chevron-right ms-auto" :class="{ 'rotate-90': menuSubmenuOpen }"></i>
+            </a>
+            <div v-show="menuSubmenuOpen" class="sidebar-submenu">
+              <Link
+                :href="`/member/businesses/${primaryBusiness.id}/menu-products`"
+                class="sidebar-link sidebar-link-sub"
+                :class="{ active: isActive(`/member/businesses/${primaryBusiness.id}/menu-products`) }"
+              >
+                <i class="bi bi-list"></i>
+                <span>Productos</span>
+              </Link>
+              <Link
+                :href="`/member/businesses/${primaryBusiness.id}/menu-categories`"
+                class="sidebar-link sidebar-link-sub"
+                :class="{ active: isActive(`/member/businesses/${primaryBusiness.id}/menu-categories`) }"
+              >
+                <i class="bi bi-folder"></i>
+                <span>Categorías</span>
+              </Link>
+            </div>
+
+            <template v-if="primaryBusinessModules.length">
+              <Link
+                v-for="mod in primaryBusinessModules"
+                :key="mod.key"
+                :href="mod.url"
+                class="sidebar-link"
+                :class="{ active: isActive(mod.url) }"
+              >
+                <i :class="mod.icon || 'bi bi-grid'"></i>
+                <span>{{ mod.title }}</span>
+              </Link>
+            </template>
+          </template>
+          
+          <div v-else class="sidebar-link text-muted">
+            <span class="small">Sin negocio configurado</span>
+          </div>
         </div>
 
         <div v-if="canBilling" class="sidebar-section">
@@ -376,6 +457,9 @@ const canSupport = computed(() => modules.value.support !== false && features.va
 
 const businessesMenuOpen = ref(true)
 const openBusiness = ref(null)
+const teamSubmenuOpen = ref(true)
+const productsSubmenuOpen = ref(true)
+const menuSubmenuOpen = ref(true)
 
 const toggleBusinessesMenu = () => {
   businessesMenuOpen.value = !businessesMenuOpen.value
@@ -391,6 +475,15 @@ const hasBusinessModules = computed(() => {
 const toggleBusiness = (id) => {
   openBusiness.value = openBusiness.value === id ? null : id
 }
+
+const primaryBusiness = computed(() => {
+  return businessMenu.value[0] || null
+})
+
+const primaryBusinessModules = computed(() => {
+  const excludeKeys = ['team_members', 'packages', 'products', 'restaurant_menu']
+  return (primaryBusiness.value?.modules || []).filter(m => !excludeKeys.includes(m.key))
+})
 
 const isActive = (url) => {
   return window.location.pathname.startsWith(url)
@@ -590,5 +683,18 @@ const alertClass = (type, priority) => {
 
 .offcanvas .sidebar-link {
   padding: 0.75rem 1rem;
+}
+
+.sidebar-submenu {
+  padding-left: 1rem;
+}
+
+.sidebar-link-sub {
+  padding-left: 2.5rem;
+  font-size: 0.85rem;
+}
+
+.rotate-90 {
+  transform: rotate(90deg);
 }
 </style>

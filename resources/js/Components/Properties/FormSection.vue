@@ -1,11 +1,5 @@
 <template>
-  <fieldset class="form-section" :id="`section-${section.id}`">
-    <div class="row">
-      <div class="col-12">
-        <legend class="border-bottom pb-2 mb-3">{{ section.name }}</legend>
-      </div>
-    </div>
-
+  <div class="form-section" :id="`section-${section.id}`">
     <div class="row g-3">
       <template v-for="field in nonGalleryFields" :key="field.id">
         <div :class="getFieldColClass(field.field_type)">
@@ -167,7 +161,7 @@
       </div>
       </template>
     </div>
-</fieldset>
+</div>
 </template>
 
 <script setup>

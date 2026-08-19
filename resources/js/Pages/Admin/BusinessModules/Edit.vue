@@ -121,7 +121,11 @@ const toggleModule = (module) => {
 
 const goToConfig = (module) => {
   if (module.settings_url) {
-    window.location.href = module.settings_url
+    let url = module.settings_url
+    if (url.includes('{business}')) {
+      url = url.replace('{business}', business.value.id)
+    }
+    window.location.href = url
   }
 }
 </script>

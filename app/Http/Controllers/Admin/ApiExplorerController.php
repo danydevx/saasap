@@ -25,6 +25,14 @@ use Modules\Reviews\Models\BusinessReview;
 use Modules\Leads\Models\BusinessLead;
 use Modules\Appointments\Models\BusinessAppointment;
 use Modules\Appointments\Models\BusinessAppointmentSlot;
+use Modules\Properties\Models\Property;
+use Modules\Clients\Models\BusinessClient;
+use Modules\RestaurantMenu\Entities\MenuProduct;
+use Modules\RestaurantMenu\Entities\MenuCategory;
+use Modules\OfficeHours\Models\BusinessSchedule;
+use Modules\TeamMembers\Models\BusinessTeamMember;
+use Modules\TeamMembers\Models\TeamMemberPosition;
+use Modules\Packages\Models\BusinessPackage;
 
 class ApiExplorerController extends Controller
 {
@@ -61,6 +69,14 @@ class ApiExplorerController extends Controller
                     ['method' => 'GET', 'path' => '/api/v1/admin/businesses/{id}/leads', 'description' => 'Leads'],
                     ['method' => 'GET', 'path' => '/api/v1/admin/businesses/{id}/appointments', 'description' => 'Citas'],
                     ['method' => 'GET', 'path' => '/api/v1/admin/businesses/{id}/appointment-slots', 'description' => 'Horarios de citas'],
+                    ['method' => 'GET', 'path' => '/api/v1/admin/businesses/{id}/properties', 'description' => 'Propiedades'],
+                    ['method' => 'GET', 'path' => '/api/v1/admin/businesses/{id}/clients', 'description' => 'Clientes'],
+                    ['method' => 'GET', 'path' => '/api/v1/admin/businesses/{id}/menu-categories', 'description' => 'Categorias menu'],
+                    ['method' => 'GET', 'path' => '/api/v1/admin/businesses/{id}/menu-products', 'description' => 'Productos menu'],
+                    ['method' => 'GET', 'path' => '/api/v1/admin/businesses/{id}/office-hours', 'description' => 'Horarios de oficina'],
+                    ['method' => 'GET', 'path' => '/api/v1/admin/businesses/{id}/team-members', 'description' => 'Miembros del equipo'],
+                    ['method' => 'GET', 'path' => '/api/v1/admin/businesses/{id}/team-positions', 'description' => 'Puestos del equipo'],
+                    ['method' => 'GET', 'path' => '/api/v1/admin/businesses/{id}/packages', 'description' => 'Paquetes'],
                 ],
             ],
             'industries' => [
@@ -155,6 +171,8 @@ class ApiExplorerController extends Controller
                 'products' => $business->products()->count(),
                 'reviews' => $business->reviews()->count(),
                 'leads' => $business->leads()->count(),
+                'properties' => $business->properties()->count(),
+                'clients' => $business->clients()->count(),
             ]];
         }
 
@@ -289,6 +307,107 @@ class ApiExplorerController extends Controller
             }
             $slots = BusinessAppointmentSlot::where('business_id', $business->id)->with(['service:id,name', 'location:id,name'])->orderBy('day_of_week')->orderBy('start_time')->get();
             return $slots->isEmpty() ? ['data' => null, 'message' => 'No hay horarios configurados'] : ['data' => $slots, 'meta' => ['total' => $slots->count()]];
+        }
+
+        if ($path === '/api/v1/admin/businesses/' . $businessId . '/properties') {
+            $business = Business::findOrFail($businessId);
+            $module = $business->modules()->where('module_key', 'properties')->first();
+            if (!$module || !$module->is_enabled) {
+                return ['data' => null, 'message' => 'Modulo no habilitado en el plan'];
+            }
+            $properties = Property::where('business_id', $business->id)
+                ->with(['propertyType:id,name,key', 'images'])
+                ->orderBy('created_at', 'desc')
+                ->get();
+            return $properties->isEmpty() ? ['data' => null, 'message' => 'No hay propiedades'] : ['data' => $properties, 'meta' => ['total' => $properties->count()]];
+        }
+
+        if ($path === '/api/v1/admin/businesses/' . $businessId . '/clients') {
+            $business = Business::findOrFail($businessId);
+            $module = $business->modules()->where('module_key', 'clients')->first();
+            if (!$module || !$module->is_enabled) {
+                return ['data' => null, 'message' => 'Modulo no habilitado en el plan'];
+            }
+            $clients = BusinessClient::where('business_id', $business->id)
+                ->orderBy('created_at', 'desc')
+                ->get();
+            return $clients->isEmpty() ? ['data' => null, 'message' => 'No hay clientes'] : ['data' => $clients, 'meta' => ['total' => $clients->count()]];
+        }
+
+        if ($path === '/api/v1/admin/businesses/' . $businessId . '/menu-categories') {
+            $business = Business::findOrFail($businessId);
+            $module = $business->modules()->where('module_key', 'restaurant_menu')->first();
+            if (!$module || !$module->is_enabled) {
+                return ['data' => null, 'message' => 'Modulo no habilitado en el plan'];
+            }
+            $categories = MenuCategory::where('business_id', $business->id)
+                ->with(['parent:id,title', 'children:id,parent_id,title'])
+                ->orderBy('sort_order')
+                ->get();
+            return $categories->isEmpty() ? ['data' => null, 'message' => 'No hay categorias'] : ['data' => $categories, 'meta' => ['total' => $categories->count()]];
+        }
+
+        if ($path === '/api/v1/admin/businesses/' . $businessId . '/menu-products') {
+            $business = Business::findOrFail($businessId);
+            $module = $business->modules()->where('module_key', 'restaurant_menu')->first();
+            if (!$module || !$module->is_enabled) {
+                return ['data' => null, 'message' => 'Modulo no habilitado en el plan'];
+            }
+            $products = MenuProduct::where('business_id', $business->id)
+                ->with(['category:id,title', 'variants', 'images'])
+                ->orderBy('sort_order')
+                ->get();
+            return $products->isEmpty() ? ['data' => null, 'message' => 'No hay productos'] : ['data' => $products, 'meta' => ['total' => $products->count()]];
+        }
+
+        if ($path === '/api/v1/admin/businesses/' . $businessId . '/office-hours') {
+            $business = Business::findOrFail($businessId);
+            $module = $business->modules()->where('module_key', 'office_hours')->first();
+            if (!$module || !$module->is_enabled) {
+                return ['data' => null, 'message' => 'Modulo no habilitado en el plan'];
+            }
+            $schedules = BusinessSchedule::where('business_id', $business->id)
+                ->with(['location:id,name'])
+                ->orderBy('created_at', 'desc')
+                ->get();
+            return $schedules->isEmpty() ? ['data' => null, 'message' => 'No hay horarios'] : ['data' => $schedules, 'meta' => ['total' => $schedules->count()]];
+        }
+
+        if ($path === '/api/v1/admin/businesses/' . $businessId . '/team-members') {
+            $business = Business::findOrFail($businessId);
+            $module = $business->modules()->where('module_key', 'team_members')->first();
+            if (!$module || !$module->is_enabled) {
+                return ['data' => null, 'message' => 'Modulo no habilitado en el plan'];
+            }
+            $members = BusinessTeamMember::where('business_id', $business->id)
+                ->with(['position:id,name'])
+                ->orderBy('sort_order')
+                ->get();
+            return $members->isEmpty() ? ['data' => null, 'message' => 'No hay miembros'] : ['data' => $members, 'meta' => ['total' => $members->count()]];
+        }
+
+        if ($path === '/api/v1/admin/businesses/' . $businessId . '/team-positions') {
+            $business = Business::findOrFail($businessId);
+            $module = $business->modules()->where('module_key', 'team_members')->first();
+            if (!$module || !$module->is_enabled) {
+                return ['data' => null, 'message' => 'Modulo no habilitado en el plan'];
+            }
+            $positions = TeamMemberPosition::where('business_id', $business->id)
+                ->orderBy('sort_order')
+                ->get();
+            return $positions->isEmpty() ? ['data' => null, 'message' => 'No hay puestos'] : ['data' => $positions, 'meta' => ['total' => $positions->count()]];
+        }
+
+        if ($path === '/api/v1/admin/businesses/' . $businessId . '/packages') {
+            $business = Business::findOrFail($businessId);
+            $module = $business->modules()->where('module_key', 'packages')->first();
+            if (!$module || !$module->is_enabled) {
+                return ['data' => null, 'message' => 'Modulo no habilitado en el plan'];
+            }
+            $packages = BusinessPackage::where('business_id', $business->id)
+                ->orderBy('sort_order')
+                ->get();
+            return $packages->isEmpty() ? ['data' => null, 'message' => 'No hay paquetes'] : ['data' => $packages, 'meta' => ['total' => $packages->count()]];
         }
 
         if ($path === '/api/v1/admin/users') {

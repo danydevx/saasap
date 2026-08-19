@@ -8,8 +8,8 @@
       :backHref="'/member/business-modules'"
     >
       <template #actions>
-        <Link :href="`/member/businesses/${business?.id}/faqs/create`" class="btn btn-primary">
-          <i class="bi bi-plus me-1"></i>Nueva Pregunta
+        <Link :href="`/member/businesses/${business?.id}/faqs/create`" class="btn btn-primary btn-sm">
+          <i class="bi bi-plus-lg me-1"></i>Nueva Pregunta
         </Link>
       </template>
     </PageHeader>
@@ -30,26 +30,20 @@
     </div>
 
     <div class="row mb-3 align-items-center">
-      <div class="col-md-4">
-        <BulkSelect
-          v-model:selectedIds="selectedIds"
-          :current-page-ids="currentPageIds"
-          :delete-endpoint="`/member/businesses/${business?.id}/faqs/bulk-delete`"
-          item-name="preguntas"
-          @deleted="onBulkDeleted"
-        />
-      </div>
-      <div class="col-md-4 ms-auto">
-        <select
-          v-model="selectedCategory"
-          class="form-select form-select-sm"
-          @change="filterByCategory"
-        >
-          <option :value="null">Todas las categorías</option>
-          <option v-for="cat in categories" :key="cat.id" :value="cat.id">
-            {{ cat.name }}
-          </option>
-        </select>
+      <div class="col">
+        <div class="d-flex gap-2 align-items-center">
+          <select
+            v-model="selectedCategory"
+            class="form-select form-select-sm"
+            @change="filterByCategory"
+            style="max-width: 200px;"
+          >
+            <option :value="null">Todas las categorías</option>
+            <option v-for="cat in categories" :key="cat.id" :value="cat.id">
+              {{ cat.name }}
+            </option>
+          </select>
+        </div>
       </div>
     </div>
 
@@ -66,6 +60,16 @@
       empty-text="Comienza creando tu primera pregunta frecuente."
       @updated="onDataTableUpdated"
     >
+      <template #header-actions>
+        <BulkSelect
+          v-model:selectedIds="selectedIds"
+          :current-page-ids="currentPageIds"
+          :delete-endpoint="`/member/businesses/${business?.id}/faqs/bulk-delete`"
+          item-name="preguntas"
+          @deleted="onBulkDeleted"
+        />
+      </template>
+
       <template #cell-checkbox="{ row }">
         <BulkSelectRowCheckbox
           :id="row.id"

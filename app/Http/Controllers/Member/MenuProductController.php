@@ -53,6 +53,11 @@ class MenuProductController extends Controller
             $query->whereNull('category_id');
         }
 
+        $search = $request->query('search');
+        if ($search) {
+            $query->where('title', 'like', '%' . $search . '%');
+        }
+
         $products = $query->orderBy('sort_order')->paginate(20);
 
         $categories = MenuCategory::where('business_id', $business->id)
@@ -71,6 +76,7 @@ class MenuProductController extends Controller
             'products' => $products,
             'categories' => $categories,
             'selectedCategory' => $request->boolean('uncategorized') ? 'uncategorized' : ($categoryId ?? null),
+            'searchQuery' => $search,
         ]);
     }
 
@@ -283,5 +289,34 @@ class MenuProductController extends Controller
 
         return redirect()->back()
             ->with('success', $message);
+    }
+
+    public function clone(Business $business, MenuProduct $product)
+    {
+        $user = Auth::user();
+        abort_unless($business->user_id === $user->id, 403);
+        abort_unless($product->business_id === $business->id, 403);
+
+        $newProduct = $product->replicate();
+        $newProduct->title = $product->title . ' (Copia)';
+        $newProduct->slug = MenuProduct::generateUniqueSlug($business->id, $product->title . ' (Copia)');
+        $newProduct->active = false;
+        $newProduct->featured = false;
+        $newProduct->save();
+
+        foreach ($product->variants as $variant) {
+            $newVariant = $variant->replicate();
+            $newVariant->product_id = $newProduct->id;
+            $newVariant->save();
+        }
+
+        foreach ($product->images as $image) {
+            $newImage = $image->replicate();
+            $newImage->product_id = $newProduct->id;
+            $newImage->save();
+        }
+
+        return redirect()->back()
+            ->with('success', 'Producto clonado exitosamente. Edita el producto para ver más detalles.');
     }
 }

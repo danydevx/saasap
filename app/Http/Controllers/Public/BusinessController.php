@@ -11,6 +11,7 @@ use Modules\Businesses\Models\Business;
 use Modules\Gallery\Models\BusinessGallery;
 use Modules\Leads\Models\BusinessLead;
 use Modules\Locations\Models\BusinessLocation;
+use Modules\Packages\Models\BusinessPackage;
 use Modules\Services\Models\BusinessService;
 
 class BusinessController extends Controller
@@ -27,6 +28,7 @@ class BusinessController extends Controller
         ['key' => 'reviews', 'module' => 'reviews', 'label' => 'Reseñas'],
         ['key' => 'locations', 'module' => 'locations', 'label' => 'Ubicaciones'],
         ['key' => 'promotions', 'module' => 'promotions', 'label' => 'Promociones'],
+        ['key' => 'packages', 'module' => 'packages', 'label' => 'Paquetes'],
     ];
 
     public function show(string $slug)
@@ -116,6 +118,16 @@ class BusinessController extends Controller
                 ->orderBy('sort_order')
                 ->limit(12)
                 ->get(['id', 'name', 'description', 'price']);
+        }
+
+        $packages = [];
+        if (in_array('packages', $modules)) {
+            $packages = $business->packages()
+                ->where('is_active', true)
+                ->with('features')
+                ->orderBy('sort_order')
+                ->limit(12)
+                ->get(['id', 'title', 'short_description', 'image', 'price', 'promo_price', 'whatsapp', 'whatsapp_message']);
         }
 
         $menuCategories = [];
@@ -251,6 +263,7 @@ class BusinessController extends Controller
             'reviews' => $reviews,
             'promotions' => $promotions,
             'products' => $products,
+            'packages' => $packages,
             'menuCategories' => $menuCategories,
             'menuProducts' => $menuProducts,
             'socialNetworks' => $socialNetworks,
@@ -826,6 +839,52 @@ class BusinessController extends Controller
             'modules' => $modules,
             'branding' => ['generated_css' => $brandingSetting?->generated_css, 'page_style' => $brandingSetting?->page_style, 'section_style' => $brandingSetting?->section_style, 'hero_style' => $brandingSetting?->hero_style, 'buttons_uppercase' => $brandingSetting?->buttons_uppercase, 'dark_mode' => $brandingSetting?->dark_mode],
             'socialNetworks' => $socialNetworks,
+        ]);
+    }
+
+    public function packages(string $slug)
+    {
+        $business = Business::where('slug', $slug)
+            ->where('is_active', true)
+            ->where('is_published', true)
+            ->firstOrFail();
+
+        $modules = $business->modules()->where('is_enabled', true)->get()->pluck('moduleDefinition.key')->toArray();
+        if (! in_array('packages', $modules)) {
+            abort(404);
+        }
+
+        $packages = BusinessPackage::where('business_id', $business->id)
+            ->where('is_active', true)
+            ->with('features')
+            ->orderBy('sort_order')
+            ->get();
+
+        $defaultWhatsapp = $business->phone;
+        $defaultMessage = 'Hola, me interesa el paquete';
+
+        return response()->json([
+            'business' => [
+                'id' => $business->id,
+                'name' => $business->name,
+                'slug' => $business->slug,
+                'logo_path' => $business->logo_path,
+                'phone' => $business->phone,
+            ],
+            'packages' => $packages->map(function ($package) use ($defaultWhatsapp, $defaultMessage) {
+                return [
+                    'id' => $package->id,
+                    'title' => $package->title,
+                    'short_description' => $package->short_description,
+                    'long_description' => $package->long_description,
+                    'image' => $package->image,
+                    'price' => $package->price,
+                    'promo_price' => $package->promo_price,
+                    'whatsapp' => $package->whatsapp ?? $defaultWhatsapp,
+                    'whatsapp_message' => $package->whatsapp_message ?? str_replace('{package_title}', $package->title, $defaultMessage),
+                    'features' => $package->features->pluck('name')->toArray(),
+                ];
+            }),
         ]);
     }
 }

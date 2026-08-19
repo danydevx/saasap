@@ -27,26 +27,17 @@
       </template>
     </PageHeader>
 
-    <div class="row mb-4 align-items-center">
-      <div class="col-md-4">
-        <select v-model="filterCategory" class="form-select" @change="filterProducts">
-          <option :value="null">Todas las categorias</option>
-          <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
-        </select>
-      </div>
-      <div class="col-md-4">
-        <BulkSelect
-          v-model:selectedIds="selectedIds"
-          :current-page-ids="currentPageIds"
-          :delete-endpoint="`/member/businesses/${business?.id}/products/bulk-delete`"
-          item-name="productos"
-          @deleted="onBulkDeleted"
-        />
-      </div>
-      <div v-if="filterCategory" class="col-md-2">
-        <button type="button" class="btn btn-outline-secondary" @click="clearFilter">
-          <i class="bi bi-x-lg me-1"></i>Limpiar
-        </button>
+    <div class="row mb-3 align-items-center">
+      <div class="col">
+        <div class="d-flex gap-2 align-items-center flex-wrap">
+          <select v-model="filterCategory" class="form-select form-select-sm" @change="filterProducts" style="max-width: 200px;">
+            <option :value="null">Todas las categorias</option>
+            <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
+          </select>
+          <button v-if="filterCategory" type="button" class="btn btn-outline-secondary btn-sm" @click="clearFilter">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
       </div>
     </div>
 
@@ -63,6 +54,16 @@
       :empty-text="selectedCategoryName ? `No hay productos en la categoria '${selectedCategoryName}'.` : 'Comienza creando tu primer producto.'"
       @updated="onDataTableUpdated"
     >
+      <template #header-actions>
+        <BulkSelect
+          v-model:selectedIds="selectedIds"
+          :current-page-ids="currentPageIds"
+          :delete-endpoint="`/member/businesses/${business?.id}/products/bulk-delete`"
+          item-name="productos"
+          @deleted="onBulkDeleted"
+        />
+      </template>
+
       <template #cell-checkbox="{ row }">
         <BulkSelectRowCheckbox
           :id="row.id"
